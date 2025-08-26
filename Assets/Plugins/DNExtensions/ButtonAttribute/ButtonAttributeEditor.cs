@@ -1,21 +1,30 @@
-
-
 #if UNITY_EDITOR
 using UnityEngine;
 using System;
 using System.Collections.Generic;
 using UnityEditor;
 using System.Reflection;
-
+using System.Linq;
 
 namespace DNExtensions.Button
 {
-  
+    public struct ButtonInfo
+    {
+        public readonly MethodInfo Method;
+        public readonly ButtonAttribute Attribute;
+        
+        public ButtonInfo(MethodInfo method, ButtonAttribute attribute)
+        {
+            Method = method;
+            Attribute = attribute;
+        }
+    }
 
     public abstract class BaseButtonAttributeEditor : UnityEditor.Editor
     {
         private readonly Dictionary<string, object[]> _methodParameters = new Dictionary<string, object[]>();
         private readonly Dictionary<string, bool> _foldoutStates = new Dictionary<string, bool>();
+        private readonly Dictionary<string, bool> _groupFoldoutStates = new Dictionary<string, bool>();
         
         public override void OnInspectorGUI()
         {
@@ -27,13 +36,84 @@ namespace DNExtensions.Button
         {
             MethodInfo[] methods = target.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
             
+            // Collect all button methods
+            List<ButtonInfo> buttonInfos = new List<ButtonInfo>();
             foreach (MethodInfo method in methods)
             {
                 ButtonAttribute buttonAttr = method.GetCustomAttribute<ButtonAttribute>();
                 if (buttonAttr != null)
                 {
-                    DrawButton(method, buttonAttr);
+                    buttonInfos.Add(new ButtonInfo(method, buttonAttr));
                 }
+            }
+            
+            // Group buttons by their Group property
+            var groupedButtons = buttonInfos.GroupBy(b => string.IsNullOrEmpty(b.Attribute.Group) ? "" : b.Attribute.Group)
+                                           .OrderBy(g => g.Key);
+            
+            foreach (var group in groupedButtons)
+            {
+                if (string.IsNullOrEmpty(group.Key))
+                {
+                    // Draw ungrouped buttons normally
+                    foreach (var buttonInfo in group.OrderBy(b => b.Method.Name))
+                    {
+                        DrawButton(buttonInfo.Method, buttonInfo.Attribute);
+                    }
+                }
+                else
+                {
+                    // Draw grouped buttons in a foldout
+                    DrawButtonGroup(group.Key, group.ToList());
+                }
+            }
+        }
+        
+        private void DrawButtonGroup(string groupName, List<ButtonInfo> buttons)
+        {
+            string groupKey = target.GetInstanceID() + "_group_" + groupName;
+            
+            _groupFoldoutStates.TryAdd(groupKey, true);
+
+            // Groups start expanded by default
+            // Draw group header with some spacing
+            GUILayout.Space(5);
+            
+            // Custom group header style
+            var groupStyle = new GUIStyle(EditorStyles.foldout)
+            {
+                fontStyle = FontStyle.Bold,
+                fontSize = 12
+            };
+
+            _groupFoldoutStates[groupKey] = EditorGUILayout.Foldout(
+                _groupFoldoutStates[groupKey], 
+                groupName, 
+                groupStyle
+            );
+            
+            if (_groupFoldoutStates[groupKey])
+            {
+                EditorGUI.indentLevel++;
+                
+                // Draw all buttons in the group
+                foreach (var buttonInfo in buttons.OrderBy(b => b.Method.Name))
+                {
+                    // Reduce space for grouped buttons to make them more compact
+                    var modifiedAttr = new ButtonAttribute(
+                        buttonInfo.Attribute.Group,
+                        buttonInfo.Attribute.Height,
+                        Math.Max(1, buttonInfo.Attribute.Space - 2), // Reduce space but keep minimum of 1
+                        buttonInfo.Attribute.Color,
+                        buttonInfo.Attribute.PlayMode,
+                        buttonInfo.Attribute.Name
+                    );
+                    
+                    DrawButton(buttonInfo.Method, modifiedAttr);
+                }
+                
+                EditorGUI.indentLevel--;
+                GUILayout.Space(3); // Add some space after the group
             }
         }
         
@@ -44,13 +124,12 @@ namespace DNExtensions.Button
                 GUILayout.Space(buttonAttr.Space);
             }
             
-
             string buttonText = string.IsNullOrEmpty(buttonAttr.Name) 
                 ? ObjectNames.NicifyVariableName(method.Name) 
                 : buttonAttr.Name;
             
             bool shouldDisable;
-            string playModeText = "";
+            var playModeText = "";
             
             switch (buttonAttr.PlayMode)
             {
@@ -73,8 +152,8 @@ namespace DNExtensions.Button
                 buttonText += playModeText;
             }
             
-            ParameterInfo[] parameters = method.GetParameters();
-            string methodKey = target.GetInstanceID() + "_" + method.Name;
+            var parameters = method.GetParameters();
+            var methodKey = target.GetInstanceID() + "_" + method.Name;
             
             if (!_methodParameters.ContainsKey(methodKey))
             {
@@ -99,27 +178,25 @@ namespace DNExtensions.Button
                 GUI.backgroundColor = buttonAttr.Color;
             }
             
-
             bool buttonClicked;
             
             if (parameters.Length > 0)
             {
- 
                 EditorGUILayout.BeginHorizontal();
                 
-                bool newFoldoutState = GUILayout.Toggle(_foldoutStates[methodKey], "", EditorStyles.foldout, GUILayout.Width(15), GUILayout.Height(buttonAttr.Size));
+                bool newFoldoutState = GUILayout.Toggle(_foldoutStates[methodKey], "", EditorStyles.foldout, GUILayout.Width(15), GUILayout.Height(buttonAttr.Height));
                 if (_foldoutStates != null && newFoldoutState != _foldoutStates[methodKey])
                 {
                     _foldoutStates[methodKey] = newFoldoutState;
                 }
                 
-                buttonClicked = GUILayout.Button(buttonText, GUILayout.Height(buttonAttr.Size), GUILayout.ExpandWidth(true));
+                buttonClicked = GUILayout.Button(buttonText, GUILayout.Height(buttonAttr.Height), GUILayout.ExpandWidth(true));
                 
                 EditorGUILayout.EndHorizontal();
             }
             else
             {
-                buttonClicked = GUILayout.Button(buttonText, GUILayout.Height(buttonAttr.Size));
+                buttonClicked = GUILayout.Button(buttonText, GUILayout.Height(buttonAttr.Height));
             }
             
             if (buttonClicked && !shouldDisable)
@@ -137,12 +214,10 @@ namespace DNExtensions.Button
             GUI.backgroundColor = originalColor;
             GUI.enabled = originalEnabled;
             
-            
             if (parameters.Length > 0 && _foldoutStates[methodKey])
             {
                 EditorGUI.indentLevel++;
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                
                 
                 for (int i = 0; i < parameters.Length; i++)
                 {
@@ -234,18 +309,14 @@ namespace DNExtensions.Button
         }
     }
     
-
     [CustomEditor(typeof(MonoBehaviour), true)]
     public class ButtonAttributeEditor : BaseButtonAttributeEditor
     {
-
     }
     
-
     [CustomEditor(typeof(ScriptableObject), true)]
     public class ButtonAttributeScriptableObjectEditor : BaseButtonAttributeEditor
     {
-
     }
 }
 

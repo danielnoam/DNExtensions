@@ -3,20 +3,44 @@ using UnityEngine;
 using System.Collections.Generic;
 using Random = UnityEngine.Random;
 
-
 namespace DNExtensions
 {
+    /// <summary>
+    /// A weighted chance-based collection that allows random selection of items based on percentage probabilities.
+    /// Items can have their chances locked to prevent normalization, and the collection automatically 
+    /// maintains a total of 100% across all unlocked items.
+    /// </summary>
+    /// <typeparam name="T">The type of items stored in the chance list</typeparam>
     [Serializable]
-
     public class ChanceList<T>
     {
+        /// <summary>
+        /// Internal structure representing an item with its associated chance and lock state
+        /// </summary>
         [Serializable]
         private struct InternalChanceItem
         {
+            /// <summary>
+            /// The item stored in this chance entry
+            /// </summary>
             public T item;
+            
+            /// <summary>
+            /// The percentage chance (0-100) for this item to be selected
+            /// </summary>
             [Range(0, 100)] public int chance;
+            
+            /// <summary>
+            /// Whether this item's chance is locked from automatic normalization
+            /// </summary>
             public bool isLocked;
 
+            /// <summary>
+            /// Initializes a new chance item with the specified parameters
+            /// </summary>
+            /// <param name="item">The item to store</param>
+            /// <param name="chance">The percentage chance (0-100) for selection</param>
+            /// <param name="isLocked">Whether the chance should be locked from normalization</param>
             public InternalChanceItem(T item, int chance = 10, bool isLocked = false)
             {
                 this.item = item;
@@ -25,18 +49,25 @@ namespace DNExtensions
             }
         }
 
+        /// <summary>
+        /// The internal array storing all chance items
+        /// </summary>
         [SerializeField] private InternalChanceItem[] internalItems = Array.Empty<InternalChanceItem>();
 
         #region Public API
 
         /// <summary>
-        /// Number of items in the chance list
+        /// Gets the number of items currently in the chance list
         /// </summary>
+        /// <value>The total count of items in the collection</value>
         public int Count => internalItems.Length;
 
         /// <summary>
-        /// Get or set an item at the specified index
+        /// Gets or sets the item at the specified index
         /// </summary>
+        /// <param name="index">The zero-based index of the item to get or set</param>
+        /// <returns>The item at the specified index</returns>
+        /// <exception cref="IndexOutOfRangeException">Thrown when index is outside the valid range</exception>
         public T this[int index]
         {
             get
@@ -56,8 +87,15 @@ namespace DNExtensions
         }
 
         /// <summary>
-        /// Add a new item to the chance list
+        /// Adds a new item to the chance list with the specified parameters
         /// </summary>
+        /// <param name="item">The item to add to the collection</param>
+        /// <param name="chance">The initial percentage chance (0-100) for this item</param>
+        /// <param name="isLocked">Whether this item's chance should be locked from normalization</param>
+        /// <remarks>
+        /// After adding the item, NormalizeChances() is automatically called to maintain 
+        /// a total of 100% across all unlocked items.
+        /// </remarks>
         public void AddItem(T item, int chance = 10, bool isLocked = false)
         {
             var newArray = new InternalChanceItem[internalItems.Length + 1];
@@ -68,8 +106,14 @@ namespace DNExtensions
         }
 
         /// <summary>
-        /// Remove an item at the specified index
+        /// Removes the item at the specified index from the chance list
         /// </summary>
+        /// <param name="index">The zero-based index of the item to remove</param>
+        /// <exception cref="IndexOutOfRangeException">Thrown when index is outside the valid range</exception>
+        /// <remarks>
+        /// After removing the item, NormalizeChances() is automatically called to redistribute 
+        /// percentages among remaining unlocked items.
+        /// </remarks>
         public void RemoveAt(int index)
         {
             if (index < 0 || index >= internalItems.Length)
@@ -84,8 +128,15 @@ namespace DNExtensions
         }
 
         /// <summary>
-        /// Set the chance value for an item at the specified index
+        /// Sets the chance percentage for the item at the specified index
         /// </summary>
+        /// <param name="index">The zero-based index of the item</param>
+        /// <param name="newChance">The new chance percentage (will be clamped to 0-100)</param>
+        /// <exception cref="IndexOutOfRangeException">Thrown when index is outside the valid range</exception>
+        /// <remarks>
+        /// The chance value is automatically clamped to the range 0-100. After setting the chance,
+        /// NormalizeChances() is called to maintain proper percentage distribution.
+        /// </remarks>
         public void SetChance(int index, int newChance)
         {
             if (index < 0 || index >= internalItems.Length)
@@ -97,8 +148,11 @@ namespace DNExtensions
         }
 
         /// <summary>
-        /// Get the chance value for an item at the specified index
+        /// Gets the current chance percentage for the item at the specified index
         /// </summary>
+        /// <param name="index">The zero-based index of the item</param>
+        /// <returns>The chance percentage (0-100) for the specified item</returns>
+        /// <exception cref="IndexOutOfRangeException">Thrown when index is outside the valid range</exception>
         public int GetChance(int index)
         {
             if (index < 0 || index >= internalItems.Length)
@@ -109,8 +163,16 @@ namespace DNExtensions
         }
 
         /// <summary>
-        /// Set the locked state for an item at the specified index
+        /// Sets the locked state for the item at the specified index
         /// </summary>
+        /// <param name="index">The zero-based index of the item</param>
+        /// <param name="locked">True to lock the item's chance from normalization, false to unlock</param>
+        /// <exception cref="IndexOutOfRangeException">Thrown when index is outside the valid range</exception>
+        /// <remarks>
+        /// Locked items maintain their current chance value during normalization operations.
+        /// After changing the lock state, NormalizeChances() is called to redistribute 
+        /// percentages among unlocked items.
+        /// </remarks>
         public void SetLocked(int index, bool locked)
         {
             if (index < 0 || index >= internalItems.Length)
@@ -122,8 +184,11 @@ namespace DNExtensions
         }
 
         /// <summary>
-        /// Get the locked state for an item at the specified index
+        /// Gets the locked state for the item at the specified index
         /// </summary>
+        /// <param name="index">The zero-based index of the item</param>
+        /// <returns>True if the item's chance is locked from normalization, false otherwise</returns>
+        /// <exception cref="IndexOutOfRangeException">Thrown when index is outside the valid range</exception>
         public bool IsLocked(int index)
         {
             if (index < 0 || index >= internalItems.Length)
@@ -134,7 +199,7 @@ namespace DNExtensions
         }
 
         /// <summary>
-        /// Clear all items from the chance list
+        /// Removes all items from the chance list, resetting it to an empty state
         /// </summary>
         public void Clear()
         {
@@ -142,8 +207,22 @@ namespace DNExtensions
         }
 
         /// <summary>
-        /// Manually normalize all chance values to ensure they total 100%
+        /// Manually normalizes all chance values to ensure they total 100%
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This method redistributes percentage values among unlocked items to maintain a total of 100%.
+        /// Locked items retain their current chance values and are excluded from normalization.
+        /// </para>
+        /// <para>
+        /// The normalization process:
+        /// 1. Calculates the total percentage used by locked items
+        /// 2. Distributes the remaining percentage (100% - locked total) among unlocked items
+        /// 3. If unlocked items have zero total, distributes remaining percentage equally
+        /// 4. Handles rounding errors by adjusting values to ensure exact 100% total
+        /// 5. Ensures no negative values exist after normalization
+        /// </para>
+        /// </remarks>
         public void NormalizeChances()
         {
             if (internalItems.Length == 0) return;
@@ -238,12 +317,29 @@ namespace DNExtensions
 
         #endregion Public API
 
-        
         #region Random Selection
 
         /// <summary>
-        /// Get a random item based on the weighted chances. Returns default(T) if no valid items exist.
+        /// Selects and returns a random item based on the weighted chance percentages
         /// </summary>
+        /// <returns>
+        /// A randomly selected item from the collection, or default(T) if no valid items exist
+        /// or the collection is empty
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// Items with higher chance percentages are more likely to be selected. Items with 0% chance
+        /// are excluded from selection. The method can return default(T) which allows for "nothing" 
+        /// results when that's the intended behavior.
+        /// </para>
+        /// <para>
+        /// The selection algorithm:
+        /// 1. Filters items to only include those with chance > 0
+        /// 2. Calculates total weight from all valid items
+        /// 3. Generates a random value within the total weight range
+        /// 4. Iterates through items, accumulating weights until the random value is reached
+        /// </para>
+        /// </remarks>
         public T GetRandomItem()
         {
             if (internalItems.Length == 0) return default(T);
@@ -287,8 +383,15 @@ namespace DNExtensions
         }
 
         /// <summary>
-        /// Get multiple random items (with possible duplicates based on chances)
+        /// Gets multiple random items from the collection, allowing duplicates
         /// </summary>
+        /// <param name="count">The number of items to randomly select</param>
+        /// <returns>An array containing the randomly selected items</returns>
+        /// <remarks>
+        /// Each selection is independent, so the same item can be selected multiple times.
+        /// This is useful for scenarios like loot drops where you want multiple rolls
+        /// with the same probabilities.
+        /// </remarks>
         public T[] GetRandomItems(int count)
         {
             var results = new T[count];
@@ -301,8 +404,21 @@ namespace DNExtensions
         }
 
         /// <summary>
-        /// Get multiple unique random items (no duplicates, items are removed from selection pool)
+        /// Gets multiple unique random items from the collection without duplicates
         /// </summary>
+        /// <param name="count">The number of unique items to select (will be limited by available items)</param>
+        /// <returns>An array containing unique randomly selected items</returns>
+        /// <remarks>
+        /// <para>
+        /// Items are removed from the selection pool after being chosen, ensuring no duplicates.
+        /// The actual number of items returned may be less than requested if there aren't 
+        /// enough valid items in the collection.
+        /// </para>
+        /// <para>
+        /// This method is useful for scenarios like drawing cards from a deck or selecting
+        /// unique rewards where repetition should be avoided.
+        /// </para>
+        /// </remarks>
         public T[] GetUniqueRandomItems(int count)
         {
             if (count <= 0) return Array.Empty<T>();

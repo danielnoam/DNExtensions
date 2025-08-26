@@ -551,7 +551,7 @@ MonoBehaviour:
   priority: 0
   blendDistance: 0
   weight: 1
-  sharedProfile: {fileID: 11400000, guid: 781241d16e3073a438bd50026db11712, type: 2}
+  sharedProfile: {fileID: 11400000, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
 --- !u!4 &824312513
 Transform:
   m_ObjectHideFlags: 0
@@ -627,6 +627,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 552f8876cc78dbc459183ef952b3f7a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  testStrings:
+    internalItems: []
+  testInts:
+    internalItems:
+    - item: 0
+      chance: 83
+      isLocked: 0
+    - item: 0
+      chance: 8
+      isLocked: 0
+    - item: 0
+      chance: 9
+      isLocked: 0
+  gmeObjects:
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!4 &1974443090
 Transform:
   m_ObjectHideFlags: 0
@@ -879,10 +895,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5069706797151171049, guid: 21ec55a3eeed7b44d998504fabcd38d3, type: 3}
-      propertyPath: m_Actions
+    - target: {fileID: 4943005900495085804, guid: 21ec55a3eeed7b44d998504fabcd38d3, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 7027668206908105715, guid: 21ec55a3eeed7b44d998504fabcd38d3, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0

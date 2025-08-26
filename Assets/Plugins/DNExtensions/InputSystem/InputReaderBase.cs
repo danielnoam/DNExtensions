@@ -5,14 +5,16 @@ using UnityEngine.InputSystem;
 
 namespace DNExtensions.InputSystem
 {
-    
+    /// <summary>
+    /// Base class for handling Unity Input System interactions with cursor management capabilities.
+    /// Provides foundation for input handling classes with built-in cursor visibility controls.
+    /// </summary>
     public class InputReaderBase : MonoBehaviour
     {
-        [Header("Cursor Settings")] 
+        [SerializeField] protected PlayerInput playerInput;
         [SerializeField] private bool hideCursorOnAwake = true;
-        [SerializeField, HideInInspector] protected PlayerInput playerInput;
 
-
+        
         private void OnValidate()
         {
             if (!playerInput) 
@@ -27,12 +29,17 @@ namespace DNExtensions.InputSystem
             }
         }
 
+
         protected virtual void Awake()
         {
             SetCursorVisibility(hideCursorOnAwake);
         }
 
-
+        /// <summary>
+        /// Subscribes a callback method to all phases of an InputAction (started, performed, canceled).
+        /// </summary>
+        /// <param name="action">The InputAction to subscribe to. If null, no subscription occurs.</param>
+        /// <param name="callback">The callback method to invoke for all action phases.</param>
         protected void SubscribeToAction(InputAction action, Action<InputAction.CallbackContext> callback)
         {
             if (action == null) return;
@@ -42,6 +49,11 @@ namespace DNExtensions.InputSystem
             action.canceled += callback;
         }
 
+        /// <summary>
+        /// Unsubscribes a callback method from all phases of an InputAction (started, performed, canceled).
+        /// </summary>
+        /// <param name="action">The InputAction to unsubscribe from. If null, no unsubscription occurs.</param>
+        /// <param name="callback">The callback method to remove from all action phases.</param>
         protected void UnsubscribeFromAction(InputAction action, Action<InputAction.CallbackContext> callback)
         {
             if (action == null) return;
@@ -51,14 +63,13 @@ namespace DNExtensions.InputSystem
             action.canceled -= callback;
         }
 
-        
-
-
-
-        
-        protected void SetCursorVisibility(bool state)
+        /// <summary>
+        /// Sets the cursor visibility and lock state.
+        /// </summary>
+        /// <param name="isVisible">True to show the cursor, false to hide it.</param>
+        protected void SetCursorVisibility(bool isVisible)
         {
-            if (state)
+            if (!isVisible)
             {
                 Cursor.lockState = CursorLockMode.Confined;
                 Cursor.visible = false;
@@ -70,7 +81,9 @@ namespace DNExtensions.InputSystem
             }
         }
 
-        
+        /// <summary>
+        /// Toggles cursor visibility between visible and hidden states.
+        /// </summary>
         [Button("Toggle Cursor", ButtonPlayMode.OnlyWhenPlaying)]
         protected void ToggleCursorVisibility()
         {
@@ -85,6 +98,5 @@ namespace DNExtensions.InputSystem
                 Cursor.visible = true;
             }
         }
-
     }
 }

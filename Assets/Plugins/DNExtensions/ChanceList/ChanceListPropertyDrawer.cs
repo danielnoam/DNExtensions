@@ -8,17 +8,13 @@ using System.Reflection;
 namespace DNExtensions
 {
     [CustomPropertyDrawer(typeof(ChanceList<>), true)]
-
     public class ChanceListPropertyDrawer : PropertyDrawer
     {
         private ReorderableList _reorderableList;
-        private bool _isInitialized = false;
-
-        // Layout configuration
-
-        private const float HeaderHeight = 2f;
-        private const float ElementHeight = 3f;
+        private bool _isInitialized;
         
+        // Layout configuration
+        private const float ElementHeight = 3f;
         private const float ItemWidthRatio = 0.55f;
         private const float IntFieldWidth = 30f;
         private const float LockButtonWidth = 20f;
@@ -31,16 +27,14 @@ namespace DNExtensions
             var internalItemsProperty = property.FindPropertyRelative("internalItems");
             if (internalItemsProperty == null) return;
 
-            _reorderableList =
-                new ReorderableList(property.serializedObject, internalItemsProperty, true, true, true, true)
-                {
-                    drawHeaderCallback = DrawHeader,
-                    drawElementCallback = DrawElement,
-                    elementHeight = EditorGUIUtility.singleLineHeight + ElementHeight,
-                    headerHeight = EditorGUIUtility.singleLineHeight + HeaderHeight,
-                    onAddCallback = OnAdd,
-                    onRemoveCallback = OnRemove
-                };
+            _reorderableList = new ReorderableList(property.serializedObject, internalItemsProperty, true, false, true, true)
+            {
+                drawElementCallback = DrawElement,
+                elementHeight = EditorGUIUtility.singleLineHeight + ElementHeight,
+                onAddCallback = OnAdd,
+                onRemoveCallback = OnRemove,
+                drawHeaderCallback = null // We'll handle the header ourselves
+            };
 
             _isInitialized = true;
         }
@@ -48,35 +42,151 @@ namespace DNExtensions
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             InitializeList(property);
-
             if (_reorderableList == null) return;
 
             EditorGUI.BeginProperty(position, label, property);
 
-            // Draw the label
-            var labelRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
-
-            // Handle right-click on the label/header area to add custom options to Unity's default context menu
-            if (Event.current.type == EventType.ContextClick && labelRect.Contains(Event.current.mousePosition))
+            var internalItemsProperty = property.FindPropertyRelative("internalItems");
+            
+            // Create foldout header layout like Unity's default
+            var foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+            
+            // Handle right-click context menu on foldout
+            if (Event.current.type == EventType.ContextClick && foldoutRect.Contains(Event.current.mousePosition))
             {
                 ShowEnhancedContextMenu(property);
                 Event.current.Use();
             }
 
-            EditorGUI.LabelField(labelRect, label, EditorStyles.boldLabel);
+            // Calculate the width for the foldout text and size field
+            var sizeText = internalItemsProperty.arraySize.ToString();
+            var sizeWidth = GUI.skin.textField.CalcSize(new GUIContent(sizeText)).x + 35f;
+            
+            // Foldout takes most of the space, size field on the right
+            var foldoutWidth = position.width - sizeWidth - 5f;
+            var actualFoldoutRect = new Rect(foldoutRect.x, foldoutRect.y, foldoutWidth, foldoutRect.height);
+            var sizeFieldRect = new Rect(actualFoldoutRect.xMax + 5f, foldoutRect.y, sizeWidth, foldoutRect.height);
 
-            // Draw the reorderable list
-            var listRect = new Rect(position.x, position.y + EditorGUIUtility.singleLineHeight + 2f,
-                position.width, position.height - EditorGUIUtility.singleLineHeight - 2f);
+            // Draw foldout with bold label and hover effect (no size in title)
+            var boldFoldoutStyle = new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold };
 
-            // Handle right-click on the list area to add custom options to Unity's default context menu
-            if (Event.current.type == EventType.ContextClick && listRect.Contains(Event.current.mousePosition))
+            // Handle hover effect like Unity's default lists
+            if (actualFoldoutRect.Contains(Event.current.mousePosition))
             {
-                ShowEnhancedContextMenu(property);
-                Event.current.Use();
+                EditorGUI.DrawRect(actualFoldoutRect, new Color(1f, 1f, 1f, 0.1f));
+                EditorGUIUtility.AddCursorRect(actualFoldoutRect, MouseCursor.Link);
             }
 
-            _reorderableList.DoList(listRect);
+            property.isExpanded = EditorGUI.Foldout(actualFoldoutRect, property.isExpanded, label.text, true, boldFoldoutStyle);
+
+            // Draw size field on the right
+            EditorGUI.BeginChangeCheck();
+            int newSize = EditorGUI.DelayedIntField(sizeFieldRect, internalItemsProperty.arraySize);
+            if (EditorGUI.EndChangeCheck())
+            {
+                internalItemsProperty.arraySize = Mathf.Max(0, newSize);
+                
+                // Initialize new elements with default values
+                for (int i = 0; i < internalItemsProperty.arraySize; i++)
+                {
+                    var element = internalItemsProperty.GetArrayElementAtIndex(i);
+                    var chanceProperty = element.FindPropertyRelative("chance");
+                    var isLockedProperty = element.FindPropertyRelative("isLocked");
+                    
+                    if (chanceProperty.intValue == 0 && !isLockedProperty.boolValue)
+                    {
+                        chanceProperty.intValue = 10;
+                        isLockedProperty.boolValue = false;
+                    }
+                }
+                
+                TriggerNormalization(internalItemsProperty);
+            }
+
+            if (property.isExpanded)
+            {
+                EditorGUI.indentLevel++;
+                
+                // Calculate the content area for the list background
+                var contentStartY = position.y + EditorGUIUtility.singleLineHeight + 2f;
+                var backgroundRect = new Rect(position.x, contentStartY, position.width, 0f);
+                
+                if (internalItemsProperty.arraySize == 0)
+                {
+                    // Calculate background height for empty list (header + empty message only)
+                    var headerHeight = EditorGUIUtility.singleLineHeight;
+                    var emptyMessageHeight = EditorGUIUtility.singleLineHeight;
+                    var footerHeight = 18; // Standard ReorderableList footer height
+                    backgroundRect.height = headerHeight + emptyMessageHeight;
+                    
+                    // Draw background (doesn't include footer)
+                    var backgroundStyle = "RL Background";
+                    GUI.Box(backgroundRect, "", backgroundStyle);
+                    
+                    // Draw header for empty list
+                    var headerRect = new Rect(backgroundRect.x, backgroundRect.y, backgroundRect.width, headerHeight);
+                    var headerBackgroundStyle = "RL Header";
+                    GUI.Box(headerRect, "", headerBackgroundStyle);
+                    DrawHeader(headerRect);
+                    
+                    // Show "List is Empty" message (left-aligned like Unity's default)
+                    var emptyRect = new Rect(backgroundRect.x + 6f, headerRect.yMax, backgroundRect.width - 12f, emptyMessageHeight);
+                    var emptyStyle = new GUIStyle(EditorStyles.label) 
+                    { 
+                        fontStyle = FontStyle.Italic,
+                        alignment = TextAnchor.MiddleLeft
+                    };
+                    EditorGUI.LabelField(emptyRect, "List is Empty", emptyStyle);
+                    
+                    // Draw footer with add/remove buttons below the background
+                    var footerRect = new Rect(backgroundRect.x, backgroundRect.yMax, backgroundRect.width, footerHeight);
+                    
+                    // Create button group background (darker area like Unity's default)
+                    var buttonGroupWidth = 60f;
+                    var buttonGroupHeight = 20f;
+                    var buttonGroupRect = new Rect(footerRect.xMax - buttonGroupWidth - 11f, footerRect.y + (footerRect.height - buttonGroupHeight) / 2f, buttonGroupWidth, buttonGroupHeight);
+                    GUI.Box(buttonGroupRect, "", "RL Footer");
+                    
+                    // Add and remove buttons in the button group (+ first, then -)
+                    var buttonWidth = 30f;
+                    var buttonHeight = 16f;
+                    var addButtonRect = new Rect(buttonGroupRect.x, buttonGroupRect.y, buttonWidth, buttonHeight);
+                    var removeButtonRect = new Rect(buttonGroupRect.x + buttonWidth, buttonGroupRect.y, buttonWidth, buttonHeight);
+                    
+                    if (GUI.Button(addButtonRect, "+", "RL FooterButton"))
+                    {
+                        OnAdd(_reorderableList);
+                    }
+                    
+                    EditorGUI.BeginDisabledGroup(true); // Always disabled when list is empty
+                    GUI.Button(removeButtonRect, "-", "RL FooterButton");
+                    EditorGUI.EndDisabledGroup();
+                    
+                }
+                else
+                {
+                    // Draw header for the list elements with background
+                    var headerRect = new Rect(position.x, contentStartY, position.width, EditorGUIUtility.singleLineHeight);
+                    var headerBackgroundStyle = "RL Header";
+                    GUI.Box(headerRect, "", headerBackgroundStyle);
+                    DrawHeader(headerRect);
+                    
+                    // Draw the reorderable list without its own header
+                    var listRect = new Rect(position.x, headerRect.y + EditorGUIUtility.singleLineHeight,
+                        position.width, _reorderableList.GetHeight());
+                    
+                    // Handle right-click context menu on list area
+                    if (Event.current.type == EventType.ContextClick && listRect.Contains(Event.current.mousePosition))
+                    {
+                        ShowEnhancedContextMenu(property);
+                        Event.current.Use();
+                    }
+                    
+                    _reorderableList.DoList(listRect);
+                }
+                
+                EditorGUI.indentLevel--;
+            }
 
             EditorGUI.EndProperty();
         }
@@ -84,31 +194,53 @@ namespace DNExtensions
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             InitializeList(property);
-
-            if (_reorderableList == null) return EditorGUIUtility.singleLineHeight;
-
-            return EditorGUIUtility.singleLineHeight + 2f + _reorderableList.GetHeight();
+            
+            float height = EditorGUIUtility.singleLineHeight; // Foldout line
+            
+            if (property.isExpanded)
+            {
+                var internalItemsProperty = property.FindPropertyRelative("internalItems");
+                
+                if (internalItemsProperty.arraySize == 0)
+                {
+                    // Header + empty message + footer for empty list
+                    height += EditorGUIUtility.singleLineHeight + 2f; // Header
+                    height += EditorGUIUtility.singleLineHeight; // "List is Empty" message
+                    height += 20f; // Footer with buttons
+                }
+                else
+                {
+                    height += EditorGUIUtility.singleLineHeight + 2f; // Header
+                    if (_reorderableList != null)
+                    {
+                        height += _reorderableList.GetHeight();
+                    }
+                }
+            }
+            
+            return height;
         }
 
         private void DrawHeader(Rect rect)
         {
-            var headerStyle = new GUIStyle(EditorStyles.boldLabel)
+            var headerStyle = new GUIStyle(EditorStyles.label)
             {
                 alignment = TextAnchor.MiddleLeft,
-                normal = { textColor = EditorStyles.label.normal.textColor }
+                fontStyle = FontStyle.Bold
             };
 
-            var chanceHeaderStyle = new GUIStyle(EditorStyles.boldLabel)
+            var chanceHeaderStyle = new GUIStyle(EditorStyles.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                normal = { textColor = EditorStyles.label.normal.textColor }
+                fontStyle = FontStyle.Bold
             };
 
-            var itemHeaderRect = new Rect(rect.x, rect.y, rect.width * ItemWidthRatio, rect.height);
-            var chanceHeaderRect = new Rect(rect.x + rect.width * ItemWidthRatio + 3f, rect.y, rect.width * 0.35f,
-                rect.height);
+            // Adjust for indent
+            rect.x += EditorGUI.indentLevel * 15f;
+            rect.width -= EditorGUI.indentLevel * 15f;
 
-            // Calculate lock header position - aligned to the right
+            var itemHeaderRect = new Rect(rect.x, rect.y, rect.width * ItemWidthRatio, rect.height);
+            var chanceHeaderRect = new Rect(rect.x + rect.width * ItemWidthRatio + 3f, rect.y, rect.width * 0.35f, rect.height);
             var lockHeaderRect = new Rect(rect.x + rect.width - LockButtonWidth, rect.y, LockButtonWidth, rect.height);
 
             GUI.Label(itemHeaderRect, "Item", headerStyle);
@@ -127,12 +259,11 @@ namespace DNExtensions
             var chanceProperty = element.FindPropertyRelative("chance");
             var isLockedProperty = element.FindPropertyRelative("isLocked");
 
-            // Calculate rects - lock button stays aligned to the right
+            // Calculate rects
             var itemRect = new Rect(rect.x, rect.y, rect.width * ItemWidthRatio, rect.height);
             var lockButtonRect = new Rect(rect.x + rect.width - LockButtonWidth, rect.y, LockButtonWidth, rect.height);
             var intFieldRect = new Rect(lockButtonRect.x - Spacing - IntFieldWidth, rect.y, IntFieldWidth, rect.height);
-            var sliderRect = new Rect(itemRect.xMax + Spacing, rect.y, intFieldRect.x - itemRect.xMax - (Spacing * 2),
-                rect.height);
+            var sliderRect = new Rect(itemRect.xMax + Spacing, rect.y, intFieldRect.x - itemRect.xMax - (Spacing * 2), rect.height);
 
             // Draw item field
             EditorGUI.PropertyField(itemRect, itemProperty, GUIContent.none);
@@ -161,8 +292,7 @@ namespace DNExtensions
             // Draw lock checkbox
             var lockTooltip = isLockedProperty.boolValue ? "Chance value is locked" : "Chance value is unlocked";
             EditorGUI.BeginChangeCheck();
-            bool isLocked = EditorGUI.Toggle(lockButtonRect, new GUIContent("", lockTooltip),
-                isLockedProperty.boolValue);
+            bool isLocked = EditorGUI.Toggle(lockButtonRect, new GUIContent("", lockTooltip), isLockedProperty.boolValue);
             if (EditorGUI.EndChangeCheck())
             {
                 isLockedProperty.boolValue = isLocked;
@@ -175,25 +305,78 @@ namespace DNExtensions
             list.serializedProperty.arraySize++;
             var newElement = list.serializedProperty.GetArrayElementAtIndex(list.serializedProperty.arraySize - 1);
 
-            var itemProperty = newElement.FindPropertyRelative("item");
             var chanceProperty = newElement.FindPropertyRelative("chance");
             var isLockedProperty = newElement.FindPropertyRelative("isLocked");
-
-            // Set default values
-            itemProperty.objectReferenceValue = null;
+            
             chanceProperty.intValue = 10;
             isLockedProperty.boolValue = false;
 
-            // Trigger normalization after adding
             TriggerNormalization(list.serializedProperty);
         }
 
         private void OnRemove(ReorderableList list)
         {
             ReorderableList.defaultBehaviours.DoRemoveButton(list);
-
-            // Trigger normalization after removing
             TriggerNormalization(list.serializedProperty);
+        }
+
+        private void ShowEnhancedContextMenu(SerializedProperty property)
+        {
+            var menu = new GenericMenu();
+            var internalItemsProperty = property.FindPropertyRelative("internalItems");
+
+            // Add Unity's default property context menu items
+            menu.AddItem(new GUIContent("Copy Property Path"), false,
+                () => { EditorGUIUtility.systemCopyBuffer = property.propertyPath; });
+
+            menu.AddItem(new GUIContent("Copy"), false,
+                () => { EditorGUIUtility.systemCopyBuffer = JsonUtility.ToJson(property.serializedObject.targetObject); });
+
+            if (property.serializedObject.targetObject != null)
+            {
+                menu.AddItem(new GUIContent("Copy GUID"), false, () =>
+                {
+                    if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier(property.serializedObject.targetObject,
+                            out string guid, out long localId))
+                    {
+                        EditorGUIUtility.systemCopyBuffer = guid;
+                    }
+                });
+            }
+            else
+            {
+                menu.AddDisabledItem(new GUIContent("Copy GUID"));
+            }
+
+            menu.AddItem(new GUIContent("Paste"), false, () =>
+            {
+                Undo.RecordObject(property.serializedObject.targetObject, "Paste Property");
+                property.serializedObject.ApplyModifiedProperties();
+                TriggerNormalization(internalItemsProperty);
+            });
+
+            menu.AddSeparator("");
+
+            menu.AddItem(new GUIContent("Properties..."), false, () =>
+            {
+                Selection.activeObject = property.serializedObject.targetObject;
+                EditorGUIUtility.PingObject(property.serializedObject.targetObject);
+            });
+
+            menu.AddSeparator("");
+
+            // ChanceList-specific options
+            menu.AddItem(new GUIContent("Equalize All Chances"), false,
+                () => EqualizeAllChances(property));
+
+            menu.AddSeparator("");
+
+            menu.AddItem(new GUIContent("Lock All"), false,
+                () => SetAllLocked(internalItemsProperty, true));
+            menu.AddItem(new GUIContent("Unlock All"), false,
+                () => SetAllLocked(internalItemsProperty, false));
+
+            menu.ShowAsContext();
         }
 
         private void EqualizeAllChances(SerializedProperty property)
@@ -236,102 +419,10 @@ namespace DNExtensions
             property.serializedObject.ApplyModifiedProperties();
         }
 
-        private void OnMouseUp(ReorderableList list)
-        {
-            // This callback is kept for compatibility but context menu is handled in OnGUI
-            // since onMouseUpCallback has limited coverage
-        }
-
-        private void ShowEnhancedContextMenu(SerializedProperty property)
-        {
-            var menu = new GenericMenu();
-            var internalItemsProperty = property.FindPropertyRelative("internalItems");
-
-            // Add Unity's default property context menu items
-            // Copy Property Path
-            menu.AddItem(new GUIContent("Copy Property Path"), false,
-                () => { EditorGUIUtility.systemCopyBuffer = property.propertyPath; });
-
-            // Copy
-            menu.AddItem(new GUIContent("Copy"), false,
-                () =>
-                {
-                    EditorGUIUtility.systemCopyBuffer = JsonUtility.ToJson(property.serializedObject.targetObject);
-                });
-
-            // Copy Path  
-            menu.AddItem(new GUIContent("Copy Path"), false,
-                () => { EditorGUIUtility.systemCopyBuffer = property.propertyPath; });
-
-            // Copy GUID (if applicable)
-            if (property.serializedObject.targetObject != null)
-            {
-                menu.AddItem(new GUIContent("Copy GUID"), false, () =>
-                {
-                    if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier(property.serializedObject.targetObject,
-                            out string guid, out long localId))
-                    {
-                        EditorGUIUtility.systemCopyBuffer = guid;
-                    }
-                });
-            }
-            else
-            {
-                menu.AddDisabledItem(new GUIContent("Copy GUID"));
-            }
-
-            // Paste - simplified version
-            menu.AddItem(new GUIContent("Paste"), false, () =>
-            {
-                // Basic paste functionality - you could enhance this further
-                Undo.RecordObject(property.serializedObject.targetObject, "Paste Property");
-                property.serializedObject.ApplyModifiedProperties();
-                TriggerNormalization(internalItemsProperty);
-            });
-
-            menu.AddSeparator("");
-
-            // Properties... - open Inspector window
-            menu.AddItem(new GUIContent("Properties..."), false, () =>
-            {
-                Selection.activeObject = property.serializedObject.targetObject;
-                EditorGUIUtility.PingObject(property.serializedObject.targetObject);
-            });
-
-            menu.AddSeparator("");
-
-            // ChanceList-specific options
-            menu.AddItem(new GUIContent("Equalize All Chances"), false,
-                () => EqualizeAllChances_ContextMenu(internalItemsProperty));
-
-            menu.AddSeparator("");
-
-            // Lock/Unlock options
-            menu.AddItem(new GUIContent("Lock All"), false,
-                () => SetAllLocked_ContextMenu(internalItemsProperty, true));
-            menu.AddItem(new GUIContent("Unlock All"), false,
-                () => SetAllLocked_ContextMenu(internalItemsProperty, false));
-
-            menu.ShowAsContext();
-        }
-
-        private void EqualizeAllChances_ContextMenu(SerializedProperty internalItemsProperty)
-        {
-            // Find the parent property to pass to the existing method
-            var parentProperty = internalItemsProperty.serializedObject.FindProperty(
-                internalItemsProperty.propertyPath.Replace(".internalItems", ""));
-
-            if (parentProperty != null)
-            {
-                EqualizeAllChances(parentProperty);
-            }
-        }
-
-        private void SetAllLocked_ContextMenu(SerializedProperty internalItemsProperty, bool locked)
+        private void SetAllLocked(SerializedProperty internalItemsProperty, bool locked)
         {
             if (internalItemsProperty.arraySize == 0) return;
 
-            // Set all items to the specified lock state
             for (int i = 0; i < internalItemsProperty.arraySize; i++)
             {
                 var element = internalItemsProperty.GetArrayElementAtIndex(i);
@@ -340,32 +431,24 @@ namespace DNExtensions
             }
 
             internalItemsProperty.serializedObject.ApplyModifiedProperties();
-
-            // Trigger normalization
             TriggerNormalization(internalItemsProperty);
         }
 
         private void TriggerNormalization(SerializedProperty internalItemsProperty)
         {
-            // Apply changes immediately
             internalItemsProperty.serializedObject.ApplyModifiedProperties();
 
-            // Force normalization by calling it on the target object
             var targetObject = internalItemsProperty.serializedObject.targetObject;
             if (targetObject != null)
             {
                 EditorUtility.SetDirty(targetObject);
 
-                // Use reflection to find and call NormalizeChances on the ChanceList
                 var targetType = targetObject.GetType();
-                var fields = targetType.GetFields(BindingFlags.NonPublic |
-                                                  BindingFlags.Public |
-                                                  BindingFlags.Instance);
+                var fields = targetType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
 
                 foreach (var field in fields)
                 {
-                    if (field.FieldType.IsGenericType &&
-                        field.FieldType.GetGenericTypeDefinition() == typeof(ChanceList<>))
+                    if (field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(ChanceList<>))
                     {
                         var chanceListInstance = field.GetValue(targetObject);
                         if (chanceListInstance != null)
@@ -376,7 +459,6 @@ namespace DNExtensions
                     }
                 }
 
-                // Update the serialized object to reflect changes
                 internalItemsProperty.serializedObject.Update();
             }
         }

@@ -4,9 +4,12 @@ using UnityEngine.SceneManagement;
 using UnityEditor;
 #endif
 
-
 namespace DNExtensions
 {
+    /// <summary>
+    /// Serializable scene reference with validation and convenient loading methods.
+    /// Provides type-safe scene management with build settings validation.
+    /// </summary>
     [System.Serializable]
     public class SceneField
     {
@@ -14,6 +17,9 @@ namespace DNExtensions
         [SerializeField] private string sceneName = "";
         [SerializeField] private string scenePath = "";
 
+        /// <summary>
+        /// Gets the scene name with validation warnings if invalid.
+        /// </summary>
         public string SceneName 
         { 
             get
@@ -34,6 +40,9 @@ namespace DNExtensions
             }
         }
 
+        /// <summary>
+        /// Gets the scene asset path with validation warnings if invalid.
+        /// </summary>
         public string ScenePath 
         { 
             get
@@ -54,6 +63,9 @@ namespace DNExtensions
             }
         }
 
+        /// <summary>
+        /// Gets the build index of the scene. Returns -1 if scene is not in build settings.
+        /// </summary>
         public int BuildIndex
         {
             get
@@ -88,21 +100,26 @@ namespace DNExtensions
             }
         }
         
-        
+        /// <summary>
+        /// Implicit conversion to string, returns scene name.
+        /// </summary>
         public static implicit operator string(SceneField sceneField)
         {
             return sceneField.SceneName;
         }
 
+        /// <summary>
+        /// Implicit conversion to int, returns build index.
+        /// </summary>
         public static implicit operator int(SceneField sceneField)
         {
             return sceneField.BuildIndex;
         }
 
         /// <summary>
-        /// Checks if the scene is valid and exists in build settings
+        /// Checks if the scene is valid and exists in build settings as enabled.
         /// </summary>
-        /// <returns>True if the scene is valid and in build settings, false otherwise</returns>
+        /// <returns>True if the scene is valid and enabled in build settings</returns>
         public bool IsSceneValid()
         {
             // Check if basic data is present
@@ -135,9 +152,9 @@ namespace DNExtensions
         }
 
         /// <summary>
-        /// Checks if the scene is in build settings (enabled or disabled)
+        /// Checks if the scene exists in build settings (regardless of enabled state).
         /// </summary>
-        /// <returns>True if the scene is in build settings, false otherwise</returns>
+        /// <returns>True if the scene is in build settings</returns>
         public bool IsSceneInBuildSettings()
         {
             if (string.IsNullOrEmpty(scenePath))
@@ -160,10 +177,11 @@ namespace DNExtensions
             return SceneUtility.GetBuildIndexByScenePath(scenePath) != -1;
             #endif
         }
-        
-        
-        
-        
+
+        /// <summary>
+        /// Loads the scene synchronously with validation.
+        /// </summary>
+        /// <param name="mode">Scene loading mode</param>
         public void LoadScene(LoadSceneMode mode = LoadSceneMode.Single)
         {
             if (IsSceneValid())
@@ -176,6 +194,9 @@ namespace DNExtensions
             }
         }
         
+        /// <summary>
+        /// Unloads the scene synchronously with validation.
+        /// </summary>
         public void UnloadScene()
         {
             if (IsSceneValid())
@@ -188,9 +209,13 @@ namespace DNExtensions
             }
         }
 
+        /// <summary>
+        /// Loads the scene asynchronously with validation.
+        /// </summary>
+        /// <param name="mode">Scene loading mode</param>
+        /// <returns>AsyncOperation for the load, or null if scene is invalid</returns>
         public AsyncOperation LoadSceneAsync(LoadSceneMode mode = LoadSceneMode.Single)
         {
-            
             if (IsSceneValid())
             {
                 return SceneManager.LoadSceneAsync(SceneName, mode);
@@ -202,7 +227,10 @@ namespace DNExtensions
             }
         }
         
-        
+        /// <summary>
+        /// Unloads the scene asynchronously with validation.
+        /// </summary>
+        /// <returns>AsyncOperation for the unload, or null if scene is invalid</returns>
         public AsyncOperation UnloadSceneAsync()
         {
             if (IsSceneValid())
@@ -215,8 +243,5 @@ namespace DNExtensions
                 return null;
             }
         }
-
-
     }
-    
 }

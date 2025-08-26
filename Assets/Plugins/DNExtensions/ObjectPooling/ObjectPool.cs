@@ -6,7 +6,10 @@ using Object = UnityEngine.Object;
 
 namespace DNExtensions.ObjectPooling
 {
-    
+    /// <summary>
+    /// High-performance object pool for managing GameObject instances with lifecycle callbacks.
+    /// Supports pre-warming, recycling, and automatic memory management.
+    /// </summary>
     [Serializable]
     public class ObjectPool
     {
@@ -41,6 +44,13 @@ namespace DNExtensions.ObjectPooling
         private Transform _poolHolder;
         private bool _isInitialized;
 
+        /// <summary>
+        /// Gets an object from the pool or creates a new one if needed.
+        /// Automatically handles position, rotation, and IPooledObject callbacks.
+        /// </summary>
+        /// <param name="position">World position for the object</param>
+        /// <param name="rotation">World rotation for the object</param>
+        /// <returns>GameObject from pool, or null if pool is full and recycling is disabled</returns>
         public GameObject GetObjectFromPool(Vector3 position = default, Quaternion rotation = default)
         {
             if (!_isInitialized)
@@ -115,6 +125,10 @@ namespace DNExtensions.ObjectPooling
             return null;
         }
 
+        /// <summary>
+        /// Returns an object to the pool for reuse. Validates object belongs to this pool.
+        /// </summary>
+        /// <param name="obj">GameObject to return to pool</param>
         public void ReturnObjectToPool(GameObject obj)
         {
             if (!_isInitialized || !obj) return;
@@ -154,11 +168,20 @@ namespace DNExtensions.ObjectPooling
             }
         }
 
+        /// <summary>
+        /// Checks if a GameObject belongs to this pool (active or inactive).
+        /// </summary>
+        /// <param name="obj">GameObject to check</param>
+        /// <returns>True if object is part of this pool</returns>
         public bool IsObjectPartOfPool(GameObject obj)
         {
             return _activePoolSet.Contains(obj) || _inactivePool.Contains(obj);
         }
 
+        /// <summary>
+        /// Initializes the pool with a holder transform and optionally pre-warms it.
+        /// </summary>
+        /// <param name="poolHolder">Parent transform for pooled objects</param>
         public void SetUpPool(Transform poolHolder)
         {
             if (_isInitialized) return;
@@ -175,6 +198,9 @@ namespace DNExtensions.ObjectPooling
             UpdateDebugFields();
         }
 
+        /// <summary>
+        /// Destroys all pooled objects and cleans up resources.
+        /// </summary>
         public void ClearPools()
         {
             foreach (var obj in _activePool.Where(obj => obj))
@@ -184,7 +210,6 @@ namespace DNExtensions.ObjectPooling
 
             _activePool.Clear();
             _activePoolSet.Clear();
-
 
             while (_inactivePool.Count > 0)
             {
@@ -200,6 +225,9 @@ namespace DNExtensions.ObjectPooling
             UpdateDebugFields();
         }
 
+        /// <summary>
+        /// Validates and clamps pre-warm pool size to valid range.
+        /// </summary>
         public void LimitPreWorm()
         {
             preWarmPoolSize = !preWarmPool ? 0 : Mathf.Clamp(preWarmPoolSize, 1, maxPoolSize);
@@ -214,6 +242,9 @@ namespace DNExtensions.ObjectPooling
 #endif
         }
 
+        /// <summary>
+        /// Pre-instantiates objects to avoid runtime allocation spikes.
+        /// </summary>
         private void WarmPool()
         {
             if (_isInitialized) return;
@@ -227,6 +258,10 @@ namespace DNExtensions.ObjectPooling
             UpdateDebugFields();
         }
 
+        /// <summary>
+        /// Creates a new pool object instance and registers any IPooledObject components.
+        /// </summary>
+        /// <returns>Newly instantiated GameObject ready for pooling</returns>
         private GameObject InstantiatePoolObject()
         {
             if (!prefab) return null;

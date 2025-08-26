@@ -3,10 +3,12 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-
 namespace DNExtensions.ObjectPooling
 {
-    
+    /// <summary>
+    /// Singleton manager for multiple object pools with automatic scene management.
+    /// Provides static API for getting and returning objects from pools with fallback support.
+    /// </summary>
     public class ObjectPooler : MonoBehaviour
     {
         public static ObjectPooler Instance { get; private set; }
@@ -18,7 +20,6 @@ namespace DNExtensions.ObjectPooling
 
         private bool _isFirstScene;
 
-
         private void OnValidate()
         {
             foreach (var pool in pools)
@@ -26,7 +27,6 @@ namespace DNExtensions.ObjectPooling
                 pool.LimitPreWorm();
             }
         }
-
 
         private void Awake()
         {
@@ -39,7 +39,6 @@ namespace DNExtensions.ObjectPooling
             {
                 Destroy(gameObject);
             }
-            
 
             _isFirstScene = true;
             SceneManager.activeSceneChanged += OnActiveSceneChanged;
@@ -64,10 +63,11 @@ namespace DNExtensions.ObjectPooling
             SceneManager.activeSceneChanged -= OnActiveSceneChanged;
         }
 #endif
-        
 
-
-
+        /// <summary>
+        /// Handles pool cleanup and reinitialization when scenes change.
+        /// Pools marked as dontDestroyOnLoad persist across scenes.
+        /// </summary>
         private static void OnActiveSceneChanged(Scene previousActiveScene, Scene newActiveScene)
         {
             if (!Instance) return;
@@ -96,7 +96,9 @@ namespace DNExtensions.ObjectPooling
             }
         }
 
-
+        /// <summary>
+        /// Initializes all pools with their holder GameObjects and parent hierarchy.
+        /// </summary>
         private void SetUpPools()
         {
             foreach (var pool in pools)
@@ -107,6 +109,14 @@ namespace DNExtensions.ObjectPooling
             }
         }
 
+        /// <summary>
+        /// Gets an object from the appropriate pool or instantiates as fallback.
+        /// Searches pools by matching prefab reference.
+        /// </summary>
+        /// <param name="obj">Prefab GameObject to get from pool</param>
+        /// <param name="positon">World position for the object</param>
+        /// <param name="rotation">World rotation for the object</param>
+        /// <returns>GameObject from pool or new instance if no pool found</returns>
         public static GameObject GetObjectFromPool(GameObject obj, Vector3 positon = default,
             Quaternion rotation = default)
         {
@@ -132,8 +142,11 @@ namespace DNExtensions.ObjectPooling
             return Instantiate(obj, positon, rotation);
         }
 
-
-
+        /// <summary>
+        /// Returns an object to its appropriate pool or destroys as fallback.
+        /// Automatically finds the correct pool by checking object membership.
+        /// </summary>
+        /// <param name="obj">GameObject to return to pool</param>
         public static void ReturnObjectToPool(GameObject obj)
         {
             if (!obj) return;
@@ -157,13 +170,8 @@ namespace DNExtensions.ObjectPooling
                 }
             }
 
-
             // Debug.LogError($"Can't return object, No object pooler in scene");
             Destroy(obj);
         }
-        
-
-
     }
-
 }
