@@ -32,7 +32,7 @@ namespace DNExtensions.InputSystem
 
         protected virtual void Awake()
         {
-            SetCursorVisibility(hideCursorOnAwake);
+            if (hideCursorOnAwake) SetCursorVisibility(false);
         }
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace DNExtensions.InputSystem
         /// <summary>
         /// Toggles cursor visibility between visible and hidden states.
         /// </summary>
-        [Button("Toggle Cursor", ButtonPlayMode.OnlyWhenPlaying)]
+        [Button(ButtonPlayMode.OnlyWhenPlaying)]
         protected void ToggleCursorVisibility()
         {
             if (Cursor.visible)

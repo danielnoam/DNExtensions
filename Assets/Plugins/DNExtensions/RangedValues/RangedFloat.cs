@@ -180,20 +180,18 @@ namespace DNExtensions
         public float minValue;
         public float maxValue;
 
-        // Constructor
+  
         public RangedFloat(float min, float max)
         {
             minValue = min;
             maxValue = max;
         }
 
-        // Implicit conversion from float
         public static implicit operator RangedFloat(float value)
         {
             return new RangedFloat(-value, value);
         }
-
-        // Utility properties
+        
         public float RandomValue => Random.Range(minValue, maxValue);
         public float Range => maxValue - minValue;
         public float Average => (minValue + maxValue) * 0.5f;

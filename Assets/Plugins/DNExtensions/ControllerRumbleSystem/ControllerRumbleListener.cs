@@ -7,7 +7,6 @@ using UnityEngine.InputSystem.DualShock;
 
 namespace DNExtensions.ControllerRumbleSystem
 {
-    [RequireComponent(typeof(PlayerInput))]
     [DisallowMultipleComponent]
     public class ControllerRumbleListener : MonoBehaviour, IDualShockHaptics
     {

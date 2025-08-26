@@ -17,11 +17,11 @@ namespace DNExtensions.MenuSystem
         [SerializeField] private bool keepAllCategoriesActive;
         [SerializeField] private bool keepAllPagesActive;
         [SerializeField] private List<MenuCategory> menuCategories = new List<MenuCategory>();
-        [SerializeField, HideInInspector] private MenuInput inputReader;
+
 
         [Space(10)] 
-        [ReadOnly, SerializeField] private MenuCategory currentCategory;
-
+        [SerializeField, ReadOnly] private MenuCategory currentCategory;
+        [SerializeField, ReadOnly] private MenuInput inputReader;
 
 
         private bool _receiveInput = true;

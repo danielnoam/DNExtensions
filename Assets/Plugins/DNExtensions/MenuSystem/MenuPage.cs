@@ -23,14 +23,14 @@ namespace  DNExtensions.MenuSystem
         [SerializeField, ShowIf("autoSetSelectableOnPageSelect")] private bool savePreviousSelectableOnPageDeselect = true;
         [SerializeField] private Selectable[] selectables = Array.Empty<Selectable>();
         [SerializeField] private AnimatedPageObject[] animatedObjects = Array.Empty<AnimatedPageObject>();
-        [SerializeField, HideInInspector] private AudioSource audioSource;
-        [SerializeField, HideInInspector] private MenuController controller;
-        [SerializeField, HideInInspector] private MenuCategory category;
 
         [Space(10)] 
         [ReadOnly] public bool canSelect;
         [ReadOnly] public Selectable currentSelectable;
         [ReadOnly] public Selectable previousSelectable;
+        [SerializeField, ReadOnly] private MenuController controller;
+        [SerializeField, ReadOnly] private MenuCategory category;
+        [SerializeField, HideInInspector] private AudioSource audioSource;
 
         private void OnValidate()
         {
@@ -46,6 +46,9 @@ namespace  DNExtensions.MenuSystem
 
         private void Awake()
         {
+            if (!controller) controller = GetComponentInParent<MenuController>();
+            if (!category) category = GetComponentInParent<MenuCategory>();
+            
             if (!category || !controller)
             {
                 Debug.LogError("No menu controllers found!");

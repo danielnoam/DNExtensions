@@ -215,12 +215,12 @@ MonoBehaviour:
     endPosition: {x: 0, y: 0, z: 0}
     positionEase: 0
     animatedObject: {fileID: 0}
-  audioSource: {fileID: 6700557478895110851}
-  controller: {fileID: 3348995847298183845}
-  category: {fileID: 4237070072743199711}
   canSelect: 0
   currentSelectable: {fileID: 0}
   previousSelectable: {fileID: 0}
+  controller: {fileID: 3348995847298183845}
+  category: {fileID: 4237070072743199711}
+  audioSource: {fileID: 6700557478895110851}
 --- !u!1 &1176303835735123277
 GameObject:
   m_ObjectHideFlags: 0
@@ -393,12 +393,12 @@ MonoBehaviour:
   - {fileID: 139746471164103350}
   - {fileID: 662536018022612991}
   animatedObjects: []
-  audioSource: {fileID: 9063999529738803445}
-  controller: {fileID: 3348995847298183845}
-  category: {fileID: 389207398723633355}
   canSelect: 0
   currentSelectable: {fileID: 0}
   previousSelectable: {fileID: 0}
+  controller: {fileID: 3348995847298183845}
+  category: {fileID: 389207398723633355}
+  audioSource: {fileID: 9063999529738803445}
 --- !u!114 &4063397132362299895
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -632,8 +632,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe31249e26a54481b409e6b5f547ad67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hideCursorOnAwake: 0
   playerInput: {fileID: 5069706797151171049}
+  hideCursorOnAwake: 0
 --- !u!114 &3348995847298183845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -652,8 +652,8 @@ MonoBehaviour:
   - {fileID: 4237070072743199711}
   - {fileID: 389207398723633355}
   - {fileID: 3157429229995582143}
-  inputReader: {fileID: 8971081164035261509}
   currentCategory: {fileID: 0}
+  inputReader: {fileID: 8971081164035261509}
 --- !u!1 &3382564092673911593
 GameObject:
   m_ObjectHideFlags: 0
@@ -1153,12 +1153,12 @@ MonoBehaviour:
     endPosition: {x: 0, y: 0, z: 0}
     positionEase: 0
     animatedObject: {fileID: 0}
-  audioSource: {fileID: 2232401965399058854}
-  controller: {fileID: 3348995847298183845}
-  category: {fileID: 0}
   canSelect: 0
   currentSelectable: {fileID: 0}
   previousSelectable: {fileID: 0}
+  controller: {fileID: 3348995847298183845}
+  category: {fileID: 0}
+  audioSource: {fileID: 2232401965399058854}
 --- !u!1 &5247091275453703594
 GameObject:
   m_ObjectHideFlags: 0
@@ -1568,12 +1568,12 @@ MonoBehaviour:
   - {fileID: 874979507815882872}
   - {fileID: 9071689911733432804}
   animatedObjects: []
-  audioSource: {fileID: 1058532360955424179}
-  controller: {fileID: 3348995847298183845}
-  category: {fileID: 389207398723633355}
   canSelect: 0
   currentSelectable: {fileID: 0}
   previousSelectable: {fileID: 0}
+  controller: {fileID: 3348995847298183845}
+  category: {fileID: 389207398723633355}
+  audioSource: {fileID: 1058532360955424179}
 --- !u!114 &6548621834574279370
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1892,12 +1892,12 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   animatedObjects: []
-  audioSource: {fileID: 7624975242299368361}
-  controller: {fileID: 3348995847298183845}
-  category: {fileID: 389207398723633355}
   canSelect: 0
   currentSelectable: {fileID: 0}
   previousSelectable: {fileID: 0}
+  controller: {fileID: 3348995847298183845}
+  category: {fileID: 389207398723633355}
+  audioSource: {fileID: 7624975242299368361}
 --- !u!1 &8215488927196151637
 GameObject:
   m_ObjectHideFlags: 0
@@ -2134,12 +2134,12 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   animatedObjects: []
-  audioSource: {fileID: 6837923472834464897}
-  controller: {fileID: 3348995847298183845}
-  category: {fileID: 389207398723633355}
   canSelect: 0
   currentSelectable: {fileID: 0}
   previousSelectable: {fileID: 0}
+  controller: {fileID: 3348995847298183845}
+  category: {fileID: 389207398723633355}
+  audioSource: {fileID: 6837923472834464897}
 --- !u!1 &8712006465835188211
 GameObject:
   m_ObjectHideFlags: 0
@@ -2316,12 +2316,12 @@ MonoBehaviour:
     endPosition: {x: 0, y: 0, z: 0}
     positionEase: 0
     animatedObject: {fileID: 0}
-  audioSource: {fileID: 2232401965399058854}
-  controller: {fileID: 3348995847298183845}
-  category: {fileID: 0}
   canSelect: 0
   currentSelectable: {fileID: 0}
   previousSelectable: {fileID: 0}
+  controller: {fileID: 3348995847298183845}
+  category: {fileID: 0}
+  audioSource: {fileID: 2232401965399058854}
 --- !u!1 &9171518219029624159
 GameObject:
   m_ObjectHideFlags: 0

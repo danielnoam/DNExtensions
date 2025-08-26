@@ -53,14 +53,10 @@ namespace DNExtensions
         private static GUIStyle _labelStyle;
         private static GUIStyle GetLabelStyle()
         {
-            if (_labelStyle == null)
+            return _labelStyle ??= new GUIStyle(EditorStyles.miniLabel)
             {
-                _labelStyle = new GUIStyle(EditorStyles.miniLabel)
-                {
-                    alignment = TextAnchor.UpperCenter
-                };
-            }
-            return _labelStyle;
+                alignment = TextAnchor.UpperCenter
+            };
         }
         
         // Customizable UI constants
@@ -139,7 +135,7 @@ namespace DNExtensions
                     20
                 );
     
-                EditorGUI.LabelField(labelRect, "Range " + rangeValue.ToString(), GetLabelStyle());
+                EditorGUI.LabelField(labelRect, "Range " + rangeValue, GetLabelStyle());
             }
 
             // Slider (using float values for smooth sliding, then rounding to ints)
@@ -172,21 +168,21 @@ namespace DNExtensions
         public int minValue;
         public int maxValue;
 
-        // Constructor
+
         public RangedInt(int min, int max)
         {
             minValue = min;
             maxValue = max;
         }
 
-        // Implicit conversion from int
+
         public static implicit operator RangedInt(int value)
         {
             return new RangedInt(-value, value);
         }
 
-        // Utility properties
-        public int RandomValue => Random.Range(minValue, maxValue + 1); // +1 for inclusive max
+
+        public int RandomValue => Random.Range(minValue, maxValue + 1);
         public int Range => maxValue - minValue;
         public float Average => (minValue + maxValue) * 0.5f;
         public int Lerp(float t) => Mathf.RoundToInt(Mathf.Lerp(minValue, maxValue, t));

@@ -274,6 +274,7 @@ namespace DNExtensions.Button
                 catch (Exception e)
                 {
                     Debug.LogError($"Error invoking method {method.Name}: {e.Message}");
+                    
                 }
             }
             

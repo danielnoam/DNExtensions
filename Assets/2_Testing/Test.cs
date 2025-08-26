@@ -5,7 +5,7 @@ using DNExtensions.VFXManager;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class TestTransitions : MonoBehaviour
+public class Test : MonoBehaviour
 {
     
     
@@ -16,11 +16,23 @@ public class TestTransitions : MonoBehaviour
     [Header("Sorting Layer Field")]
     [SerializeField] private SortingLayerField testLayer;
     
+    [Header("Ranged Values")]
+    [SerializeField] private RangedInt testRangedInt;
+    [SerializeField, MinMaxRange(-5f,5)] private RangedFloat testRangedFloat;
+    
     [Header("Chance List")]
     [SerializeField] private ChanceList<string> testStrings;
     [SerializeField] private ChanceList<int> testInts;
+    [SerializeField] private ChanceList<TestEnum> testEnums;
     
     
+    private enum TestEnum
+    {
+        Option1,
+        Option2,
+        Option3
+    }
+
 
     private void Start()
     {

@@ -120,7 +120,6 @@ namespace  DNExtensions.MenuSystem
 
             if (delayBeforeNextPage > 0)
             {
-                Debug.Log(delayBeforeNextPage);
                 if (_pageChangeSequence.isAlive) _pageChangeSequence.Stop();
 
                 _pageChangeSequence = Sequence.Create()

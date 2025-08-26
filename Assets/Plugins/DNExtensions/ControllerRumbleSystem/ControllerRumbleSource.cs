@@ -1,5 +1,6 @@
 ﻿
 using System.Collections.Generic;
+using DNExtensions.Button;
 using UnityEngine;
 
 namespace DNExtensions.ControllerRumbleSystem
@@ -36,7 +37,8 @@ namespace DNExtensions.ControllerRumbleSystem
         /// <summary>
         /// Triggers rumble effect on all connected listeners (Takes custom parameters, frequencies are clamped between 0-1)
         /// </summary>
-        public void Rumble(float lowFrequency, float highFrequency, float duration, AnimationCurve lowFreqCurve = null, AnimationCurve highFreqCurve = null)
+        [Button]
+        public void Rumble(float lowFrequency = 0.2f, float highFrequency = 0.2f, float duration = 0.2f, AnimationCurve lowFreqCurve = null, AnimationCurve highFreqCurve = null)
         {
             var effect = new ControllerRumbleEffect(lowFrequency, highFrequency, duration, lowFreqCurve, highFreqCurve);
             foreach (var listener in _rumbleListeners)
@@ -66,7 +68,8 @@ namespace DNExtensions.ControllerRumbleSystem
         /// <summary>
         /// Triggers rumble effect on all connected listeners (Uses custom curves to fade out the effect)
         /// </summary>
-        public void RumbleFadeOut(float lowFreq, float highFreq, float duration)
+        [Button]
+        public void RumbleFadeOut(float lowFreq = 0.2f, float highFreq = 0.2f, float duration = 0.2f)
         {
             var fadeOutCurve = AnimationCurve.Linear(0, 1, 1, 0);
             var effect = new ControllerRumbleEffect(lowFreq, highFreq, duration, fadeOutCurve, fadeOutCurve);
@@ -81,7 +84,8 @@ namespace DNExtensions.ControllerRumbleSystem
         /// <summary>
         /// Triggers rumble effect on all connected listeners (Uses custom curves to fade in the effect)
         /// </summary>
-        public void RumbleFadeIn(float lowFreq, float highFreq, float duration)
+        [Button]
+        public void RumbleFadeIn(float lowFreq = 0.2f, float highFreq = 0.2f, float duration = 0.2f)
         {
             var fadeInCurve = AnimationCurve.Linear(0, 0, 1, 1);
             var effect = new ControllerRumbleEffect(lowFreq, highFreq, duration, fadeInCurve, fadeInCurve);
@@ -96,7 +100,8 @@ namespace DNExtensions.ControllerRumbleSystem
         /// <summary>
         /// Triggers rumble effect on all connected listeners (Uses custom curves to pulse the effect)
         /// </summary>
-        public void RumblePulse(float lowFreq, float highFreq, float duration, int pulses = 3)
+        [Button]
+        public void RumblePulse(float lowFreq = 0.2f, float highFreq = 0.2f, float duration = 0.2f, int pulses = 3)
         {
 
             var pulseCurve = new AnimationCurve();
