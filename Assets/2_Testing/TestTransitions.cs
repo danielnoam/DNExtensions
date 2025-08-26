@@ -1,5 +1,4 @@
-using System;
-using System.Collections.Generic;
+
 using DNExtensions;
 using DNExtensions.Button;
 using DNExtensions.VFXManager;
@@ -14,11 +13,15 @@ public class TestTransitions : MonoBehaviour
     [Header("Scene Field")]
     [SerializeField] private SceneField testScene;
     
+    [Header("Sorting Layer Field")]
+    [SerializeField] private SortingLayerField testLayer;
+    
     [Header("Chance List")]
     [SerializeField] private ChanceList<string> testStrings;
     [SerializeField] private ChanceList<int> testInts;
-    [SerializeField] private List<GameObject> gmeObjects;
     
+    
+
     private void Start()
     {
         VFXManager.Instance.PlayRandomVFX();
@@ -27,21 +30,21 @@ public class TestTransitions : MonoBehaviour
     
     
     
-    [Button("Group1", "")]
+    [Button("Test Group", "")]
     public void TestButton1() { }
     
-    [Button("Group1", "")]
+    [Button("Test Group", "")]
     public void TestButton2() { }
     
     
     
-    [Button(ButtonPlayMode.OnlyWhenPlaying)]
+    [Button("Transitions", ButtonPlayMode.OnlyWhenPlaying)]
     public void TransitionQuit()
     {
         TransitionManager.TransitionQuit(VFXManager.Instance.GetRandomEffect());
     }
     
-    [Button(ButtonPlayMode.OnlyWhenPlaying)]
+    [Button("Transitions",ButtonPlayMode.OnlyWhenPlaying)]
     public void TransitionReloadScene()
     {
         

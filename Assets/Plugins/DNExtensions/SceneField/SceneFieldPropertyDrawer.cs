@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
-#endif
+
 
 namespace DNExtensions
 {
-    #if UNITY_EDITOR
+
     /// <summary>
     /// Custom property drawer for SceneField that displays build index and validation errors.
     /// Shows scene reference field with build status information below.
@@ -149,5 +149,7 @@ namespace DNExtensions
             return EditorGUIUtility.singleLineHeight;
         }
     }
-    #endif
+
 }
+
+#endif

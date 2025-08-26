@@ -8,6 +8,9 @@ using System.Linq;
 
 namespace DNExtensions.Button
 {
+    /// <summary>
+    /// Contains method and attribute information for button drawing.
+    /// </summary>
     public struct ButtonInfo
     {
         public readonly MethodInfo Method;
@@ -20,6 +23,10 @@ namespace DNExtensions.Button
         }
     }
 
+    /// <summary>
+    /// Base editor for drawing buttons from ButtonAttribute-decorated methods.
+    /// Supports parameter input, grouping, and play mode restrictions.
+    /// </summary>
     public abstract class BaseButtonAttributeEditor : UnityEditor.Editor
     {
         private readonly Dictionary<string, object[]> _methodParameters = new Dictionary<string, object[]>();
@@ -32,6 +39,9 @@ namespace DNExtensions.Button
             DrawButtonsForTarget();
         }
         
+        /// <summary>
+        /// Finds all ButtonAttribute-decorated methods and draws them grouped appropriately.
+        /// </summary>
         private void DrawButtonsForTarget()
         {
             MethodInfo[] methods = target.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
@@ -69,6 +79,9 @@ namespace DNExtensions.Button
             }
         }
         
+        /// <summary>
+        /// Draws a collapsible group of buttons with enhanced foldout interaction and hover effects.
+        /// </summary>
         private void DrawButtonGroup(string groupName, List<ButtonInfo> buttons)
         {
             string groupKey = target.GetInstanceID() + "_group_" + groupName;
@@ -86,11 +99,61 @@ namespace DNExtensions.Button
                 fontSize = 12
             };
 
-            _groupFoldoutStates[groupKey] = EditorGUILayout.Foldout(
-                _groupFoldoutStates[groupKey], 
-                groupName, 
-                groupStyle
-            );
+            // Create a rect for the entire foldout area to handle clicks and hover
+            Rect foldoutRect = GUILayoutUtility.GetRect(new GUIContent(groupName), groupStyle);
+            
+            // Check if mouse is hovering over the foldout area
+            bool isHovering = foldoutRect.Contains(Event.current.mousePosition);
+            
+            // Draw hover background effect
+            if (isHovering)
+            {
+                Color hoverColor = EditorGUIUtility.isProSkin 
+                    ? new Color(1f, 1f, 1f, 0.1f)  // Light overlay for dark theme
+                    : new Color(0f, 0f, 0f, 0.05f); // Dark overlay for light theme
+                
+                EditorGUI.DrawRect(foldoutRect, hoverColor);
+                
+                // Change cursor to pointer when hovering
+                EditorGUIUtility.AddCursorRect(foldoutRect, MouseCursor.Link);
+            }
+            
+            // Handle mouse clicks on the entire foldout area (both arrow and text)
+            if (Event.current.type == EventType.MouseDown && foldoutRect.Contains(Event.current.mousePosition))
+            {
+                if (Event.current.button == 0) // Left mouse button
+                {
+                    _groupFoldoutStates[groupKey] = !_groupFoldoutStates[groupKey];
+                    Event.current.Use();
+                    GUI.changed = true;
+                }
+            }
+            
+            // Modify text color slightly when hovering for additional feedback
+            if (isHovering)
+            {
+                Color originalTextColor = groupStyle.normal.textColor;
+                groupStyle.normal.textColor = EditorGUIUtility.isProSkin 
+                    ? Color.white 
+                    : new Color(0.2f, 0.2f, 0.2f);
+                
+                // Draw the foldout with hover styling
+                _groupFoldoutStates[groupKey] = EditorGUI.Foldout(foldoutRect, _groupFoldoutStates[groupKey], groupName, groupStyle);
+                
+                // Restore original text color
+                groupStyle.normal.textColor = originalTextColor;
+            }
+            else
+            {
+                // Draw the foldout normally
+                _groupFoldoutStates[groupKey] = EditorGUI.Foldout(foldoutRect, _groupFoldoutStates[groupKey], groupName, groupStyle);
+            }
+            
+            // Force repaint on mouse move for smooth hover effects
+            if (Event.current.type == EventType.MouseMove)
+            {
+                SceneView.RepaintAll();
+            }
             
             if (_groupFoldoutStates[groupKey])
             {
@@ -117,6 +180,9 @@ namespace DNExtensions.Button
             }
         }
         
+        /// <summary>
+        /// Draws an individual button with parameter support and play mode validation.
+        /// </summary>
         private void DrawButton(MethodInfo method, ButtonAttribute buttonAttr)
         {
             if (buttonAttr.Space > 0)
@@ -233,6 +299,9 @@ namespace DNExtensions.Button
             }
         }
         
+        /// <summary>
+        /// Draws appropriate GUI field for method parameter based on its type.
+        /// </summary>
         private object DrawParameterField(string paramName, Type paramType, object currentValue)
         {
             string niceName = ObjectNames.NicifyVariableName(paramName);
@@ -281,7 +350,7 @@ namespace DNExtensions.Button
         }
         
         /// <summary>
-        /// Gets the default value for a method parameter, using the method's default value if available
+        /// Gets the default value for a method parameter, using the method's default value if available.
         /// </summary>
         private object GetMethodParameterDefaultValue(ParameterInfo parameter)
         {
@@ -291,7 +360,7 @@ namespace DNExtensions.Button
         }
         
         /// <summary>
-        /// Gets the default value for a type
+        /// Gets the default value for a type.
         /// </summary>
         private object GetTypeDefaultValue(Type type)
         {
@@ -309,11 +378,17 @@ namespace DNExtensions.Button
         }
     }
     
+    /// <summary>
+    /// Custom editor for MonoBehaviour classes that adds button functionality.
+    /// </summary>
     [CustomEditor(typeof(MonoBehaviour), true)]
     public class ButtonAttributeEditor : BaseButtonAttributeEditor
     {
     }
     
+    /// <summary>
+    /// Custom editor for ScriptableObject classes that adds button functionality.
+    /// </summary>
     [CustomEditor(typeof(ScriptableObject), true)]
     public class ButtonAttributeScriptableObjectEditor : BaseButtonAttributeEditor
     {

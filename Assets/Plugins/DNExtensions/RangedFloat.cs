@@ -53,14 +53,10 @@ namespace DNExtensions
         private static GUIStyle _labelStyle;
         private static GUIStyle GetLabelStyle()
         {
-            if (_labelStyle == null)
+            return _labelStyle ??= new GUIStyle(EditorStyles.miniLabel)
             {
-                _labelStyle = new GUIStyle(EditorStyles.miniLabel)
-                {
-                    alignment = TextAnchor.UpperCenter
-                };
-            }
-            return _labelStyle;
+                alignment = TextAnchor.UpperCenter
+            };
         }
         
         // Customizable UI constants

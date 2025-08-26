@@ -627,22 +627,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 552f8876cc78dbc459183ef952b3f7a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  testScene:
+    sceneAsset: {fileID: 102900000, guid: 5b4d3b561a35c3545b147352e9dd15b8, type: 3}
+    sceneName: TestScene
+    scenePath: Assets/2_Testing/TestScene.unity
+  testLayer:
+    layerName: Default
+    layerID: 0
   testStrings:
     internalItems: []
   testInts:
-    internalItems:
-    - item: 0
-      chance: 83
-      isLocked: 0
-    - item: 0
-      chance: 8
-      isLocked: 0
-    - item: 0
-      chance: 9
-      isLocked: 0
-  gmeObjects:
-  - {fileID: 0}
-  - {fileID: 0}
+    internalItems: []
 --- !u!4 &1974443090
 Transform:
   m_ObjectHideFlags: 0
