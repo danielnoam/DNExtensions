@@ -1,6 +1,7 @@
 
 using DNExtensions;
 using DNExtensions.Button;
+using DNExtensions.SerializedInterface;
 using DNExtensions.VFXManager;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -26,12 +27,11 @@ public class Test : MonoBehaviour
     [SerializeField] private ChanceList<TestEnum> testEnums;
     
     
-    private enum TestEnum
-    {
-        Option1,
-        Option2,
-        Option3
-    }
+    [Header("Serialized Interface")]
+    [SerializeField] private InterfaceReference<ITest> testInterface;
+    [SerializeField, RequireInterface(typeof(ITest))] private MonoBehaviour interactableObject;
+
+    private enum TestEnum { Option1, Option2, Option3 }
 
 
     private void Start()
@@ -62,4 +62,8 @@ public class Test : MonoBehaviour
         
         TransitionManager.TransitionToScene(SceneManager.GetActiveScene().buildIndex, VFXManager.Instance.GetRandomEffect());
     }
+}
+
+internal interface ITest
+{
 }

@@ -1,43 +1,3 @@
-/*
- * RangedFloat Custom Attribute
- * 
- * This attribute creates a min-max slider in the Unity Inspector for float ranges.
- * 
- * Usage Examples:
- * 1. With MinMaxRange attribute (recommended):
- *    [MinMaxRange(-5f, 5f)] 
- *    public RangedFloat spawnDelay;
- * 
- * 2. With MinMaxRange and direct float initialization:
- *    [MinMaxRange(-5f, 5f)] 
- *    public RangedFloat damage = 5f; // Creates range from -5 to 5
- * 
- * 3. With direct value initialization (no attribute):
- *    public RangedFloat health = new RangedFloat(50f, 100f);
- * 
- * 4. Without any initialization (defaults to 0-1 range):
- *    public RangedFloat defaultRange;
- * 
- * Available Functions:
- * - RandomValue: Get a random value within the range
- *     float random = myRange.RandomValue;
- * 
- * - Lerp: Interpolate within the range
- *     float interpolated = myRange.Lerp(0.5f);  // Get middle value
- * 
- * - Contains: Check if a value is within the range
- *     bool isInRange = myRange.Contains(value);
- * 
- * - Clamp: Force a value to be within the range
- *     float clamped = myRange.Clamp(value);
- * 
- * - Range: Get the size of the range
- *     float size = myRange.Range;
- * 
- * - Average: Get the middle value of the range
- *     float middle = myRange.Average;
- */
-
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -49,7 +9,7 @@ namespace DNExtensions
     [CustomPropertyDrawer(typeof(RangedFloat), true)]
     public class RangedFloatDrawer : PropertyDrawer
     {
-        // Cached style for better performance
+  
         private static GUIStyle _labelStyle;
         private static GUIStyle GetLabelStyle()
         {
@@ -65,18 +25,18 @@ namespace DNExtensions
         private const float FieldHeight = 18f;    // Height of the min/max input fields
         private const float DefaultMinRange = -1f; // Default minimum range when no attribute is specified
         private const float DefaultMaxRange = 1f;  // Default maximum range when no attribute is specified
-        private const float RangePaddingPercent = 0.2f; // Padding percentage for dynamic range calculation
         
         // Range label settings
         private const bool ShowRangeValue = true;  // Toggle to show/hide the range value
         private const float LabelYOffset = 15f;   // How far above the slider to show the label
         private const int DecimalPlaces = 1;        // Decimal places for range value
 
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             return ShowRangeValue ? FieldHeight + 15f : FieldHeight;
         }
-
+        
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
@@ -97,17 +57,8 @@ namespace DNExtensions
             }
             else
             {
-                if (minProp.floatValue == 0 && maxProp.floatValue == 0)
-                {
-                    rangeMin = DefaultMinRange;
-                    rangeMax = DefaultMaxRange;
-                }
-                else
-                {
-                    float padding = (maxProp.floatValue - minProp.floatValue) * RangePaddingPercent;
-                    rangeMin = minProp.floatValue - padding;
-                    rangeMax = maxProp.floatValue + padding;
-                }
+                rangeMin = DefaultMinRange;
+                rangeMax = DefaultMaxRange;
             }
 
             // Calculate rects
@@ -162,42 +113,85 @@ namespace DNExtensions
         }
     }
     #endif
-    public class MinMaxRangeAttribute : PropertyAttribute
-    {
-        public float Min { get; private set; }
-        public float Max { get; private set; }
-
-        public MinMaxRangeAttribute(float min, float max)
-        {
-            Min = Mathf.Min(min, max);
-            Max = Mathf.Max(min, max);
-        }
-    }
-
+    
+    /// <summary>
+    /// A serializable struct that represents a range of float values with utility methods.
+    /// Provides a min-max slider interface in the Unity Inspector when used with the MinMaxRangeAttribute.
+    /// </summary>
     [System.Serializable]
     public struct RangedFloat
     {
+        /// <summary>
+        /// The minimum value of the range.
+        /// </summary>
         public float minValue;
+        
+        /// <summary>
+        /// The maximum value of the range.
+        /// </summary>
         public float maxValue;
 
-  
+        /// <summary>
+        /// Initializes a new instance of the RangedFloat struct.
+        /// </summary>
+        /// <param name="min">The minimum value of the range.</param>
+        /// <param name="max">The maximum value of the range.</param>
         public RangedFloat(float min, float max)
         {
             minValue = min;
             maxValue = max;
         }
 
+        /// <summary>
+        /// Implicitly converts a float value to a RangedFloat with range from - value to +value.
+        /// </summary>
+        /// <param name="value">The value to convert (range will be - value to +value).</param>
+        /// <returns>A RangedFloat with range from - value to +value.</returns>
         public static implicit operator RangedFloat(float value)
         {
             return new RangedFloat(-value, value);
         }
         
+        /// <summary>
+        /// Gets a random value within the range (inclusive of minValue, exclusive of maxValue).
+        /// </summary>
         public float RandomValue => Random.Range(minValue, maxValue);
+        
+        /// <summary>
+        /// Gets the size of the range (maxValue - minValue).
+        /// </summary>
         public float Range => maxValue - minValue;
+        
+        /// <summary>
+        /// Gets the average (middle) value of the range.
+        /// </summary>
         public float Average => (minValue + maxValue) * 0.5f;
+        
+        /// <summary>
+        /// Linearly interpolates between minValue and maxValue.
+        /// </summary>
+        /// <param name="t">The interpolation parameter (0 returns minValue, 1 returns maxValue).</param>
+        /// <returns>The interpolated value between minValue and maxValue.</returns>
         public float Lerp(float t) => Mathf.Lerp(minValue, maxValue, t);
+        
+        /// <summary>
+        /// Checks if the specified value is within the range (inclusive).
+        /// </summary>
+        /// <param name="value">The value to check.</param>
+        /// <returns>True if the value is within the range, false otherwise.</returns>
         public bool Contains(float value) => value >= minValue && value <= maxValue;
+        
+        /// <summary>
+        /// Clamps the specified value to be within the range.
+        /// </summary>
+        /// <param name="value">The value to clamp.</param>
+        /// <returns>The value clamped to be within minValue and maxValue.</returns>
         public float Clamp(float value) => Mathf.Clamp(value, minValue, maxValue);
+        
+        /// <summary>
+        /// Returns a string representation of the range.
+        /// </summary>
+        /// <returns>A formatted string showing the range (min - max).</returns>
         public override string ToString() => $"({minValue:F2} - {maxValue:F2})";
     }
 }
