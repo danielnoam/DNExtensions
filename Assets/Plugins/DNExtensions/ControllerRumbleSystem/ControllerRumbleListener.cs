@@ -1,4 +1,3 @@
-
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,7 +6,6 @@ using UnityEngine.InputSystem.DualShock;
 
 namespace DNExtensions.ControllerRumbleSystem
 {
-    [DisallowMultipleComponent]
     public class ControllerRumbleListener : MonoBehaviour, IDualShockHaptics
     {
         
@@ -15,11 +13,13 @@ namespace DNExtensions.ControllerRumbleSystem
         [SerializeField] private PlayerInput playerInput;
         [SerializeField, MinMaxRange(0f,1f)] private RangedFloat lowFrequencyRange = new RangedFloat(0, 1f);
         [SerializeField, MinMaxRange(0f,1f)] private RangedFloat highFrequencyRange = new RangedFloat(0, 1f);
+
         
         private readonly List<ControllerRumbleSource> _rumbleSources = new List<ControllerRumbleSource>();
         private readonly HashSet<ControllerRumbleEffect> _activeRumbleEffects = new HashSet<ControllerRumbleEffect>();
         private Gamepad _gamepad;
         private DualShockGamepad _dualShockGamepad;
+        private bool _motorsActive;
 
 
 
@@ -90,12 +90,23 @@ namespace DNExtensions.ControllerRumbleSystem
             _activeRumbleEffects.RemoveWhere(effect =>
             {
                 effect.Update(Time.deltaTime);
-                return effect.IsExpired;
+        
+                bool shouldRemove = effect.IsExpired;
+                if (effect.SourceReference && effect.SourceReference.Is3DSource)
+                {
+                    shouldRemove |= !effect.SourceReference.gameObject.activeInHierarchy;
+                }
+
+                return shouldRemove;
             });
 
             if (_activeRumbleEffects.Count == 0)
             {
-                SetMotorSpeeds(0f, 0f);
+                if (_motorsActive)
+                {
+                    SetMotorSpeeds(0f, 0f);
+                    _motorsActive = false;
+                }
             }
             else
             {
@@ -107,14 +118,24 @@ namespace DNExtensions.ControllerRumbleSystem
                     float normalizedTime = effect.ElapsedTime / effect.Duration;
                     float lowIntensity = effect.LowFrequency * effect.LowFrequencyCurve.Evaluate(normalizedTime);
                     float highIntensity = effect.HighFrequency * effect.HighFrequencyCurve.Evaluate(normalizedTime);
+            
+                    if (effect.SourceReference && effect.SourceReference.Is3DSource)
+                    {
+                        float distanceMultiplier = CalculateDistanceFalloff(effect.SourceReference);
+                        lowIntensity *= distanceMultiplier;
+                        highIntensity *= distanceMultiplier;
+                    }
 
                     combinedLow = Mathf.Max(combinedLow, lowIntensity);
                     combinedHigh = Mathf.Max(combinedHigh, highIntensity);
+                    _motorsActive = true;
                 }
 
                 SetMotorSpeeds(combinedLow, combinedHigh);
             }
         }
+
+
 
         
 
@@ -137,7 +158,8 @@ namespace DNExtensions.ControllerRumbleSystem
             _activeRumbleEffects.Clear();
             ResetHaptics();
         }
-
+        
+        
 
         #endregion Rumble Effects ------------------------------------------------------------------------------
 
@@ -165,7 +187,28 @@ namespace DNExtensions.ControllerRumbleSystem
         {
             if (!source || !_rumbleSources.Contains(source)) return;
 
+            
             _rumbleSources.Remove(source);
+        }
+        
+        /// <summary>
+        /// Calculates the distance falloff multiplier for a 3D rumble source
+        /// </summary>
+        /// <param name="source">The 3D rumble source</param>
+        /// <returns>Distance falloff multiplier (0-1)</returns>
+        private float CalculateDistanceFalloff(ControllerRumbleSource source)
+        {
+            if (!source || !source.gameObject.activeInHierarchy) return 0f;
+            
+            float distance = Vector3.Distance(transform.position, source.transform.position);
+            
+            if (distance <= source.MinDistance) return 1f;
+            if (distance >= source.MaxDistance) return 0f;
+            
+
+            float normalizedDistance = (distance - source.MinDistance) / (source.MaxDistance - source.MinDistance);
+            
+            return source.DistanceFalloffCurve.Evaluate(normalizedDistance);
         }
 
         #endregion Rumble Sources ----------------------------------------------------------------------------------

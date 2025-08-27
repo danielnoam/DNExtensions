@@ -76,16 +76,6 @@ namespace DNExtensions
             // Unity's default hover behavior - only show on mouse move and repaint events
             if (isHovering)
             {
-                if (Event.current.type == EventType.Repaint)
-                {
-                    // Draw hover background using Unity's internal style
-                    EditorGUI.DrawRect(actualFoldoutRect,
-                        EditorGUIUtility.isProSkin ? new Color(1f, 1f, 1f, 0.1f) : new Color(0f, 0f, 0f, 0.1f));
-                }
-    
-                // Set cursor and request repaint for smooth hover transitions
-                EditorGUIUtility.AddCursorRect(actualFoldoutRect, MouseCursor.Link);
-    
                 // Request repaint to ensure smooth hover effect
                 if (Event.current.type == EventType.MouseMove)
                 {

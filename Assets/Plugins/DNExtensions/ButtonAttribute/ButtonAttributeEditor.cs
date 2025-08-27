@@ -85,75 +85,40 @@ namespace DNExtensions.Button
         private void DrawButtonGroup(string groupName, List<ButtonInfo> buttons)
         {
             string groupKey = target.GetInstanceID() + "_group_" + groupName;
-            
             _groupFoldoutStates.TryAdd(groupKey, true);
 
-            // Groups start expanded by default
-            // Draw group header with some spacing
             GUILayout.Space(5);
             
-            // Custom group header style
             var groupStyle = new GUIStyle(EditorStyles.foldout)
             {
                 fontStyle = FontStyle.Bold,
                 fontSize = 12
             };
 
-            // Create a rect for the entire foldout area to handle clicks and hover
+            // Get the rect that the foldout will occupy
             Rect foldoutRect = GUILayoutUtility.GetRect(new GUIContent(groupName), groupStyle);
             
-            // Check if mouse is hovering over the foldout area
+            // Handle hover effect like Unity's default lists
             bool isHovering = foldoutRect.Contains(Event.current.mousePosition);
             
-            // Draw hover background effect
             if (isHovering)
             {
-                Color hoverColor = EditorGUIUtility.isProSkin 
-                    ? new Color(1f, 1f, 1f, 0.1f)  // Light overlay for dark theme
-                    : new Color(0f, 0f, 0f, 0.05f); // Dark overlay for light theme
-                
-                EditorGUI.DrawRect(foldoutRect, hoverColor);
-                
-                // Change cursor to pointer when hovering
-                EditorGUIUtility.AddCursorRect(foldoutRect, MouseCursor.Link);
-            }
-            
-            // Handle mouse clicks on the entire foldout area (both arrow and text)
-            if (Event.current.type == EventType.MouseDown && foldoutRect.Contains(Event.current.mousePosition))
-            {
-                if (Event.current.button == 0) // Left mouse button
+                // Request repaint to ensure smooth hover effect
+                if (Event.current.type == EventType.MouseMove)
                 {
-                    _groupFoldoutStates[groupKey] = !_groupFoldoutStates[groupKey];
                     Event.current.Use();
                     GUI.changed = true;
                 }
             }
             
-            // Modify text color slightly when hovering for additional feedback
-            if (isHovering)
-            {
-                Color originalTextColor = groupStyle.normal.textColor;
-                groupStyle.normal.textColor = EditorGUIUtility.isProSkin 
-                    ? Color.white 
-                    : new Color(0.2f, 0.2f, 0.2f);
-                
-                // Draw the foldout with hover styling
-                _groupFoldoutStates[groupKey] = EditorGUI.Foldout(foldoutRect, _groupFoldoutStates[groupKey], groupName, groupStyle);
-                
-                // Restore original text color
-                groupStyle.normal.textColor = originalTextColor;
-            }
-            else
-            {
-                // Draw the foldout normally
-                _groupFoldoutStates[groupKey] = EditorGUI.Foldout(foldoutRect, _groupFoldoutStates[groupKey], groupName, groupStyle);
-            }
-            
-            // Force repaint on mouse move for smooth hover effects
-            if (Event.current.type == EventType.MouseMove)
-            {
-                SceneView.RepaintAll();
-            }
+            // Draw the foldout
+            _groupFoldoutStates[groupKey] = EditorGUI.Foldout(
+                foldoutRect, 
+                _groupFoldoutStates[groupKey], 
+                groupName, 
+                true,
+                groupStyle
+            );
             
             if (_groupFoldoutStates[groupKey])
             {
@@ -179,7 +144,6 @@ namespace DNExtensions.Button
                 GUILayout.Space(3); // Add some space after the group
             }
         }
-        
         /// <summary>
         /// Draws an individual button with parameter support and play mode validation.
         /// </summary>
@@ -285,71 +249,187 @@ namespace DNExtensions.Button
             {
                 EditorGUI.indentLevel++;
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                
+    
                 for (int i = 0; i < parameters.Length; i++)
                 {
                     _methodParameters[methodKey][i] = DrawParameterField(
                         parameters[i].Name, 
                         parameters[i].ParameterType, 
-                        _methodParameters[methodKey][i]
+                        _methodParameters[methodKey][i],
+                        parameters[i]  // Pass the ParameterInfo for Range attribute detection
                     );
                 }
-                
+    
                 EditorGUILayout.EndVertical();
                 EditorGUI.indentLevel--;
             }
         }
         
-        /// <summary>
-        /// Draws appropriate GUI field for method parameter based on its type.
-        /// </summary>
-        private object DrawParameterField(string paramName, Type paramType, object currentValue)
+    /// <summary>
+    /// Draws appropriate GUI field for method parameter based on its type.
+    /// </summary>
+    private object DrawParameterField(string paramName, Type paramType, object currentValue, ParameterInfo paramInfo = null)
+    {
+        string niceName = ObjectNames.NicifyVariableName(paramName);
+        
+        // Check for Range attribute on the parameter
+        RangeAttribute rangeAttr = paramInfo?.GetCustomAttribute<RangeAttribute>();
+        
+        // Basic types with Range support
+        if (paramType == typeof(int))
         {
-            string niceName = ObjectNames.NicifyVariableName(paramName);
-            
-            if (paramType == typeof(int))
+            if (rangeAttr != null)
             {
-                return EditorGUILayout.IntField(niceName, currentValue != null ? (int)currentValue : 0);
+                return EditorGUILayout.IntSlider(niceName, currentValue != null ? (int)currentValue : 0, (int)rangeAttr.min, (int)rangeAttr.max);
             }
-            else if (paramType == typeof(float))
+            return EditorGUILayout.IntField(niceName, currentValue != null ? (int)currentValue : 0);
+        }
+        else if (paramType == typeof(float))
+        {
+            if (rangeAttr != null)
             {
-                return EditorGUILayout.FloatField(niceName, currentValue != null ? (float)currentValue : 0f);
+                return EditorGUILayout.Slider(niceName, currentValue != null ? (float)currentValue : 0f, rangeAttr.min, rangeAttr.max);
             }
-            else if (paramType == typeof(string))
-            {
-                return EditorGUILayout.TextField(niceName, currentValue != null ? (string)currentValue : "");
-            }
-            else if (paramType == typeof(bool))
-            {
-                return EditorGUILayout.Toggle(niceName, currentValue != null && (bool)currentValue);
-            }
-            else if (paramType == typeof(Vector2))
-            {
-                return EditorGUILayout.Vector2Field(niceName, currentValue != null ? (Vector2)currentValue : Vector2.zero);
-            }
-            else if (paramType == typeof(Vector3))
-            {
-                return EditorGUILayout.Vector3Field(niceName, currentValue != null ? (Vector3)currentValue : Vector3.zero);
-            }
-            else if (paramType == typeof(Color))
-            {
-                return EditorGUILayout.ColorField(niceName, currentValue != null ? (Color)currentValue : Color.white);
-            }
-            else if (paramType.IsEnum)
-            {
-                return EditorGUILayout.EnumPopup(niceName, currentValue != null ? (Enum)currentValue : (Enum)Enum.GetValues(paramType).GetValue(0));
-            }
-            else if (typeof(UnityEngine.Object).IsAssignableFrom(paramType))
-            {
-                return EditorGUILayout.ObjectField(niceName, (UnityEngine.Object)currentValue, paramType, true);
-            }
-            else
-            {
-                EditorGUILayout.LabelField(niceName, $"Unsupported type: {paramType.Name}");
-                return currentValue;
-            }
+            return EditorGUILayout.FloatField(niceName, currentValue != null ? (float)currentValue : 0f);
+        }
+        else if (paramType == typeof(double))
+        {
+            // Note: No slider support for double in Unity's EditorGUILayout
+            return EditorGUILayout.DoubleField(niceName, currentValue != null ? (double)currentValue : 0.0);
+        }
+        else if (paramType == typeof(long))
+        {
+            return EditorGUILayout.LongField(niceName, currentValue != null ? (long)currentValue : 0L);
+        }
+        else if (paramType == typeof(string))
+        {
+            return EditorGUILayout.TextField(niceName, currentValue != null ? (string)currentValue : "");
+        }
+        else if (paramType == typeof(bool))
+        {
+            return EditorGUILayout.Toggle(niceName, currentValue != null && (bool)currentValue);
         }
         
+        // Vector types
+        else if (paramType == typeof(Vector2))
+        {
+            return EditorGUILayout.Vector2Field(niceName, currentValue != null ? (Vector2)currentValue : Vector2.zero);
+        }
+        else if (paramType == typeof(Vector3))
+        {
+            return EditorGUILayout.Vector3Field(niceName, currentValue != null ? (Vector3)currentValue : Vector3.zero);
+        }
+        else if (paramType == typeof(Vector4))
+        {
+            return EditorGUILayout.Vector4Field(niceName, currentValue != null ? (Vector4)currentValue : Vector4.zero);
+        }
+        else if (paramType == typeof(Vector2Int))
+        {
+            return EditorGUILayout.Vector2IntField(niceName, currentValue != null ? (Vector2Int)currentValue : Vector2Int.zero);
+        }
+        else if (paramType == typeof(Vector3Int))
+        {
+            return EditorGUILayout.Vector3IntField(niceName, currentValue != null ? (Vector3Int)currentValue : Vector3Int.zero);
+        }
+        
+        // Color types
+        else if (paramType == typeof(Color))
+        {
+            return EditorGUILayout.ColorField(niceName, currentValue != null ? (Color)currentValue : Color.white);
+        }
+        else if (paramType == typeof(Color32))
+        {
+            Color32 color32 = currentValue != null ? (Color32)currentValue : Color.white;
+            Color color = EditorGUILayout.ColorField(niceName, color32);
+            return (Color32)color;
+        }
+        
+        // Rect types
+        else if (paramType == typeof(Rect))
+        {
+            return EditorGUILayout.RectField(niceName, currentValue != null ? (Rect)currentValue : new Rect(0, 0, 100, 100));
+        }
+        else if (paramType == typeof(RectInt))
+        {
+            return EditorGUILayout.RectIntField(niceName, currentValue != null ? (RectInt)currentValue : new RectInt(0, 0, 100, 100));
+        }
+        
+        // Bounds types
+        else if (paramType == typeof(Bounds))
+        {
+            return EditorGUILayout.BoundsField(niceName, currentValue != null ? (Bounds)currentValue : new Bounds());
+        }
+        else if (paramType == typeof(BoundsInt))
+        {
+            return EditorGUILayout.BoundsIntField(niceName, currentValue != null ? (BoundsInt)currentValue : new BoundsInt());
+        }
+        
+        // Curves and Gradients
+        else if (paramType == typeof(AnimationCurve))
+        {
+            return EditorGUILayout.CurveField(niceName, currentValue != null ? (AnimationCurve)currentValue : AnimationCurve.Linear(0, 0, 1, 1));
+        }
+        else if (paramType == typeof(Gradient))
+        {
+            return EditorGUILayout.GradientField(niceName, currentValue != null ? (Gradient)currentValue : new Gradient());
+        }
+        
+        // Text area for multiline strings
+        else if (paramType == typeof(string) && paramName.ToLower().Contains("text") || paramName.ToLower().Contains("description"))
+        {
+            // Use text area for parameters that might need multiple lines
+            return EditorGUILayout.TextArea((string)currentValue ?? "", GUILayout.Height(60));
+        }
+        
+        // LayerMask
+        else if (paramType == typeof(LayerMask))
+        {
+            LayerMask mask = currentValue != null ? (LayerMask)currentValue : 0;
+            return EditorGUILayout.MaskField(niceName, mask, UnityEditorInternal.InternalEditorUtility.layers);
+        }
+        
+        // Enums
+        else if (paramType.IsEnum)
+        {
+            return EditorGUILayout.EnumPopup(niceName, currentValue != null ? (Enum)currentValue : (Enum)Enum.GetValues(paramType).GetValue(0));
+        }
+        
+        // Unity Object references
+        else if (typeof(UnityEngine.Object).IsAssignableFrom(paramType))
+        {
+            return EditorGUILayout.ObjectField(niceName, (UnityEngine.Object)currentValue, paramType, true);
+        }
+        
+        // Generic array support (limited)
+        else if (paramType.IsArray && paramType.GetElementType() == typeof(string))
+        {
+            string[] array = (string[])currentValue ?? new string[0];
+            EditorGUILayout.LabelField(niceName + " (String Array)");
+            EditorGUI.indentLevel++;
+            
+            // Simple array editor - you might want to make this more sophisticated
+            int newSize = EditorGUILayout.IntField("Size", array.Length);
+            if (newSize != array.Length)
+            {
+                Array.Resize(ref array, newSize);
+            }
+            
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = EditorGUILayout.TextField($"Element {i}", array[i] ?? "");
+            }
+            
+            EditorGUI.indentLevel--;
+            return array;
+        }
+        
+        // Fallback for unsupported types
+        else
+        {
+            EditorGUILayout.LabelField(niceName, $"Unsupported type: {paramType.Name}");
+            return currentValue;
+        }
+    } 
         /// <summary>
         /// Gets the default value for a method parameter, using the method's default value if available.
         /// </summary>
@@ -365,16 +445,50 @@ namespace DNExtensions.Button
         /// </summary>
         private object GetTypeDefaultValue(Type type)
         {
+            // Basic types
             if (type == typeof(string)) return "";
             if (type == typeof(int)) return 0;
             if (type == typeof(float)) return 0f;
+            if (type == typeof(double)) return 0.0;
+            if (type == typeof(long)) return 0L;
             if (type == typeof(bool)) return false;
+    
+            // Vector types
             if (type == typeof(Vector2)) return Vector2.zero;
             if (type == typeof(Vector3)) return Vector3.zero;
+            if (type == typeof(Vector4)) return Vector4.zero;
+            if (type == typeof(Vector2Int)) return Vector2Int.zero;
+            if (type == typeof(Vector3Int)) return Vector3Int.zero;
+    
+            // Color types
             if (type == typeof(Color)) return Color.white;
+            if (type == typeof(Color32)) return (Color32)Color.white;
+    
+            // Rect types
+            if (type == typeof(Rect)) return new Rect(0, 0, 100, 100);
+            if (type == typeof(RectInt)) return new RectInt(0, 0, 100, 100);
+    
+            // Bounds types
+            if (type == typeof(Bounds)) return new Bounds();
+            if (type == typeof(BoundsInt)) return new BoundsInt();
+    
+            // Curves and Gradients
+            if (type == typeof(AnimationCurve)) return AnimationCurve.Linear(0, 0, 1, 1);
+            if (type == typeof(Gradient)) return new Gradient();
+    
+            // LayerMask
+            if (type == typeof(LayerMask)) return (LayerMask)0;
+    
+            // Enums
             if (type.IsEnum) return Enum.GetValues(type).GetValue(0);
+    
+            // Unity Objects
             if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return null;
-            
+    
+            // Arrays
+            if (type.IsArray) return Array.CreateInstance(type.GetElementType() ?? throw new InvalidOperationException(), 0);
+    
+            // Generic fallback for value types
             return type.IsValueType ? Activator.CreateInstance(type) : null;
         }
     }
