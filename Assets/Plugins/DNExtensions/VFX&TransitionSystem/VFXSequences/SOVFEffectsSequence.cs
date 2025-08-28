@@ -13,15 +13,18 @@ namespace DNExtensions.VFXManager
     {
         [Header("Sequence Settings")]
         [SerializeField, Min(0f)] private float sequenceDuration = 1f;
-        [SerializeField] private bool resetEffectsOnComplete = true;
+        [SerializeField, Tooltip("Playing this sequence will not reset the effects of the previous sequence")] private bool sequenceIsAdditive;
+        [SerializeField, Tooltip("After the sequences completes, reset all the effect to default ")] private bool resetEffectsOnComplete = true;
         [SerializeReference] private VFEffectsEffectBase[] effects;
 
 
         private Sequence _sequence;
+        
+        public bool SequenceIsAdditive => sequenceIsAdditive;
 
 
         [Button]
-        public float PlayEffects()
+        public float PlaySequence()
         {
             if (_sequence.isAlive) _sequence.Stop();
             
@@ -32,7 +35,7 @@ namespace DNExtensions.VFXManager
             
             _sequence = Sequence.Create()
                 .ChainDelay(sequenceDuration)
-                .OnComplete(() => { if (resetEffectsOnComplete) ResetEffects(); });
+                .OnComplete(() => { if (resetEffectsOnComplete) ResetSequenceEffects(); });
 
 
             return sequenceDuration;
@@ -41,7 +44,7 @@ namespace DNExtensions.VFXManager
         
 
         [Button]
-        public void ResetEffects()
+        public void ResetSequenceEffects()
         {
             if (_sequence.isAlive) _sequence.Stop();
             

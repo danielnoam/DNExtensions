@@ -72,13 +72,13 @@ namespace DNExtensions.VFXManager
             var effectDurationValue = sequenceDuration * duration.maxValue - startDelay;
             
             if (_sequence.isAlive) _sequence.Stop();
-            _sequence = Sequence.Create();
+            _sequence = Sequence.Create(useUnscaledTime: true);
             
             // Intensity animation
             var intensity = useDefaultIntensity ? VFXManager.Instance.DefaultLensDistortionIntensity : startIntensity;
             _sequence.Group(Tween.Custom(intensity, endIntensity, effectDurationValue, 
                 onValueChange: value => _lensDistortion.intensity.value = value, 
-                ease: intensityEase, startDelay: startDelay, useUnscaledTime: true));
+                ease: intensityEase, startDelay: startDelay));
             
             // X Multiplier animation
             if (animateXMultiplier)
@@ -86,7 +86,7 @@ namespace DNExtensions.VFXManager
                 var xMultiplier = useDefaultXMultiplier ? VFXManager.Instance.DefaultLensDistortionXMultiplier : startXMultiplier;
                 _sequence.Group(Tween.Custom(xMultiplier, endXMultiplier, effectDurationValue, 
                     onValueChange: value => _lensDistortion.xMultiplier.value = value, 
-                    ease: xMultiplierEase, startDelay: startDelay, useUnscaledTime: true));
+                    ease: xMultiplierEase, startDelay: startDelay));
             }
             
             // Y Multiplier animation
@@ -95,7 +95,7 @@ namespace DNExtensions.VFXManager
                 var yMultiplier = useDefaultYMultiplier ? VFXManager.Instance.DefaultLensDistortionYMultiplier : startYMultiplier;
                 _sequence.Group(Tween.Custom(yMultiplier, endYMultiplier, effectDurationValue, 
                     onValueChange: value => _lensDistortion.yMultiplier.value = value, 
-                    ease: yMultiplierEase, startDelay: startDelay, useUnscaledTime: true));
+                    ease: yMultiplierEase, startDelay: startDelay));
             }
             
             // Center animation
@@ -104,7 +104,7 @@ namespace DNExtensions.VFXManager
                 var center = useDefaultCenter ? VFXManager.Instance.DefaultLensDistortionCenter : startCenter;
                 _sequence.Group(Tween.Custom(center, endCenter, effectDurationValue, 
                     onValueChange: value => _lensDistortion.center.value = value, 
-                    ease: centerEase, startDelay: startDelay, useUnscaledTime: true));
+                    ease: centerEase, startDelay: startDelay));
             }
             
             // Scale animation
@@ -113,7 +113,7 @@ namespace DNExtensions.VFXManager
                 var scale = useDefaultScale ? VFXManager.Instance.DefaultLensDistortionScale : startScale;
                 _sequence.Group(Tween.Custom(scale, endScale, effectDurationValue, 
                     onValueChange: value => _lensDistortion.scale.value = value, 
-                    ease: scaleEase, startDelay: startDelay, useUnscaledTime: true));
+                    ease: scaleEase, startDelay: startDelay));
             }
         }
 

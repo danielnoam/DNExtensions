@@ -33,6 +33,7 @@ namespace DNExtensions.VFXManager
         public ChromaticAberration ChromaticAberration { get; private set; }
         public MotionBlur MotionBlur { get; private set; }
         public Vignette Vignette { get; private set; }
+        public PaniniProjection PaniniProjection { get; private set; }
         public Sprite DefaultIconSprite { get; private set; }
         public Sprite DefaultFullScreenSprite { get; private set; }
         public Vector3 DefaultFullScreenPosition { get; private set; }
@@ -55,6 +56,10 @@ namespace DNExtensions.VFXManager
         public float DefaultVignetteSmoothness { get; private set; }
         public Vector2 DefaultVignetteCenter { get; private set; }
         public bool DefaultVignetteRounded { get; private set; }
+        public float DefaultPaniniProjectionDistance { get; private set; }
+        public float DefaultPaniniProjectionCropToFit { get; private set; }
+        
+        
         
         public Image FullScreenImage => fullScreenImage;
         public Image IconImage => iconImage;
@@ -188,6 +193,17 @@ namespace DNExtensions.VFXManager
                 MotionBlur.quality.overrideState = true;
                 MotionBlur.clamp.overrideState = true;
             }
+            
+            if (postProcessingVolume.profile.TryGet(out PaniniProjection paniniProjection))
+            {
+                PaniniProjection = paniniProjection;
+                DefaultPaniniProjectionDistance = PaniniProjection.distance.value;
+                DefaultPaniniProjectionCropToFit = PaniniProjection.cropToFit.value;
+                if (!autoSetupPostProcessing) return;
+                PaniniProjection.active = true;
+                PaniniProjection.distance.overrideState = true;
+                PaniniProjection.cropToFit.overrideState = true;
+            }
 
         }
 
@@ -195,13 +211,15 @@ namespace DNExtensions.VFXManager
         /// <summary>
         /// Plays a specific visual effects sequence.
         /// </summary>
+        /// <param name="vfxSequence">The visual effects sequence to play.</param>
+        /// <returns>The duration of the visual effects sequence.</returns>
         public float PlayVFX(SOVFEffectsSequence vfxSequence)
         {
             if (!vfxSequence) return 0;
-            ResetActiveEffects();
+            if (!vfxSequence.SequenceIsAdditive) ResetActiveEffects();
 
             _currentSequence = vfxSequence;
-            var vfxDuration = _currentSequence.PlayEffects();
+            var vfxDuration = _currentSequence.PlaySequence();
 
             return vfxDuration;
 
@@ -210,6 +228,7 @@ namespace DNExtensions.VFXManager
         /// <summary>
         /// Plays a random visual effects sequence from the available sequences.
         /// </summary>
+        /// <returns>The duration of the played visual effects sequence.</returns>
         [Button(ButtonPlayMode.OnlyWhenPlaying)]
         public float PlayRandomVFX()
         {
@@ -222,6 +241,7 @@ namespace DNExtensions.VFXManager
         /// <summary>
         /// Gets a random sequence from the sequence list.
         /// </summary>
+        /// <returns>A random SOVFEffectsSequence.</returns>
         public SOVFEffectsSequence GetRandomEffect()
         {
             var randomVFXIndex = Random.Range(0, effectsSequences.Length);
@@ -238,7 +258,7 @@ namespace DNExtensions.VFXManager
         {
             if (_currentSequence)
             {
-                _currentSequence.ResetEffects();
+                _currentSequence.ResetSequenceEffects();
                 _currentSequence = null;
             }
             
@@ -263,11 +283,18 @@ namespace DNExtensions.VFXManager
             if (Vignette)
             {
                 Vignette.intensity.value = DefaultVignetteIntensity;
+                Vignette.smoothness.value = DefaultVignetteSmoothness;
+                Vignette.center.value = DefaultVignetteCenter;
+                Vignette.rounded.value = DefaultVignetteRounded;
             }
             
             if (LensDistortion)
             {
                 LensDistortion.intensity.value = DefaultLensDistortionIntensity;
+                LensDistortion.xMultiplier.value = DefaultLensDistortionXMultiplier;
+                LensDistortion.yMultiplier.value = DefaultLensDistortionYMultiplier;
+                LensDistortion.center.value = DefaultLensDistortionCenter;
+                LensDistortion.scale.value = DefaultLensDistortionScale;
             }
             
             if (ChromaticAberration)
@@ -278,8 +305,14 @@ namespace DNExtensions.VFXManager
             if (MotionBlur)
             {
                 MotionBlur.intensity.value = DefaultMotionBlurIntensity;
+                MotionBlur.clamp.value = DefaultMotionBlurClamp;
             }
             
+            if (PaniniProjection)
+            {
+                PaniniProjection.distance.value = DefaultPaniniProjectionDistance;
+                PaniniProjection.cropToFit.value = DefaultPaniniProjectionCropToFit;
+            }
 
         }
     }
