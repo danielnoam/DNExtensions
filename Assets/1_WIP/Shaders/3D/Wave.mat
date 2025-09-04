@@ -47,7 +47,7 @@ Material:
     - _Wave_Speed: 1
     - _Wave_Strength: 0.74
     m_Colors:
-    - _Base_Color: {r: 0, g: 0.6099918, b: 1, a: 0}
+    - _Base_Color: {r: 1, g: 0.029222593, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &566290720367612982

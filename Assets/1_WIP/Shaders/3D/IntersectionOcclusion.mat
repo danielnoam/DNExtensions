@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-493572863140461727
+--- !u!114 &-7810183970625418148
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -20,14 +20,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: LightingExample
-  m_Shader: {fileID: -6465566751694194690, guid: 9331069381bdc8f4faa49e991adbf201, type: 3}
+  m_Name: IntersectionOcclusion
+  m_Shader: {fileID: -6465566751694194690, guid: ebd5a382d805aba4495f580b80b81146, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords:
-  - _EMISSION
-  m_LightmapFlags: 2
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -38,24 +37,8 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _AmbientOcclusion_Texture:
-        m_Texture: {fileID: 2800000, guid: 98a2a146cd607054585a11ce84bed81e, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _Base_Texture:
         m_Texture: {fileID: 2800000, guid: bd9b8b9f72c7e764eb17a81a4431b980, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Heightmap_Texture:
-        m_Texture: {fileID: 2800000, guid: a96acad2f3aac3c4bb4fc5e9e7eaa844, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Normal_Texture:
-        m_Texture: {fileID: 2800000, guid: a64ffccf85cdb6c40bb4d08b8508a26d, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Roughness_Texture:
-        m_Texture: {fileID: 2800000, guid: 4aa13a28274e0554ab1245767a702078, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -72,10 +55,11 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Metalic: 0
+    - _Intersection_Power: 0.5
+    - _Occlusion_Stregth: 0.98
     - _QueueControl: 0
     - _QueueOffset: 0
     m_Colors:
-    - _Emissive_Color: {r: 0, g: 0, b: 0, a: 0}
+    - _Base_Color: {r: 1, g: 1, b: 1, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

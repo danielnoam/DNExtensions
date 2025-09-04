@@ -4,9 +4,17 @@ using Object = UnityEngine.Object;
 
 namespace DNExtensions
 {
+    
+    public enum PlayerSelectionMode
+    {
+        ByTag = 0,
+        ByPath = 1
+    }
+    
+    
+    
     /// <summary>
     /// Unity Editor extension that adds "Play from Camera Position" to the play button context menu.
-    /// Provides Unreal-like functionality without requiring toolbar extensions.
     /// </summary>
     [InitializeOnLoad]
     public static class PlayFromCameraContextMenu
@@ -14,15 +22,8 @@ namespace DNExtensions
         static PlayFromCameraContextMenu()
         {
             EditorApplication.playModeStateChanged += OnPlayModeChanged;
-            
-            // Hook into Unity's context menu system
-            EditorApplication.contextualPropertyMenu += OnContextualPropertyMenu;
         }
-
-        private static void OnContextualPropertyMenu(GenericMenu menu, SerializedProperty property)
-        {
-            // This approach doesn't work for play button, we need a different method
-        }
+        
 
         [MenuItem("Tools/Play from Camera Position %&p", false, 170)]
         private static void PlayFromCameraMenuItem()
@@ -82,7 +83,7 @@ namespace DNExtensions
             }
             else
             {
-                Debug.LogWarning("[PlayFromCamera] Could not find player object to teleport. Check your player settings in the Play from Camera settings.");
+                Debug.LogWarning("Could not find player object to teleport. Check your player settings in the Play from Camera settings.");
             }
         }
 
@@ -103,11 +104,11 @@ namespace DNExtensions
             
             GameObject player = FindPlayerObject(playerMode, playerTag, playerPath);
             
-            if (player != null)
+            if (player)
             {
                 var characterController = player.GetComponent<CharacterController>();
                 bool ccWasEnabled = false;
-                if (characterController != null)
+                if (characterController)
                 {
                     ccWasEnabled = characterController.enabled;
                     characterController.enabled = false;
@@ -119,7 +120,7 @@ namespace DNExtensions
                     player.transform.rotation = targetRot;
                 }
                 
-                if (characterController != null && ccWasEnabled)
+                if (characterController && ccWasEnabled)
                 {
                     EditorApplication.delayCall += () => 
                     {
@@ -162,7 +163,7 @@ namespace DNExtensions
                 player = GameObject.Find(path);
             }
             
-            if (player == null)
+            if (!player)
             {
                 string[] commonNames = { "Player", "player", "FPSController", "FirstPersonController", "Character", "PlayerCharacter" };
                 foreach (string name in commonNames)
@@ -188,10 +189,7 @@ namespace DNExtensions
             return player;
         }
     }
-
-    /// <summary>
-    /// Settings and core functionality for the Play from Camera feature
-    /// </summary>
+    
     public static class PlayFromCameraSettings
     {
         private const string PrefAlsoSetRotation = "DNExtensions_PlayFromCamera_AlsoSetRotation";
@@ -222,136 +220,6 @@ namespace DNExtensions
             get => EditorPrefs.GetString(PrefPlayerObjectPath, "");
             set => EditorPrefs.SetString(PrefPlayerObjectPath, value);
         }
-
-        public static void OpenSettingsWindow()
-        {
-            PlayFromCameraSettingsWindow.ShowWindow();
-        }
     }
 
-    /// <summary>
-    /// Enum for different ways to find the player object
-    /// </summary>
-    public enum PlayerSelectionMode
-    {
-        ByTag = 0,
-        ByPath = 1
-    }
-
-    /// <summary>
-    /// Settings window for configuring the Play from Camera feature
-    /// </summary>
-    public class PlayFromCameraSettingsWindow : EditorWindow
-    {
-        private Vector2 _scrollPosition;
-
-        [MenuItem("Tools/Play from Camera Settings")]
-        public static void ShowWindow()
-        {
-            PlayFromCameraSettingsWindow window = GetWindow<PlayFromCameraSettingsWindow>();
-            window.titleContent = new GUIContent("Play from Camera Settings");
-            window.minSize = new Vector2(350, 250);
-            window.Show();
-        }
-
-        private void OnGUI()
-        {
-            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
-
-            EditorGUILayout.LabelField("Play from Camera Settings", EditorStyles.boldLabel);
-            EditorGUILayout.Space();
-
-            PlayFromCameraSettings.AlsoSetRotation = EditorGUILayout.Toggle(
-                new GUIContent("Also Set Player Rotation", 
-                              "If enabled, the player's rotation will also be set to match the camera rotation"), 
-                PlayFromCameraSettings.AlsoSetRotation
-            );
-
-            EditorGUILayout.Space();
-
-            EditorGUILayout.LabelField("Player Object Selection", EditorStyles.boldLabel);
-            
-            PlayFromCameraSettings.PlayerSelectionMode = (PlayerSelectionMode)EditorGUILayout.EnumPopup(
-                new GUIContent("Selection Mode", "How to find the player object in the scene"),
-                PlayFromCameraSettings.PlayerSelectionMode
-            );
-
-            EditorGUILayout.Space();
-
-            switch (PlayFromCameraSettings.PlayerSelectionMode)
-            {
-                case PlayerSelectionMode.ByTag:
-                    PlayFromCameraSettings.PlayerTag = EditorGUILayout.TagField(
-                        new GUIContent("Player Tag", "Tag to search for when finding the player object"),
-                        PlayFromCameraSettings.PlayerTag
-                    );
-                    break;
-
-                case PlayerSelectionMode.ByPath:
-                    PlayFromCameraSettings.PlayerObjectPath = EditorGUILayout.TextField(
-                        new GUIContent("Player Object Path", "Hierarchy path to the player object (e.g., 'Player', 'Managers/Player', etc.)"),
-                        PlayFromCameraSettings.PlayerObjectPath
-                    );
-                    
-                    EditorGUILayout.HelpBox(
-                        "Enter the hierarchy path to your player object. Examples:\n" +
-                        "• 'Player' - for object named Player at root level\n" +
-                        "• 'GameManager/Player' - for nested objects\n" +
-                        "• Use GameObject.Find() naming conventions",
-                        MessageType.Info
-                    );
-                    break;
-            }
-
-            EditorGUILayout.Space();
-
-            EditorGUILayout.LabelField("Testing", EditorStyles.boldLabel);
-            
-            if (GUILayout.Button("Test Find Player Object"))
-            {
-                GameObject playerObj = null;
-                
-                switch (PlayFromCameraSettings.PlayerSelectionMode)
-                {
-                    case PlayerSelectionMode.ByTag:
-                        try
-                        {
-                            playerObj = GameObject.FindWithTag(PlayFromCameraSettings.PlayerTag);
-                        }
-                        catch (UnityException e)
-                        {
-                            Debug.LogError($"Tag '{PlayFromCameraSettings.PlayerTag}' is not defined: {e.Message}");
-                        }
-                        break;
-                    case PlayerSelectionMode.ByPath:
-                        playerObj = GameObject.Find(PlayFromCameraSettings.PlayerObjectPath);
-                        break;
-                }
-
-                if (playerObj != null)
-                {
-                    EditorGUIUtility.PingObject(playerObj);
-                    Debug.Log($"Found player object: {playerObj.name} at {playerObj.transform.position}");
-                }
-                else
-                {
-                    Debug.LogWarning("Could not find player object with current settings!");
-                }
-            }
-
-            EditorGUILayout.Space();
-
-            EditorGUILayout.HelpBox(
-                "How to use Play from Camera:\n\n" +
-                "1. Position your Scene View camera where you want the player to spawn\n" +
-                "2. Use the menu: Tools > Play from Camera Position\n" +
-                "3. Or access settings via: Tools > Play from Camera Settings\n" +
-                "4. The game will start and your player will be teleported to the camera position\n\n" +
-                "If the player doesn't teleport, check that your player settings above are correct.",
-                MessageType.Info
-            );
-
-            EditorGUILayout.EndScrollView();
-        }
-    }
 }
