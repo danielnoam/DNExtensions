@@ -12,7 +12,7 @@ namespace DNExtensions.InputSystem
     public class InputReaderBase : MonoBehaviour
     {
         [SerializeField] protected PlayerInput playerInput;
-        [SerializeField] private bool hideCursorOnAwake = true;
+        [SerializeField] private bool autoHideCursorOnAwake = true;
 
         
         private void OnValidate()
@@ -32,7 +32,7 @@ namespace DNExtensions.InputSystem
 
         protected virtual void Awake()
         {
-            if (hideCursorOnAwake) SetCursorVisibility(false);
+            if (autoHideCursorOnAwake) SetCursorVisibility(false);
         }
 
         /// <summary>
