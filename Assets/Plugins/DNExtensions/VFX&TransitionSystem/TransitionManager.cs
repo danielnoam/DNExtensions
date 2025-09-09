@@ -1,3 +1,4 @@
+using System;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,6 +11,9 @@ namespace DNExtensions.VFXManager
         private static SOVFEffectsSequence _pendingOutSequence;
         private static bool _isInitialized;
         private static bool _playingASequence;
+        
+        public static event Action OnTransitionStarted;
+        public static event Action OnTransitionCompleted;
         
         static TransitionManager()
         {
@@ -38,6 +42,8 @@ namespace DNExtensions.VFXManager
             {
                 VFXManager.Instance.ResetActiveEffects();
             }
+            
+            OnTransitionCompleted?.Invoke();
         }
         
         /// <summary>
@@ -61,6 +67,7 @@ namespace DNExtensions.VFXManager
             var transitionDuration = VFXManager.Instance.PlayVFX(vfxSequenceIn);
             _pendingOutSequence = vfxSequenceOut;
             _playingASequence = true;
+            OnTransitionStarted?.Invoke();
 
             _activeTransition = Sequence.Create()
                 .ChainDelay(transitionDuration)
@@ -92,6 +99,7 @@ namespace DNExtensions.VFXManager
             var transitionDuration = VFXManager.Instance.PlayVFX(vfxSequenceIn);
             _pendingOutSequence = vfxSequenceOut;
             _playingASequence = true;
+            OnTransitionStarted?.Invoke();
 
             _activeTransition = Sequence.Create()
                 .ChainDelay(transitionDuration)
@@ -122,6 +130,7 @@ namespace DNExtensions.VFXManager
             var transitionDuration = VFXManager.Instance.PlayVFX(vfxSequenceIn);
             _pendingOutSequence = vfxSequenceOut;
             _playingASequence = true;
+            OnTransitionStarted?.Invoke();
             
 
             _activeTransition = Sequence.Create()
@@ -152,6 +161,7 @@ namespace DNExtensions.VFXManager
 
             var transitionDuration = VFXManager.Instance.PlayVFX(vfxSequenceIn);
             _playingASequence = true;
+            OnTransitionStarted?.Invoke();
 
 
             #if UNITY_EDITOR

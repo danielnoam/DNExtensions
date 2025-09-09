@@ -1,3 +1,4 @@
+using System;
 using DNExtensions.Button;
 using PrimeTween;
 using UnityEngine;
@@ -21,6 +22,9 @@ namespace DNExtensions.VFXManager
         private Sequence _sequence;
         
         public bool SequenceIsAdditive => sequenceIsAdditive;
+        
+        public event Action OnSequencePlay;
+        public event Action OnSequenceComplete;
 
 
         [Button]
@@ -32,10 +36,15 @@ namespace DNExtensions.VFXManager
             {
                 effect?.OnPlayEffect(sequenceDuration);
             }
+            OnSequencePlay?.Invoke();
             
             _sequence = Sequence.Create()
                 .ChainDelay(sequenceDuration)
-                .OnComplete(() => { if (resetEffectsOnComplete) ResetSequenceEffects(); });
+                .OnComplete(() =>
+                {
+                    OnSequenceComplete?.Invoke();
+                    if (resetEffectsOnComplete) ResetSequenceEffects();
+                });
 
 
             return sequenceDuration;

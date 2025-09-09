@@ -1,4 +1,3 @@
-
 using System;
 using DNExtensions.Button;
 using PrimeTween;
@@ -23,6 +22,7 @@ namespace DNExtensions.VFXManager
         
         [Header("References")]
         [SerializeField] private Volume postProcessingVolume;
+        [SerializeField] private Camera mainCamera;
         [SerializeField] private Image iconImage;
         [SerializeField] private Image fullScreenImage;
         [SerializeField] private SOVFEffectsSequence[] effectsSequences;
@@ -34,6 +34,9 @@ namespace DNExtensions.VFXManager
         public MotionBlur MotionBlur { get; private set; }
         public Vignette Vignette { get; private set; }
         public PaniniProjection PaniniProjection { get; private set; }
+        public DepthOfField DepthOfField { get; private set; }
+        
+        public Camera MainCamera => mainCamera;
         public Sprite DefaultIconSprite { get; private set; }
         public Sprite DefaultFullScreenSprite { get; private set; }
         public Vector3 DefaultFullScreenPosition { get; private set; }
@@ -58,11 +61,18 @@ namespace DNExtensions.VFXManager
         public bool DefaultVignetteRounded { get; private set; }
         public float DefaultPaniniProjectionDistance { get; private set; }
         public float DefaultPaniniProjectionCropToFit { get; private set; }
+        public float DefaultCameraFOV { get; private set; }
+        public float DefaultDepthOfFieldFocusDistance { get; private set; }
+        public float DefaultDepthOfFieldAperture { get; private set; }
+        public float DefaultDepthOfFieldFocalLength { get; private set; }
         
         
         
         public Image FullScreenImage => fullScreenImage;
         public Image IconImage => iconImage;
+        
+        
+        public event Action<SOVFEffectsSequence> OnVFXSequenceStarted;
 
 
         private void OnValidate()
@@ -112,6 +122,9 @@ namespace DNExtensions.VFXManager
                 
                 fullScreenImage.color = Color.clear;
             }
+            
+            if (!mainCamera) mainCamera = Camera.main;
+            if (mainCamera) DefaultCameraFOV = mainCamera.fieldOfView;
             
             SetupPostProcessingVolume();
         }
@@ -204,7 +217,19 @@ namespace DNExtensions.VFXManager
                 PaniniProjection.distance.overrideState = true;
                 PaniniProjection.cropToFit.overrideState = true;
             }
-
+            
+            if (postProcessingVolume.profile.TryGet(out DepthOfField depthOfField))
+            {
+                DepthOfField = depthOfField;
+                DefaultDepthOfFieldFocusDistance = DepthOfField.focusDistance.value;
+                DefaultDepthOfFieldAperture = DepthOfField.aperture.value;
+                DefaultDepthOfFieldFocalLength = DepthOfField.focalLength.value;
+                if (!autoSetupPostProcessing) return;
+                DepthOfField.active = true;
+                DepthOfField.focusDistance.overrideState = true;
+                DepthOfField.aperture.overrideState = true;
+                DepthOfField.focalLength.overrideState = true;
+            }
         }
 
         
@@ -220,23 +245,12 @@ namespace DNExtensions.VFXManager
 
             _currentSequence = vfxSequence;
             var vfxDuration = _currentSequence.PlaySequence();
+            OnVFXSequenceStarted?.Invoke(vfxSequence);
 
             return vfxDuration;
 
         }
         
-        /// <summary>
-        /// Plays a random visual effects sequence from the available sequences.
-        /// </summary>
-        /// <returns>The duration of the played visual effects sequence.</returns>
-        [Button(ButtonPlayMode.OnlyWhenPlaying)]
-        public float PlayRandomVFX()
-        {
-            var randomVFXIndex = Random.Range(0, effectsSequences.Length);
-            var vfxSequence = effectsSequences[randomVFXIndex];
-            
-            return PlayVFX(vfxSequence);
-        }
 
         /// <summary>
         /// Gets a random sequence from the sequence list.
@@ -314,9 +328,19 @@ namespace DNExtensions.VFXManager
                 PaniniProjection.cropToFit.value = DefaultPaniniProjectionCropToFit;
             }
 
+            // Reset DepthOfField
+            if (DepthOfField)
+            {
+                DepthOfField.focusDistance.value = DefaultDepthOfFieldFocusDistance;
+                DepthOfField.aperture.value = DefaultDepthOfFieldAperture;
+                DepthOfField.focalLength.value = DefaultDepthOfFieldFocalLength;
+            }
+            
+            // Reset Camera FOV
+            if (mainCamera)
+            {
+                mainCamera.fieldOfView = DefaultCameraFOV;
+            }
         }
     }
-    
-
 }
-

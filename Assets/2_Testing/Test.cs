@@ -36,7 +36,7 @@ public class Test : MonoBehaviour
 
     private void Start()
     {
-        VFXManager.Instance.PlayRandomVFX();
+        VFXManager.Instance.PlayVFX(VFXManager.Instance.GetRandomEffect());
     }
 
     
