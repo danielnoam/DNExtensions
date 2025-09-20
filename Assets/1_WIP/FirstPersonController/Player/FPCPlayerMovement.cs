@@ -116,7 +116,6 @@ public class FpcPlayerMovement : MonoBehaviour
         {
             targetMoveSpeed /= fpcPlayerInteraction.HeldObject.ObjectWeight;
         }
-        Debug.Log( targetMoveSpeed);
         controller.Move(moveDir * (targetMoveSpeed * Time.deltaTime));
     }
     

@@ -94,7 +94,6 @@ public class FPCPlayerInput : InputReaderBase
 
         private void OnMove(InputAction.CallbackContext context)
         {
-            Debug.Log("Move action received");
             OnMoveAction?.Invoke(context);
         }
         

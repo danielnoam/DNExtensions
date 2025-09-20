@@ -5,6 +5,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 254358
   packageName: Hot Reload | Edit Code Without Compiling
-  packageVersion: 1.13.10
+  packageVersion: 1.13.11
   assetPath: Packages/com.singularitygroup.hotreload/Runtime/HttpClientUtils.cs
-  uploadId: 780490
+  uploadId: 784638

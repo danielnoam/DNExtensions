@@ -2,13 +2,11 @@
 using UnityEngine;
 using UnityEditor;
 
-
 namespace DNExtensions
 {
-
     /// <summary>
     /// Custom property drawer for SceneField that displays build index and validation errors.
-    /// Shows scene reference field with build status information below.
+    /// Shows scene reference field with build status information and consistent icon styling.
     /// </summary>
     [CustomPropertyDrawer(typeof(SceneField))]
     public class SceneFieldPropertyDrawer : PropertyDrawer
@@ -20,11 +18,13 @@ namespace DNExtensions
             SerializedProperty sceneName = property.FindPropertyRelative("sceneName");
             SerializedProperty scenePath = property.FindPropertyRelative("scenePath");
             
-            // Reserve space for status icon (20px)
+            // Reserve space for status icon and settings button
             float iconWidth = 20f;
+            float buttonWidth = 25f;
             Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth - iconWidth, position.height);
             Rect iconRect = new Rect(position.x + EditorGUIUtility.labelWidth - iconWidth, position.y, iconWidth, position.height);
-            Rect fieldRect = new Rect(position.x + EditorGUIUtility.labelWidth, position.y, position.width - EditorGUIUtility.labelWidth, position.height);
+            Rect fieldRect = new Rect(position.x + EditorGUIUtility.labelWidth, position.y, position.width - EditorGUIUtility.labelWidth - buttonWidth, position.height);
+            Rect buttonRect = new Rect(position.x + position.width - buttonWidth, position.y, buttonWidth, position.height);
             
             // Draw label
             EditorGUI.LabelField(labelRect, label);
@@ -57,6 +57,16 @@ namespace DNExtensions
                 {
                     DrawStatusIcon(iconRect, sceneName.stringValue, scenePath.stringValue);
                 }
+                else if (sceneAsset.objectReferenceValue == null)
+                {
+                    DrawEmptyStatusIcon(iconRect);
+                }
+            }
+            
+            // Draw settings button
+            if (GUI.Button(buttonRect, new GUIContent("⚙", "Open Build Settings")))
+            {
+                EditorWindow.GetWindow(System.Type.GetType("UnityEditor.BuildPlayerWindow,UnityEditor"));
             }
             
             EditorGUI.EndProperty();
@@ -64,6 +74,7 @@ namespace DNExtensions
 
         /// <summary>
         /// Draws a status icon next to the label with tooltip on hover and click to open build settings.
+        /// Uses the same visual style as SortingLayerField and TagField for consistency.
         /// </summary>
         private void DrawStatusIcon(Rect rect, string sceneName, string scenePath)
         {
@@ -116,7 +127,7 @@ namespace DNExtensions
             {
                 if (Event.current.button == 0) // Left mouse button
                 {
-                    // Open Build Settings window
+                    // Open Build Settings window using the original working method
                     EditorWindow.GetWindow(System.Type.GetType("UnityEditor.BuildPlayerWindow,UnityEditor"));
                     Event.current.Use();
                 }
@@ -144,12 +155,35 @@ namespace DNExtensions
             GUI.color = originalColor;
         }
 
+        /// <summary>
+        /// Draws a warning icon when no scene is assigned.
+        /// </summary>
+        private void DrawEmptyStatusIcon(Rect rect)
+        {
+            string icon = "⚠";
+            string tooltip = "No scene assigned";
+            Color iconColor = new Color(1f, 0.6f, 0f); // Orange
+
+            // Draw icon with color and tooltip
+            Color originalColor = GUI.color;
+            GUI.color = iconColor;
+            
+            GUIContent iconContent = new GUIContent(icon, tooltip);
+            GUIStyle iconStyle = new GUIStyle(EditorStyles.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 12,
+                fontStyle = FontStyle.Bold
+            };
+            
+            EditorGUI.LabelField(rect, iconContent, iconStyle);
+            GUI.color = originalColor;
+        }
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             return EditorGUIUtility.singleLineHeight;
         }
     }
-
 }
-
 #endif

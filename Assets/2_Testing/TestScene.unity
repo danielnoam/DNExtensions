@@ -2027,6 +2027,8 @@ MonoBehaviour:
   testLayer:
     layerName: Default
     layerID: 0
+  testTag:
+    tagName: Respawn
   testRangedInt:
     minValue: -1
     maxValue: 1
@@ -2621,7 +2623,7 @@ SceneRoots:
   - {fileID: 834220156}
   - {fileID: 1741790389}
   - {fileID: 1296550133}
-  - {fileID: 902910965}
-  - {fileID: 2138021902}
   - {fileID: 1831971084}
+  - {fileID: 902910965}
   - {fileID: 1507623671}
+  - {fileID: 2138021902}

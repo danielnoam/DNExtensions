@@ -8,29 +8,30 @@ using UnityEngine.SceneManagement;
 
 public class Test : MonoBehaviour
 {
+
+    [Header("DNExtensions")]
     
-    
-    
-    [Header("Scene Field")]
+    [InfoBox("This is an info box showing something")]
+    [Separator("Custom Fields")]
     [SerializeField] private SceneField testScene;
-    
-    [Header("Sorting Layer Field")]
     [SerializeField] private SortingLayerField testLayer;
+    [SerializeField] private TagField testTag;
     
-    [Header("Ranged Values")]
+    
+    [Separator("Ranged Values")]
     [SerializeField] private RangedInt testRangedInt;
     [SerializeField, MinMaxRange(-5f,5)] private RangedFloat testRangedFloat;
     
-    [Header("Chance List")]
+    [Separator("Chance List")]
     [SerializeField] private ChanceList<string> testStrings;
     [SerializeField] private ChanceList<int> testInts;
     [SerializeField] private ChanceList<TestEnum> testEnums;
     
-    
-    [Header("Serialized Interface")]
+    [Separator("Serialized Interface")]
     [SerializeField] private InterfaceReference<ITest> testInterface;
     [SerializeField, RequireInterface(typeof(ITest))] private MonoBehaviour interactableObject;
 
+    
     private enum TestEnum { Option1, Option2, Option3 }
 
 
