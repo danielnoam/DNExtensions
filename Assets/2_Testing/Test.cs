@@ -32,6 +32,8 @@ public class Test : MonoBehaviour
     [SerializeField, RequireInterface(typeof(ITest))] private MonoBehaviour interactableObject;
 
     
+    
+    
     private enum TestEnum { Option1, Option2, Option3 }
 
 
