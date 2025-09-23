@@ -1,5 +1,4 @@
 ﻿using System;
-using DNExtensions;
 using DNExtensions.InputSystem;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -28,12 +27,10 @@ public class FPCPlayerInput : InputReaderBase
         public event Action<InputAction.CallbackContext> OnToggleMenuAction;
 
 
-        protected override void Awake()
+        private void Awake()
         {
-            base.Awake();
 
-
-            _playerActionMap = playerInput.actions.FindActionMap("Player");
+            _playerActionMap = PlayerInput.actions.FindActionMap("Player");
 
             if (_playerActionMap == null)
             {

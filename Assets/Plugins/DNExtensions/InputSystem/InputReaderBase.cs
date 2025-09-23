@@ -1,39 +1,31 @@
 using System;
-using DNExtensions.Button;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace DNExtensions.InputSystem
 {
+    
     /// <summary>
     /// Base class for handling Unity Input System interactions with cursor management capabilities.
     /// Provides foundation for input handling classes with built-in cursor visibility controls.
     /// </summary>
     public class InputReaderBase : MonoBehaviour
     {
-        [SerializeField] protected PlayerInput playerInput;
-        [SerializeField] private bool autoHideCursorOnAwake = true;
+        [SerializeField] protected InputManager inputManager;
+    
+    
+        public bool IsCurrentDeviceGamepad => inputManager?.IsCurrentDeviceGamepad ?? false;
+        protected PlayerInput PlayerInput => inputManager?.PlayerInput;
+        
+        
 
         
-        private void OnValidate()
+        protected virtual  void OnValidate()
         {
-            if (!playerInput) 
-            {
-                Debug.Log("No Player Input was set!");
-            }
-
-            if (playerInput && playerInput.notificationBehavior != PlayerNotifications.InvokeCSharpEvents)
-            {
-                playerInput.notificationBehavior = PlayerNotifications.InvokeCSharpEvents;
-                Debug.Log("Set Player Input notification to c# events");
-            }
+            if (!inputManager) inputManager = FindFirstObjectByType<InputManager>();
+            
         }
-
-
-        protected virtual void Awake()
-        {
-            if (autoHideCursorOnAwake) SetCursorVisibility(false);
-        }
+        
 
         /// <summary>
         /// Subscribes a callback method to all phases of an InputAction (started, performed, canceled).
@@ -62,41 +54,6 @@ namespace DNExtensions.InputSystem
             action.started -= callback;
             action.canceled -= callback;
         }
-
-        /// <summary>
-        /// Sets the cursor visibility and lock state.
-        /// </summary>
-        /// <param name="isVisible">True to show the cursor, false to hide it.</param>
-        protected void SetCursorVisibility(bool isVisible)
-        {
-            if (!isVisible)
-            {
-                Cursor.lockState = CursorLockMode.Confined;
-                Cursor.visible = false;
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-        }
-
-        /// <summary>
-        /// Toggles cursor visibility between visible and hidden states.
-        /// </summary>
-        [Button(ButtonPlayMode.OnlyWhenPlaying)]
-        protected void ToggleCursorVisibility()
-        {
-            if (Cursor.visible)
-            {
-                Cursor.lockState = CursorLockMode.Confined;
-                Cursor.visible = false;
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-        }
+        
     }
 }

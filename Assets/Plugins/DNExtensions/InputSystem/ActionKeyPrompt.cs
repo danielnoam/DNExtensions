@@ -2,7 +2,6 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 using DNExtensions.Button;
 
 public class ActionKeyPrompt : MonoBehaviour
@@ -44,10 +43,10 @@ public class ActionKeyPrompt : MonoBehaviour
     }
 
     [Button]
-    private void SetTextBasedOnAction(PlayerInput input = null)
+    private void SetTextBasedOnAction(PlayerInput input)
     {
         if (inputActionReferences == null || inputActionReferences.Length < 1 || !prompt) return;
-
+        
         var currentDeviceIsGamepad = playerInput && playerInput.currentControlScheme == "Gamepad";
 
         prompt.text = "";

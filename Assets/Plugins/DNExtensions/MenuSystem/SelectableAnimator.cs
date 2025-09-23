@@ -1,6 +1,6 @@
 
+using System;
 using System.Linq;
-using DNExtensions;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.Events;
@@ -15,8 +15,14 @@ namespace  DNExtensions.MenuSystem
     [RequireComponent(typeof(Selectable))]
     [RequireComponent(typeof(EventTrigger))]
 
-    public class MenuSelectableAnimator : MonoBehaviour
+    public class SelectableAnimator : MonoBehaviour
     {
+        [Header("Settings")]
+        [SerializeField] private bool mouseSelectsSelectable;
+        [SerializeField] private SOAudioEvent selectSfx;
+        [SerializeField] private SOAudioEvent submitSfx;
+        
+        
         [Header("Position")] 
         [SerializeField] private PositionEffectType positionEffectType = PositionEffectType.Shake;
         [ShowIf("IsOffsetMode"), SerializeField] private Vector3 positionOffset = new Vector3(0, 10, 0);
@@ -48,6 +54,7 @@ namespace  DNExtensions.MenuSystem
         [SerializeField] private AnimationCurve alphaCurve = AnimationCurve.Linear(0, 0, 1, 1);
 
         [Space(10)] 
+        [SerializeField] public AudioSource audioSource;
         [SerializeField, ReadOnly] private Selectable selectable;
         [SerializeField, ReadOnly] private EventTrigger eventTrigger;
         [SerializeField, ReadOnly] private RectTransform rectTransform;
@@ -59,13 +66,12 @@ namespace  DNExtensions.MenuSystem
         private bool _originalInteractionState;
         private bool IsOffsetMode => positionEffectType == PositionEffectType.Offset;
         private bool IsShakeMode => positionEffectType == PositionEffectType.Shake;
-
-        private enum PositionEffectType
-        {
-            None,
-            Offset,
-            Shake
-        }
+        private enum PositionEffectType { None, Offset, Shake }
+        
+        
+        public event Action OnSelectEvent;
+        public event Action OnDeselectEvent;
+        public event Action OnSubmitEvent;
 
 
         private void OnValidate()
@@ -77,7 +83,6 @@ namespace  DNExtensions.MenuSystem
 
         private void Awake()
         {
-
             _originalInteractionState = selectable.interactable;
             _originalScale = selectable.transform.localScale;
             _originalRotation = selectable.transform.localRotation.eulerAngles;
@@ -86,6 +91,14 @@ namespace  DNExtensions.MenuSystem
 
             AddEventTriggerEntry(EventTriggerType.Select, OnSelect);
             AddEventTriggerEntry(EventTriggerType.Deselect, OnDeselect);
+            AddEventTriggerEntry(EventTriggerType.Submit, OnSubmit);
+            AddEventTriggerEntry(EventTriggerType.PointerClick, OnSubmit);
+            
+            if (mouseSelectsSelectable)
+            {
+                AddEventTriggerEntry(EventTriggerType.PointerEnter, OnPointerEnter);
+                AddEventTriggerEntry(EventTriggerType.PointerExit, OnPointerExit);
+            }
         }
 
         private void OnDisable()
@@ -124,11 +137,52 @@ namespace  DNExtensions.MenuSystem
             }
         }
 
+        private void OnSubmit(BaseEventData eventData)
+        {
+
+            OnSubmitEvent?.Invoke();
+            submitSfx?.Play(audioSource);
+        }
 
         private void OnSelect(BaseEventData eventData)
         {
             if (!eventData.selectedObject.activeSelf || !selectable.interactable) return;
 
+            Select();
+        }
+
+        private void OnDeselect(BaseEventData eventData)
+        {
+            if (!eventData.selectedObject.activeSelf || !selectable.interactable) return;
+
+            Deselect();
+        }
+        
+        private void OnPointerEnter(BaseEventData eventData)
+        {
+            if (!selectable.interactable) return;
+
+            if (eventData is PointerEventData pointerEventData)
+            {
+                pointerEventData.selectedObject = pointerEventData.pointerEnter;
+            }
+        }
+
+        private void OnPointerExit(BaseEventData eventData)
+        {
+            if (!selectable.interactable) return;
+            
+            if (eventData is PointerEventData pointerEventData)
+            {
+                pointerEventData.selectedObject = null;
+            }
+        }
+        
+        public void Select()
+        {
+            
+            OnSelectEvent?.Invoke();
+            
             switch (positionEffectType)
             {
                 case PositionEffectType.Offset:
@@ -142,15 +196,15 @@ namespace  DNExtensions.MenuSystem
             if (animateScale) PlayScaleAnimation(true);
             if (animateRotation) PlayRotateAnimation(true);
             if (animateAlpha) PlayAlphaAnimation(true);
-
-
-
+            
+            selectSfx?.Play(audioSource);
         }
 
-        private void OnDeselect(BaseEventData eventData)
-        {
-            if (!eventData.selectedObject.activeSelf || !selectable.interactable) return;
 
+        public void Deselect()
+        {
+            OnDeselectEvent?.Invoke();
+            
             switch (positionEffectType)
             {
                 case PositionEffectType.Offset:
@@ -164,7 +218,6 @@ namespace  DNExtensions.MenuSystem
             if (animateScale) PlayScaleAnimation(false);
             if (animateRotation) PlayRotateAnimation(false);
             if (animateAlpha) PlayAlphaAnimation(false);
-
         }
 
 
@@ -200,7 +253,6 @@ namespace  DNExtensions.MenuSystem
             var endAlpha = selected ? selectedAlpha : _originalAlpha;
             var curve = selected ? alphaCurve : AnimationCurve.Linear(0, 0, 1, 1);
             Tween.Alpha(selectable.image, endAlpha, alphaDuration, curve, useUnscaledTime: true);
-
         }
 
 

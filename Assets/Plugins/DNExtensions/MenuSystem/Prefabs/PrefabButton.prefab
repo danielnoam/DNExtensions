@@ -148,10 +148,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22c641a4da1748fa866e29dd0aa259af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animatePosition: 0
+  mouseSelectsSelectable: 0
+  selectSfx: {fileID: 0}
+  submitSfx: {fileID: 0}
+  positionEffectType: 2
   positionOffset: {x: 0, y: 10, z: 0}
   positionDuration: 0.15
   positionEase: 31
+  shakeOnDeselect: 0
+  shakeStrength: {x: 3, y: 3, z: 0}
+  shakeFrequency: 10
+  shakeDuration: 0.5
+  shakeEase: 0
   animateRotation: 0
   rotationOffset: {x: 0, y: 0, z: 15}
   rotationDuration: 0.15
@@ -160,12 +168,6 @@ MonoBehaviour:
   scaleMultiplier: 1.1
   scaleDuration: 0.15
   scaleEase: 31
-  animateShake: 1
-  shakeOnDeselect: 0
-  shakeStrength: {x: 3, y: 3, z: 0}
-  shakeFrequency: 10
-  shakeDuration: 0.5
-  shakeEase: 0
   animateAlpha: 0
   selectedAlpha: 1
   alphaDuration: 0.5
@@ -229,6 +231,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  audioSource: {fileID: 0}
   selectable: {fileID: 8605963583811302500}
   eventTrigger: {fileID: 8254838736615546446}
   rectTransform: {fileID: 2023513964665382101}
@@ -243,6 +246,7 @@ GameObject:
   - component: {fileID: 4485481049812042888}
   - component: {fileID: 753912805279279780}
   - component: {fileID: 8448562733777217120}
+  - component: {fileID: 639721458761033838}
   m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -368,3 +372,39 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &639721458761033838
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8679515168312409101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f2231885b2944be90dc6fb3775af10c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.MenuSystem.SelectableTextAnimator
+  selectableAnimator: {fileID: -793014818130612730}
+  positionEffectType: 0
+  positionOffset: {x: 0, y: 10, z: 0}
+  positionDuration: 0.15
+  positionEase: 31
+  shakeOnDeselect: 0
+  shakeStrength: {x: 3, y: 3, z: 0}
+  shakeFrequency: 10
+  shakeDuration: 0.5
+  shakeEase: 0
+  animateRotation: 0
+  rotationOffset: {x: 0, y: 0, z: 15}
+  rotationDuration: 0.15
+  rotationEase: 31
+  animateScale: 0
+  scaleMultiplier: 1.1
+  scaleDuration: 0.15
+  scaleEase: 31
+  animateColor: 0
+  selectedColor: {r: 1, g: 1, b: 1, a: 1}
+  colorDuration: 0.15
+  colorEase: 7
+  textMeshPro: {fileID: 8448562733777217120}
+  rectTransform: {fileID: 4485481049812042888}

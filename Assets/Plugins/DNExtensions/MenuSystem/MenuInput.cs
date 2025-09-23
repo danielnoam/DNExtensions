@@ -1,14 +1,13 @@
 
 
 using System;
-using DNExtensions.InputSystem;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using DNExtensions.InputSystem;
 
 namespace  DNExtensions.MenuSystem
 {
     
-
     public class MenuInput : InputReaderBase
     {
         private InputActionMap _uiActionMap;
@@ -35,12 +34,10 @@ namespace  DNExtensions.MenuSystem
         public event Action<InputAction.CallbackContext> OnTrackedDevicePositionAction;
         public event Action<InputAction.CallbackContext> OnTrackedDeviceOrientationAction;
 
-        protected override void Awake()
+        private void Awake()
         {
-            base.Awake();
-
-
-            _uiActionMap = playerInput.actions.FindActionMap("UI");
+            
+            _uiActionMap = PlayerInput.actions.FindActionMap("UI");
 
             if (_uiActionMap == null)
             {

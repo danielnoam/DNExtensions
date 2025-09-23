@@ -47,6 +47,7 @@ GameObject:
   - component: {fileID: 3548495886715731324}
   - component: {fileID: 6675398042037709168}
   - component: {fileID: 204628566310287971}
+  - component: {fileID: 1581904611002391018}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -172,6 +173,42 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &1581904611002391018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 433051918677178659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f2231885b2944be90dc6fb3775af10c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.MenuSystem.SelectableTextAnimator
+  selectableAnimator: {fileID: -446102909628198116}
+  positionEffectType: 0
+  positionOffset: {x: 0, y: 10, z: 0}
+  positionDuration: 0.15
+  positionEase: 31
+  shakeOnDeselect: 0
+  shakeStrength: {x: 3, y: 3, z: 0}
+  shakeFrequency: 10
+  shakeDuration: 0.5
+  shakeEase: 0
+  animateRotation: 0
+  rotationOffset: {x: 0, y: 0, z: 15}
+  rotationDuration: 0.15
+  rotationEase: 31
+  animateScale: 0
+  scaleMultiplier: 1.1
+  scaleDuration: 0.15
+  scaleEase: 31
+  animateColor: 0
+  selectedColor: {r: 1, g: 1, b: 1, a: 1}
+  colorDuration: 0.15
+  colorEase: 7
+  textMeshPro: {fileID: 204628566310287971}
+  rectTransform: {fileID: 3548495886715731324}
 --- !u!1 &903707571928962766
 GameObject:
   m_ObjectHideFlags: 0
@@ -963,10 +1000,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22c641a4da1748fa866e29dd0aa259af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animatePosition: 0
+  mouseSelectsSelectable: 0
+  selectSfx: {fileID: 0}
+  submitSfx: {fileID: 0}
+  positionEffectType: 2
   positionOffset: {x: 0, y: 10, z: 0}
   positionDuration: 0.15
   positionEase: 31
+  shakeOnDeselect: 0
+  shakeStrength: {x: 3, y: 3, z: 0}
+  shakeFrequency: 10
+  shakeDuration: 0.5
+  shakeEase: 0
   animateRotation: 0
   rotationOffset: {x: 0, y: 0, z: 15}
   rotationDuration: 0.15
@@ -975,12 +1020,6 @@ MonoBehaviour:
   scaleMultiplier: 1.1
   scaleDuration: 0.15
   scaleEase: 31
-  animateShake: 1
-  shakeOnDeselect: 0
-  shakeStrength: {x: 3, y: 3, z: 0}
-  shakeFrequency: 10
-  shakeDuration: 0.5
-  shakeEase: 0
   animateAlpha: 0
   selectedAlpha: 1
   alphaDuration: 0.5
@@ -1008,6 +1047,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  audioSource: {fileID: 0}
   selectable: {fileID: 6627467794847877687}
   eventTrigger: {fileID: 4848554489464282712}
   rectTransform: {fileID: 4790876206665644700}
