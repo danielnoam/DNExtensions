@@ -6,7 +6,7 @@ using DNExtensions.VFXManager;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class Test : MonoBehaviour
+public class DNExtensionsExample : MonoBehaviour
 {
 
     [Header("DNExtensions")]

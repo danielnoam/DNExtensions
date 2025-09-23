@@ -78,7 +78,7 @@ public class InteractableTooltip : MonoBehaviour
                 }
         }
 
-        private void InteractableOnOnInteract(FPCPlayerInteraction interactor)
+        private void InteractableOnOnInteract(FPCInteraction interactor)
         {
                 
         }

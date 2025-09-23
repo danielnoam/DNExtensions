@@ -23,7 +23,7 @@ public class Interactable : MonoBehaviour
     
     public bool CanInteract => canInteract;
     
-    public event Action<FPCPlayerInteraction> OnInteract;
+    public event Action<FPCInteraction> OnInteract;
     public event Action OnUnHighlight;
     public event Action OnHighlight;
 
@@ -78,7 +78,7 @@ public class Interactable : MonoBehaviour
         OnUnHighlight?.Invoke();
     }
     
-    public void Interact(FPCPlayerInteraction interactor)
+    public void Interact(FPCInteraction interactor)
     {
         if (!canInteract) return;
         interactionSfx?.Play(audioSource);

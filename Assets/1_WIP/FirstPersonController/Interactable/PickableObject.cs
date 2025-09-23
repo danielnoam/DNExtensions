@@ -52,7 +52,7 @@ public class PickableObject : MonoBehaviour
         }
     }
     
-    private void OnInteract(FPCPlayerInteraction interactor)
+    private void OnInteract(FPCInteraction interactor)
     {
         if (!rigidBody || !interactor) return;
 
@@ -95,7 +95,7 @@ public class PickableObject : MonoBehaviour
     }
     
     
-    private void PickUp(FPCPlayerInteraction interactor)
+    private void PickUp(FPCInteraction interactor)
     {
         if (!rigidBody || _isBeingHeld) return;
 

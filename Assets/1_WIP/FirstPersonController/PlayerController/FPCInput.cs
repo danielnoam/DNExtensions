@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [DisallowMultipleComponent]
-public class FPCPlayerInput : InputReaderBase
+public class FPCInput : InputReaderBase
 {
         private InputActionMap _playerActionMap;
         private InputAction _moveAction;

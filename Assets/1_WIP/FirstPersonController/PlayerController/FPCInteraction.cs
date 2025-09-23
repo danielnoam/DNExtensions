@@ -7,9 +7,9 @@ using UnityEngine.InputSystem;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(AudioSource))]
-[RequireComponent(typeof(FpcPlayerMovement))]
-[RequireComponent(typeof(FPCPlayerCamera))]
-public class FPCPlayerInteraction : MonoBehaviour
+[RequireComponent(typeof(FPCMovement))]
+[RequireComponent(typeof(FPCCamera))]
+public class FPCInteraction : MonoBehaviour
 {
     [Header("Interaction Settings")]
     [SerializeField] private float interactionRadius = 3f;
@@ -21,9 +21,9 @@ public class FPCPlayerInteraction : MonoBehaviour
     [SerializeField, MinMaxRange(1f,4f)] private RangedFloat throwHeldRange = new RangedFloat(1f, 4f);
     
     [Header("References")]
-    [SerializeField] private FPCPlayerCamera fpcPlayerCamera;
-    [SerializeField] private FPCPlayerInput fpcPlayerInput;
-    [SerializeField] private FpcPlayerMovement fpcPlayerMovement;
+    [SerializeField] private FPCCamera fpcCamera;
+    [SerializeField] private FPCInput fpcInput;
+    [SerializeField] private FPCMovement fpcMovement;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private Transform holdPosition;
     [SerializeField] private Transform interactionPosition;
@@ -56,9 +56,9 @@ public class FPCPlayerInteraction : MonoBehaviour
 
     private void OnValidate()
     {
-        if (!fpcPlayerCamera) fpcPlayerCamera = GetComponent<FPCPlayerCamera>();
-        if (!fpcPlayerInput) fpcPlayerInput = GetComponent<FPCPlayerInput>();
-        if (!fpcPlayerMovement) fpcPlayerMovement = GetComponent<FpcPlayerMovement>();
+        if (!fpcCamera) fpcCamera = GetComponent<FPCCamera>();
+        if (!fpcInput) fpcInput = GetComponent<FPCInput>();
+        if (!fpcMovement) fpcMovement = GetComponent<FPCMovement>();
         if (!audioSource) audioSource = GetComponent<AudioSource>();
         if (!interactionPosition) interactionPosition = transform;
     }
@@ -66,16 +66,16 @@ public class FPCPlayerInteraction : MonoBehaviour
 
     private void OnEnable()
     {
-        fpcPlayerInput.OnInteractAction += OnInteract;
-        fpcPlayerInput.OnThrowAction += OnThrow;
-        fpcPlayerInput.OnDropAction += OnDrop;
+        fpcInput.OnInteractAction += OnInteract;
+        fpcInput.OnThrowAction += OnThrow;
+        fpcInput.OnDropAction += OnDrop;
     }
 
     private void OnDisable()
     {
-        fpcPlayerInput.OnInteractAction -= OnInteract;
-        fpcPlayerInput.OnThrowAction -= OnThrow;
-        fpcPlayerInput.OnDropAction -= OnDrop;
+        fpcInput.OnInteractAction -= OnInteract;
+        fpcInput.OnThrowAction -= OnThrow;
+        fpcInput.OnDropAction -= OnDrop;
     }
     
     private void OnInteract(InputAction.CallbackContext context)
@@ -129,7 +129,7 @@ public class FPCPlayerInteraction : MonoBehaviour
         if (!_heldObject) return;
         
         var force = throwForceRange.Lerp(_throwInputHoldTime / throwHeldRange.maxValue);
-        _heldObject.Throw(fpcPlayerCamera.GetAimDirection(), force);
+        _heldObject.Throw(fpcCamera.GetAimDirection(), force);
         _heldObject = null;
     }
 

@@ -2,9 +2,9 @@
 using System;
 using UnityEngine;
 
-[RequireComponent(typeof(FpcPlayerMovement))]
+[RequireComponent(typeof(FPCMovement))]
 [RequireComponent(typeof(CharacterController))]
-public class FPCPlayerRigidBodyPush : MonoBehaviour
+public class FPCRigidBodyPush : MonoBehaviour
 {
 
     [SerializeField, Min(0f)] private float pushPower = 2f;

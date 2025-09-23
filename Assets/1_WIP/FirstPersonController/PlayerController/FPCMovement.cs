@@ -7,13 +7,13 @@ using DNExtensions;
 [SelectionBase]
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(AudioSource))]
-[RequireComponent(typeof(FPCPlayerCamera))]
-[RequireComponent(typeof(FPCPlayerInput))]
-[RequireComponent(typeof(FPCPlayerInteraction))]
-[RequireComponent(typeof(FPCPlayerRigidBodyPush))]
+[RequireComponent(typeof(FPCCamera))]
+[RequireComponent(typeof(FPCInput))]
+[RequireComponent(typeof(FPCInteraction))]
+[RequireComponent(typeof(FPCRigidBodyPush))]
 [DisallowMultipleComponent]
 
-public class FpcPlayerMovement : MonoBehaviour
+public class FPCMovement : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float walkSpeed = 5f;
@@ -28,9 +28,9 @@ public class FpcPlayerMovement : MonoBehaviour
 
     [Header("References")] 
     [SerializeField] private CharacterController controller;
-    [SerializeField] private FPCPlayerCamera fpcPlayerCamera;
-    [SerializeField] private FPCPlayerInteraction fpcPlayerInteraction;
-    [SerializeField] private FPCPlayerInput fpcPlayerInput;
+    [SerializeField] private FPCCamera fpcCamera;
+    [SerializeField] private FPCInteraction fpcInteraction;
+    [SerializeField] private FPCInput fpcInput;
     [SerializeField] private AudioSource audioSource;
 
 
@@ -56,24 +56,24 @@ public class FpcPlayerMovement : MonoBehaviour
     private void OnValidate()
     {
         if (!controller) controller = GetComponent<CharacterController>();
-        if (!fpcPlayerCamera) fpcPlayerCamera = GetComponent<FPCPlayerCamera>();
-        if (!fpcPlayerInput) fpcPlayerInput = GetComponent<FPCPlayerInput>();
-        if (!fpcPlayerInteraction) fpcPlayerInteraction = GetComponent<FPCPlayerInteraction>();
+        if (!fpcCamera) fpcCamera = GetComponent<FPCCamera>();
+        if (!fpcInput) fpcInput = GetComponent<FPCInput>();
+        if (!fpcInteraction) fpcInteraction = GetComponent<FPCInteraction>();
         if (!audioSource) audioSource = GetComponent<AudioSource>();
     }
 
     private void OnEnable()
     {
-        fpcPlayerInput.OnMoveAction += GetMovementInput;
-        fpcPlayerInput.OnRunAction += GetRunningInput;
-        fpcPlayerInput.OnJumpAction += GetJumpInput;
+        fpcInput.OnMoveAction += GetMovementInput;
+        fpcInput.OnRunAction += GetRunningInput;
+        fpcInput.OnJumpAction += GetJumpInput;
     }
 
     private void OnDisable()
     {
-        fpcPlayerInput.OnMoveAction -= GetMovementInput;
-        fpcPlayerInput.OnRunAction -= GetRunningInput;
-        fpcPlayerInput.OnJumpAction -= GetJumpInput;
+        fpcInput.OnMoveAction -= GetMovementInput;
+        fpcInput.OnRunAction -= GetRunningInput;
+        fpcInput.OnJumpAction -= GetJumpInput;
     }
     
     private void Update()
@@ -106,15 +106,15 @@ public class FpcPlayerMovement : MonoBehaviour
 
     private void HandleMovement()
     {
-        Vector3 cameraForward = fpcPlayerCamera.GetMovementDirection();
+        Vector3 cameraForward = fpcCamera.GetMovementDirection();
         Vector3 cameraRight = Quaternion.Euler(0, 90, 0) * cameraForward;
         Vector3 moveDir = (cameraForward * _moveInput.y + cameraRight * _moveInput.x).normalized;
 
         IsRunning = _runInput && canRun;
         float targetMoveSpeed = IsRunning ? runSpeed : walkSpeed;
-        if (fpcPlayerInteraction.HeldObject)
+        if (fpcInteraction.HeldObject)
         {
-            targetMoveSpeed /= fpcPlayerInteraction.HeldObject.ObjectWeight;
+            targetMoveSpeed /= fpcInteraction.HeldObject.ObjectWeight;
         }
         controller.Move(moveDir * (targetMoveSpeed * Time.deltaTime));
     }
