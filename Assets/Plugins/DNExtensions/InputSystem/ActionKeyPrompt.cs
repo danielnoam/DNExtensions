@@ -1,72 +1,160 @@
+
 using System;
+using DNExtensions.Button;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using DNExtensions.Button;
 
-public class ActionKeyPrompt : MonoBehaviour
+namespace DNExtensions.InputSystem
 {
-
-    [Header("Settings")]
-    [SerializeField] private InputActionReference[] inputActionReferences = Array.Empty<InputActionReference>();
     
-    
-    [Header("Reference")]
-    [SerializeField] private TextMeshProUGUI prompt;
-    [SerializeField] private PlayerInput playerInput;
-
-
-    private void OnValidate()
+    public class ActionKeyPrompt : MonoBehaviour
     {
-        if (!playerInput) playerInput = FindFirstObjectByType<PlayerInput>();
-    }
+        [Header("Settings")] [SerializeField] private bool useSprites = true;
+        [SerializeField] private string separator = " | ";
+        [SerializeField] private InputActionReference[] inputActionReferences = Array.Empty<InputActionReference>();
 
-    private void Awake()
-    {
-        if (!playerInput) playerInput = FindFirstObjectByType<PlayerInput>();
-    }
+        [Header("Pressed Effects")] [SerializeField]
+        private Color pressedColor = Color.gray;
 
-    private void OnEnable()
-    {
-        if (playerInput)
+        [SerializeField] private Vector3 pressedScale = Vector3.one * 0.9f;
+
+        [Header("Reference")] [SerializeField] private TextMeshProUGUI prompt;
+        [SerializeField] private InputManager inputManager;
+
+        private Color _originalColor;
+        private Vector3 _originalScale;
+        private bool _isPressed;
+
+        private void Awake()
         {
-            playerInput.onControlsChanged += SetTextBasedOnAction;
+            if (!inputManager) inputManager = FindFirstObjectByType<InputManager>();
         }
-    }
 
-    private void OnDisable()
-    {
-        if (playerInput)
+        private void Start()
         {
-            playerInput.onControlsChanged -= SetTextBasedOnAction;
-        }
-    }
-
-    [Button]
-    private void SetTextBasedOnAction(PlayerInput input)
-    {
-        if (inputActionReferences == null || inputActionReferences.Length < 1 || !prompt) return;
-        
-        var currentDeviceIsGamepad = playerInput && playerInput.currentControlScheme == "Gamepad";
-
-        prompt.text = "";
-
-        for (var index = 0; index < inputActionReferences.Length; index++)
-        {
-            var inputActionReference = inputActionReferences[index];
-            if (!inputActionReference) continue;
-
-            if (inputActionReferences.Length > 1 && index < inputActionReferences.Length - 1)
+            if (prompt)
             {
-                prompt.text += $"{inputActionReference.action.GetBindingDisplayString(0, currentDeviceIsGamepad ? "Gamepad" : "Keyboard&Mouse")} | ";
+                _originalColor = prompt.color;
+                _originalScale = prompt.transform.localScale;
+            }
+
+            UpdateDisplay();
+        }
+
+        private void OnEnable()
+        {
+            if (inputManager)
+            {
+                inputManager.OnControlsChangedEvent += OnInputChanged;
+            }
+
+
+            foreach (var actionReference in inputActionReferences)
+            {
+                if (actionReference?.action != null)
+                {
+                    actionReference.action.started += OnActionStarted;
+                    actionReference.action.canceled += OnActionCanceled;
+                }
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (inputManager)
+            {
+                inputManager.OnControlsChangedEvent -= OnInputChanged;
+            }
+
+
+            foreach (var actionReference in inputActionReferences)
+            {
+                if (actionReference?.action != null)
+                {
+                    actionReference.action.started -= OnActionStarted;
+                    actionReference.action.canceled -= OnActionCanceled;
+                }
+            }
+        }
+
+        private void OnInputChanged(PlayerInput input) => UpdateDisplay();
+
+        private void OnActionStarted(InputAction.CallbackContext context)
+        {
+
+            SetFontColor(pressedColor);
+            SetScale(pressedScale);
+            _isPressed = true;
+        }
+
+        private void OnActionCanceled(InputAction.CallbackContext context)
+        {
+
+            ResetFontColor();
+            ResetScale();
+            _isPressed = false;
+        }
+
+
+
+
+        [Button("Update Display")]
+        public void UpdateDisplay()
+        {
+            if (!prompt || inputActionReferences == null || inputActionReferences.Length == 0) return;
+
+            InputAction[] actions = new InputAction[inputActionReferences.Length];
+            for (int i = 0; i < inputActionReferences.Length; i++)
+            {
+                actions[i] = inputActionReferences[i]?.action;
+            }
+
+            prompt.text = InputManager.GetActionBindings(actions, separator, useSprites);
+
+            if (_isPressed)
+            {
+                SetFontColor(pressedColor);
+                SetScale(pressedScale);
             }
             else
             {
-                prompt.text += $"{inputActionReference.action.GetBindingDisplayString(0, currentDeviceIsGamepad ? "Gamepad" : "Keyboard&Mouse")}";
+                ResetFontColor();
+                ResetScale();
             }
-
         }
+
+        private void SetFontColor(Color color)
+        {
+            if (prompt)
+            {
+                prompt.color = color;
+            }
+        }
+
+        private void ResetFontColor()
+        {
+            if (prompt)
+            {
+                prompt.color = _originalColor;
+            }
+        }
+
+        private void SetScale(Vector3 scale)
+        {
+            if (prompt)
+            {
+                prompt.transform.localScale = scale;
+            }
+        }
+
+        private void ResetScale()
+        {
+            if (prompt)
+            {
+                prompt.transform.localScale = _originalScale;
+            }
+        }
+
     }
-    
-    
 }

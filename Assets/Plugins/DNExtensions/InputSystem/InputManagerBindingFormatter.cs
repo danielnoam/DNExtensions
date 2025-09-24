@@ -260,5 +260,23 @@ namespace DNExtensions.InputSystem
 
             return buttonName;
         }
+        
+        
+        /// <summary>
+        /// Get binding display for a specific InputAction
+        /// </summary>
+        public static string GetActionBinding(InputAction action, bool useSprites, PlayerInput playerInput, TMP_SpriteAsset spriteAsset = null)
+        {
+            if (!playerInput || action == null) return action?.name ?? "Unknown";
+    
+            if (useSprites)
+            {
+                return GetSpriteTagsForAction(action, action.name, playerInput, spriteAsset);
+            }
+            else
+            {
+                return GetTextTagsForAction(action, action.name, playerInput);
+            }
+        }
     }
 }

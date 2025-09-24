@@ -12,19 +12,20 @@ namespace DNExtensions.InputSystem
 
         [SerializeField] private PlayerInput playerInput;
 
+        [Header("Cursor Settings")]
+        [SerializeField] private bool hideCursor = true;
+        
+        
         // Sprite assets has to be in /Resources/Sprite Assets/ folder
-        [Header("Controls Sprite Assets")] [SerializeField]
-        private TMP_SpriteAsset keyboardMouseSpriteAsset;
-
+        [Header("Controls Sprite Assets")] 
+        [SerializeField] private TMP_SpriteAsset keyboardMouseSpriteAsset;
         [SerializeField] private TMP_SpriteAsset gamepadSpriteAsset;
 
-        [Header("Cursor Settings")] [SerializeField]
-        private bool hideCursor = true;
 
 
-        private bool _isCurrentDeviceGamepad;
 
-        public bool IsCurrentDeviceGamepad => _isCurrentDeviceGamepad;
+        public bool IsCurrentDeviceGamepad { get; private set; }
+
         public PlayerInput PlayerInput => playerInput;
 
         public event Action<PlayerInput> OnDeviceRegainedEvent;
@@ -107,14 +108,14 @@ namespace DNExtensions.InputSystem
 
         private void SetActiveControlScheme(PlayerInput input)
         {
-            _isCurrentDeviceGamepad = input.currentControlScheme == "Gamepad";
+            IsCurrentDeviceGamepad = input.currentControlScheme == "Gamepad";
         }
 
 
         /// <summary>
         /// Sets the cursor visibility and lock state.
         /// </summary>
-        /// <param name="isVisible">True to show the cursor, false to hide it.</param>
+        /// <param name="state">True to show the cursor, false to hide it.</param>
         public void SetCursorVisibility(bool state)
         {
             if (state)
@@ -151,7 +152,7 @@ namespace DNExtensions.InputSystem
         {
             if (!Instance) return text;
 
-            TMP_SpriteAsset spriteAsset = Instance._isCurrentDeviceGamepad
+            TMP_SpriteAsset spriteAsset = Instance.IsCurrentDeviceGamepad
                 ? Instance.gamepadSpriteAsset
                 : Instance.keyboardMouseSpriteAsset;
 
@@ -162,5 +163,38 @@ namespace DNExtensions.InputSystem
         {
             return InputManagerBindingFormatter.ReplaceActionBindings(text, false, Instance.playerInput);
         }
+        
+        
+            
+        /// <summary>
+        /// Get binding for a specific InputAction
+        /// </summary>
+        public static string GetActionBinding(InputAction action, bool asSprite = true)
+        {
+            if (!Instance?.playerInput || action == null) return action?.name ?? "Unknown";
+    
+            TMP_SpriteAsset spriteAsset = asSprite ? Instance.IsCurrentDeviceGamepad 
+                ? Instance.gamepadSpriteAsset 
+                : Instance.keyboardMouseSpriteAsset : null;
+    
+            return InputManagerBindingFormatter.GetActionBinding(action, asSprite, Instance.playerInput, spriteAsset);
+        }
+
+        /// <summary>
+        /// Get bindings for multiple InputActions
+        /// </summary>
+        public static string GetActionBindings(InputAction[] actions, string separator = " | ", bool asSprites = true)
+        {
+            if (actions == null || actions.Length == 0) return "";
+    
+            string[] bindings = new string[actions.Length];
+            for (int i = 0; i < actions.Length; i++)
+            {
+                bindings[i] = GetActionBinding(actions[i], asSprites);
+            }
+    
+            return string.Join(separator, bindings);
+        }
+
     }
 }
