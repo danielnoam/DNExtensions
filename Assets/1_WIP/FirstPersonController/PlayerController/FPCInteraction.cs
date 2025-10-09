@@ -6,9 +6,7 @@ using UnityEngine.InputSystem;
 
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(AudioSource))]
-[RequireComponent(typeof(FPCMovement))]
-[RequireComponent(typeof(FPCCamera))]
+[RequireComponent(typeof(FPCManager))]
 public class FPCInteraction : MonoBehaviour
 {
     [Header("Interaction Settings")]
@@ -21,10 +19,7 @@ public class FPCInteraction : MonoBehaviour
     [SerializeField, MinMaxRange(1f,4f)] private RangedFloat throwHeldRange = new RangedFloat(1f, 4f);
     
     [Header("References")]
-    [SerializeField] private FPCCamera fpcCamera;
-    [SerializeField] private FPCInput fpcInput;
-    [SerializeField] private FPCMovement fpcMovement;
-    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private FPCManager manager;
     [SerializeField] private Transform holdPosition;
     [SerializeField] private Transform interactionPosition;
     
@@ -56,26 +51,23 @@ public class FPCInteraction : MonoBehaviour
 
     private void OnValidate()
     {
-        if (!fpcCamera) fpcCamera = GetComponent<FPCCamera>();
-        if (!fpcInput) fpcInput = GetComponent<FPCInput>();
-        if (!fpcMovement) fpcMovement = GetComponent<FPCMovement>();
-        if (!audioSource) audioSource = GetComponent<AudioSource>();
+        if (!manager) manager = GetComponent<FPCManager>();
         if (!interactionPosition) interactionPosition = transform;
     }
 
 
     private void OnEnable()
     {
-        fpcInput.OnInteractAction += OnInteract;
-        fpcInput.OnThrowAction += OnThrow;
-        fpcInput.OnDropAction += OnDrop;
+        manager.FPCInput.OnInteractAction += OnInteract;
+        manager.FPCInput.OnThrowAction += OnThrow;
+        manager.FPCInput.OnDropAction += OnDrop;
     }
 
     private void OnDisable()
     {
-        fpcInput.OnInteractAction -= OnInteract;
-        fpcInput.OnThrowAction -= OnThrow;
-        fpcInput.OnDropAction -= OnDrop;
+        manager.FPCInput.OnInteractAction -= OnInteract;
+        manager.FPCInput.OnThrowAction -= OnThrow;
+        manager.FPCInput.OnDropAction -= OnDrop;
     }
     
     private void OnInteract(InputAction.CallbackContext context)
@@ -129,7 +121,7 @@ public class FPCInteraction : MonoBehaviour
         if (!_heldObject) return;
         
         var force = throwForceRange.Lerp(_throwInputHoldTime / throwHeldRange.maxValue);
-        _heldObject.Throw(fpcCamera.GetAimDirection(), force);
+        _heldObject.Throw(manager.FPCCamera.GetAimDirection(), force);
         _heldObject = null;
     }
 

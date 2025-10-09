@@ -2,16 +2,19 @@
 using System;
 using UnityEngine;
 
-[RequireComponent(typeof(FPCMovement))]
-[RequireComponent(typeof(CharacterController))]
+[DisallowMultipleComponent]
 public class FPCRigidBodyPush : MonoBehaviour
 {
 
+    [Header("Settings")]
+    [SerializeField] private bool enablePush = true;
     [SerializeField, Min(0f)] private float pushPower = 2f;
     
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
+        if (!enablePush) return;
+        
         Rigidbody rb = hit.collider.attachedRigidbody;
         
         if (!rb || rb.isKinematic) return;

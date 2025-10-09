@@ -4,7 +4,7 @@ using Unity.Cinemachine;
 using UnityEngine.InputSystem;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(FPCMovement))]
+[RequireComponent(typeof(FPCManager))]
 public class FPCCamera : MonoBehaviour
 {
     [Header("Settings")]
@@ -21,8 +21,7 @@ public class FPCCamera : MonoBehaviour
     [SerializeField] private float fovChangeSmoothing = 5;
     
     [Header("References")]
-    [SerializeField] private FPCMovement fpcMovement;
-    [SerializeField] private FPCInput fpcInput;
+    [SerializeField] private FPCManager manager;
     [SerializeField] private Transform playerHead;
     [SerializeField] private CinemachineCamera cinemachineCamera;
     [SerializeField] private Camera normalCamera;
@@ -37,8 +36,7 @@ public class FPCCamera : MonoBehaviour
     
     private void OnValidate()
     {
-        if (!fpcMovement) fpcMovement = GetComponent<FPCMovement>();
-        if (!fpcInput) fpcInput = GetComponent<FPCInput>();
+        if (!manager) manager = GetComponent<FPCManager>();
 
         if (useNormalCamera)
         {
@@ -62,12 +60,12 @@ public class FPCCamera : MonoBehaviour
     
     private void OnEnable()
     {
-        fpcInput.OnLookAction += OnLook;
+        manager.FPCInput.OnLookAction += OnLook;
     }
     
     private void OnDisable()
     {
-        fpcInput.OnLookAction -= OnLook;
+        manager.FPCInput.OnLookAction -= OnLook;
     }
     
     private void Update()
@@ -116,7 +114,7 @@ public class FPCCamera : MonoBehaviour
         if (!cinemachineCamera) return;
         
         float targetFov = baseFov;
-        if (fpcMovement.IsRunning)
+        if (manager.FPCMovement.IsRunning)
         {
             targetFov *= runFovMultiplier;
         }

@@ -3,9 +3,12 @@ using DNExtensions;
 using DNExtensions.Button;
 using DNExtensions.SerializedInterface;
 using DNExtensions.VFXManager;
+using DNExtensions.CinemachineImpulseSystem;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+[RequireComponent(typeof(CinemachineImpulseSource))]
 public class DNExtensionsExample : MonoBehaviour
 {
 
@@ -31,7 +34,9 @@ public class DNExtensionsExample : MonoBehaviour
     [SerializeField] private InterfaceReference<ITest> testInterface;
     [SerializeField, RequireInterface(typeof(ITest))] private MonoBehaviour interactableObject;
 
-    
+    [Separator("Cinemachine")]
+    [SerializeField] private ImpulseSettings testImpulse;
+    [SerializeField] private CinemachineImpulseSource testImpulseSource;
     
     
     private enum TestEnum { Option1, Option2, Option3 }
@@ -44,12 +49,11 @@ public class DNExtensionsExample : MonoBehaviour
 
     
     
-    
     [Button("Test Group", "")]
-    public void TestButton1() { }
-    
-    [Button("Test Group", "")]
-    public void TestButton2() { }
+    public void TestImpulse()
+    {
+        testImpulseSource.GenerateImpulse(testImpulse);
+    }
     
     
     

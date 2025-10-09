@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [DisallowMultipleComponent]
+[RequireComponent(typeof(FPCManager))]
 public class FPCInput : InputReaderBase
 {
         private InputActionMap _playerActionMap;

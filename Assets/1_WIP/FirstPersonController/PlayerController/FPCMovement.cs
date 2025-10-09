@@ -4,21 +4,16 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using DNExtensions;
 
-[SelectionBase]
-[RequireComponent(typeof(CharacterController))]
-[RequireComponent(typeof(AudioSource))]
-[RequireComponent(typeof(FPCCamera))]
-[RequireComponent(typeof(FPCInput))]
-[RequireComponent(typeof(FPCInteraction))]
-[RequireComponent(typeof(FPCRigidBodyPush))]
-[DisallowMultipleComponent]
 
+
+[DisallowMultipleComponent]
+[RequireComponent(typeof(FPCManager))]
 public class FPCMovement : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float walkSpeed = 5f;
+    [SerializeField] private float walkSpeed = 8f;
     [SerializeField] private bool canRun = true;
-    [ShowIf("canRun")][SerializeField] private float runSpeed = 7f;
+    [ShowIf("canRun")][SerializeField] private float runSpeed = 12f;
     [SerializeField] private float gravity = -15f;
     
     [Header("Jump")]
@@ -27,11 +22,7 @@ public class FPCMovement : MonoBehaviour
     [SerializeField] private float coyoteTime = 0.1f;
 
     [Header("References")] 
-    [SerializeField] private CharacterController controller;
-    [SerializeField] private FPCCamera fpcCamera;
-    [SerializeField] private FPCInteraction fpcInteraction;
-    [SerializeField] private FPCInput fpcInput;
-    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private FPCManager manager;
 
 
     
@@ -55,25 +46,21 @@ public class FPCMovement : MonoBehaviour
 
     private void OnValidate()
     {
-        if (!controller) controller = GetComponent<CharacterController>();
-        if (!fpcCamera) fpcCamera = GetComponent<FPCCamera>();
-        if (!fpcInput) fpcInput = GetComponent<FPCInput>();
-        if (!fpcInteraction) fpcInteraction = GetComponent<FPCInteraction>();
-        if (!audioSource) audioSource = GetComponent<AudioSource>();
+        if (!manager) manager = GetComponent<FPCManager>();
     }
 
     private void OnEnable()
     {
-        fpcInput.OnMoveAction += GetMovementInput;
-        fpcInput.OnRunAction += GetRunningInput;
-        fpcInput.OnJumpAction += GetJumpInput;
+        manager.FPCInput.OnMoveAction += GetMovementInput;
+        manager.FPCInput.OnRunAction += GetRunningInput;
+        manager.FPCInput.OnJumpAction += GetJumpInput;
     }
 
     private void OnDisable()
     {
-        fpcInput.OnMoveAction -= GetMovementInput;
-        fpcInput.OnRunAction -= GetRunningInput;
-        fpcInput.OnJumpAction -= GetJumpInput;
+        manager.FPCInput.OnMoveAction -= GetMovementInput;
+        manager.FPCInput.OnRunAction -= GetRunningInput;
+        manager.FPCInput.OnJumpAction -= GetJumpInput;
     }
     
     private void Update()
@@ -106,17 +93,17 @@ public class FPCMovement : MonoBehaviour
 
     private void HandleMovement()
     {
-        Vector3 cameraForward = fpcCamera.GetMovementDirection();
+        Vector3 cameraForward = manager.FPCCamera.GetMovementDirection();
         Vector3 cameraRight = Quaternion.Euler(0, 90, 0) * cameraForward;
         Vector3 moveDir = (cameraForward * _moveInput.y + cameraRight * _moveInput.x).normalized;
 
         IsRunning = _runInput && canRun;
         float targetMoveSpeed = IsRunning ? runSpeed : walkSpeed;
-        if (fpcInteraction.HeldObject)
+        if (manager.FPCInteraction.HeldObject)
         {
-            targetMoveSpeed /= fpcInteraction.HeldObject.ObjectWeight;
+            targetMoveSpeed /= manager.FPCInteraction.HeldObject.ObjectWeight;
         }
-        controller.Move(moveDir * (targetMoveSpeed * Time.deltaTime));
+        manager.CharacterController.Move(moveDir * (targetMoveSpeed * Time.deltaTime));
     }
     
     private void HandleJump()
@@ -135,14 +122,14 @@ public class FPCMovement : MonoBehaviour
         }
         
         _velocity.y += gravity * Time.deltaTime;
-        controller.Move(_velocity * Time.deltaTime);
+        manager.CharacterController.Move(_velocity * Time.deltaTime);
         IsJumping = _velocity.y > 0;
     }
 
     private void CheckGrounded()
     {
         _wasGrounded  = IsGrounded;
-        IsGrounded = controller.isGrounded;
+        IsGrounded = manager.CharacterController.isGrounded;
         IsFalling = _velocity.y < 0;
         
         if (IsGrounded)
