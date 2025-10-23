@@ -18,3 +18,4 @@ MonoBehaviour:
   bookmarks: []
   bookmarkedScenePaths:
   - Assets/2_Testing/TestScene.unity
+  - Assets/2_Testing/1.unity
