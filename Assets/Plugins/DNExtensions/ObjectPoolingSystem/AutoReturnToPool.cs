@@ -8,16 +8,17 @@ namespace DNExtensions.ObjectPooling
     /// </summary>
     public class AutoReturnToPool : MonoBehaviour, IPooledObject
     {
-        private float _lifeTime;
+        public float lifeTime;
         private bool _isInitialized;
 
         private void Update()
         {
             if (!_isInitialized) return;
 
-            _lifeTime -= Time.deltaTime;
-            if (_lifeTime <= 0f)
+            lifeTime -= Time.deltaTime;
+            if (lifeTime <= 0f)
             {
+                lifeTime = 0f;
                 _isInitialized = false;
                 ObjectPooler.ReturnObjectToPool(gameObject);
             }
@@ -29,7 +30,7 @@ namespace DNExtensions.ObjectPooling
         /// <param name="lifeTime">Time in seconds before returning to pool</param>
         public void Initialize(float lifeTime)
         {
-            _lifeTime = lifeTime;
+            this.lifeTime = lifeTime;
             _isInitialized = true;
         }
 

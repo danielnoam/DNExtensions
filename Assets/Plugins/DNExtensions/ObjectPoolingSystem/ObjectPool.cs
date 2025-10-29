@@ -17,17 +17,14 @@ namespace DNExtensions.ObjectPooling
         public string poolName = "New Pool";
         [Min(1)] public int maxPoolSize = 50;
         public GameObject prefab;
-
         [Tooltip("Adds the pool to don't destroy list")]
         public bool dontDestroyOnLoad = true;
-
         [Tooltip("If max pool size reached and there are no objects in inactive pool, recycle the last active object (this is not recommended, objects are notified that they have been recycled but it is not performant")]
         public bool recycleActiveObjects;
 
         [Header("Pre Warm")] 
         [Tooltip("Pre populate the pool")]
         public bool preWarmPool = true;
-
         public int preWarmPoolSize = 5;
 
         [Header("Debug")]

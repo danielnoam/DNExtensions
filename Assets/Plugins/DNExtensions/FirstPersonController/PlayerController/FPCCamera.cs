@@ -111,7 +111,6 @@ public class FPCCamera : MonoBehaviour
     
     private void UpdateFov()
     {
-        if (!cinemachineCamera) return;
         
         float targetFov = baseFov;
         if (manager.FPCMovement.IsRunning)
@@ -125,7 +124,7 @@ public class FPCCamera : MonoBehaviour
         }
         else
         {
-            cinemachineCamera.Lens.FieldOfView = Mathf.Lerp(cinemachineCamera.Lens.FieldOfView, targetFov, Time.deltaTime * fovChangeSmoothing);
+            if (cinemachineCamera) cinemachineCamera.Lens.FieldOfView = Mathf.Lerp(cinemachineCamera.Lens.FieldOfView, targetFov, Time.deltaTime * fovChangeSmoothing);
         }
 
     }
