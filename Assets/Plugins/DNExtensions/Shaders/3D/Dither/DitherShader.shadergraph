@@ -980,7 +980,7 @@
         },
         "preventRotation": false
     },
-    "m_Path": "",
+    "m_Path": "—",
     "m_GraphPrecision": 1,
     "m_PreviewMode": 2,
     "m_OutputNode": {
@@ -1828,7 +1828,7 @@
     "m_Group": {
         "m_Id": "5e686a8330034b3c8ccc7c1580583cf4"
     },
-    "m_Name": "Fade Near Camera Sub Graph",
+    "m_Name": "Dither Near Sub Graph",
     "m_DrawState": {
         "m_Expanded": true,
         "m_Position": {
@@ -1836,7 +1836,7 @@
             "x": 1764.6666259765625,
             "y": 2238.0,
             "width": 285.3333740234375,
-            "height": 166.666748046875
+            "height": 166.0
         }
     },
     "m_Slots": [
@@ -3214,8 +3214,8 @@
     "m_ObjectId": "5e686a8330034b3c8ccc7c1580583cf4",
     "m_Title": "Dither",
     "m_Position": {
-        "x": 1340.0001220703125,
-        "y": 1787.9998779296875
+        "x": 1339.999755859375,
+        "y": 1787.999755859375
     }
 }
 
@@ -3455,15 +3455,15 @@
     "m_Group": {
         "m_Id": "5e686a8330034b3c8ccc7c1580583cf4"
     },
-    "m_Name": "Fade Near Camera Sub Graph",
+    "m_Name": "Dither Near Sub Graph",
     "m_DrawState": {
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": 1764.6666259765625,
+            "x": 1764.66650390625,
             "y": 2428.666748046875,
-            "width": 285.3333740234375,
-            "height": 166.666748046875
+            "width": 285.33349609375,
+            "height": 166.0
         }
     },
     "m_Slots": [
@@ -4471,7 +4471,7 @@
     "m_Group": {
         "m_Id": "5e686a8330034b3c8ccc7c1580583cf4"
     },
-    "m_Name": "Fade Near Camera Sub Graph",
+    "m_Name": "Dither Near Sub Graph",
     "m_DrawState": {
         "m_Expanded": true,
         "m_Position": {
