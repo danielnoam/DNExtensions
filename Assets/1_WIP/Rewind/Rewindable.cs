@@ -3,7 +3,10 @@ using UnityEngine;
 
 namespace DNExtensions.Rewind
 {
-    public abstract class BaseRewindable : MonoBehaviour
+    
+    
+    [DisallowMultipleComponent]
+    public abstract class Rewindable : MonoBehaviour
     {
         
         
@@ -20,10 +23,10 @@ namespace DNExtensions.Rewind
             RewindManager.Instance.RemoveRewindable(this);
         }
         
-        
-        
-        public abstract void Record(float frame);
-        public abstract void Rewind(float frame);
-        
+
+        public abstract void Record(int frame);
+        public abstract void Rewind(int frame);
+        public abstract void ClearFutureFrames(int frame);
+
     }
 }

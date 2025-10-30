@@ -41,11 +41,7 @@ public class DNExtensionsExample : MonoBehaviour
     
     private enum TestEnum { Option1, Option2, Option3 }
 
-
-    private void Start()
-    {
-        VFXManager.Instance.PlayVFX(VFXManager.Instance.GetRandomEffect());
-    }
+    
 
     
     
