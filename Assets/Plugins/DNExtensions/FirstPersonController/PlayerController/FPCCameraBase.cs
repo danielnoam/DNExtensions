@@ -1,85 +1,69 @@
-
 using UnityEngine;
-using Unity.Cinemachine;
 using UnityEngine.InputSystem;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(FPCManager))]
-public class FPCCamera : MonoBehaviour
+public abstract class FPCCameraBase : MonoBehaviour
 {
     [Header("Settings")]
-    [SerializeField] private bool useNormalCamera;
-    [SerializeField] [Range(0,0.1f)] private float lookSensitivity = 0.04f;
-    [SerializeField] [Range(0,0.1f)] private float lookSmoothing;
-    [SerializeField] private Vector2 verticalAxisRange = new (-90, 90);
+    [SerializeField] [Range(0, 0.1f)] private float lookSensitivity = 0.04f;
+    [SerializeField] [Range(0, 0.1f)] private float lookSmoothing;
+    [SerializeField] private Vector2 verticalAxisRange = new(-90, 90);
     [SerializeField] private bool invertHorizontal;
     [SerializeField] private bool invertVertical;
     
     [Header("FOV")]
-    [SerializeField] private float baseFov = 60f;
-    [SerializeField] private float runFovMultiplier = 1.3f;
-    [SerializeField] private float fovChangeSmoothing = 5;
+    [SerializeField] protected float baseFov = 60f;
+    [SerializeField] protected float runFovMultiplier = 1.3f;
+    [SerializeField] protected float fovChangeSmoothing = 5;
     
     [Header("References")]
-    [SerializeField] private FPCManager manager;
-    [SerializeField] private Transform playerHead;
-    [SerializeField] private CinemachineCamera cinemachineCamera;
-    [SerializeField] private Camera normalCamera;
-    
+    [SerializeField] protected FPCManager manager;
+    [SerializeField] protected Transform playerHead;
 
     private float _currentPanAngle;
     private float _currentTiltAngle;
     private float _targetPanAngle;
     private float _targetTiltAngle;
     private Vector2 _rotationVelocity;
+
     
-    
-    private void OnValidate()
+
+    protected virtual void OnValidate()
     {
         if (!manager) manager = GetComponent<FPCManager>();
-
-        if (useNormalCamera)
-        {
-            if (normalCamera) normalCamera.fieldOfView = baseFov;
-        }
-        else
-        {
-            if (cinemachineCamera) cinemachineCamera.Lens.FieldOfView = baseFov;
-        }
-
+        UpdateFovInEditor();
     }
-    
-    
-    private void Awake()
+
+    protected virtual void Awake()
     {
         _currentPanAngle = transform.eulerAngles.y;
         _currentTiltAngle = playerHead.localEulerAngles.x;
         _targetPanAngle = _currentPanAngle;
         _targetTiltAngle = _currentTiltAngle;
     }
-    
-    private void OnEnable()
+
+    protected virtual void OnEnable()
     {
         manager.FPCInput.OnLookAction += OnLook;
     }
-    
-    private void OnDisable()
+
+    protected virtual void OnDisable()
     {
         manager.FPCInput.OnLookAction -= OnLook;
     }
-    
-    private void Update()
+
+    protected virtual void Update()
     {
         UpdateFov();
         UpdateHeadRotation();
     }
-    
+
     private void OnLook(InputAction.CallbackContext context)
     {
         if (!playerHead) return;
         
         Vector2 lookDelta = context.ReadValue<Vector2>();
-
 
         float horizontalInput = invertHorizontal ? -lookDelta.x : lookDelta.x;
         float verticalInput = invertVertical ? lookDelta.y : -lookDelta.y;
@@ -94,7 +78,7 @@ public class FPCCamera : MonoBehaviour
             _currentTiltAngle = _targetTiltAngle;
         }
     }
-    
+
     private void UpdateHeadRotation()   
     {
         if (!playerHead) return;
@@ -108,27 +92,17 @@ public class FPCCamera : MonoBehaviour
         transform.rotation = Quaternion.Euler(0, _currentPanAngle, 0);
         playerHead.localRotation = Quaternion.Euler(_currentTiltAngle, 0, 0);
     }
-    
+
     private void UpdateFov()
     {
-        
         float targetFov = baseFov;
         if (manager.FPCMovement.IsRunning)
         {
             targetFov *= runFovMultiplier;
         }
-        
-        if (useNormalCamera)
-        {
-            if (normalCamera) normalCamera.fieldOfView = Mathf.Lerp(normalCamera.fieldOfView, targetFov, Time.deltaTime * fovChangeSmoothing);
-        }
-        else
-        {
-            if (cinemachineCamera) cinemachineCamera.Lens.FieldOfView = Mathf.Lerp(cinemachineCamera.Lens.FieldOfView, targetFov, Time.deltaTime * fovChangeSmoothing);
-        }
 
+        SetFieldOfView(targetFov);
     }
-    
     
     public Vector3 GetMovementDirection()
     {
@@ -141,4 +115,6 @@ public class FPCCamera : MonoBehaviour
         return Quaternion.Euler(_currentTiltAngle, _currentPanAngle, 0) * Vector3.forward;
     }
     
+    protected abstract void UpdateFovInEditor();
+    protected abstract void SetFieldOfView(float targetFov);
 }

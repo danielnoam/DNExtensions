@@ -14,6 +14,7 @@ namespace DNExtensions.Rewind
         public static RewindManager Instance;
         
         [Header("Settings")]
+        [Tooltip("The duration between frames while rewinding")]
         [SerializeField, Range(0.5f, 3f)] private float rewindSpeed = 1f;
 
         [Separator("Debug")]

@@ -675,7 +675,7 @@ GameObject:
   m_Component:
   - component: {fileID: 844734881}
   m_Layer: 0
-  m_Name: 'Rewind----------------------------------------- '
+  m_Name: Rewind
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1205,7 +1205,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1507623671}
   m_Layer: 0
-  m_Name: 'Shaders----------------------------------------- '
+  m_Name: Shaders
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2188,11 +2188,11 @@ GameObject:
   - component: {fileID: 7793576838022702164}
   - component: {fileID: 3395161608787476849}
   - component: {fileID: 7353486125745782107}
-  - component: {fileID: 4949772630576232149}
   - component: {fileID: 6825158376563177225}
   - component: {fileID: 5528858428821148142}
+  - component: {fileID: 7793576838022702165}
   m_Layer: 0
-  m_Name: Player-----------------------------------------
+  m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2280,7 +2280,7 @@ GameObject:
   - component: {fileID: 4883835537815693667}
   - component: {fileID: 3617825078091803414}
   m_Layer: 0
-  m_Name: Sphere
+  m_Name: Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2445,7 +2445,7 @@ GameObject:
   - component: {fileID: 6718577599513822599}
   - component: {fileID: 4792602761453997418}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2507,31 +2507,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2116501225362715451}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &4949772630576232149
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1439365873206089730}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b4337a991588f8a4f8765f5689fbcbea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FPCPlayerCamera
-  useNormalCamera: 1
-  lookSensitivity: 0.04
-  lookSmoothing: 0
-  verticalAxisRange: {x: -90, y: 90}
-  invertHorizontal: 0
-  invertVertical: 0
-  baseFov: 60
-  runFovMultiplier: 1.3
-  fovChangeSmoothing: 5
-  manager: {fileID: 7793576838022702164}
-  playerHead: {fileID: 6718865669666369426}
-  cinemachineCamera: {fileID: 0}
-  normalCamera: {fileID: 9168253136687549377}
 --- !u!114 &5528858428821148142
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2646,12 +2621,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f490b6222c1499794679074402a2220, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FPCManager
+  cameraMode: 0
   fpcMovement: {fileID: 7353486125745782107}
   fpcInteraction: {fileID: 6825158376563177225}
-  fpcCamera: {fileID: 4949772630576232149}
+  fpcCamera: {fileID: 7793576838022702165}
   fpcInput: {fileID: 3395161608787476849}
   fpcRigidBodyPush: {fileID: 5528858428821148142}
   characterController: {fileID: 1511190064804850702}
+--- !u!114 &7793576838022702165
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1439365873206089730}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f81c285790cc4f36a6faa779b3d6d57b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::FPCCameraNormal
+  lookSensitivity: 0.04
+  lookSmoothing: 0
+  verticalAxisRange: {x: -90, y: 90}
+  invertHorizontal: 0
+  invertVertical: 0
+  baseFov: 60
+  runFovMultiplier: 1.3
+  fovChangeSmoothing: 5
+  manager: {fileID: 7793576838022702164}
+  playerHead: {fileID: 6718865669666369426}
+  normalCamera: {fileID: 9168253136687549377}
 --- !u!1 &8670642967180193791
 GameObject:
   m_ObjectHideFlags: 0
