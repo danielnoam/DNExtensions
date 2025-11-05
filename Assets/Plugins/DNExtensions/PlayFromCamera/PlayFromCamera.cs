@@ -1,6 +1,10 @@
+
+
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using Object = UnityEngine.Object;
+
 
 namespace DNExtensions
 {
@@ -227,3 +231,5 @@ namespace DNExtensions
     }
 
 }
+
+#endif

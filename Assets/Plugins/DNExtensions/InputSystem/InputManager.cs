@@ -49,15 +49,15 @@ namespace DNExtensions.InputSystem
 
         private void Awake()
         {
-            if (Instance && Instance != this)
+            if ((!Instance || Instance == this) && playerInput)
+            {
+                Instance = this;
+            }
+            else
             {
                 Destroy(gameObject);
                 return;
             }
-
-            Instance = this;
-
-            if (!playerInput) return;
 
             SetCursorVisibility(!hideCursor);
         }
