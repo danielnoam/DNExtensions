@@ -25,7 +25,7 @@ namespace DNExtensions.ObjectPooling
 
         [Header("Pre Warm")] 
         [Tooltip("Pre populate the pool")]
-        public bool preWarmPool = true;
+        public bool preWarmPool;
         [Tooltip("If pre warm pool, how many objects to pre warm")]
         public int preWarmPoolSize = 5;
         [Tooltip("If there are scenes, only pre warm pool if its in the selected scenes")]
@@ -209,17 +209,17 @@ namespace DNExtensions.ObjectPooling
                 Object.Destroy(obj);
             }
 
-            _activePool.Clear();
-            _activePoolSet.Clear();
-
             while (_inactivePool.Count > 0)
             {
                 var obj = _inactivePool.Dequeue();
                 if (obj) Object.Destroy(obj);
             }
 
+            _activePool.Clear();
+            _activePoolSet.Clear();
             _objectsBeingReturned.Clear();
             _pooledObjects.Clear();
+            _inactivePool.Clear();
 
             if (_poolHolder) Object.Destroy(_poolHolder.gameObject);
             _isInitialized = false;
@@ -236,11 +236,9 @@ namespace DNExtensions.ObjectPooling
 
         private void UpdateDebugFields()
         {
-#if UNITY_EDITOR || DEBUG
             activePoolCount = _activePool.Count;
             inactivePoolCount = _inactivePool.Count;
             poolSize = activePoolCount + inactivePoolCount;
-#endif
         }
 
         /// <summary>
