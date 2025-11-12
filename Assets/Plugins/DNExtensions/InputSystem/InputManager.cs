@@ -16,7 +16,7 @@ namespace DNExtensions.InputSystem
         [SerializeField] private bool hideCursor = true;
         
         
-        // Sprite assets has to be in /Resources/Sprite Assets/ folder
+        // Sprite assets has to be in /Resources/Sprite Assets/
         [Header("Controls Sprite Assets")] 
         [SerializeField] private TMP_SpriteAsset keyboardMouseSpriteAsset;
         [SerializeField] private TMP_SpriteAsset gamepadSpriteAsset;
@@ -24,7 +24,7 @@ namespace DNExtensions.InputSystem
 
 
 
-        public bool IsCurrentDeviceGamepad { get; private set; }
+        public bool IsCurrentControlsGamepad { get; private set; }
 
         public PlayerInput PlayerInput => playerInput;
 
@@ -90,25 +90,25 @@ namespace DNExtensions.InputSystem
 
         private void OnDeviceRegained(PlayerInput input)
         {
-            SetActiveControlScheme(input);
+            UpdateActiveControlScheme(input);
             OnDeviceRegainedEvent?.Invoke(input);
         }
 
         private void OnDeviceLost(PlayerInput input)
         {
-            SetActiveControlScheme(input);
+            UpdateActiveControlScheme(input);
             OnDeviceLostEvent?.Invoke(input);
         }
 
         private void OnControlsChanged(PlayerInput input)
         {
-            SetActiveControlScheme(input);
+            UpdateActiveControlScheme(input);
             OnControlsChangedEvent?.Invoke(input);
         }
 
-        private void SetActiveControlScheme(PlayerInput input)
+        private void UpdateActiveControlScheme(PlayerInput input)
         {
-            IsCurrentDeviceGamepad = input.currentControlScheme == "Gamepad";
+            IsCurrentControlsGamepad = input.currentControlScheme == "Gamepad";
         }
 
 
@@ -152,7 +152,7 @@ namespace DNExtensions.InputSystem
         {
             if (!Instance) return text;
 
-            TMP_SpriteAsset spriteAsset = Instance.IsCurrentDeviceGamepad
+            TMP_SpriteAsset spriteAsset = Instance.IsCurrentControlsGamepad
                 ? Instance.gamepadSpriteAsset
                 : Instance.keyboardMouseSpriteAsset;
 
@@ -173,7 +173,7 @@ namespace DNExtensions.InputSystem
         {
             if (!Instance?.playerInput || action == null) return action?.name ?? "Unknown";
     
-            TMP_SpriteAsset spriteAsset = asSprite ? Instance.IsCurrentDeviceGamepad 
+            TMP_SpriteAsset spriteAsset = asSprite ? Instance.IsCurrentControlsGamepad 
                 ? Instance.gamepadSpriteAsset 
                 : Instance.keyboardMouseSpriteAsset : null;
     

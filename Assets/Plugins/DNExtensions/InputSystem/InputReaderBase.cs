@@ -14,7 +14,7 @@ namespace DNExtensions.InputSystem
         [SerializeField] protected InputManager inputManager;
     
     
-        public bool IsCurrentDeviceGamepad => inputManager?.IsCurrentDeviceGamepad ?? false;
+        public bool IsCurrentDeviceGamepad => inputManager?.IsCurrentControlsGamepad ?? false;
         protected PlayerInput PlayerInput => inputManager?.PlayerInput;
         
         
