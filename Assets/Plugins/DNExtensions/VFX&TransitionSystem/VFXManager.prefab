@@ -99,9 +99,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   autoSetupPostProcessing: 1
+  autoSetCameraIfUsingCameraOverlay: 0
   postProcessingVolume: {fileID: 0}
+  mainCamera: {fileID: 0}
   iconImage: {fileID: 5646557657411839832}
   fullScreenImage: {fileID: 505253833126219681}
+  fullscreenCanvas: {fileID: 8434494797635188864}
   effectsSequences:
   - {fileID: 11400000, guid: 2cf701e889338b54b9338039b720f844, type: 2}
   - {fileID: 11400000, guid: 661c164b035891047885f26f16312cc4, type: 2}
