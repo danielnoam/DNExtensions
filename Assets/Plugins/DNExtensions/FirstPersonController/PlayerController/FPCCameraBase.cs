@@ -6,7 +6,8 @@ using UnityEngine.InputSystem;
 public abstract class FPCCameraBase : MonoBehaviour
 {
     [Header("Settings")]
-    [SerializeField] [Range(0, 0.1f)] private float lookSensitivity = 0.04f;
+    [SerializeField] [Range(0, 0.1f)] private float mouseLookSensitivity = 0.04f;
+    [SerializeField] [Range(0, 300f)] private float gamepadLookSensitivity = 3f;
     [SerializeField] [Range(0, 0.1f)] private float lookSmoothing;
     [SerializeField] private Vector2 verticalAxisRange = new(-90, 90);
     [SerializeField] private bool invertHorizontal;
@@ -26,6 +27,7 @@ public abstract class FPCCameraBase : MonoBehaviour
     private float _targetPanAngle;
     private float _targetTiltAngle;
     private Vector2 _rotationVelocity;
+    private Vector2 _lookInput;
 
     
 
@@ -55,21 +57,31 @@ public abstract class FPCCameraBase : MonoBehaviour
 
     protected virtual void Update()
     {
+        HandleLookInput();
         UpdateFov();
         UpdateHeadRotation();
     }
 
     private void OnLook(InputAction.CallbackContext context)
     {
+        _lookInput = context.ReadValue<Vector2>();
+    }
+
+    private void HandleLookInput()
+    {
         if (!playerHead) return;
         
-        Vector2 lookDelta = context.ReadValue<Vector2>();
+        float sensitivity = mouseLookSensitivity;
+        if (manager.FPCInput.IsCurrentDeviceGamepad)
+        {
+            sensitivity = gamepadLookSensitivity * Time.deltaTime;
+        }
 
-        float horizontalInput = invertHorizontal ? -lookDelta.x : lookDelta.x;
-        float verticalInput = invertVertical ? lookDelta.y : -lookDelta.y;
+        float horizontalInput = invertHorizontal ? -_lookInput.x : _lookInput.x;
+        float verticalInput = invertVertical ? _lookInput.y : -_lookInput.y;
         
-        _targetPanAngle += horizontalInput * lookSensitivity;
-        _targetTiltAngle += verticalInput * lookSensitivity;
+        _targetPanAngle += horizontalInput * sensitivity;
+        _targetTiltAngle += verticalInput * sensitivity;
         _targetTiltAngle = Mathf.Clamp(_targetTiltAngle, verticalAxisRange.x, verticalAxisRange.y);
 
         if (lookSmoothing <= 0) 

@@ -1,5 +1,6 @@
 using UnityEngine;
 using DNExtensions.ControllerRumbleSystem;
+using TMPro;
 
 public class ControllerRumbleUI : MonoBehaviour
 {
@@ -8,18 +9,20 @@ public class ControllerRumbleUI : MonoBehaviour
     [SerializeField] private float maxMovementDistance = 10f;
     [Tooltip("How quickly the UI element moves towards the shake position. Higher = Snappier.")]
     [SerializeField] private float shakeSpeed = 25f;
+    [Tooltip("Minimum intensity threshold to start shaking (prevents micro-jitters).")]
+    [SerializeField] private float intensityThreshold = 0.01f;
     
     [Header("References")]
     [SerializeField] private ControllerRumbleListener listener;
-    [Tooltip("The RectTransform of the UI element (e.g., an Image of a controller).")]
     [SerializeField] private RectTransform uiRectTransform;
+    [SerializeField] private TextMeshProUGUI infoText;
 
     private Vector3 _originalLocalPosition;
     private Vector3 _currentVelocity = Vector3.zero;
     private float _noiseTimer;
-    private Vector3 _targetOffset = Vector3.zero;
+    private bool _isRumbling;
 
-    private void Start()
+    private void Awake()
     {
         if (!listener || !uiRectTransform)
         {
@@ -38,47 +41,61 @@ public class ControllerRumbleUI : MonoBehaviour
             return;
         }
         
-        float lowIntensity = listener.CurrentCombinedLow; 
-        float highIntensity = listener.CurrentCombinedHigh;
-
-        // Get the strongest signal
-        float intensity = Mathf.Max(lowIntensity, highIntensity);
+        // Get the combined rumble intensity from the listener
+        float combinedIntensity = Mathf.Max(listener.CurrentCombinedLow, listener.CurrentCombinedHigh);
         
-        // Only calculate shake if intensity is above a small threshold
-        if (intensity > 0.01f)
+        // Update info text if assigned
+        if (infoText)
         {
-            float shakeMagnitude = intensity * maxMovementDistance;
+            infoText.text = $"Low: {listener.CurrentCombinedLow:F2}\nHigh: {listener.CurrentCombinedHigh:F2}\nIntensity: {combinedIntensity:F2}";
+        }
+        
+        // Check if we should be rumbling
+        bool shouldRumble = combinedIntensity > intensityThreshold;
+        
+        if (shouldRumble)
+        {
+            _isRumbling = true;
             
-            _noiseTimer -= Time.deltaTime;
-            if (_noiseTimer <= 0f)
-            {
-                // Generate a random direction (normalized) then multiply by magnitude
-                Vector3 randomDir = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), 0f).normalized;
-                _targetOffset = randomDir * shakeMagnitude;
-                
-                _noiseTimer = Random.Range(0.01f, 0.05f);
-            }
+            // Update noise timer for random offset generation
+            _noiseTimer += Time.deltaTime * shakeSpeed;
             
-            Vector3 targetPosition = _originalLocalPosition + _targetOffset;
+            // Generate random offset based on Perlin noise for smoother movement
+            float offsetX = (Mathf.PerlinNoise(_noiseTimer, 0f) - 0.5f) * 2f;
+            float offsetY = (Mathf.PerlinNoise(0f, _noiseTimer) - 0.5f) * 2f;
             
-            // Move towards the shaky target
+            // Scale offset by intensity and max distance
+            Vector3 targetOffset = new Vector3(
+                offsetX * combinedIntensity * maxMovementDistance,
+                offsetY * combinedIntensity * maxMovementDistance,
+                0f
+            );
+            
+            // Apply directly for immediate shake response
+            uiRectTransform.localPosition = _originalLocalPosition + targetOffset;
+        }
+        else if (_isRumbling)
+        {
+            // We were rumbling but now stopped - smoothly return to original position
             uiRectTransform.localPosition = Vector3.SmoothDamp(
-                uiRectTransform.localPosition,
-                targetPosition,
-                ref _currentVelocity,
+                uiRectTransform.localPosition, 
+                _originalLocalPosition, 
+                ref _currentVelocity, 
                 1f / shakeSpeed
             );
+            
+            // Check if we've reached the original position (within a small threshold)
+            if (Vector3.Distance(uiRectTransform.localPosition, _originalLocalPosition) < 0.1f)
+            {
+                uiRectTransform.localPosition = _originalLocalPosition;
+                _isRumbling = false;
+                _currentVelocity = Vector3.zero;
+            }
         }
         else
         {
-            // Return to center (Idle state)
-            // This must be in an 'else' block so SmoothDamp isn't called twice
-            uiRectTransform.localPosition = Vector3.SmoothDamp(
-                uiRectTransform.localPosition,
-                _originalLocalPosition,
-                ref _currentVelocity,
-                0.05f 
-            );
+            // Not rumbling and already at rest - ensure we're at the exact original position
+            uiRectTransform.localPosition = _originalLocalPosition;
         }
     }
 }

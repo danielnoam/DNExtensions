@@ -110,6 +110,10 @@ namespace DNExtensions.ControllerRumbleSystem
                     SetMotorSpeeds(0f, 0f);
                     _motorsActive = false;
                 }
+                
+                // Reset current combined values to 0
+                CurrentCombinedLow = 0f;
+                CurrentCombinedHigh = 0f;
             }
             else
             {
@@ -118,9 +122,22 @@ namespace DNExtensions.ControllerRumbleSystem
 
                 foreach (var effect in _activeRumbleEffects)
                 {
-                    float normalizedTime = effect.ElapsedTime / effect.Duration;
-                    float lowIntensity = effect.LowFrequency * effect.LowFrequencyCurve.Evaluate(normalizedTime);
-                    float highIntensity = effect.HighFrequency * effect.HighFrequencyCurve.Evaluate(normalizedTime);
+                    float lowIntensity;
+                    float highIntensity;
+                    
+                    // Continuous effects have constant intensity (no curves)
+                    if (effect.IsContinuous)
+                    {
+                        lowIntensity = effect.LowFrequency;
+                        highIntensity = effect.HighFrequency;
+                    }
+                    else
+                    {
+                        // Timed effects use curves
+                        float normalizedTime = effect.ElapsedTime / effect.Duration;
+                        lowIntensity = effect.LowFrequency * effect.LowFrequencyCurve.Evaluate(normalizedTime);
+                        highIntensity = effect.HighFrequency * effect.HighFrequencyCurve.Evaluate(normalizedTime);
+                    }
             
                     if (effect.SourceReference && effect.SourceReference.Is3DSource)
                     {
@@ -163,6 +180,17 @@ namespace DNExtensions.ControllerRumbleSystem
         {
             _activeRumbleEffects.Clear();
             ResetHaptics();
+        }
+        
+        /// <summary>
+        /// Removes all continuous rumble effects originating from a specific source
+        /// </summary>
+        /// <param name="source">The source to remove continuous effects from</param>
+        public void RemoveContinuousEffectsFromSource(ControllerRumbleSource source)
+        {
+            if (!source) return;
+            
+            _activeRumbleEffects.RemoveWhere(effect => effect.IsContinuous && effect.SourceReference == source);
         }
         
         
