@@ -21,6 +21,9 @@ namespace DNExtensions.ControllerRumbleSystem
         private DualShockGamepad _dualShockGamepad;
         private bool _motorsActive;
 
+        
+        public float CurrentCombinedLow { get; private set; }
+        public float CurrentCombinedHigh { get; private set; }
 
 
         private void OnValidate()
@@ -130,8 +133,11 @@ namespace DNExtensions.ControllerRumbleSystem
                     combinedHigh = Mathf.Max(combinedHigh, highIntensity);
                     _motorsActive = true;
                 }
+                
+                CurrentCombinedLow = combinedLow;
+                CurrentCombinedHigh = combinedHigh;
 
-                SetMotorSpeeds(combinedLow, combinedHigh);
+                SetMotorSpeeds(CurrentCombinedLow, CurrentCombinedHigh);
             }
         }
 

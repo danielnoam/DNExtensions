@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using DNExtensions;
-
+using DNExtensions.ControllerRumbleSystem;
 
 
 [DisallowMultipleComponent]
@@ -15,12 +15,14 @@ public class FPCMovement : MonoBehaviour
     [SerializeField] private bool canRun = true;
     [ShowIf("canRun")][SerializeField] private float runSpeed = 12f;
     [SerializeField] private float gravity = -15f;
+    [SerializeField] private ControllerRumbleEffectSettings landingRumbleSettings = new ControllerRumbleEffectSettings(0.5f, 0.7f, 0.2f);
     
     [Header("Jump")]
     [SerializeField] private float jumpForce = 1.5f;
     [SerializeField] private float jumpBufferTime = 0.1f;
     [SerializeField] private float coyoteTime = 0.1f;
-
+    
+    
     [Header("References")] 
     [SerializeField] private FPCManager manager;
 
@@ -128,9 +130,15 @@ public class FPCMovement : MonoBehaviour
 
     private void CheckGrounded()
     {
-        _wasGrounded  = IsGrounded;
+        _wasGrounded  = IsGrounded; 
+        
         IsGrounded = manager.CharacterController.isGrounded;
         IsFalling = _velocity.y < 0;
+        
+        if (IsGrounded && !_wasGrounded)
+        {
+            manager.ControllerRumbleSource?.Rumble(landingRumbleSettings);
+        }
         
         if (IsGrounded)
         {
@@ -138,8 +146,9 @@ public class FPCMovement : MonoBehaviour
             {
                 _velocity.y = -2f;
             }
+            _coyoteTimeCounter = coyoteTime; 
         }
-        else if (IsGrounded || _wasGrounded)
+        else if (_wasGrounded)
         {
             _coyoteTimeCounter = coyoteTime;
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using DNExtensions;
+using DNExtensions.ControllerRumbleSystem;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -24,6 +25,7 @@ public class FPCManager : MonoBehaviour
     [SerializeField] private FPCInput fpcInput;
     [SerializeField] private FPCRigidBodyPush fpcRigidBodyPush;
     [SerializeField] private CharacterController characterController;
+    [SerializeField] private ControllerRumbleSource controllerRumbleSource;
 
     private enum FPCCameraMode
     {
@@ -37,6 +39,7 @@ public class FPCManager : MonoBehaviour
     public FPCInput FPCInput => fpcInput;
     public FPCRigidBodyPush FPCRigidBodyPush => fpcRigidBodyPush;
     public CharacterController CharacterController => characterController;
+    public ControllerRumbleSource ControllerRumbleSource => controllerRumbleSource;
 
     private void OnValidate()
     {
