@@ -4,7 +4,7 @@ namespace DNExtensions.ObjectPooling
     /// Interface for objects that need lifecycle callbacks when used with ObjectPool.
     /// Implement to receive notifications for get, return, and recycle events.
     /// </summary>
-    public interface IPooledObject
+    public interface IPoolable
     {
         /// <summary>
         /// Called when object is retrieved from the pool and activated.

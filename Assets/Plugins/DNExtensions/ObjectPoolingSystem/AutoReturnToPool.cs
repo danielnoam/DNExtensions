@@ -6,7 +6,7 @@ namespace DNExtensions.ObjectPooling
     /// Automatically returns pooled objects after a specified lifetime.
     /// Useful for temporary effects, projectiles, or time-based spawned objects.
     /// </summary>
-    public class AutoReturnToPool : MonoBehaviour, IPooledObject
+    public class AutoReturnToPool : MonoBehaviour, IPoolable
     {
         public float lifeTime;
         private bool _isInitialized;

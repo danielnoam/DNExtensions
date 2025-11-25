@@ -40,7 +40,7 @@ namespace DNExtensions.ObjectPooling
         private readonly Queue<GameObject> _inactivePool = new Queue<GameObject>();
         private readonly HashSet<GameObject> _activePoolSet = new HashSet<GameObject>();
         private readonly HashSet<GameObject> _objectsBeingReturned = new HashSet<GameObject>();
-        private readonly Dictionary<GameObject, IPooledObject> _pooledObjects = new Dictionary<GameObject, IPooledObject>();
+        private readonly Dictionary<GameObject, IPoolable> _pooledObjects = new Dictionary<GameObject, IPoolable>();
 
         private Transform _poolHolder;
         private bool _isInitialized;
@@ -286,7 +286,7 @@ namespace DNExtensions.ObjectPooling
             obj.SetActive(false);
             if (_poolHolder) obj.transform.SetParent(_poolHolder);
 
-            if (obj.TryGetComponent(out IPooledObject pooledObject))
+            if (obj.TryGetComponent(out IPoolable pooledObject))
             {
                 _pooledObjects[obj] = pooledObject;
             }
