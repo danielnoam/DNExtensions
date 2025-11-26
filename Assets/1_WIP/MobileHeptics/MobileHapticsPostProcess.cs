@@ -11,7 +11,6 @@ public class MobileHapticsPostProcess
     {
         if (target == BuildTarget.Android)
         {
-            // Validate the manifest was included
             Debug.Log("[MobileHaptics] Build complete - manifest should include VIBRATE permission");
         }
     }
