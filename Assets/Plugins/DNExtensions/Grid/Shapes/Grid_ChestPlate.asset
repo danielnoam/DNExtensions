@@ -19,11 +19,10 @@ MonoBehaviour:
     cellSpacing: {x: 0.1, y: 0.1, z: 0}
     cells: 000001010101010000000001010101010000000001010101010000010101010101010101010101010101010101010101010101010101010101010101010101010101010001010101
     coordinateConverter:
-      rid: 3019431853672366085
-    editorFoldout: 1
+      rid: 190982496010109047
   references:
     version: 2
     RefIds:
-    - rid: 3019431853672366085
-      type: {class: VerticalConvertor, ns: , asm: Assembly-CSharp}
+    - rid: 190982496010109047
+      type: {class: VerticalConvertor, ns: DNExtensions.GridSystem, asm: Assembly-CSharp-firstpass}
       data: 

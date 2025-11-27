@@ -23,6 +23,7 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
     - rid: 3019431853672366081
       type: {class: VerticalConvertor, ns: , asm: Assembly-CSharp}
-      data: 

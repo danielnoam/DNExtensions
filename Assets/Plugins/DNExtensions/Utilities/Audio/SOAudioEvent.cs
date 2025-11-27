@@ -18,36 +18,24 @@ namespace DNExtensions
         [Header("Settings")] 
         public AudioClip[] clips;
         public AudioMixerGroup mixerGroup;
-        [MinMaxRange(0f, 1f)] public RangedFloat volume = 1f;
+        [MinMaxRange(0f, 1f)] public RangedFloat volume = new RangedFloat(1,1);
         [MinMaxRange(-3f, 3f)] public RangedFloat pitch = 1f;
-
-        [Range(-1f, 1f), Tooltip("Left,Right")]
-        public float stereoPan = 0f;
-
-        [Range(0f, 1f), Tooltip("2D,3D")] public float spatialBlend = 0f;
+        [Range(-1f, 1f), Tooltip("Left,Right")] public float stereoPan;
+        [Range(0f, 1f), Tooltip("2D,3D")] public float spatialBlend;
         [Range(0f, 1.1f)] public float reverbZoneMix = 1f;
         public bool bypassEffects;
         public bool bypassListenerEffects;
         public bool bypassReverbZones;
         public bool loop;
 
-        [Header("3D Sound")] public bool set3DSettings = false;
+        [Header("3D Sound")] public bool set3DSettings;
         [EnableIf("set3DSettings")] [MinMaxRange(0f, 5f)] public float dopplerLevel = 1f;
-        [EnableIf("set3DSettings")] [MinMaxRange(0f, 360f)] public float spread = 0f;
+        [EnableIf("set3DSettings")] [MinMaxRange(0f, 360f)] public float spread;
         [EnableIf("set3DSettings")] public AudioRolloffMode rolloffMode = AudioRolloffMode.Logarithmic;
         [EnableIf("set3DSettings")] [Min(0)] public float minDistance = 1f;
         [EnableIf("set3DSettings")] [Min(0)] public float maxDistance = 500f;
 
-
-
-        [Header("OneShot Object Pooler")]
-        public bool useObjectPooler = true;
-        public GameObject oneShotPrefab;
-
-
         
-        
-        #region Play AE ----------------------------------------------------------------------------
 
         public void Play(AudioSource source)
         {
@@ -88,29 +76,12 @@ namespace DNExtensions
             }
 
 
-            if (!useObjectPooler)
-            {
-                AudioSource source = new GameObject("OneShotAudioEvent").AddComponent<AudioSource>();
+            AudioSource source = new GameObject("OneShotAudioEvent").AddComponent<AudioSource>();
 
-                source.transform.position = position;
-                SetAudioSourceSettings(source);
-                source.Play();
-                Destroy(source.gameObject, source.clip.length);
-            }
-            else
-            {
-                GameObject oneShotObject = ObjectPooler.GetObjectFromPool(oneShotPrefab, position, Quaternion.identity);
-                if (oneShotObject.TryGetComponent(out AudioSource source))
-                {
-                    source.transform.position = position;
-                    SetAudioSourceSettings(source);
-                    source.Play();
-                    if (source.TryGetComponent(out AutoReturnToPool returnToPool))
-                    {
-                        returnToPool.Initialize(source.clip.length);
-                    }
-                }
-            }
+            source.transform.position = position;
+            SetAudioSourceSettings(source);
+            source.Play();
+            Destroy(source.gameObject, source.clip.length);
         }
 
         public void PlayAtPoint(float delay, Vector3 position = new())
@@ -120,68 +91,16 @@ namespace DNExtensions
                 Debug.Log("No clips found");
                 return;
             }
+            
+            AudioSource source = new GameObject("OneShotAudioEvent").AddComponent<AudioSource>();
 
-
-
-            if (!useObjectPooler)
-            {
-                AudioSource source = new GameObject("OneShotAudioEvent").AddComponent<AudioSource>();
-
-                source.transform.position = position;
-                SetAudioSourceSettings(source);
-                source.PlayDelayed(delay);
-                Destroy(source.gameObject, source.clip.length + delay);
-            }
-            else
-            {
-                GameObject oneShotObject = ObjectPooler.GetObjectFromPool(oneShotPrefab, position, Quaternion.identity);
-                if (oneShotObject.TryGetComponent(out AudioSource source))
-                {
-                    source.transform.position = position;
-                    SetAudioSourceSettings(source);
-                    source.Play();
-
-                    if (source.TryGetComponent(out AutoReturnToPool returnToPool))
-                    {
-                        returnToPool.Initialize(source.clip.length);
-                    }
-                }
-            }
+            source.transform.position = position;
+            SetAudioSourceSettings(source);
+            source.PlayDelayed(delay);
+            Destroy(source.gameObject, source.clip.length + delay);
         }
 
-
-
-
-        #endregion Play AE ----------------------------------------------------------------------------
-
-
-
-        #region Autdio source control ------------------------------------------------------------------------------------------------
-
-        private void SetAudioSourceSettings(AudioSource source)
-        {
-            if (!source) return;
-
-            source.clip = clips[Random.Range(0, clips.Length)];
-            source.outputAudioMixerGroup = mixerGroup;
-            source.volume = Random.Range(volume.minValue, volume.maxValue);
-            source.pitch = Random.Range(pitch.minValue, pitch.maxValue);
-            source.panStereo = stereoPan;
-            source.spatialBlend = spatialBlend;
-            source.reverbZoneMix = reverbZoneMix;
-            source.bypassEffects = bypassEffects;
-            source.bypassListenerEffects = bypassListenerEffects;
-            source.bypassReverbZones = bypassReverbZones;
-            source.loop = loop;
-            if (set3DSettings)
-            {
-                source.dopplerLevel = dopplerLevel;
-                source.spread = spread;
-                source.minDistance = minDistance;
-                source.maxDistance = maxDistance;
-                source.rolloffMode = rolloffMode;
-            }
-        }
+        
 
         public void Stop(AudioSource source)
         {
@@ -238,8 +157,32 @@ namespace DNExtensions
 
             return false;
         }
+        
+        private void SetAudioSourceSettings(AudioSource source)
+        {
+            if (!source) return;
 
-        #endregion Autdio source control ------------------------------------------------------------------------------------------------
+            source.clip = clips[Random.Range(0, clips.Length)];
+            source.outputAudioMixerGroup = mixerGroup;
+            source.volume = Random.Range(volume.minValue, volume.maxValue);
+            source.pitch = Random.Range(pitch.minValue, pitch.maxValue);
+            source.panStereo = stereoPan;
+            source.spatialBlend = spatialBlend;
+            source.reverbZoneMix = reverbZoneMix;
+            source.bypassEffects = bypassEffects;
+            source.bypassListenerEffects = bypassListenerEffects;
+            source.bypassReverbZones = bypassReverbZones;
+            source.loop = loop;
+            if (set3DSettings)
+            {
+                source.dopplerLevel = dopplerLevel;
+                source.spread = spread;
+                source.minDistance = minDistance;
+                source.maxDistance = maxDistance;
+                source.rolloffMode = rolloffMode;
+            }
+        }
+        
         
     }
 
@@ -248,8 +191,7 @@ namespace DNExtensions
 
 #if UNITY_EDITOR
 
-
-// Preview button
+    
     [CustomEditor(typeof(SOAudioEvent), true)]
     public class AudioEventEditor : UnityEditor.Editor
     {

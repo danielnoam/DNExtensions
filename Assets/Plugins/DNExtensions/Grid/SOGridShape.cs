@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DNExtensions.GridSystem
 {
-    [CreateAssetMenu(fileName = "New Grid Shape", menuName = "Scriptable Objects/Grid Shape")]
+    [CreateAssetMenu(fileName = "Grid Shape", menuName = "Scriptable Objects/New Grid Shape")]
     public class SOGridShape : ScriptableObject
     {
         [SerializeField] private Grid grid = new Grid(8,8);

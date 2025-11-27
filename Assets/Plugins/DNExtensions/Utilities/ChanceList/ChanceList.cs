@@ -314,6 +314,19 @@ namespace DNExtensions
                 }
             }
         }
+        
+        /// <summary>
+        /// Returns the ChanceList as a List
+        /// </summary>
+        public List<T> ToList()
+        {
+            var items = new List<T>();
+            foreach (var item in internalItems)
+            {
+                items.Add(item.item);
+            }
+            return items;
+        }
 
         #endregion Public API
 
