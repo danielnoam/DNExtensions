@@ -15,7 +15,10 @@ public class DNExtensionsExample : MonoBehaviour
     [Header("DNExtensions")]
     
     [InfoBox("This is an info box showing something")]
-    [Separator("Custom Fields")]
+    [Separator("Attributes")]
+    [ReadOnly] [SerializeField] private int testReadOnly;
+    
+    [Separator("Fields")]
     [SerializeField] private SceneField testScene;
     [SerializeField] private SortingLayerField testLayer;
     [SerializeField] private TagField testTag;

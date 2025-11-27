@@ -75,7 +75,7 @@ namespace DNExtensions
 
             EditorGUILayout.LabelField("Testing", EditorStyles.boldLabel);
 
-            if (GUILayout.Button("Test Find Player Object"))
+            if (GUILayout.Button("Find Player Object"))
             {
                 GameObject playerObj = null;
 

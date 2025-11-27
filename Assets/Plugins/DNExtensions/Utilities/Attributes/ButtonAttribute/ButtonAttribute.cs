@@ -31,7 +31,7 @@ namespace DNExtensions.Button
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
         public ButtonAttribute(string name)
         {
-            this.Name = name;
+            Name = name;
         }
         
         /// <summary>
@@ -41,8 +41,8 @@ namespace DNExtensions.Button
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
         public ButtonAttribute(int height, string name = "")
         {
-            this.Height = height;
-            this.Name = name;
+            Height = height;
+            Name = name;
         }
         
         /// <summary>
@@ -53,9 +53,9 @@ namespace DNExtensions.Button
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
         public ButtonAttribute(int height, int space, string name = "")
         {
-            this.Height = height;
-            this.Space = space;
-            this.Name = name;
+            Height = height;
+            Space = space;
+            Name = name;
         }
         
         /// <summary>
@@ -67,10 +67,10 @@ namespace DNExtensions.Button
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
         public ButtonAttribute(int height, int space, Color color, string name = "")
         {
-            this.Height = height;
-            this.Space = space;
-            this.Color = color;
-            this.Name = name;
+            Height = height;
+            Space = space;
+            Color = color;
+            Name = name;
         }
         
         /// <summary>
@@ -83,11 +83,11 @@ namespace DNExtensions.Button
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
         public ButtonAttribute(int height, int space, Color color, ButtonPlayMode playMode, string name = "")
         {
-            this.Height = height;
-            this.Space = space;
-            this.Color = color;
-            this.PlayMode = playMode;
-            this.Name = name;
+            Height = height;
+            Space = space;
+            Color = color;
+            PlayMode = playMode;
+            Name = name;
         }
         
         /// <summary>
@@ -97,8 +97,8 @@ namespace DNExtensions.Button
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
         public ButtonAttribute(ButtonPlayMode playMode, string name = "")
         {
-            this.PlayMode = playMode;
-            this.Name = name;
+            PlayMode = playMode;
+            Name = name;
         }
 
         // GROUP CONSTRUCTORS - Group first, name last (optional)
@@ -110,8 +110,8 @@ namespace DNExtensions.Button
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
         public ButtonAttribute(string group, string name = "")
         {
-            this.Group = group;
-            this.Name = name;
+            Group = group;
+            Name = name;
         }
 
         /// <summary>
@@ -122,9 +122,9 @@ namespace DNExtensions.Button
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
         public ButtonAttribute(string group, ButtonPlayMode playMode, string name = "")
         {
-            this.Group = group;
-            this.PlayMode = playMode;
-            this.Name = name;
+            Group = group;
+            PlayMode = playMode;
+            Name = name;
         }
 
         /// <summary>
@@ -135,9 +135,9 @@ namespace DNExtensions.Button
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
         public ButtonAttribute(string group, int height, string name = "")
         {
-            this.Group = group;
-            this.Height = height;
-            this.Name = name;
+            Group = group;
+            Height = height;
+            Name = name;
         }
 
         /// <summary>
@@ -149,10 +149,10 @@ namespace DNExtensions.Button
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
         public ButtonAttribute(string group, int height, int space, string name = "")
         {
-            this.Group = group;
-            this.Height = height;
-            this.Space = space;
-            this.Name = name;
+            Group = group;
+            Height = height;
+            Space = space;
+            Name = name;
         }
 
         /// <summary>
@@ -165,11 +165,11 @@ namespace DNExtensions.Button
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
         public ButtonAttribute(string group, int height, int space, Color color, string name = "")
         {
-            this.Group = group;
-            this.Height = height;
-            this.Space = space;
-            this.Color = color;
-            this.Name = name;
+            Group = group;
+            Height = height;
+            Space = space;
+            Color = color;
+            Name = name;
         }
 
         /// <summary>
@@ -183,12 +183,12 @@ namespace DNExtensions.Button
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
         public ButtonAttribute(string group, int height, int space, Color color, ButtonPlayMode playMode, string name = "")
         {
-            this.Group = group;
-            this.Height = height;
-            this.Space = space;
-            this.Color = color;
-            this.PlayMode = playMode;
-            this.Name = name;
+            Group = group;
+            Height = height;
+            Space = space;
+            Color = color;
+            PlayMode = playMode;
+            Name = name;
         }
     }
 }
