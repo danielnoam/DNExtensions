@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using DNExtensions.Button;
+using UnityEditor;
 using UnityEngine;
 
 namespace DNExtensions.ControllerRumbleSystem
@@ -11,28 +12,27 @@ namespace DNExtensions.ControllerRumbleSystem
         [Tooltip("Enable distance-based rumble falloff for 3D spatial rumble effects")]
         [SerializeField] private bool is3DSource;
         [Tooltip("Distance at which rumble is at full intensity (closer = full strength)")]
-        [SerializeField, EnableIf("is3DSource"), Min(0f)] private float fullIntensityDistance = 1f;
+        [SerializeField, EnableIf("is3DSource"), Min(0f)] private float maxRumbleDistance = 1f;
         [Tooltip("Distance at which rumble completely stops (further = no rumble)")]
-        [SerializeField, EnableIf("is3DSource"), Min(0f)]  private float noRumbleDistance = 10f;
+        [SerializeField, EnableIf("is3DSource"), Min(0f)]  private float minRumbleDistance = 10f;
         [Tooltip("Falloff curve from full intensity (at 0) to no rumble (at 1)")]
         [SerializeField, EnableIf("is3DSource")] private AnimationCurve distanceFalloffCurve = AnimationCurve.EaseInOut(0, 1, 1, 0);
-            
-            
+        
         private readonly List<ControllerRumbleListener> _rumbleListeners = new List<ControllerRumbleListener>();
 
         public bool Is3DSource => is3DSource;
-        public float MinDistance => fullIntensityDistance;
-        public float MaxDistance => noRumbleDistance;
+        public float MinDistance => maxRumbleDistance;
+        public float MaxDistance => minRumbleDistance;
         public AnimationCurve DistanceFalloffCurve => distanceFalloffCurve;
         
         
         private void OnValidate()
         {
             // Ensure full intensity distance is always less than no rumble distance
-            if (fullIntensityDistance >= noRumbleDistance)
+            if (maxRumbleDistance >= minRumbleDistance)
             {
-                noRumbleDistance = fullIntensityDistance + 1f;
-                Debug.LogWarning($"[{gameObject.name}] No Rumble Distance must be greater than Full Intensity Distance. Adjusted to {noRumbleDistance}.");
+                minRumbleDistance = maxRumbleDistance + 1f;
+                Debug.LogWarning($"[{gameObject.name}] No Rumble Distance must be greater than Full Intensity Distance. Adjusted to {minRumbleDistance}.");
             }
         }
 
@@ -179,7 +179,7 @@ namespace DNExtensions.ControllerRumbleSystem
         /// Triggers a continuous rumble effect that persists until the source is disabled or destroyed
         /// </summary>
         [Button]
-        public void RumbleContinuous(float lowFreq = 0.2f, float highFreq = 0.2f)
+        public void StartContinuousRumble(float lowFreq = 0.2f, float highFreq = 0.2f)
         {
             var effect = new ControllerRumbleEffect(lowFreq, highFreq, this);
             
@@ -201,16 +201,6 @@ namespace DNExtensions.ControllerRumbleSystem
                 listener?.RemoveContinuousEffectsFromSource(this);
             }
         }
-
-
-        private void OnDrawGizmosSelected()
-        {
-            if (!is3DSource) return;
-
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position, fullIntensityDistance);
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(transform.position, noRumbleDistance);
-        }
+        
     }
 }

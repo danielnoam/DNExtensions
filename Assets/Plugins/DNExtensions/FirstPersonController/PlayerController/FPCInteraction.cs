@@ -24,6 +24,9 @@ public class FPCInteraction : MonoBehaviour
     [SerializeField] private Transform interactionPosition;
     
     
+    [Header("Debug")]
+    [SerializeField] private bool drawInformation;
+    
     private Interactable _closestInteractable;
     private PickableObject _heldObject;
     private bool _throwInputHeld;
@@ -189,10 +192,14 @@ public class FPCInteraction : MonoBehaviour
         }
     }
     
-#if UNITY_EDITOR
-    
+
+
     private void OnDrawGizmos()
     {
+        if (!drawInformation) return;
+        
+#if UNITY_EDITOR
+
         if (interactionPosition)
         {
             Gizmos.color = Color.yellow;
@@ -204,15 +211,14 @@ public class FPCInteraction : MonoBehaviour
             Gizmos.color = Color.green;
             Gizmos.DrawWireSphere(holdPosition.position, 0.3f);
         }
-    }
-
-    private void OnDrawGizmosSelected()
-    {
+        
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(transform.position.RemoveY(autoDropYOffset), 0.1f);
-        Handles.Label(transform.position.RemoveY(autoDropYOffset), "Held object auto drop point");
-    }
+        Handles.Label(transform.position.RemoveY(autoDropYOffset), "Auto drop distance");
+        
 #endif
+    }
+
     
 
 }

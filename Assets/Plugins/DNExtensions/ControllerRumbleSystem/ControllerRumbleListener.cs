@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.DualShock;
@@ -14,6 +15,9 @@ namespace DNExtensions.ControllerRumbleSystem
         [SerializeField, MinMaxRange(0f,1f)] private RangedFloat lowFrequencyRange = new RangedFloat(0, 1f);
         [SerializeField, MinMaxRange(0f,1f)] private RangedFloat highFrequencyRange = new RangedFloat(0, 1f);
 
+        [Header("Debug")]
+        [SerializeField] private bool fakeGamepad;
+        [SerializeField] private bool drawInformation;
         
         private readonly List<ControllerRumbleSource> _rumbleSources = new List<ControllerRumbleSource>();
         private readonly HashSet<ControllerRumbleEffect> _activeRumbleEffects = new HashSet<ControllerRumbleEffect>();
@@ -25,6 +29,7 @@ namespace DNExtensions.ControllerRumbleSystem
         public float CurrentCombinedLow { get; private set; }
         public float CurrentCombinedHigh { get; private set; }
 
+        public int ActiveEffects => _activeRumbleEffects.Count;
 
         private void OnValidate()
         {
@@ -88,7 +93,7 @@ namespace DNExtensions.ControllerRumbleSystem
 
         private void Update()
         {
-            if (_gamepad == null) return;
+            if (_gamepad == null && !fakeGamepad) return;
 
             _activeRumbleEffects.RemoveWhere(effect =>
             {
@@ -111,7 +116,6 @@ namespace DNExtensions.ControllerRumbleSystem
                     _motorsActive = false;
                 }
                 
-                // Reset current combined values to 0
                 CurrentCombinedLow = 0f;
                 CurrentCombinedHigh = 0f;
             }
@@ -125,7 +129,6 @@ namespace DNExtensions.ControllerRumbleSystem
                     float lowIntensity;
                     float highIntensity;
                     
-                    // Continuous effects have constant intensity (no curves)
                     if (effect.IsContinuous)
                     {
                         lowIntensity = effect.LowFrequency;
@@ -133,7 +136,6 @@ namespace DNExtensions.ControllerRumbleSystem
                     }
                     else
                     {
-                        // Timed effects use curves
                         float normalizedTime = effect.ElapsedTime / effect.Duration;
                         lowIntensity = effect.LowFrequency * effect.LowFrequencyCurve.Evaluate(normalizedTime);
                         highIntensity = effect.HighFrequency * effect.HighFrequencyCurve.Evaluate(normalizedTime);
@@ -146,13 +148,13 @@ namespace DNExtensions.ControllerRumbleSystem
                         highIntensity *= distanceMultiplier;
                     }
 
-                    combinedLow = Mathf.Max(combinedLow, lowIntensity);
-                    combinedHigh = Mathf.Max(combinedHigh, highIntensity);
+                    combinedLow += lowIntensity;
+                    combinedHigh += highIntensity;
                     _motorsActive = true;
                 }
                 
-                CurrentCombinedLow = combinedLow;
-                CurrentCombinedHigh = combinedHigh;
+                CurrentCombinedLow = Mathf.Clamp01(combinedLow);;
+                CurrentCombinedHigh =  Mathf.Clamp01(combinedHigh);
 
                 SetMotorSpeeds(CurrentCombinedLow, CurrentCombinedHigh);
             }
@@ -283,8 +285,6 @@ namespace DNExtensions.ControllerRumbleSystem
         /// <param name="highFrequency">High frequency motor intensity (0-1, clamped by frequency range)</param>
         public void SetMotorSpeeds(float lowFrequency, float highFrequency)
         {
-            lowFrequency  = lowFrequencyRange.Clamp(lowFrequency);
-            highFrequency = highFrequencyRange.Clamp(highFrequency);
             _gamepad?.SetMotorSpeeds(lowFrequency, highFrequency);
         }
 
@@ -301,8 +301,71 @@ namespace DNExtensions.ControllerRumbleSystem
         #endregion Motor Interface --------------------------------------------------------------------------------------
 
 
+        
+        
+        private void OnDrawGizmos()
+        {
+            if (!drawInformation) return;
+            #if UNITY_EDITOR
+            
+            
+            
+            
+            var headerStyle = new GUIStyle
+            {
+                fontSize = 12,
+                normal =
+                {
+                    textColor = Color.white
+                }
+                ,
+                alignment = TextAnchor.MiddleCenter
+                ,
+                fontStyle = FontStyle.Bold
+                
+            };
+            var normalStyle = new GUIStyle
+            {
+                fontSize = 12,
+                normal =
+                {
+                    textColor = Color.white
+                }
+                ,
+                alignment = TextAnchor.MiddleCenter
+            };
+            
+            
+            
+            Handles.Label(transform.position + Vector3.up * 1f, $"Rumble Listener",headerStyle);
 
 
+            foreach (var rumbleSource in _rumbleSources)
+            {
+                if (!rumbleSource || !rumbleSource.isActiveAndEnabled) continue;
+                
+                
+                if (rumbleSource.Is3DSource)
+                {
+                    Gizmos.color = Color.green;
+                    Handles.Label(rumbleSource.transform.position + Vector3.up * rumbleSource.MinDistance * 1.3f, $"Rumble Source 3D",headerStyle);
+                    Gizmos.DrawWireSphere(rumbleSource.transform.position, rumbleSource.MaxDistance);
+                    Handles.Label(rumbleSource.transform.position + Vector3.up * rumbleSource.MaxDistance, $"Full distance {rumbleSource.MaxDistance}",normalStyle);
+                    Gizmos.color = Color.red;
+                    Gizmos.DrawWireSphere(rumbleSource.transform.position, rumbleSource.MinDistance);
+                    Handles.Label(rumbleSource.transform.position + Vector3.up * rumbleSource.MinDistance, $"Min distance {rumbleSource.MinDistance}", normalStyle);
+                }
+                else
+                {
+                    Handles.Label(rumbleSource.transform.position + Vector3.up * 1f, $"Rumble Source",headerStyle);
+                }
+            }
+            
+            
+            #endif
+
+        }
+        
     }
-
 }
+

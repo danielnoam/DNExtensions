@@ -47,7 +47,7 @@ public class ControllerRumbleUI : MonoBehaviour
         // Update info text if assigned
         if (infoText)
         {
-            infoText.text = $"Low: {listener.CurrentCombinedLow:F2}\nHigh: {listener.CurrentCombinedHigh:F2}\nIntensity: {combinedIntensity:F2}";
+            infoText.text = $"Low: {listener.CurrentCombinedLow:F2}\nHigh: {listener.CurrentCombinedHigh:F2}\nIntensity: {combinedIntensity:F2}\n Effects: {listener.ActiveEffects}";
         }
         
         // Check if we should be rumbling
