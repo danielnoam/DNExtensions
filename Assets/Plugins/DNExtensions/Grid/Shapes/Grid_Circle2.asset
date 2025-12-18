@@ -18,12 +18,4 @@ MonoBehaviour:
     cellSize: {x: 1, y: 1, z: 0}
     cellSpacing: {x: 0.1, y: 0.1, z: 0}
     cells: 000000010101000000000001010101010000000101010101010100010101010101010101010101010101010101010101010101010101000101010101010100000001010101010000000000010101000000
-    coordinateConverter:
-      rid: 3019431832108662932
-  references:
-    version: 2
-    RefIds:
-    - rid: -2
-      type: {class: , ns: , asm: }
-    - rid: 3019431832108662932
-      type: {class: VerticalConvertor, ns: , asm: Assembly-CSharp}
+    orientation: 0

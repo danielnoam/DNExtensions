@@ -6,6 +6,12 @@ using UnityEditor;
 
 namespace DNExtensions.GridSystem
 {
+    public enum GridOrientation
+    {
+        Vertical,
+        Horizontal
+    }
+
     [System.Serializable]
     public class Grid
     {
@@ -14,7 +20,7 @@ namespace DNExtensions.GridSystem
         public Vector3 cellSize;
         public Vector3 cellSpacing;
         public bool[] cells;
-        [SerializeReference] public CoordinateConverter coordinateConverter;
+        public GridOrientation orientation;
         
         public int Width => size.x;
         public int Height => size.y;
@@ -32,6 +38,13 @@ namespace DNExtensions.GridSystem
             }
         }
         
+        private CoordinateConverter GetConverter()
+        {
+            return orientation == GridOrientation.Vertical 
+                ? new VerticalConvertor() 
+                : new HorizontalConvertor();
+        }
+        
         /// <summary>
         /// Creates a new grid with default values (8x8, vertical orientation).
         /// </summary>
@@ -43,7 +56,7 @@ namespace DNExtensions.GridSystem
             origin =  Vector3.zero;
             cellSize = new Vector3(1f, 1f, 0);
             cellSpacing = new Vector3(0.1f, 0.1f, 0);
-            coordinateConverter = new VerticalConvertor();
+            orientation = GridOrientation.Vertical;
             
             InitializeCells();
         }
@@ -56,14 +69,14 @@ namespace DNExtensions.GridSystem
         /// <param name="origin">The world space origin point of the grid</param>
         /// <param name="cellSize">The size of each cell in world units</param>
         /// <param name="cellSpacing">The spacing between cells in world units</param>
-        /// <param name="coordinateConverter">The coordinate converter to use (defaults to VerticalConvertor if null)</param>
-        public Grid(int width, int height, Vector3 origin, Vector3 cellSize, Vector3 cellSpacing, CoordinateConverter coordinateConverter)
+        /// <param name="gridOrientation">The orientation of the grid (defaults to Vertical)</param>
+        public Grid(int width, int height, Vector3 origin, Vector3 cellSize, Vector3 cellSpacing, GridOrientation gridOrientation = GridOrientation.Vertical)
         {
             size = new Vector2Int(width, height);
             this.origin = origin;
             this.cellSize = cellSize;
             this.cellSpacing = cellSpacing;
-            this.coordinateConverter = coordinateConverter ?? new VerticalConvertor();
+            this.orientation = gridOrientation;
             InitializeCells();
         }
 
@@ -105,7 +118,7 @@ namespace DNExtensions.GridSystem
         /// </summary>
         /// <param name="x">The x coordinate of the cell</param>
         /// <param name="y">The y coordinate of the cell</param>
-        public void DeactivateTile(int x, int y)
+        public void DeactivateCell(int x, int y)
         {
             SetCellActive(x, y, false);
         }
@@ -197,7 +210,7 @@ namespace DNExtensions.GridSystem
         public Vector2Int[] GetActiveCellsPositions()
         {
             int count = ActiveCellCount;
-            Vector2Int[] activeTiles = new Vector2Int[count];
+            Vector2Int[] activeCells = new Vector2Int[count];
             int index = 0;
 
             for (int y = 0; y < Height; y++)
@@ -206,13 +219,13 @@ namespace DNExtensions.GridSystem
                 {
                     if (IsCellActive(x, y))
                     {
-                        activeTiles[index] = new Vector2Int(x, y);
+                        activeCells[index] = new Vector2Int(x, y);
                         index++;
                     }
                 }
             }
 
-            return activeTiles;
+            return activeCells;
         }
         
         /// <summary>
@@ -222,7 +235,8 @@ namespace DNExtensions.GridSystem
         /// <returns>The grid coordinates, or (-1, -1) if the position is outside the grid bounds</returns>
         public Vector2Int GetCell(Vector3 position)
         {
-            Vector2Int gridPos = coordinateConverter.WorldToGrid(position, size, cellSize, cellSpacing, origin);
+            CoordinateConverter converter = GetConverter();
+            Vector2Int gridPos = converter.WorldToGrid(position, size, cellSize, cellSpacing, origin);
             
             if (gridPos.x < 0 || gridPos.x >= Width || gridPos.y < 0 || gridPos.y >= Height)
             {
@@ -240,7 +254,8 @@ namespace DNExtensions.GridSystem
         /// <returns>The world position at the center of the cell</returns>
         public Vector3 GetCellWorldPosition(int x, int y)
         {
-            return coordinateConverter.GridToWorldCenter(
+            CoordinateConverter converter = GetConverter();
+            return converter.GridToWorldCenter(
                 new Vector2Int(x, y), 
                 size, 
                 cellSize, 
@@ -256,8 +271,8 @@ namespace DNExtensions.GridSystem
         /// <returns>The world position at the center of the cell</returns>
         public Vector3 GetCellWorldPosition(Vector2Int position)
         {
-            
-            return coordinateConverter.GridToWorldCenter(
+            CoordinateConverter converter = GetConverter();
+            return converter.GridToWorldCenter(
                 position, 
                 size, 
                 cellSize, 
@@ -269,63 +284,63 @@ namespace DNExtensions.GridSystem
         /// <summary>
         /// Gets the neighboring cell in the specified direction.
         /// </summary>
-        /// <param name="tile">The starting cell position</param>
+        /// <param name="cell">The starting cell position</param>
         /// <param name="direction">The direction vector to the neighbor</param>
         /// <returns>The neighboring cell position, or (-1, -1) if the neighbor is outside grid bounds</returns>
-        public Vector2Int GetNeighboringCell(Vector2Int tile, Vector2Int direction)
+        public Vector2Int GetNeighboringCell(Vector2Int cell, Vector2Int direction)
         {
-            Vector2Int neighboringTile = tile + direction;
+            Vector2Int neighboringCell = cell + direction;
 
-            if (neighboringTile.x < 0 || neighboringTile.x >= Width || neighboringTile.y < 0 || neighboringTile.y >= Height)
+            if (neighboringCell.x < 0 || neighboringCell.x >= Width || neighboringCell.y < 0 || neighboringCell.y >= Height)
             {
                 return new Vector2Int(-1, -1);
             }
 
-            return neighboringTile;
+            return neighboringCell;
         }
         
         /// <summary>
         /// Checks if a cell is touching any edge of the grid and returns the edge directions.
         /// </summary>
-        /// <param name="tile">The cell position to check</param>
+        /// <param name="cell">The cell position to check</param>
         /// <param name="directions">Output list of edge directions this cell is touching</param>
         /// <returns>True if the cell is touching any edge, false otherwise</returns>
-        public bool IsTouchingEdge(Vector2Int tile, out List<Vector2Int> directions)
+        public bool IsTouchingEdge(Vector2Int cell, out List<Vector2Int> directions)
         {
             directions = new List<Vector2Int>();
 
             // Main directions
-            if (tile.x == 0)
+            if (cell.x == 0)
             {
                 directions.Add(Vector2Int.left);
             }
-            if (tile.x == Width - 1)
+            if (cell.x == Width - 1)
             {
                 directions.Add(Vector2Int.right);
             }
-            if (tile.y == 0)
+            if (cell.y == 0)
             {
                 directions.Add(Vector2Int.down);
             }
-            if (tile.y == Height - 1)
+            if (cell.y == Height - 1)
             {
                 directions.Add(Vector2Int.up);
             }
             
             // Diagonals
-            if (tile.x == Width - 1 && tile.y == Height - 1)
+            if (cell.x == Width - 1 && cell.y == Height - 1)
             {
                 directions.Add(new Vector2Int(1,1));
             }
-            if (tile.x == Width - 1 && tile.y == 0)
+            if (cell.x == Width - 1 && cell.y == 0)
             {
                 directions.Add(new Vector2Int(1, -1));
             }
-            if (tile.x == 0 && tile.y == Height - 1)
+            if (cell.x == 0 && cell.y == Height - 1)
             {
                 directions.Add(new Vector2Int(-1, 1));
             }
-            if (tile is { x: 0, y: 0 })
+            if (cell is { x: 0, y: 0 })
             {
                 directions.Add(new Vector2Int(-1, -1));
             }
@@ -337,12 +352,12 @@ namespace DNExtensions.GridSystem
         /// <summary>
         /// Checks if two cells are orthogonally adjacent (Manhattan distance of 1).
         /// </summary>
-        /// <param name="tile1">The first cell position</param>
-        /// <param name="tile2">The second cell position</param>
+        /// <param name="cell1">The first cell position</param>
+        /// <param name="cell2">The second cell position</param>
         /// <returns>True if the cells are neighbors, false otherwise</returns>
-        public bool AreCellsNeighbors(Vector2Int tile1, Vector2Int tile2)
+        public bool AreCellsNeighbors(Vector2Int cell1, Vector2Int cell2)
         {
-            Vector2Int difference = tile1 - tile2;
+            Vector2Int difference = cell1 - cell2;
             int manhattanDistance = Mathf.Abs(difference.x) + Mathf.Abs(difference.y);
         
             return manhattanDistance == 1;
@@ -368,7 +383,7 @@ namespace DNExtensions.GridSystem
         /// </summary>
         public void DrawGrid()
         {
-            coordinateConverter ??= new VerticalConvertor();
+            CoordinateConverter converter = GetConverter();
             
             var labelStyle = new GUIStyle()
             {
@@ -381,17 +396,17 @@ namespace DNExtensions.GridSystem
             {
                 for (int y = 0; y < Height; y++)
                 {
-                    var tileState = IsCellActive(x, y);
-                    var tilePosition = GetCellWorldPosition(x, y);
+                    var cellState = IsCellActive(x, y);
+                    var cellPosition = GetCellWorldPosition(x, y);
                 
-                    Gizmos.color = tileState ? Color.green : Color.white;
+                    Gizmos.color = cellState ? Color.green : Color.white;
                     
-                    Gizmos.matrix = Matrix4x4.TRS(tilePosition, Quaternion.LookRotation(coordinateConverter.Forward), Vector3.one);
+                    Gizmos.matrix = Matrix4x4.TRS(cellPosition, Quaternion.LookRotation(converter.Forward), Vector3.one);
                     Gizmos.DrawWireCube(Vector3.zero, cellSize);
                     Gizmos.matrix = Matrix4x4.identity;
                 
                     #if UNITY_EDITOR
-                    Handles.Label(tilePosition, $"{x},{y}", labelStyle);
+                    Handles.Label(cellPosition, $"{x},{y}", labelStyle);
                     #endif
                 }
             }

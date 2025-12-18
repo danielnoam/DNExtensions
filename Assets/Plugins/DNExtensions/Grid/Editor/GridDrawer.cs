@@ -121,13 +121,13 @@ namespace DNExtensions.GridSystem
             EditorGUI.PropertyField(currentRect, cellSpacingProp, new GUIContent("Cell Spacing"));
             currentRect.y += EditorGUI.GetPropertyHeight(cellSpacingProp) + Spacing;
 
-            // Coordinate Converter Selector
-            SerializedProperty converterProp = property.FindPropertyRelative("coordinateConverter");
-            DrawCoordinateConverterSelector(currentRect, converterProp);
+            // Orientation Selector
+            SerializedProperty orientationProp = property.FindPropertyRelative("orientation");
+            EditorGUI.PropertyField(currentRect, orientationProp, new GUIContent("Orientation"));
             currentRect.y += EditorGUIUtility.singleLineHeight + Spacing;
             
             // Active Cell Count
-            EditorGUI.LabelField(currentRect, $"Active Cell: {activeCount} / {width * height}");
+            EditorGUI.LabelField(currentRect, $"Active Cells: {activeCount} / {width * height}");
             currentRect.y += EditorGUIUtility.singleLineHeight + Spacing;
 
             // Shape Painter (Grid Visualization)
@@ -198,33 +198,36 @@ namespace DNExtensions.GridSystem
                     e.Use();
                 }
             }
-            else if (e.type == EventType.MouseDrag && _isDragging && gridRect.Contains(e.mousePosition))
+
+            if (e.type == EventType.MouseDrag && _isDragging && gridRect.Contains(e.mousePosition))
             {
                 int x = Mathf.FloorToInt((e.mousePosition.x - gridRect.x) / CellSize);
                 int visualY = Mathf.FloorToInt((e.mousePosition.y - gridRect.y) / CellSize);
-                int y = height - 1 - visualY; // Flip Y
+                int y = height - 1 - visualY;
 
                 if (x >= 0 && x < width && y >= 0 && y < height)
                 {
                     int index = y * width + x;
-                    cellsProp.GetArrayElementAtIndex(index).boolValue = _dragState;
-                    cellsProp.serializedObject.ApplyModifiedProperties();
-                    GUI.changed = true;
+                    if (cellsProp.GetArrayElementAtIndex(index).boolValue != _dragState)
+                    {
+                        cellsProp.GetArrayElementAtIndex(index).boolValue = _dragState;
+                        cellsProp.serializedObject.ApplyModifiedProperties();
+                        GUI.changed = true;
+                    }
                     e.Use();
                 }
             }
-            else if (e.type == EventType.MouseUp)
+
+            if (e.type == EventType.MouseUp)
             {
                 _isDragging = false;
             }
 
-            // Draw cells - flip Y when drawing
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
                     int index = y * width + x;
-                    if (index >= cellsProp.arraySize) continue;
 
                     bool isActive = cellsProp.GetArrayElementAtIndex(index).boolValue;
 
@@ -355,32 +358,6 @@ namespace DNExtensions.GridSystem
 
             cellsProp.serializedObject.ApplyModifiedProperties();
             GUI.changed = true;
-        }
-        
-        private void DrawCoordinateConverterSelector(Rect rect, SerializedProperty converterProp)
-        {
-            string currentType = converterProp.managedReferenceFullTypename;
-            int currentSelection = 0;
-        
-            if (!string.IsNullOrEmpty(currentType))
-            {
-                if (currentType.Contains("Horizontal"))
-                    currentSelection = 1;
-            }
-        
-            EditorGUI.BeginChangeCheck();
-            int selection = EditorGUI.Popup(rect, "Coordinate System", currentSelection, 
-                new[] { "Vertical", "Horizontal" });
-        
-            if (EditorGUI.EndChangeCheck())
-            {
-                if (selection == 0)
-                    converterProp.managedReferenceValue = new VerticalConvertor();
-                else
-                    converterProp.managedReferenceValue = new HorizontalConvertor();
-            
-                converterProp.serializedObject.ApplyModifiedProperties();
-            }
         }
         
         private void FlipGridHorizontally(SerializedProperty cellsProp, int width, int height)

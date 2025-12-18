@@ -1,0 +1,27 @@
+g defualt
+
+v -0.5 0.5 0.0
+v 0.5 0.5 0.0
+v 0.5 -0.5 0.0
+v -0.5 -0.5 0.0
+
+# vertices
+
+
+vt 0.0 1.0
+vt 1.0 1.0
+vt 1.0 0.0
+vt 0.0 0.0
+
+# uv coordinates
+
+vn 0.0 0.0 -1.0
+vn 0.0 0.0 -1.0
+vn 0.0 0.0 -1.0
+vn 0.0 0.0 -1.0
+
+# normals
+
+s off
+g custom_quad_mesh
+f 1/2/1 2/1/2 3/4/3 4/3/4

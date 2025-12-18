@@ -17,5 +17,6 @@ MonoBehaviour:
     values: []
   bookmarks: []
   bookmarkedScenePaths:
+  - Assets/3_ShaderBible/ShaderBible.unity
   - Assets/2_Testing/TestScene.unity
   - Assets/2_Testing/UITesting/UITest.unity
