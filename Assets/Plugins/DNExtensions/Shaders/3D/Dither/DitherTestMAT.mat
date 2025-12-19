@@ -55,7 +55,7 @@ Material:
     m_Floats:
     - _Ambient_Occlusion: 1
     - _DITHER_FROM: 3
-    - _Dither_Fade_Distance: 1.22
+    - _Dither_Fade_Distance: 0
     - _Dither_Flip: 0
     - _Emission: 0
     - _Metallic: 0
@@ -65,7 +65,7 @@ Material:
     - _Tiling: 1
     - _UVPOSITION: 0
     m_Colors:
-    - _Base_Color: {r: 1, g: 1, b: 1, a: 0}
+    - _Base_Color: {r: 0.5471698, g: 0.5471698, b: 0.5471698, a: 0}
     - _Dither_World_Position: {r: 0, g: 0, b: 0, a: 0}
     - _Emission_Color: {r: 6.867925, g: 0, b: 0.06694186, a: 0}
   m_BuildTextureStacks: []

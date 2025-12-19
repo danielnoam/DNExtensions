@@ -980,7 +980,7 @@
         },
         "preventRotation": false
     },
-    "m_Path": "—",
+    "m_Path": "Shader Graphs",
     "m_GraphPrecision": 1,
     "m_PreviewMode": 2,
     "m_OutputNode": {
@@ -3214,8 +3214,8 @@
     "m_ObjectId": "5e686a8330034b3c8ccc7c1580583cf4",
     "m_Title": "Dither",
     "m_Position": {
-        "x": 1339.999755859375,
-        "y": 1787.999755859375
+        "x": 1340.0,
+        "y": 1787.9998779296875
     }
 }
 
