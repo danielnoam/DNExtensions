@@ -42,7 +42,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _ColorMask: 15
-    - _CycleTime: 1
+    - _CycleTime: 3
     - _Rotation: 0.14
     - _Speed: 4
     - _Stencil: 0
