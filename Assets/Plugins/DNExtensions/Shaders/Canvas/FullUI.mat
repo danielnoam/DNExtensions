@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Shiny
-  m_Shader: {fileID: -6465566751694194690, guid: a9f1cbce184a50c4085b5edf3a118080, type: 3}
+  m_Name: FullUI
+  m_Shader: {fileID: -6465566751694194690, guid: bf46d28c70d9a96448ff7049e51e55ee, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -41,19 +41,38 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _Blue_Contrast: 1
     - _ColorMask: 15
+    - _Contrast: 0
     - _CycleTime: 3
-    - _Rotation: 0.14
-    - _Speed: 4
+    - _Dissolve: 1
+    - _Dissolve_Amount: 0
+    - _Dissolve_Noise_Scale: 25
+    - _Gradient: 0
+    - _Green_Contrast: 1
+    - _Line_Cycle_Time: 2
+    - _Line_Rotation: 335
+    - _Line_Shine: 1
+    - _Line_Speed: 2
+    - _Line_Thickness: 0.25
+    - _Rainbow: 0
+    - _Rainbow_Rotation: 0
+    - _Red_Contrast: 1
+    - _Rotation: 3
+    - _Shine: 0
+    - _Speed: 3
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
     - _StencilReadMask: 255
     - _StencilWriteMask: 255
+    - _Tint: 0
     - _UIMaskSoftnessX: 1
     - _UIMaskSoftnessY: 1
     m_Colors:
     - _ClipRect: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Line_Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Tint_Color: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
