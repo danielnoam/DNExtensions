@@ -582,7 +582,7 @@
     "m_Group": {
         "m_Id": ""
     },
-    "m_Name": "OutlineComponent",
+    "m_Name": "Outline Component",
     "m_DrawState": {
         "m_Expanded": true,
         "m_Position": {
@@ -970,12 +970,15 @@
     "overrideHLSLDeclaration": false,
     "hlslDeclarationOverride": 0,
     "m_Hidden": false,
+    "m_PerRendererData": false,
+    "m_customAttributes": [],
     "m_Value": {
         "m_SerializedTexture": "",
         "m_Guid": ""
     },
     "isMainTexture": false,
     "useTilingAndOffset": false,
+    "useTexelSize": true,
     "m_Modifiable": true,
     "m_DefaultType": 0
 }
@@ -1276,7 +1279,7 @@
     "m_Group": {
         "m_Id": ""
     },
-    "m_Name": "OutlineComponent",
+    "m_Name": "Outline Component",
     "m_DrawState": {
         "m_Expanded": true,
         "m_Position": {
@@ -1768,7 +1771,7 @@
     "m_Group": {
         "m_Id": ""
     },
-    "m_Name": "OutlineComponent",
+    "m_Name": "Outline Component",
     "m_DrawState": {
         "m_Expanded": true,
         "m_Position": {
@@ -1839,15 +1842,15 @@
     "m_Group": {
         "m_Id": ""
     },
-    "m_Name": "OutlineComponent",
+    "m_Name": "Outline Component",
     "m_DrawState": {
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -838.6665649414063,
-            "y": 251.3333282470703,
-            "width": 225.33331298828126,
-            "height": 121.33332824707031
+            "x": -841.5000610351563,
+            "y": 253.50001525878907,
+            "width": 225.00006103515626,
+            "height": 119.00001525878906
         }
     },
     "m_Slots": [
