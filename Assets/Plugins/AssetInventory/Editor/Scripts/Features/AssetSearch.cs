@@ -206,7 +206,10 @@ namespace AssetInventory
             // SRP filters
             switch (opt.SelectedPackageSRPs)
             {
-                case 0: // auto-detect
+                case 0:
+                    break;
+                
+                case 1: // auto-detect
                     if (AI.Config.excludeIncompatibleSRPs)
                     {
                         bool isURP = AssetUtils.IsOnURP();
@@ -228,15 +231,15 @@ namespace AssetInventory
                     }
                     break;
 
-                case 2:
+                case 3:
                     wheres.Add("Asset.BIRPCompatible=1");
                     break;
 
-                case 3:
+                case 4:
                     wheres.Add("Asset.URPCompatible=1");
                     break;
 
-                case 4:
+                case 5:
                     wheres.Add("Asset.HDRPCompatible=1");
                     break;
             }

@@ -174,7 +174,7 @@ namespace AssetInventory
         private int _selectedExpertSearchField;
         private int _selectedAsset;
         private int _selectedPackageTypes = 1;
-        private int _selectedPackageSRPs;
+        private int _selectedPackageSRPs = 1;
         private int _selectedImageType;
         private int _selectedPackageTag;
         private int _selectedFileTag;
@@ -2017,7 +2017,7 @@ namespace AssetInventory
                 || _selectedImageType > 0
                 || _selectedColorOption > 0
                 || _selectedPackageTypes != 1
-                || _selectedPackageSRPs > 0
+                || _selectedPackageSRPs != 1
                 || !string.IsNullOrEmpty(_searchWidth)
                 || !string.IsNullOrEmpty(_searchHeight)
                 || !string.IsNullOrEmpty(_searchLength)
@@ -2976,7 +2976,7 @@ namespace AssetInventory
             _selectedEntry = null;
             _selectedAsset = 0;
             _selectedPackageTypes = 1;
-            _selectedPackageSRPs = 0;
+            _selectedPackageSRPs = 1;
             _selectedImageType = 0;
             _selectedColorOption = 0;
             _selectedColor = Color.clear;

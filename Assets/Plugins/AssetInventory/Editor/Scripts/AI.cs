@@ -26,7 +26,7 @@ namespace AssetInventory
 {
     public static class AI
     {
-        public const string VERSION = "3.6.0";
+        public const string VERSION = "3.6.1";
         public const string DEFINE_SYMBOL = "ASSET_INVENTORY";
         public const string DEFINE_SYMBOL_OLLAMA = DEFINE_SYMBOL + "_OLLAMA";
         public const string DEFINE_SYMBOL_HIDE_AI = DEFINE_SYMBOL + "_HIDE_AI";
@@ -1631,7 +1631,7 @@ namespace AssetInventory
                                 case 1:
                                     string path = deps[i].Path;
                                     string lowerPath = path.ToLowerInvariant();
-                                    
+
                                     // Handle both relative paths (assets/...) and absolute paths (.../Assets/...)
                                     // Check if path starts with "assets/" or contains "/assets/" (standalone directory)
                                     int assetsIndex = -1;
@@ -1644,12 +1644,12 @@ namespace AssetInventory
                                         int slashIndex = lowerPath.IndexOf("/assets/", StringComparison.OrdinalIgnoreCase);
                                         if (slashIndex >= 0) assetsIndex = slashIndex + 1;
                                     }
-                                    
+
                                     if (assetsIndex >= 0)
                                     {
                                         path = path.Substring(assetsIndex + 7); // Skip "assets/"
                                     }
-                                    
+
                                     targetPath = Path.Combine(
                                         folder,
                                         asset.AssetSource == Asset.Source.RegistryPackage && !previewMode ? asset.SafeName : "",
@@ -1704,15 +1704,22 @@ namespace AssetInventory
 #if USE_URP_CONVERTER
             if (AssetUtils.IsOnURP())
             {
-                Converters.RunInBatchMode(
-                    ConverterContainerId.BuiltInToURP
-                    , new List<ConverterId>
-                    {
-                        ConverterId.Material,
-                        ConverterId.ReadonlyMaterial
-                    }
-                    , ConverterFilter.Inclusive
-                );
+                try
+                {
+                    Converters.RunInBatchMode(
+                        ConverterContainerId.BuiltInToURP
+                        , new List<ConverterId>
+                        {
+                            ConverterId.Material,
+                            ConverterId.ReadonlyMaterial
+                        }
+                        , ConverterFilter.Inclusive
+                    );
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"Could not run URP converter: {e.Message}");
+                }
             }
 #endif
         }

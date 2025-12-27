@@ -9,8 +9,8 @@ namespace AssetInventory
         public string id;
         public string createdBy;
         public string updatedBy;
-        public DateTime createdTime;
-        public DateTime updatedTime;
+        public DateTime? createdTime;
+        public DateTime? updatedTime;
         public string packageId;
         public string slug;
         public int revision;

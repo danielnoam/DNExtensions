@@ -594,7 +594,24 @@ namespace VFolders
         bool isTwoColumns => !isOneColumn;
         bool isSearchActive;
 
-        bool isCompactMode => isOneColumn;
+        bool isCompactMode
+        {
+            get
+            {
+                var forceNoCompactMode = EditorPrefsCached.GetBool("vFolders-forceNoCompactMode", defaultValue: false);
+                var forceCompactMode = EditorPrefsCached.GetBool("vFolders-forceCompactMode", defaultValue: false);
+
+                if (forceNoCompactMode && isOneColumn)
+                    return false;
+
+                if (forceCompactMode && !isOneColumn)
+                    return true;
+
+
+                return isOneColumn;
+
+            }
+        }
 
         Rect navbarRect;
         Rect bookmarksRect;

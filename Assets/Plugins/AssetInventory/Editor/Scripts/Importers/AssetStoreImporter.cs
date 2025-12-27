@@ -189,6 +189,7 @@ namespace AssetInventory
             {
                 Asset asset = assets[i];
                 int id = asset.ForeignId;
+                if (id <= 0) continue;
 
                 SetProgress(asset.DisplayName, i + 1);
                 if (i % 5 == 0) await Task.Yield(); // let editor breathe
@@ -302,12 +303,11 @@ namespace AssetInventory
                         currentAsset.Slug = details.slug;
                         currentAsset.LatestVersion = details.version.name;
 
-                        currentAsset.LastRelease = details.version.publishedDate;
-                        if (currentAsset.LastRelease == DateTime.MinValue) currentAsset.LastRelease = details.updatedTime; // can happen for deprecated assets, their version published date will be 0
+                        currentAsset.LastRelease = details.version.publishedDate ?? details.updatedTime ?? DateTime.MinValue; // can happen for deprecated assets, their version published date will be 0 or empty
 
                         // store updatedTime here as well since publishedDate is the date of the last upload, which can be way off for deprecated assets
                         // only store newer dates since updatedTime can be older than the update date coming from update API
-                        if (details.updatedTime > currentAsset.LastUpdate) currentAsset.LastUpdate = details.updatedTime;
+                        if (details.updatedTime.HasValue && details.updatedTime.Value > currentAsset.LastUpdate) currentAsset.LastUpdate = details.updatedTime.Value;
 
                         if (details.productReview != null)
                         {

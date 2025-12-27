@@ -10,6 +10,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 308224
   packageName: Asset Inventory 3
-  packageVersion: 3.6.0
-  assetPath: Assets/AssetInventory/Tutorials/Additional Folders/15-FolderTypes.asset
-  uploadId: 831688
+  packageVersion: 3.6.1
+  assetPath: Assets/Plugins/AssetInventory/Tutorials/Additional Folders/15-FolderTypes.asset
+  uploadId: 837862

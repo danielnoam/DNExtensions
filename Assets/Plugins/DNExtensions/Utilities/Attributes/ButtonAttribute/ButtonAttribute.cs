@@ -5,20 +5,22 @@ namespace DNExtensions.Button
 {
     public enum ButtonPlayMode
     {
-        Both,
-        OnlyWhenPlaying,
-        OnlyWhenNotPlaying
+        UseDefault = -1,
+        Both = 0,
+        OnlyWhenPlaying = 1,
+        OnlyWhenNotPlaying = 2
     }
 
-    [AttributeUsage(AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public class ButtonAttribute : Attribute 
     {
-        public readonly string Name = "";
-        public readonly int Height = 30;
-        public readonly int Space = 3;
-        public readonly ButtonPlayMode PlayMode = ButtonPlayMode.Both;
-        public readonly string Group = "";
-        public Color Color = Color.white;
+
+        public string Name { get; private set; } = null;
+        public int Height { get; private set; } = -1; 
+        public int Space { get; private set; } = -1;
+        public ButtonPlayMode PlayMode { get; private set; } = ButtonPlayMode.UseDefault;
+        public string Group { get; private set; } = null;
+        public Color Color { get; set; } = Color.clear; 
 
         /// <summary>
         /// Adds a button for the method in the inspector
@@ -39,7 +41,7 @@ namespace DNExtensions.Button
         /// </summary>
         /// <param name="height">Height of the button in pixels</param>
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
-        public ButtonAttribute(int height, string name = "")
+        public ButtonAttribute(int height, string name = null)
         {
             Height = height;
             Name = name;
@@ -51,7 +53,7 @@ namespace DNExtensions.Button
         /// <param name="height">Height of the button in pixels</param>
         /// <param name="space">Space above the button in pixels</param>
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
-        public ButtonAttribute(int height, int space, string name = "")
+        public ButtonAttribute(int height, int space, string name = null)
         {
             Height = height;
             Space = space;
@@ -65,7 +67,7 @@ namespace DNExtensions.Button
         /// <param name="space">Space above the button in pixels</param>
         /// <param name="color">Background color of the button</param>
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
-        public ButtonAttribute(int height, int space, Color color, string name = "")
+        public ButtonAttribute(int height, int space, Color color, string name = null)
         {
             Height = height;
             Space = space;
@@ -81,7 +83,7 @@ namespace DNExtensions.Button
         /// <param name="color">Background color of the button</param>
         /// <param name="playMode">When the button should be enabled (play mode, edit mode, or both)</param>
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
-        public ButtonAttribute(int height, int space, Color color, ButtonPlayMode playMode, string name = "")
+        public ButtonAttribute(int height, int space, Color color, ButtonPlayMode playMode, string name = null)
         {
             Height = height;
             Space = space;
@@ -95,7 +97,7 @@ namespace DNExtensions.Button
         /// </summary>
         /// <param name="playMode">When the button should be enabled (play mode, edit mode, or both)</param>
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
-        public ButtonAttribute(ButtonPlayMode playMode, string name = "")
+        public ButtonAttribute(ButtonPlayMode playMode, string name = null)
         {
             PlayMode = playMode;
             Name = name;
@@ -108,7 +110,7 @@ namespace DNExtensions.Button
         /// </summary>
         /// <param name="group">Group name to organize buttons together</param>
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
-        public ButtonAttribute(string group, string name = "")
+        public ButtonAttribute(string group, string name = null)
         {
             Group = group;
             Name = name;
@@ -120,7 +122,7 @@ namespace DNExtensions.Button
         /// <param name="group">Group name to organize buttons together</param>
         /// <param name="playMode">When the button should be enabled (play mode, edit mode, or both)</param>
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
-        public ButtonAttribute(string group, ButtonPlayMode playMode, string name = "")
+        public ButtonAttribute(string group, ButtonPlayMode playMode, string name = null)
         {
             Group = group;
             PlayMode = playMode;
@@ -133,7 +135,7 @@ namespace DNExtensions.Button
         /// <param name="group">Group name to organize buttons together</param>
         /// <param name="height">Height of the button in pixels</param>
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
-        public ButtonAttribute(string group, int height, string name = "")
+        public ButtonAttribute(string group, int height, string name = null)
         {
             Group = group;
             Height = height;
@@ -147,7 +149,7 @@ namespace DNExtensions.Button
         /// <param name="height">Height of the button in pixels</param>
         /// <param name="space">Space above the button in pixels</param>
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
-        public ButtonAttribute(string group, int height, int space, string name = "")
+        public ButtonAttribute(string group, int height, int space, string name = null)
         {
             Group = group;
             Height = height;
@@ -163,7 +165,7 @@ namespace DNExtensions.Button
         /// <param name="space">Space above the button in pixels</param>
         /// <param name="color">Background color of the button</param>
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
-        public ButtonAttribute(string group, int height, int space, Color color, string name = "")
+        public ButtonAttribute(string group, int height, int space, Color color, string name = null)
         {
             Group = group;
             Height = height;
@@ -181,7 +183,7 @@ namespace DNExtensions.Button
         /// <param name="color">Background color of the button</param>
         /// <param name="playMode">When the button should be enabled (play mode, edit mode, or both)</param>
         /// <param name="name">Display name for the button (uses method name if not specified)</param>
-        public ButtonAttribute(string group, int height, int space, Color color, ButtonPlayMode playMode, string name = "")
+        public ButtonAttribute(string group, int height, int space, Color color, ButtonPlayMode playMode, string name = null)
         {
             Group = group;
             Height = height;

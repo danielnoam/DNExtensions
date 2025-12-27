@@ -7,7 +7,7 @@ namespace AssetInventory
     {
         public string id;
         public string name;
-        public DateTime publishedDate;
+        public DateTime? publishedDate;
 
         public override string ToString()
         {

@@ -9,6 +9,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 308224
   packageName: Asset Inventory 3
-  packageVersion: 3.6.0
-  assetPath: Assets/AssetInventory/CHANGELOG.md
-  uploadId: 831688
+  packageVersion: 3.6.1
+  assetPath: Assets/Plugins/AssetInventory/CHANGELOG.md
+  uploadId: 837862

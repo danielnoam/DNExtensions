@@ -15,7 +15,7 @@ namespace DNExtensions.MobileHeptics.Editor
         private string _statusMessage = "";
         private MessageType _statusType = MessageType.Info;
 
-        [MenuItem("Tools/Mobile Haptics Setup")]
+        [MenuItem("Tools/DNExtensions/Mobile Haptics Setup")]
         public static void ShowWindow()
         {
             var window = GetWindow<MobileHapticsSetupWindow>("Haptics Setup");

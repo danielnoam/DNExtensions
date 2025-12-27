@@ -1,16 +1,20 @@
-using System;
+
 using DNExtensions;
 using UnityEngine;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 
 [RequireComponent(typeof(Camera))]
-public class CameraController : MonoBehaviour
+public class FreeFormCameraController : MonoBehaviour
 {
 
+    [InfoBox("Camera Controls:\n" +
+             "- Move: WASD or Arrow Keys\n" +
+             "- Move Up/Down: Space / Left Ctrl\n" +
+             "- Sprint: Left Shift\n" +
+             "- Rotate: Right Mouse Button + Mouse Move\n" +
+             "- Zoom: Mouse Scroll Wheel", InfoBoxType.Info)]
+    
     [Header("Movement Settings")]
     [SerializeField, Min(1f)] private float moveSpeed = 10;
     [SerializeField, Range(1, 10)] private float sprintMultiplier = 2f;
@@ -26,10 +30,13 @@ public class CameraController : MonoBehaviour
     [SerializeField, Min(1f)] private float zoomSpeed = 10f;
     [SerializeField, MinMaxRange(0, 50)] private RangedFloat zoomLimits = new RangedFloat(5f, 50f);
     
-    
     [Header("References")]
     [SerializeField] private new Camera camera;
+    
 
+    
+
+    
     private enum CameraRotationMode
     {
         RightMouseButton,
@@ -112,19 +119,3 @@ public class CameraController : MonoBehaviour
 
 
 
-#if UNITY_EDITOR
-[CustomEditor(typeof(CameraController))]
-public class CameraControllerEditor : UnityEditor.Editor
-{
-    public override void OnInspectorGUI()
-    {
-        EditorGUILayout.HelpBox("Camera Controls:\n" +
-                                "- Move: WASD or Arrow Keys\n" +
-                                "- Move Up/Down: Space / Left Ctrl\n" +
-                                "- Sprint: Left Shift\n" +
-                                "- Rotate: Right Mouse Button + Mouse Move\n" +
-                                "- Zoom: Mouse Scroll Wheel", MessageType.Info);
-        DrawDefaultInspector();
-    }
-}
-#endif

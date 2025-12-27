@@ -119,6 +119,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 308224
   packageName: Asset Inventory 3
-  packageVersion: 3.6.0
-  assetPath: Assets/AssetInventory/Editor/Images/asset-inventory-icon32.png
-  uploadId: 831688
+  packageVersion: 3.6.1
+  assetPath: Assets/Plugins/AssetInventory/Editor/Images/asset-inventory-icon32.png
+  uploadId: 837862

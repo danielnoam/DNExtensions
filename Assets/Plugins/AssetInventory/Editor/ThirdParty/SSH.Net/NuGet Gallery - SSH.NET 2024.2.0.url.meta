@@ -9,7 +9,7 @@ AssetOrigin:
   serializedVersion: 1
   productId: 308224
   packageName: Asset Inventory 3
-  packageVersion: 3.6.0
-  assetPath: Assets/AssetInventory/Editor/ThirdParty/SSH.Net/NuGet Gallery - SSH.NET
-    2024.2.0.url
-  uploadId: 831688
+  packageVersion: 3.6.1
+  assetPath: Assets/Plugins/AssetInventory/Editor/ThirdParty/SSH.Net/NuGet Gallery
+    - SSH.NET 2024.2.0.url
+  uploadId: 837862

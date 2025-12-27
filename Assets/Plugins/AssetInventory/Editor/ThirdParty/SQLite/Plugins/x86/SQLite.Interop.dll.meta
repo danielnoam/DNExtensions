@@ -65,6 +65,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 308224
   packageName: Asset Inventory 3
-  packageVersion: 3.6.0
-  assetPath: Assets/AssetInventory/Editor/ThirdParty/SQLite/Plugins/x86/SQLite.Interop.dll
-  uploadId: 831688
+  packageVersion: 3.6.1
+  assetPath: Assets/Plugins/AssetInventory/Editor/ThirdParty/SQLite/Plugins/x86/SQLite.Interop.dll
+  uploadId: 837862

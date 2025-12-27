@@ -9,7 +9,7 @@ AssetOrigin:
   serializedVersion: 1
   productId: 308224
   packageName: Asset Inventory 3
-  packageVersion: 3.6.0
-  assetPath: Assets/AssetInventory/Editor/ThirdParty/Microsoft AI/NuGet Gallery -
-    System.Net.Http.Json 9.0.5.url
-  uploadId: 831688
+  packageVersion: 3.6.1
+  assetPath: Assets/Plugins/AssetInventory/Editor/ThirdParty/Microsoft AI/NuGet Gallery
+    - System.Net.Http.Json 9.0.5.url
+  uploadId: 837862

@@ -33,7 +33,7 @@ namespace DNExtensions
         // & = Alt (Windows/Linux) or Option (Mac)
         // # = Shift
         // _ followed by a key = Function keys (e.g., _F1 for F1)
-        [MenuItem("Tools/Play from Camera Position #%&p", false, 170)]
+        [MenuItem("Tools/Play from Camera Position #%&p", false)]
         private static void PlayFromCameraMenuItem()
         {
             PlayFromCurrentCamera();

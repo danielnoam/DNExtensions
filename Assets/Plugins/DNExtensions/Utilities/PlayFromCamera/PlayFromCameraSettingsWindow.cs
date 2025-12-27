@@ -13,7 +13,7 @@ namespace DNExtensions
     {
         private Vector2 _scrollPosition;
 
-        [MenuItem("Tools/Play from Camera Settings", false, 169)]
+        [MenuItem("Tools/DNExtensions/Play from Camera Settings", false)]
         public static void ShowWindow()
         {
             PlayFromCameraSettingsWindow window = GetWindow<PlayFromCameraSettingsWindow>();
@@ -26,25 +26,17 @@ namespace DNExtensions
         {
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
 
-            EditorGUILayout.LabelField("Play from Camera Settings", EditorStyles.boldLabel);
-            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
 
             PlayFromCameraSettings.AlsoSetRotation = EditorGUILayout.Toggle(
                 new GUIContent("Also Set Player Rotation",
                     "If enabled, the player's rotation will also be set to match the camera rotation"),
                 PlayFromCameraSettings.AlsoSetRotation
             );
-
-            EditorGUILayout.Space();
-
-            EditorGUILayout.LabelField("Player Object Selection", EditorStyles.boldLabel);
-
             PlayFromCameraSettings.PlayerSelectionMode = (PlayerSelectionMode)EditorGUILayout.EnumPopup(
                 new GUIContent("Selection Mode", "How to find the player object in the scene"),
                 PlayFromCameraSettings.PlayerSelectionMode
             );
-
-            EditorGUILayout.Space();
 
             switch (PlayFromCameraSettings.PlayerSelectionMode)
             {
@@ -72,8 +64,6 @@ namespace DNExtensions
             }
 
             EditorGUILayout.Space();
-
-            EditorGUILayout.LabelField("Testing", EditorStyles.boldLabel);
 
             if (GUILayout.Button("Find Player Object"))
             {

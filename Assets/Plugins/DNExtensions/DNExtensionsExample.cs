@@ -48,7 +48,7 @@ public class DNExtensionsExample : MonoBehaviour
 
     
     
-    [Button("Test Group", "")]
+    [Button("Test Group", ButtonPlayMode.Both)]
     public void TestImpulse()
     {
         testImpulseSource.GenerateImpulse(testImpulse);
