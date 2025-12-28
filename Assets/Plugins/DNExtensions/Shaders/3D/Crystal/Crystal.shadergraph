@@ -35,9 +35,6 @@
             "m_Id": "d074f506eee740f18ad3264d228ae3e2"
         },
         {
-            "m_Id": "3f4c601669a2496a8ddf50fb912dfbc1"
-        },
-        {
             "m_Id": "57f7e65f186b4a05a21882d413cd0ac6"
         }
     ],
@@ -833,24 +830,6 @@
     },
     "isMainColor": false,
     "m_ColorMode": 1
-}
-
-{
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.CategoryData",
-    "m_ObjectId": "3f4c601669a2496a8ddf50fb912dfbc1",
-    "m_Name": "Base",
-    "m_ChildObjectList": [
-        {
-            "m_Id": "e38a2b6ebb744d7eac2a5b25e31c0e42"
-        },
-        {
-            "m_Id": "385055a9eb374ea09ac66a4c83612427"
-        },
-        {
-            "m_Id": "60c4e84504614ce49db9f90b29df39d2"
-        }
-    ]
 }
 
 {
@@ -2144,7 +2123,17 @@
     "m_Type": "UnityEditor.ShaderGraph.CategoryData",
     "m_ObjectId": "d074f506eee740f18ad3264d228ae3e2",
     "m_Name": "",
-    "m_ChildObjectList": []
+    "m_ChildObjectList": [
+        {
+            "m_Id": "e38a2b6ebb744d7eac2a5b25e31c0e42"
+        },
+        {
+            "m_Id": "385055a9eb374ea09ac66a4c83612427"
+        },
+        {
+            "m_Id": "60c4e84504614ce49db9f90b29df39d2"
+        }
+    ]
 }
 
 {

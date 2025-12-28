@@ -7,35 +7,23 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: DitherTestMAT
-  m_Shader: {fileID: -6465566751694194690, guid: 72e83e4c692b51842b39cc343ee1d5fc, type: 3}
+  m_Name: Ripple
+  m_Shader: {fileID: -6465566751694194690, guid: a87511a82fba6c54bb9e1270b0df543e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _DITHER_FROM_OBJECT_POSITION
-  - _UVPOSITION_OBJECT
-  m_InvalidKeywords:
-  - _EMISSION
-  m_LightmapFlags: 2
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
-  disabledShaderPasses:
-  - MOTIONVECTORS
+  disabledShaderPasses: []
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _Base_Texture:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Emission_Texture:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Metallic_Texture:
+    - _MainTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -53,25 +41,18 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Ambient_Occlusion: 1
-    - _DITHER_FROM: 3
-    - _Dither_Fade_Distance: 0
-    - _Dither_Flip: 0
-    - _Emission: 0
-    - _Metallic: 0
-    - _QueueControl: 0
-    - _QueueOffset: 0
-    - _Smoothness: 0.5
-    - _Tiling: 1
-    - _UVPOSITION: 0
-    - _UV_Tiling: 1
+    - _Count: 0
+    - _Ripple_Count: 1
+    - _Ripple_Speed: 1
+    - _Ripple_Strength: 1
+    - _Speed: 1
+    - _St_1: 1
     m_Colors:
-    - _Base_Color: {r: 0.5471698, g: 0.5471698, b: 0.5471698, a: 1}
-    - _Dither_World_Position: {r: 0, g: 0, b: 0, a: 0}
-    - _Emission_Color: {r: 6.867925, g: 0, b: 0.06694186, a: 0}
+    - _Center: {r: 2.8, g: 0, b: 0, a: 0}
+    - _Ripple_Center: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &3440271391723656810
+--- !u!114 &1345476710743814351
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -82,5 +63,5 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
   version: 10
