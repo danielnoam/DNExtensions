@@ -7,12 +7,14 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: FullscreenOutline
+  m_Name: FullscreenNCOutlineMAT
   m_Shader: {fileID: -6465566751694194690, guid: 466235a5a661d2444b6d8ae704e7076c, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_ValidKeywords:
+  - _OUTLINE
+  m_InvalidKeywords:
+  - _ONLY_OUTLINE
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -37,7 +39,15 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Thickness: 0.01
+    - _Boolean: 0
+    - _Color_Threshold: 0.1
+    - _Depth_Intensity: 0.07
+    - _Normal_Threshold: 0.6
+    - _ONLYOUTLINE: 0
+    - _ONLY_OUTLINE: 1
+    - _ONLY_OUTLINE_1: 0
+    - _OUTLINE: 1
+    - _Thickness: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
