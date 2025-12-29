@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: FullscreenDOutlineMAT
-  m_Shader: {fileID: -6465566751694194690, guid: 58ac9cd60c600ea40b403cb75c9f4055, type: 3}
+  m_Name: FullScreenOutlineMAT
+  m_Shader: {fileID: 4800000, guid: 16b33ada20a6f9448874524c113b8137, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -22,24 +22,15 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs:
-    - unity_Lightmaps:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_LightmapsInd:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_ShadowMasks:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
+    m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Depth_Intensity: 0.1
-    - _Thinkness: 0.333
+    - _ColorSensitivity: 1
+    - _DepthSensitivity: 0.1
+    - _EdgeThreshold: 0.1
+    - _NormalSensitivity: 0.29
+    - _OutlineThickness: 1
     m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _OutlineColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

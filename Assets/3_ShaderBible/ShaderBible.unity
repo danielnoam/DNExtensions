@@ -715,6 +715,109 @@ MonoBehaviour:
   endPosition: {x: 0, y: 1.054, z: 13.39}
   speed: 0.75
   useLocalSpace: 0
+--- !u!1 &391639028
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 391639032}
+  - component: {fileID: 391639031}
+  - component: {fileID: 391639030}
+  - component: {fileID: 391639029}
+  m_Layer: 0
+  m_Name: Toon (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &391639029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 391639028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aed10b6dc779cd14ebf2c35ac914320f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::HologramGlitch
+  rend: {fileID: 391639030}
+--- !u!23 &391639030
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 391639028}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: c4f78bc8793446748af6a6e79df22e9b, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &391639031
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 391639028}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &391639032
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 391639028}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 18.814, y: 0, z: 9.48}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &495697771
 GameObject:
   m_ObjectHideFlags: 0
@@ -1054,6 +1157,7 @@ GameObject:
   - component: {fileID: 802998939}
   - component: {fileID: 802998938}
   - component: {fileID: 802998937}
+  - component: {fileID: 802998940}
   m_Layer: 0
   m_Name: Hologram
   m_TagString: Untagged
@@ -1125,13 +1229,26 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 802998936}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 17.67, y: 0, z: 9.48}
+  m_LocalRotation: {x: -0.16424283, y: -0.8419929, z: 0.06867653, w: -0.5092699}
+  m_LocalPosition: {x: 17.252, y: 0.389, z: 9.371}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 16.436, y: -240.531, z: 12.441}
+--- !u!114 &802998940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 802998936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aed10b6dc779cd14ebf2c35ac914320f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::HologramGlitch
+  rend: {fileID: 802998937}
 --- !u!1 &845380353
 GameObject:
   m_ObjectHideFlags: 0
@@ -1362,7 +1479,7 @@ Material:
     - _QueueOffset: 0
     - _Rim_Power: 2
     - _RotationX: 0
-    - _RotationZ: -0
+    - _RotationZ: 0
     - _WobbleX: 0
     - _WobbleZ: 0
     m_Colors:
@@ -1504,13 +1621,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1339419460}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.022925684, z: -0, w: 0.9997372}
+  m_LocalRotation: {x: -0, y: 0.16425548, z: -0, w: 0.9864179}
   m_LocalPosition: {x: 0.2341372, y: 0.76390004, z: -4.4}
   m_LocalScale: {x: 0.4682744, y: 6.755927, z: 0.57994545}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 28178354}
-  m_LocalEulerAnglesHint: {x: 0, y: 2.627, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 18.908, z: 0}
 --- !u!23 &1339419462
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1591,7 +1708,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1375641814}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.09445523, w: 0.9955292}
+  m_LocalRotation: {x: 0.37239718, y: -0.71228105, z: 0.22275779, w: 0.55168384}
   m_LocalPosition: {x: 10.748, y: -0.459, z: 9.99}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1599,7 +1716,7 @@ Transform:
   - {fileID: 1478728119}
   - {fileID: 105012596}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 10.84}
+  m_LocalEulerAnglesHint: {x: 46.738, y: -115.223, z: -24.547}
 --- !u!1 &1471482083
 GameObject:
   m_ObjectHideFlags: 0
@@ -2431,5 +2548,6 @@ SceneRoots:
   - {fileID: 605739099}
   - {fileID: 802998939}
   - {fileID: 495697775}
+  - {fileID: 391639032}
   - {fileID: 1732704567}
   - {fileID: 845380355}
