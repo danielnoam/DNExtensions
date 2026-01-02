@@ -7,15 +7,16 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: DitherTestMAT
+  m_Name: TileableTest
   m_Shader: {fileID: -6465566751694194690, guid: 72e83e4c692b51842b39cc343ee1d5fc, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _DITHER_FROM_OBJECT_POSITION
-  - _UVPOSITION_OBJECT
+  - _UV_POSITION_OBJECT
   m_InvalidKeywords:
   - _EMISSION
+  - _UVPOSITION_OBJECT
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -32,6 +33,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Emission_Texture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -54,9 +59,11 @@ Material:
     m_Ints: []
     m_Floats:
     - _Ambient_Occlusion: 1
-    - _DITHER_FROM: 3
+    - _DITHER: 0
+    - _DITHER_FROM: 2
+    - _Dither: 1
     - _Dither_Fade_Distance: 0
-    - _Dither_Flip: 0
+    - _Dither_Flip: 1
     - _Emission: 0
     - _Metallic: 0
     - _QueueControl: 0
@@ -64,9 +71,11 @@ Material:
     - _Smoothness: 0.5
     - _Tiling: 1
     - _UVPOSITION: 0
+    - _UV_POSITION: 0
     - _UV_Tiling: 1
     m_Colors:
     - _Base_Color: {r: 0.5471698, g: 0.5471698, b: 0.5471698, a: 1}
+    - _Color: {r: 0.46226412, g: 0.46226412, b: 0.46226412, a: 1}
     - _Dither_World_Position: {r: 0, g: 0, b: 0, a: 0}
     - _Emission_Color: {r: 6.867925, g: 0, b: 0.06694186, a: 0}
   m_BuildTextureStacks: []

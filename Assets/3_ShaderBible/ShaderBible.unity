@@ -728,7 +728,7 @@ GameObject:
   - component: {fileID: 391639030}
   - component: {fileID: 391639029}
   m_Layer: 0
-  m_Name: Toon (1)
+  m_Name: Hologram
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1717,6 +1717,111 @@ Transform:
   - {fileID: 105012596}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 46.738, y: -115.223, z: -24.547}
+--- !u!1 &1387346115
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1387346119}
+  - component: {fileID: 1387346118}
+  - component: {fileID: 1387346117}
+  - component: {fileID: 1387346120}
+  m_Layer: 0
+  m_Name: Hologram (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!23 &1387346117
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1387346115}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 0e9f8796f6600e94b98bce45de202815, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1387346118
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1387346115}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1387346119
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1387346115}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: -0.006344293, w: 0.99997985}
+  m_LocalPosition: {x: -36.51, y: 5.93, z: 11.97}
+  m_LocalScale: {x: 5.9757895, y: 5.9757895, z: 5.9757895}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -0.727}
+--- !u!114 &1387346120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1387346115}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5ab13e1cfd747541acc3b8a9fa87666, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::PingPongDissolve
+  speed: 0.5
+  objectHeight: 0.8
+  material: {fileID: 0}
 --- !u!1 &1471482083
 GameObject:
   m_ObjectHideFlags: 0
@@ -2193,13 +2298,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1970791857}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071061, y: -0, z: -0, w: 0.70710754}
-  m_LocalPosition: {x: -44.34, y: 3.3362, z: 12.4267}
-  m_LocalScale: {x: 8.204029, y: 6.6358256, z: 13.576042}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -46.38, y: 10.0579, z: 10.5783}
+  m_LocalScale: {x: 8, y: 20, z: 8}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1970791861
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2213,7 +2318,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DissolveObject
   speed: 0.5
-  objectHeight: 14.5
+  objectHeight: 1
   material: {fileID: 0}
 --- !u!21 &2016466785
 Material:
@@ -2547,7 +2652,8 @@ SceneRoots:
   - {fileID: 1375641816}
   - {fileID: 605739099}
   - {fileID: 802998939}
-  - {fileID: 495697775}
   - {fileID: 391639032}
+  - {fileID: 1387346119}
+  - {fileID: 495697775}
   - {fileID: 1732704567}
   - {fileID: 845380355}

@@ -28,7 +28,7 @@ public class PingPongDissolve : MonoBehaviour
     {
         var time = Time.time * Mathf.PI * speed;
 
-        float height = transform.position.y;
+        float height = 0;
         height += Mathf.Sin(time) * (objectHeight / 2.0f);
         SetHeight(height);
     }

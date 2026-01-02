@@ -7,12 +7,12 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Dissolve
+  m_Name: Dissolve2
   m_Shader: {fileID: -6465566751694194690, guid: 1ac476ccd3378bd44a505cfebeae397c, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _DIRECTION_Y
+  - _DIRECTION_X
   m_InvalidKeywords:
   - KEEPBELOW_ON
   m_LightmapFlags: 4
@@ -89,7 +89,7 @@ Material:
     - _Cull: 2
     - _Cutoff: 0.5
     - _CutoffHeight: 0.19
-    - _DIRECTION: 1
+    - _DIRECTION: 0
     - _DstBlend: 0
     - _EdgeWidth: 0.03
     - _EnvironmentReflections: 1
@@ -105,7 +105,7 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _Smoothness: 0.5
+    - _Smoothness: 0
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -113,13 +113,13 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _Albedo: {r: 1, g: 1, b: 1, a: 1}
+    - _Albedo: {r: 0.2264151, g: 0.2264151, b: 0.2264151, a: 1}
     - _BaseColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _Color: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _Direction: {r: 0, g: 0.1, b: 0, a: 0}
     - _Dissolve_Direction: {r: 0, g: 0, b: 0, a: 0}
     - _Dissolve_From_Position: {r: 0, g: 0, b: 0, a: 0}
-    - _EdgeColor: {r: 14.943392, g: 5.437423, b: 0, a: 1}
+    - _EdgeColor: {r: 14.943392, g: 0, b: 0.047000222, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Noise_Scroll_Speed: {r: 0.1, g: 0.1, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
