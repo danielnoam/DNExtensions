@@ -1,0 +1,89 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-6409035495966416928
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
+  version: 10
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SkyWithClouds
+  m_Shader: {fileID: -6465566751694194690, guid: b941d44e36cb2054abde13a5b7528ada, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Clouds_Texture:
+        m_Texture: {fileID: 2800000, guid: 6ae6e8796fb246b41b2a4979aebbe1bf, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture:
+        m_Texture: {fileID: 2800000, guid: 6d03b639ebb5b0547808293cb651caf3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BadirBlendPower: 0.77
+    - _Badir_Blend_Power: 0.77
+    - _Clouds_Distance_Fade_Power: 2
+    - _Distance_Fade_Power: 2
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _Sun_Exponent: 5
+    - _Sun_Intensity: 0
+    - _Sun_Radius_A: 0.0286
+    - _Sun_Radius_B: 0.1
+    - _ZenithBlendPower: 0.5
+    - _Zenith_Blend_Power: 0.5
+    m_Colors:
+    - _Clouds_Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Clouds_Scale: {r: 1, g: 1, b: 0, a: 0}
+    - _Clouds_Speed: {r: 0.01, g: 0.01, b: 0, a: 0}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _HorizonColor: {r: 0.75157225, g: 0.9044516, b: 1, a: 1}
+    - _Horizon_Color: {r: 0.50628924, g: 0.81191975, b: 1, a: 1}
+    - _NadirColor: {r: 1, g: 0.8848348, b: 0, a: 1}
+    - _Nadir_Color: {r: 1, g: 0.8862745, b: 0, a: 1}
+    - _Scale: {r: 1, g: 1, b: 0, a: 0}
+    - _Speed: {r: 0.01, g: 0.01, b: 0, a: 0}
+    - _Sun_Color: {r: 1, g: 0.94673777, b: 0, a: 1}
+    - _ZennithColor: {r: 0, g: 0.7322017, b: 0.76862746, a: 1}
+    - _Zennith_Color: {r: 0.3238992, g: 0.7295596, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
