@@ -1,4 +1,4 @@
-Shader "Outline/FullScreenOutline_WithColor"
+Shader "PostProcess/BasicOutline"
 {
     Properties
     {

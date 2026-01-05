@@ -40,15 +40,15 @@ Material:
     m_Ints: []
     m_Floats:
     - _Boolean: 0
-    - _Color_Threshold: 0.175
+    - _Color_Threshold: 1
     - _Depth_Intensity: 0.787
-    - _Depth_Threshold: 0.1
-    - _Normal_Threshold: 0.5
+    - _Depth_Threshold: 0.01
+    - _Normal_Threshold: 1.4
     - _ONLYOUTLINE: 0
     - _ONLY_OUTLINE: 1
     - _ONLY_OUTLINE_1: 0
     - _OUTLINE: 1
-    - _Thickness: 1
+    - _Thickness: 2
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

@@ -4465,8 +4465,8 @@
     "m_ObjectId": "5bdb53bfc3d84e82a1e1876728f7424b",
     "m_Title": "Detect edges based on depth",
     "m_Position": {
-        "x": -4253.333984375,
-        "y": 2203.33349609375
+        "x": -4253.0,
+        "y": 2203.5
     }
 }
 
@@ -4966,8 +4966,8 @@
     "m_ObjectId": "7104d992b0ea4ec7b3ae31c99b094b5f",
     "m_Title": "Detect edges based on color",
     "m_Position": {
-        "x": -4280.00048828125,
-        "y": 1331.3333740234375
+        "x": -4279.5,
+        "y": 1331.5
     }
 }
 
@@ -5109,8 +5109,8 @@
     "m_ObjectId": "72ee0ec8708c449f9d5f1ff6db33247a",
     "m_Title": "Combine and set color",
     "m_Position": {
-        "x": -1362.0001220703125,
-        "y": 874.666748046875
+        "x": -1361.5,
+        "y": 875.0
     }
 }
 
@@ -5279,8 +5279,8 @@
     "m_ObjectId": "77e425b37fba4de494c8b3d27f8fdc02",
     "m_Title": "Detect edges based on world space normals",
     "m_Position": {
-        "x": -4278.66650390625,
-        "y": 501.3333435058594
+        "x": -4278.0,
+        "y": 501.5
     }
 }
 
@@ -5290,6 +5290,9 @@
     "m_ObjectId": "793d23da045f4fb786e3c1823b312103",
     "m_Name": "",
     "m_ChildObjectList": [
+        {
+            "m_Id": "1318a7486cdb4f46837166e8123f55ee"
+        },
         {
             "m_Id": "b6efd0e1f66e401e962c71f514bfa308"
         },
@@ -5304,9 +5307,6 @@
         },
         {
             "m_Id": "742bdf8a0a5941a2a66c714a0801baa8"
-        },
-        {
-            "m_Id": "1318a7486cdb4f46837166e8123f55ee"
         }
     ]
 }
