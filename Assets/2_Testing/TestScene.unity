@@ -2635,6 +2635,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ControllerRumbleUI
       objectReference: {fileID: 0}
+    - target: {fileID: 5477906139690878199, guid: 9bc61873b59f292449bdb68f0df7d8a1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

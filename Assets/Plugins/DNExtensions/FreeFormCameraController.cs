@@ -11,7 +11,7 @@ public class FreeFormCameraController : MonoBehaviour
     [InfoBox("Camera Controls:\n" +
              "- Move: WASD or Arrow Keys\n" +
              "- Move Up/Down: Space / Left Ctrl\n" +
-             "- Sprint: Left Shift\n" +
+             "- Fast Movement: Left Shift\n" +
              "- Rotate: Right Mouse Button + Mouse Move\n" +
              "- Zoom: Mouse Scroll Wheel", InfoBoxType.Info)]
     

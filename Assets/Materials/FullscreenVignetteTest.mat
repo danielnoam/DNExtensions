@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: FullscreenVignetteTest
+  m_Shader: {fileID: -6465566751694194690, guid: 4078be851a2962c43abc7e37c9190a06, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Noise_Texture:
+        m_Texture: {fileID: 2800000, guid: b659f3be4a135c647923b8a81a5522cf, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Breath: 0
+    - _BreathFrquency: 0
+    - _Breath_Frquency: 4
+    - _Breath_Max: 1
+    - _Breath_Min: 0.183
+    - _Fullscreen_AlphaBlendOperation: 0
+    - _Fullscreen_BlendMode: 1
+    - _Fullscreen_ColorBlendOperation: 0
+    - _Fullscreen_DepthWrite: 0
+    - _Fullscreen_DstAlphaBlend: 10
+    - _Fullscreen_DstColorBlend: 10
+    - _Fullscreen_SrcAlphaBlend: 1
+    - _Fullscreen_SrcColorBlend: 5
+    - _Intensity: 2.47
+    - _Power: 2.08
+    - _Strength: 1
+    - _Visibility: 1
+    m_Colors:
+    - _Color: {r: 0.9191922, g: 2.0395663, b: 0.39509916, a: 1}
+    - _Noise_Scroll_Speed: {r: 0.01, g: 0.01, b: 0, a: 0}
+    - _Noise_Tiling: {r: 2, g: 2, b: 0, a: 0}
+    - _Scroll_Speed: {r: 0.1, g: 0.1, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
