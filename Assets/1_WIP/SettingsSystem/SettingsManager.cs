@@ -187,16 +187,16 @@ public class SettingsManager : MonoBehaviour
         {
             case ScreenModes.FullScreen:
                 unityScreenMode = FullScreenMode.ExclusiveFullScreen;
-                Screen.SetResolution(highestResolution.width, highestResolution.height, unityScreenMode);
+                UnityEngine.Screen.SetResolution(highestResolution.width, highestResolution.height, unityScreenMode);
                 break;
             case ScreenModes.Borderless:
                 unityScreenMode = FullScreenMode.FullScreenWindow;
-                Screen.SetResolution(highestResolution.width, highestResolution.height, unityScreenMode);
+                UnityEngine.Screen.SetResolution(highestResolution.width, highestResolution.height, unityScreenMode);
                 break;
             case ScreenModes.Windowed:
                 unityScreenMode = FullScreenMode.Windowed;
-                Resolution currentResolution = Screen.currentResolution;
-                Screen.SetResolution(currentResolution.width, currentResolution.height, unityScreenMode);
+                Resolution currentResolution = UnityEngine.Screen.currentResolution;
+                UnityEngine.Screen.SetResolution(currentResolution.width, currentResolution.height, unityScreenMode);
                 break;
         }
 
@@ -211,7 +211,7 @@ public class SettingsManager : MonoBehaviour
         {
             Resolution resolution = AvailableResolutions[index];
             ResolutionIndex = index;
-            Screen.SetResolution(resolution.width, resolution.height, Screen.fullScreenMode);
+            UnityEngine.Screen.SetResolution(resolution.width, resolution.height, UnityEngine.Screen.fullScreenMode);
             OnResolutionChange?.Invoke(index);
             PlayerPerfsManager.SaveInt("ResolutionIndex", index);
         }
@@ -221,7 +221,7 @@ public class SettingsManager : MonoBehaviour
     private static void UpdateAvailableResolutions()
     {
         // Find all available resolutions
-        Resolution[] allResolutions = Screen.resolutions;
+        Resolution[] allResolutions = UnityEngine.Screen.resolutions;
     
         // Filter by a chosen aspect ratio
         IEnumerable<Resolution> filteredResolutions;
