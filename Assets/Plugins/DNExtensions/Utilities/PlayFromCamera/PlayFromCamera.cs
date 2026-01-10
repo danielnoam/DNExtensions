@@ -16,33 +16,19 @@ namespace DNExtensions
     }
     
     
-    
-    /// <summary>
-    /// Unity Editor extension that adds "Play from Camera Position" to the play button context menu.
-    /// </summary>
     [InitializeOnLoad]
-    public static class PlayFromCameraContextMenu
+    public static class PlayFromCamera
     {
-        static PlayFromCameraContextMenu()
+        static PlayFromCamera()
         {
             EditorApplication.playModeStateChanged += OnPlayModeChanged;
         }
         
-
-        // % = Ctrl (Windows/Linux) or Cmd (Mac)
-        // & = Alt (Windows/Linux) or Option (Mac)
-        // # = Shift
-        // _ followed by a key = Function keys (e.g., _F1 for F1)
-        [MenuItem("Tools/Play from Camera Position #%&p", false)]
-        private static void PlayFromCameraMenuItem()
-        {
-            PlayFromCurrentCamera();
-        }
-
-        private static void PlayFromCurrentCamera()
+        
+        public static void PlayFromCurrentCamera()
         {
             SceneView sceneView = SceneView.lastActiveSceneView;
-            if (sceneView == null)
+            if (!sceneView)
             {
                 EditorUtility.DisplayDialog("No Scene View", 
                     "No active Scene View found! Please make sure you have a Scene View window open.", 
@@ -140,7 +126,7 @@ namespace DNExtensions
                 }
                 
                 var rigidbody = player.GetComponent<Rigidbody>();
-                if (rigidbody != null)
+                if (rigidbody)
                 {
                     rigidbody.linearVelocity = Vector3.zero;
                     rigidbody.angularVelocity = Vector3.zero;

@@ -65,6 +65,11 @@ providers = {
 		priority = 210
 		defaultAction = null
 	}
+	assetinventory = {
+		active = true
+		priority = 999
+		defaultAction = null
+	}
 }
 objectSelectors = {
 }
@@ -75,6 +80,8 @@ searchItemFavorites = [
 savedSearchesSortOrder = 0
 showSavedSearchPanel = false
 hideTabs = false
+indexOnEditorStartup = true
+logIndexingPerformanceReport = false
 expandedQueries = [
 ]
 queryBuilder = true
