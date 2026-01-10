@@ -11,6 +11,14 @@ public class QuaternionSpring
     [Tooltip("Target rotation in Euler angles (degrees). Change this to make the spring rotate to a new orientation.")]
     public Vector3 targetEuler;
     
+    [Header("Limits")]
+    [Tooltip("Enable clamping of spring values per axis")]
+    public bool useLimits;
+    [Tooltip("Minimum allowed Euler angles")]
+    public Vector3 minEuler = Vector3.zero;
+    [Tooltip("Maximum allowed Euler angles")]
+    public Vector3 maxEuler = new Vector3(360f, 360f, 360f);
+    
     private Vector3 _valueEuler;
     private Vector3 _velocity;
     private bool _isLocked;
@@ -29,6 +37,7 @@ public class QuaternionSpring
     public event Action<Quaternion> OnValueChanged;
     public event Action<Quaternion> OnLocked;
     public event Action<Quaternion> OnUnlocked;
+    public event Action<Vector3, Vector3> OnLimitHit; // (hitAxis, velocityAtImpact)
     
     public void Update(float deltaTime)
     {
@@ -36,22 +45,78 @@ public class QuaternionSpring
         
         Vector3 oldValue = _valueEuler;
         
-        // Calculate spring force (Hooke's Law) - per axis in Euler space
         Vector3 displacement = _valueEuler - targetEuler;
         
-        // Handle angle wrapping (e.g., 359° to 1° should be 2° difference, not 358°)
+        // Handle angle wrapping
         displacement.x = NormalizeAngle(displacement.x);
         displacement.y = NormalizeAngle(displacement.y);
         displacement.z = NormalizeAngle(displacement.z);
         
         Vector3 springForce = -stiffness * displacement;
-        
-        // Apply damping to velocity - per axis
         Vector3 dampingForce = -damping * _velocity;
         
-        // Update velocity and position
         _velocity += (springForce + dampingForce) * deltaTime;
         _valueEuler += _velocity * deltaTime;
+        
+        if (useLimits)
+        {
+            Vector3 hitAxis = Vector3.zero;
+            Vector3 impactVelocity = _velocity;
+            bool hitLimit = false;
+            
+            // X axis
+            if (_valueEuler.x < minEuler.x)
+            {
+                _valueEuler.x = minEuler.x;
+                hitAxis.x = -1f;
+                hitLimit = true;
+                _velocity.x = 0f;
+            }
+            else if (_valueEuler.x > maxEuler.x)
+            {
+                _valueEuler.x = maxEuler.x;
+                hitAxis.x = 1f;
+                hitLimit = true;
+                _velocity.x = 0f;
+            }
+            
+            // Y axis
+            if (_valueEuler.y < minEuler.y)
+            {
+                _valueEuler.y = minEuler.y;
+                hitAxis.y = -1f;
+                hitLimit = true;
+                _velocity.y = 0f;
+            }
+            else if (_valueEuler.y > maxEuler.y)
+            {
+                _valueEuler.y = maxEuler.y;
+                hitAxis.y = 1f;
+                hitLimit = true;
+                _velocity.y = 0f;
+            }
+            
+            // Z axis
+            if (_valueEuler.z < minEuler.z)
+            {
+                _valueEuler.z = minEuler.z;
+                hitAxis.z = -1f;
+                hitLimit = true;
+                _velocity.z = 0f;
+            }
+            else if (_valueEuler.z > maxEuler.z)
+            {
+                _valueEuler.z = maxEuler.z;
+                hitAxis.z = 1f;
+                hitLimit = true;
+                _velocity.z = 0f;
+            }
+            
+            if (hitLimit)
+            {
+                OnLimitHit?.Invoke(hitAxis, impactVelocity);
+            }
+        }
         
         if (Vector3.Distance(_valueEuler, oldValue) > 0.0001f)
         {
@@ -100,7 +165,6 @@ public class QuaternionSpring
         _velocity = Vector3.zero;
     }
     
-    // Normalize angle to -180 to 180 range for proper spring behavior
     private float NormalizeAngle(float angle)
     {
         while (angle > 180f) angle -= 360f;

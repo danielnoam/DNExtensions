@@ -10,6 +10,14 @@ public class Spring
     public float damping = 0.5f;
     [Tooltip("Where the spring wants to settle. Change this to make the spring move to a new position.")]
     public float target;
+    
+    [Header("Limits")]
+    [Tooltip("Enable clamping of spring values")]
+    public bool useLimits;
+    [Tooltip("Minimum allowed value")]
+    public float min = 0f;
+    [Tooltip("Maximum allowed value")]
+    public float max = 1f;
 
     private float _value;
     private float _velocity;
@@ -22,6 +30,7 @@ public class Spring
     public event Action<float> OnValueChanged;
     public event Action<float> OnLocked;
     public event Action<float> OnUnlocked;
+    public event Action<float, float> OnLimitHit; // (hitDirection, velocityAtImpact)
     
     public void Update(float deltaTime)
     {
@@ -29,16 +38,39 @@ public class Spring
         
         float oldValue = _value;
         
-        // Calculate spring force (Hooke's Law)
         float displacement = _value - target;
         float springForce = -stiffness * displacement;
-        
-        // Apply damping to velocity
         float dampingForce = -damping * _velocity;
         
-        // Update velocity and position
         _velocity += (springForce + dampingForce) * deltaTime;
         _value += _velocity * deltaTime;
+        
+        if (useLimits)
+        {
+            float hitDirection = 0f;
+            float impactVelocity = _velocity;
+            bool hitLimit = false;
+            
+            if (_value < min)
+            {
+                _value = min;
+                hitDirection = -1f; // hit min
+                hitLimit = true;
+                _velocity = 0f;
+            }
+            else if (_value > max)
+            {
+                _value = max;
+                hitDirection = 1f; // hit max
+                hitLimit = true;
+                _velocity = 0f;
+            }
+            
+            if (hitLimit)
+            {
+                OnLimitHit?.Invoke(hitDirection, impactVelocity);
+            }
+        }
         
         if (Mathf.Abs(_value - oldValue) > 0.0001f)
         {
@@ -80,7 +112,6 @@ public class Spring
         _value = target;
         _velocity = 0f;
     }
-    
     
     public void SetValue(float newValue)
     {
