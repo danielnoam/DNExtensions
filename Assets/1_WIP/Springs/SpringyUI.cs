@@ -1,4 +1,5 @@
 using System;
+using DNExtensions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,10 +9,12 @@ public class SpringyUI : MonoBehaviour
 {
     [Header("Settings")]
     [SerializeField] private bool animateOnStart = true;
-    [SerializeField] private Vector3 positionOffset = new Vector3(0f, 500f, 0f);
-    [SerializeField] private Vector3 scaleOffset = new Vector3(0.7f, 1.2f, 1f);
-    [SerializeField] private Vector3Spring scaleSpring = new Vector3Spring();
-    [SerializeField] private Vector3Spring positionSpring = new Vector3Spring();
+    [SerializeField] private bool position;
+    [SerializeField, ShowIf("position")] private Vector3 positionOffset = new Vector3(0f, 500f, 0f);
+    [SerializeField, ShowIf("position")] private Vector3Spring positionSpring = new Vector3Spring();
+    [SerializeField] private bool scale;
+    [SerializeField, ShowIf("scale")] private Vector3 scaleOffset = new Vector3(0.7f, 1.2f, 1f);
+    [SerializeField, ShowIf("scale")] private Vector3Spring scaleSpring = new Vector3Spring();
     
     [Header("References")]
     [SerializeField] private RectTransform rectTransform;
@@ -35,8 +38,10 @@ public class SpringyUI : MonoBehaviour
         
         _baseAnchoredPosition = rectTransform.anchoredPosition3D;
         _baseScale = rectTransform.localScale;
-        positionSpring.target = _baseAnchoredPosition;
-        scaleSpring.target = _baseScale;
+        
+        
+        if (position) positionSpring.target = _baseAnchoredPosition;
+        if (scale) scaleSpring.target = _baseScale;
         
         if (animateOnStart)
         {
@@ -47,33 +52,52 @@ public class SpringyUI : MonoBehaviour
     
     private void Update()
     {
-        positionSpring.Update(Time.deltaTime);
-        scaleSpring.Update(Time.deltaTime);
         
-        rectTransform.localScale = scaleSpring.Value;
-        rectTransform.anchoredPosition3D = positionSpring.Value;
-        
-        positionSpring.DrawDebug(transform.position, 125);
+        if (position)
+        {
+            positionSpring.Update(Time.deltaTime);
+            rectTransform.anchoredPosition3D = positionSpring.Value;
+        }
+
+        if (scale)
+        {
+            scaleSpring.Update(Time.deltaTime);
+            rectTransform.localScale = scaleSpring.Value;
+        }
+
+
     }
     
     [Button]
     public void AnimateFromOffset()
     {
-        positionSpring.target = _baseAnchoredPosition;
-        scaleSpring.target = _baseScale;
-        
-        scaleSpring.SetValue(scaleOffset);
-        positionSpring.SetValue(_baseAnchoredPosition + positionOffset);
+        if (position)
+        {
+            positionSpring.target = _baseAnchoredPosition;
+            positionSpring.SetValue(_baseAnchoredPosition + positionOffset);
+        }
+
+        if (scale)
+        {
+            scaleSpring.target = _baseScale;
+            scaleSpring.SetValue(scaleOffset);
+        }
     }
 
     [Button]
     public void AnimateToOffset()
     {
-        positionSpring.target = _baseAnchoredPosition + positionOffset;
-        scaleSpring.target = scaleOffset;
-        
-        scaleSpring.SetValue(_baseScale);
-        positionSpring.SetValue(_baseAnchoredPosition);
+        if (position)
+        {
+            positionSpring.target = _baseAnchoredPosition + positionOffset;
+            positionSpring.SetValue(_baseAnchoredPosition);
+        }
+
+        if (scale)
+        {
+            scaleSpring.target = scaleOffset;
+            scaleSpring.SetValue(_baseScale);
+        }
     }
     
 }
