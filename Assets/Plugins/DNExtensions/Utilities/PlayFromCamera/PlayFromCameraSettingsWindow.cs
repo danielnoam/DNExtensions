@@ -12,6 +12,16 @@ namespace DNExtensions
     public class PlayFromCameraSettingsWindow : EditorWindow
     {
         private Vector2 _scrollPosition;
+        
+        // % = Ctrl (Windows/Linux) or Cmd (Mac)
+        // & = Alt (Windows/Linux) or Option (Mac)
+        // # = Shift
+        // _ followed by a key = Function keys (e.g., _F1 for F1)
+        [MenuItem("Tools/DNExtensions/Play from Camera Position #%&p", false)]
+        private static void PlayFromCameraMenuItem()
+        {
+            PlayFromCamera.PlayFromCurrentCamera();
+        }
 
         [MenuItem("Tools/DNExtensions/Play from Camera Settings", false)]
         public static void ShowWindow()

@@ -13,46 +13,49 @@ namespace DNExtensions.ObjectPooling
     {
         public static ObjectPooler Instance { get; private set; }
 
-        [Header("Settings")] 
-        [SerializeField] private bool instantiateAsFallBack = true;
-        [SerializeField] private bool destroyAsFallBack = true;
-        [SerializeField] private bool showDebugMessages;
-        [SerializeField] private List<ObjectPool> pools = new List<ObjectPool>();
+        private bool _instantiateAsFallBack;
+        private bool _destroyAsFallBack;
+        private bool _showDebugMessages;
+        private List<Pool> _pools = new List<Pool>();
 
         private bool _isFirstScene;
         private Transform _dontDestroyOnLoadParent;
         private Transform _destroyOnLoadParent;
 
-        
-        private void OnValidate()
+        /// <summary>
+        /// Initializes the ObjectPooler with settings from the settings asset
+        /// </summary>
+        public void Initialize(ObjectPoolingSettings settings)
         {
-            foreach (var pool in pools)
+            if (!settings)
             {
-                pool.LimitPreWorm();
+                Debug.LogError("[ObjectPooler] Cannot initialize without settings!");
+                return;
             }
-        }
 
-        private void Awake()
-        {
-            if (!Instance || Instance == this)
-            {
-                Instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
-            else
+            _instantiateAsFallBack = settings.instantiateAsFallback;
+            _destroyAsFallBack = settings.destroyAsFallback;
+            _showDebugMessages = settings.showDebugMessages;
+            _pools = settings.GetPoolsCopy();
+
+            if (Instance && Instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
 
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+
             _isFirstScene = true;
             SceneManager.activeSceneChanged += OnActiveSceneChanged;
             SetUpPools();
+            
             #if UNITY_EDITOR
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
             #endif
         }
-        
+
         private void OnDestroy()
         {
             if (_dontDestroyOnLoadParent)
@@ -60,16 +63,16 @@ namespace DNExtensions.ObjectPooling
                 Destroy(_dontDestroyOnLoadParent.gameObject);
                 _dontDestroyOnLoadParent = null;
             }
-    
+
             if (_destroyOnLoadParent)
             {
                 Destroy(_destroyOnLoadParent.gameObject);
                 _destroyOnLoadParent = null;
             }
-    
+
             SceneManager.activeSceneChanged -= OnActiveSceneChanged;
         }
-        
+
         #if UNITY_EDITOR
         private static void OnPlayModeStateChanged(PlayModeStateChange state)
         {
@@ -79,7 +82,7 @@ namespace DNExtensions.ObjectPooling
             {
                 DestroyImmediate(Instance.gameObject);
             }
-    
+
             Instance = null;
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             SceneManager.activeSceneChanged -= OnActiveSceneChanged;
@@ -106,11 +109,11 @@ namespace DNExtensions.ObjectPooling
                 Destroy(Instance._destroyOnLoadParent.gameObject);
                 Instance._destroyOnLoadParent = null;
             }
-            
+
             Instance._destroyOnLoadParent = new GameObject() { name = "ObjectPools - Destroy On Load" }.transform;
 
-            List<ObjectPool> poolsToReinitialize = new List<ObjectPool>();
-            foreach (var pool in Instance.pools)
+            List<Pool> poolsToReinitialize = new List<Pool>();
+            foreach (var pool in Instance._pools)
             {
                 if (!pool.dontDestroyOnLoad)
                 {
@@ -134,24 +137,23 @@ namespace DNExtensions.ObjectPooling
         {
             if (!_destroyOnLoadParent)
             {
-                 _destroyOnLoadParent = new GameObject() { name = "ObjectPools - Destroy On Load" }.transform;
+                _destroyOnLoadParent = new GameObject() { name = "ObjectPools - Destroy On Load" }.transform;
             }
-            
+
             if (!_dontDestroyOnLoadParent)
             {
                 _dontDestroyOnLoadParent = new GameObject() { name = "ObjectPools - Dont Destroy On Load" }.transform;
                 DontDestroyOnLoad(_dontDestroyOnLoadParent.gameObject);
             }
-            
-            
-            foreach (var pool in pools)
+
+            foreach (var pool in _pools)
             {
                 var poolHolder = new GameObject() { name = $"{pool.poolName} Holder" };
-                
+
                 poolHolder.transform.SetParent(pool.dontDestroyOnLoad
                     ? _dontDestroyOnLoadParent
                     : _destroyOnLoadParent);
-                
+
                 pool.SetUpPool(poolHolder.transform);
             }
         }
@@ -169,7 +171,7 @@ namespace DNExtensions.ObjectPooling
         {
             if (Instance)
             {
-                foreach (var pool in Instance.pools)
+                foreach (var pool in Instance._pools)
                 {
                     if (pool.prefab == obj)
                     {
@@ -177,15 +179,15 @@ namespace DNExtensions.ObjectPooling
                     }
                 }
 
-                if (Instance.instantiateAsFallBack)
+                if (Instance._instantiateAsFallBack)
                 {
-                    if (Instance.showDebugMessages) Debug.Log($"No pool found for {obj} was found, instantiating as fall back");
+                    if (Instance._showDebugMessages) Debug.Log($"No pool found for {obj} was found, instantiating as fall back");
                     var fallbackObject = Instantiate(obj, positon, rotation);
                     return fallbackObject;
                 }
             }
 
-            if (Instance.showDebugMessages) Debug.LogError($"Can't get object, No object pooler in scene");
+            if (Instance._showDebugMessages) Debug.LogError($"Can't get object, No object pooler in scene");
             return Instantiate(obj, positon, rotation);
         }
 
@@ -200,7 +202,7 @@ namespace DNExtensions.ObjectPooling
 
             if (Instance)
             {
-                foreach (var pool in Instance.pools)
+                foreach (var pool in Instance._pools)
                 {
                     if (pool.IsObjectPartOfPool(obj))
                     {
@@ -209,24 +211,23 @@ namespace DNExtensions.ObjectPooling
                     }
                 }
 
-                if (Instance.destroyAsFallBack)
+                if (Instance._destroyAsFallBack)
                 {
-                    if (Instance.showDebugMessages) Debug.Log($"No pool found for {obj.name}, destroying as fallback");
+                    if (Instance._showDebugMessages) Debug.Log($"No pool found for {obj.name}, destroying as fallback");
                     Destroy(obj);
                     return;
                 }
             }
 
-            if (Instance.showDebugMessages) Debug.LogError($"Can't return object, No object pooler in scene");
+            if (Instance._showDebugMessages) Debug.LogError($"Can't return object, No object pooler in scene");
             Destroy(obj);
         }
-        
-        
-        public void AddPool(ObjectPool pool)
+
+        public void AddPool(Pool pool)
         {
-            if (pools == null) pools = new List<ObjectPool>();
-            pools.Add(pool);
-            
+            if (_pools == null) _pools = new List<Pool>();
+            _pools.Add(pool);
+
             if (_dontDestroyOnLoadParent || _destroyOnLoadParent)
             {
                 Transform parent = pool.dontDestroyOnLoad ? _dontDestroyOnLoadParent : _destroyOnLoadParent;
@@ -244,13 +245,11 @@ namespace DNExtensions.ObjectPooling
                         parent = _destroyOnLoadParent;
                     }
                 }
-        
+
                 var poolHolder = new GameObject() { name = $"{pool.poolName} Holder" };
                 poolHolder.transform.SetParent(parent);
                 pool.SetUpPool(poolHolder.transform);
             }
         }
     }
-    
-    
 }

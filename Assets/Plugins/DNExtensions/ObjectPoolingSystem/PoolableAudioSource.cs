@@ -2,7 +2,7 @@ using System.Collections;
 using DNExtensions.ObjectPooling;
 using UnityEngine;
 
-public class PoolableSfx : MonoBehaviour, IPoolable
+public class PoolableAudioSource : MonoBehaviour, IPoolable
 {
     public AudioSource audioSource;
 

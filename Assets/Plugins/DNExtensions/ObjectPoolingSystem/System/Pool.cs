@@ -12,7 +12,7 @@ namespace DNExtensions.ObjectPooling
     /// Supports pre-warming, recycling, and automatic memory management.
     /// </summary>
     [Serializable]
-    public class ObjectPool
+    public class Pool
     {
         [Header("Pool Settings")] 
         public string poolName = "New Pool";

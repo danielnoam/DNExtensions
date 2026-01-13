@@ -2,7 +2,7 @@ using System.Collections;
 using DNExtensions.ObjectPooling;
 using UnityEngine;
 
-public class PoolableParticle : MonoBehaviour, IPoolable
+public class PoolableParticleSystem : MonoBehaviour, IPoolable
 {
     public ParticleSystem particle;
 
