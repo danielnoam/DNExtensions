@@ -1,8 +1,10 @@
+using System;
 using PrimeTween;
 using UnityEngine;
 
 namespace DNExtensions.VFXManager
 {
+    [Serializable]
     public class SetCameraFOV : VFEffectsEffectBase
     {
         [Tooltip("The duration of the effect, percentage from the sequence duration.")]

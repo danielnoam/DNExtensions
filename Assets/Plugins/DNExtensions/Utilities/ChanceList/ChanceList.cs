@@ -328,6 +328,48 @@ namespace DNExtensions
             return items;
         }
 
+        /// <summary>
+        /// Removes the first occurrence of the specified item from the chance list
+        /// </summary>
+        /// <param name="item">The item to remove from the collection</param>
+        public void Remove(T item)
+        {
+            int index = -1;
+            for (int i = 0; i < internalItems.Length; i++)
+            {
+                if (EqualityComparer<T>.Default.Equals(internalItems[i].item, item))
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index != -1)
+            {
+                RemoveAt(index);
+            }
+        }
+        
+        
+        /// <summary>
+        /// Returns the index of the first occurrence of the specified item in the chance list
+        /// </summary>
+        /// <param name="item">The item to locate in the collection</param>
+        /// <returns>
+        /// The zero-based index of the first occurrence of the item, or -1 if not found
+        /// </returns>
+        public int IndexOf(T item)
+        {
+            for (int i = 0; i < internalItems.Length; i++)
+            {
+                if (EqualityComparer<T>.Default.Equals(internalItems[i].item, item))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
         #endregion Public API
 
         #region Random Selection

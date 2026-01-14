@@ -1,9 +1,12 @@
+using System;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
+using Random = UnityEngine.Random;
 
 namespace DNExtensions.VFXManager
 {
+    [Serializable]
     public class SetLensDistortionDynamic : VFEffectsEffectBase
     {
         [Tooltip("The duration of the effect, percentage from the sequence duration.")]

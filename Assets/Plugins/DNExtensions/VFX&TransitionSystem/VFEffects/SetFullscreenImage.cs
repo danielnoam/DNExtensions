@@ -1,9 +1,11 @@
+using System;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DNExtensions.VFXManager
 {
+    [Serializable]
     public class SetFullscreenImage : VFEffectsEffectBase
     {
 

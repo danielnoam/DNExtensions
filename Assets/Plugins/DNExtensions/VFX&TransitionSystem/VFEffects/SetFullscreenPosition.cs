@@ -1,9 +1,11 @@
+using System;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DNExtensions.VFXManager
 {
+    [Serializable]
     public class SetFullscreenPosition : VFEffectsEffectBase
     {
         [Tooltip("The duration of the effect, percentage from the sequence duration.")]

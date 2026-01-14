@@ -1,9 +1,11 @@
+using System;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
 namespace DNExtensions.VFXManager
 {
+    [Serializable]
     public class SetPaniniProjection : VFEffectsEffectBase
     {
         [Tooltip("The duration of the effect, percentage from the sequence duration.")]
