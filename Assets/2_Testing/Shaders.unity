@@ -5829,8 +5829,8 @@ MonoBehaviour:
   m_InlineColor: {r: 0, g: 0, b: 1, a: 1}
   m_Width: 0.25
   m_Height: 0.25
-  m_Corners: {x: 0, y: 0, z: 0, w: 0}
   m_Rounding: 0
+  m_Corners: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &2145319687
 GameObject:
   m_ObjectHideFlags: 0
