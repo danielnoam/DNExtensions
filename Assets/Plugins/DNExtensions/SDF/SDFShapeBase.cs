@@ -6,28 +6,28 @@ namespace DNExtensions.Shapes
     using UnityEngine.UI;
 
     [RequireComponent(typeof(CanvasRenderer))]
-    public abstract class SDFShapeBase : MaskableGraphic, ISerializationCallbackReceiver, ILayoutElement,
-        ICanvasRaycastFilter
+    public abstract class SDFShapeBase : MaskableGraphic, ISerializationCallbackReceiver, ILayoutElement, ICanvasRaycastFilter
     {
-        // Common properties all shapes share
-        [SerializeField] protected Color m_BaseColor = Color.white;
-        [SerializeField, Range(0, 360)] protected float m_Rotation = 0;
 
+        protected static readonly int BaseColorID = Shader.PropertyToID("_Base_Color");
+        protected static readonly int RotationID = Shader.PropertyToID("_Rotation");
+        protected static readonly int OffsetID = Shader.PropertyToID("_Offset");
+        protected static readonly int OutlineThicknessID = Shader.PropertyToID("_Outline_Thickness");
+        protected static readonly int OutlineColorID = Shader.PropertyToID("_Outline_Color");
+        protected static readonly int InlineThicknessID = Shader.PropertyToID("_Inline_Thickness");
+        protected static readonly int InlineColorID = Shader.PropertyToID("_Inline_Color");
+        
+        
+        [SerializeField] protected Color m_BaseColor = Color.white;
+        [SerializeField, Range(0, 360)] protected float m_Rotation;
+        [SerializeField] protected Vector2 m_Offset;
         [SerializeField, Range(0f, 0.5f)] protected float m_OutlineThickness = 0.02f;
         [SerializeField] protected Color m_OutlineColor = Color.red;
-
         [SerializeField, Range(0f, 0.5f)] protected float m_InlineThickness = 0f;
         [SerializeField] protected Color m_InlineColor = Color.blue;
 
         protected Material m_InstanceMaterial;
 
-        // Shader property IDs (shared by all shapes)
-        protected static readonly int BaseColorID = Shader.PropertyToID("_Base_Color");
-        protected static readonly int RotationID = Shader.PropertyToID("_Rotation");
-        protected static readonly int OutlineThicknessID = Shader.PropertyToID("_Outline_Thickness");
-        protected static readonly int OutlineColorID = Shader.PropertyToID("_Outline_Color");
-        protected static readonly int InlineThicknessID = Shader.PropertyToID("_Inline_Thickness");
-        protected static readonly int InlineColorID = Shader.PropertyToID("_Inline_Color");
 
         protected SDFShapeBase()
         {
@@ -80,6 +80,7 @@ namespace DNExtensions.Shapes
             // Set common properties
             m_InstanceMaterial.SetColor(BaseColorID, m_BaseColor);
             m_InstanceMaterial.SetFloat(RotationID, m_Rotation);
+            m_InstanceMaterial.SetVector(OffsetID, m_Offset);
             m_InstanceMaterial.SetFloat(OutlineThicknessID, m_OutlineThickness);
             m_InstanceMaterial.SetColor(OutlineColorID, m_OutlineColor);
             m_InstanceMaterial.SetFloat(InlineThicknessID, m_InlineThickness);
@@ -150,8 +151,7 @@ namespace DNExtensions.Shapes
             vh.AddTriangle(0, 1, 2);
             vh.AddTriangle(2, 3, 0);
         }
-
-        // Common property accessors
+        
         public Color baseColor
         {
             get { return m_BaseColor; }
@@ -174,6 +174,20 @@ namespace DNExtensions.Shapes
                 if (!Mathf.Approximately(m_Rotation, value))
                 {
                     m_Rotation = value;
+                    UpdateMaterialProperties();
+                    SetMaterialDirty();
+                }
+            }
+        }
+
+        public Vector2 offset
+        {
+            get { return m_Offset; }
+            set
+            {
+                if (m_Offset != value)
+                {
+                    m_Offset = value;
                     UpdateMaterialProperties();
                     SetMaterialDirty();
                 }
@@ -238,7 +252,7 @@ namespace DNExtensions.Shapes
             }
         }
 
-        // Export functionality
+
         public void ExportToPNG(int width, int height, string path)
         {
             RenderTexture renderTexture = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.ARGB32);
@@ -302,6 +316,7 @@ namespace DNExtensions.Shapes
         {
             target.m_BaseColor = this.m_BaseColor;
             target.m_Rotation = this.m_Rotation;
+            target.m_Offset = this.m_Offset;
             target.m_OutlineThickness = this.m_OutlineThickness;
             target.m_OutlineColor = this.m_OutlineColor;
             target.m_InlineThickness = this.m_InlineThickness;
@@ -309,7 +324,7 @@ namespace DNExtensions.Shapes
             target.color = this.color;
         }
 
-        // ISerializationCallbackReceiver
+
         public virtual void OnBeforeSerialize()
         {
         }
@@ -318,7 +333,7 @@ namespace DNExtensions.Shapes
         {
         }
 
-        // ILayoutElement
+
         public virtual void CalculateLayoutInputHorizontal()
         {
         }
@@ -362,7 +377,7 @@ namespace DNExtensions.Shapes
             get { return 0; }
         }
 
-        // ICanvasRaycastFilter
+     
         public virtual bool IsRaycastLocationValid(Vector2 screenPoint, Camera eventCamera)
         {
             return raycastTarget;
