@@ -65,10 +65,10 @@ Material:
     - _Distance_Fade_Power: 2
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Sun_Exponent: 5
-    - _Sun_Intensity: 0
-    - _Sun_Radius_A: 0.0286
-    - _Sun_Radius_B: 0.1
+    - _Sun_Exponent: 5.26
+    - _Sun_Intensity: 248
+    - _Sun_Radius_A: 0.0299
+    - _Sun_Radius_B: 0.0585
     - _ZenithBlendPower: 0.5
     - _Zenith_Blend_Power: 0.51
     m_Colors:

@@ -11,7 +11,8 @@ Material:
   m_Shader: {fileID: -6465566751694194690, guid: 65946aada7e22644ab914a281a4a2b51, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _MOVEMENT_WAVE
   m_InvalidKeywords:
   - _ALPHAPREMULTIPLY_ON
   - _SURFACE_TYPE_TRANSPARENT
@@ -57,6 +58,7 @@ Material:
     - _Foam_Cutoff: 4.18
     - _Foam_Scale: 5
     - _Foam_Speed: 0.1
+    - _MOVEMENT: 1
     - _Normal_Strength: 38.6
     - _QueueControl: 0
     - _QueueOffset: 0
@@ -67,6 +69,8 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 1
+    - _Swell_Displacement: 2
+    - _Swell_Speed: 25
     - _Wave_Amplitude: 0.5
     - _Wave_Hight_Frequency: 5.16
     - _Wave_Speed: 1
