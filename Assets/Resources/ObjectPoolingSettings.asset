@@ -15,4 +15,18 @@ MonoBehaviour:
   instantiateAsFallback: 1
   destroyAsFallback: 1
   showDebugMessages: 0
-  pools: []
+  pools:
+  - poolName: BulletTest
+    maxPoolSize: 50
+    prefab: {fileID: 8842675776293222798, guid: 385e2d0b9f979d14ca7b058fc6b2988c, type: 3}
+    dontDestroyOnLoad: 0
+    recycleActiveObjects: 0
+    preWarmPool: 1
+    preWarmPoolSize: 3
+    scenesToPreWarm:
+    - sceneAsset: {fileID: 102900000, guid: 5db86f2bb95500b438ebfbf95acd3568, type: 3}
+      sceneName: TestScene
+      scenePath: Assets/2_Testing/TestScene.unity
+    poolSize: 0
+    activePoolCount: 0
+    inactivePoolCount: 0

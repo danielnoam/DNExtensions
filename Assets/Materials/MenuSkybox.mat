@@ -60,20 +60,20 @@ Material:
     m_Ints: []
     m_Floats:
     - _BadirBlendPower: 0.77
-    - _Badir_Blend_Power: 0.79
-    - _Clouds_Distance_Fade_Power: 1.04
+    - _Badir_Blend_Power: 0.58
+    - _Clouds_Distance_Fade_Power: 2.44
     - _Distance_Fade_Power: 2
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Sun_Exponent: 5.26
-    - _Sun_Intensity: 248
-    - _Sun_Radius_A: 0.0299
+    - _Sun_Exponent: 5.95
+    - _Sun_Intensity: 102
+    - _Sun_Radius_A: 0.0628
     - _Sun_Radius_B: 0.0585
     - _ZenithBlendPower: 0.5
-    - _Zenith_Blend_Power: 0.51
+    - _Zenith_Blend_Power: 0.28
     m_Colors:
     - _Clouds_Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Clouds_Scale: {r: 1, g: 1, b: 0, a: 0}
+    - _Clouds_Scale: {r: 0.3, g: 0.3, b: 0, a: 0}
     - _Clouds_Speed: {r: 0.01, g: 0.01, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _HorizonColor: {r: 0.75157225, g: 0.9044516, b: 1, a: 1}

@@ -20,6 +20,9 @@ namespace DNExtensions.Shapes
         private SerializedProperty m_BaseColor;
         private SerializedProperty m_Rotation;
         private SerializedProperty m_Offset;
+        private SerializedProperty m_FillType;
+        private SerializedProperty m_FillAmount;
+        private SerializedProperty m_FillOrigin;
         private SerializedProperty m_OutlineThickness;
         private SerializedProperty m_OutlineColor;
         private SerializedProperty m_InlineThickness;
@@ -43,6 +46,9 @@ namespace DNExtensions.Shapes
             
             m_BaseColor = serializedObject.FindProperty("m_BaseColor");
             m_Rotation = serializedObject.FindProperty("m_Rotation");
+            m_FillType = serializedObject.FindProperty("m_FillType");
+            m_FillAmount = serializedObject.FindProperty("m_FillAmount");
+            m_FillOrigin = serializedObject.FindProperty("m_FillOrigin");
             m_Offset = serializedObject.FindProperty("m_Offset");
             m_OutlineThickness = serializedObject.FindProperty("m_OutlineThickness");
             m_OutlineColor = serializedObject.FindProperty("m_OutlineColor");
@@ -70,11 +76,25 @@ namespace DNExtensions.Shapes
 
             EditorGUILayout.Space();
 
-            // Shape properties 
+            // Base Shape properties 
             EditorGUILayout.LabelField("Shape", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(m_BaseColor);
             EditorGUILayout.PropertyField(m_Rotation);
             EditorGUILayout.PropertyField(m_Offset);
+            EditorGUILayout.PropertyField(m_FillType);
+            
+            SDFShapeBase.FillType fillType = (SDFShapeBase.FillType)m_FillType.enumValueIndex;
+            if (fillType != SDFShapeBase.FillType.None)
+            {
+                EditorGUILayout.PropertyField(m_FillAmount);
+                if (fillType == SDFShapeBase.FillType.Radial)
+                {
+                    EditorGUILayout.PropertyField(m_FillOrigin);
+                }
+            }
+            
+            EditorGUILayout.Space();
+            
             DrawShapeSpecificProperties();
 
             EditorGUILayout.Space();
@@ -133,6 +153,9 @@ namespace DNExtensions.Shapes
 
         private void DrawShapeSpecificProperties()
         {
+            var shapeName = target.GetType().Name.Replace("SDF", "");
+            EditorGUILayout.LabelField($"{shapeName}", EditorStyles.boldLabel);
+            
             SerializedProperty prop = serializedObject.GetIterator();
             bool enterChildren = true;
 
@@ -143,7 +166,10 @@ namespace DNExtensions.Shapes
                 if (prop.name == "m_Script" ||
                     prop.name == "m_BaseColor" ||
                     prop.name == "m_Rotation" ||
-                    prop.name == "m_Offset" ||
+                    prop.name == "m_Offset" || 
+                    prop.name == "m_FillType" ||
+                    prop.name == "m_FillAmount" ||
+                    prop.name == "m_FillOrigin" ||
                     prop.name == "m_OutlineThickness" ||
                     prop.name == "m_OutlineColor" ||
                     prop.name == "m_InlineThickness" ||

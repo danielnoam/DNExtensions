@@ -1,4 +1,6 @@
 
+// Shapes
+
 void CircleSDF_float(float2 UV, float Radius, out float Dist)
 {
     Dist = length(UV) - Radius;
@@ -86,11 +88,9 @@ void CrossSDF_float(float2 UV, float Width, float Height, float Thickness, out f
 {
     float2 p = abs(UV);
     
-    // Horizontal bar
     float2 d1 = p - float2(Width, Thickness);
     float dist1 = length(max(d1, 0.0)) + min(max(d1.x, d1.y), 0.0);
     
-    // Vertical bar
     float2 d2 = p - float2(Thickness, Height);
     float dist2 = length(max(d2, 0.0)) + min(max(d2.x, d2.y), 0.0);
     
@@ -98,8 +98,19 @@ void CrossSDF_float(float2 UV, float Width, float Height, float Thickness, out f
 }
 
 
+void LineSDF_float(float2 UV, float2 StartPos, float2 EndPos, float Thickness, out float Dist)
+{
+    float2 ba = EndPos - StartPos;
+    float2 pa = UV - StartPos;
+    
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    
+    Dist = length(pa - ba * h) - Thickness;
+}
 
 
+
+// Outlines
 
 void OutlineSDF_float(float Distance, float Thickness, out float Dist)
 {
@@ -108,4 +119,85 @@ void OutlineSDF_float(float Distance, float Thickness, out float Dist)
 void InlineSDF_float(float Distance, float Thickness, out float Dist)
 {
     Dist = max(Distance, -Distance - Thickness);
+}
+
+
+// Fill
+void RadialFillSDF_float(float2 UV, float FillAmount, float FillOrigin, out float Dist)
+{
+    // Rotate UV by origin
+    float originRad = FillOrigin * 3.14159265359 / 180.0;
+    float2x2 rot = float2x2(cos(-originRad), -sin(-originRad), 
+                            sin(-originRad), cos(-originRad));
+    float2 p = mul(rot, UV);
+
+    float angle = atan2(p.y, p.x);
+    if (angle < 0.0) angle += 6.28318530718;
+    float fillAngle = FillAmount * 6.28318530718;
+    
+    // Handle edge cases
+    if (FillAmount >= 0.9999)
+    {
+        Dist = -1.0;
+        return;
+    }
+    
+    if (FillAmount <= 0.0001) 
+    {
+        Dist = 1.0;
+        return;
+    }
+    
+    // Normal case
+    if (angle <= fillAngle)
+    {
+        float distToStart = angle;
+        float distToEnd = fillAngle - angle;
+        Dist = -min(distToStart, distToEnd);
+    }
+    else
+    {
+        Dist = angle - fillAngle;
+    }
+}
+
+void HorizontalFillSDF_float(float2 UV, float FillAmount, out float Dist)
+{
+    float normalizedX = UV.x + 0.5;
+    
+    Dist = normalizedX - FillAmount;
+}
+
+void VerticalFillSDF_float(float2 UV, float FillAmount, out float Dist)
+{
+    float normalizedY = UV.y + 0.5;
+    Dist = normalizedY - FillAmount;
+}
+
+void ApplyFillSDF_float(float Distance, int FillType, float2 UV, float FillAmount, float FillOrigin, out float Dist)
+{
+    Dist = Distance; // Start with shape distance
+    
+    if (FillType == 0) // None
+    {
+        return;
+    }
+    
+    float fillDist = 0.0;
+    
+    if (FillType == 1) // Radial
+    {
+        RadialFillSDF_float(UV, FillAmount, FillOrigin, fillDist);
+    }
+    else if (FillType == 2) // Horizontal
+    {
+        HorizontalFillSDF_float(UV, FillAmount, fillDist);
+    }
+    else if (FillType == 3) // Vertical
+    {
+        VerticalFillSDF_float(UV, FillAmount, fillDist);
+    }
+    
+    // Intersect shape with fill - max keeps only the overlapping region
+    Dist = max(Distance, fillDist);
 }
