@@ -75,9 +75,44 @@ public class MenuManager : MonoBehaviour
 
     }
     
+
+    public void ShowNextScreen(bool animated = true, Action onComplete = null)
+    {
+        if (!currentScreen)
+        {
+            ShowScreen(screens[0], animated, onComplete);
+        }
+        
+        var currentIndex = screens.IndexOf(currentScreen);
+        var nextIndex = currentIndex + 1;
+
+        ShowScreen(nextIndex >= screens.Count ? screens[0] : screens[nextIndex], animated, onComplete);
+    }
+
+    public void ShowPreviousScreen(bool animated = true, Action onComplete = null)
+    {
+        if (!currentScreen)
+        {
+            ShowScreen(screens[0], animated, onComplete);
+        }
+        
+        var currentIndex = screens.IndexOf(currentScreen);
+        var previousIndex = currentIndex - 1;
+
+        ShowScreen(previousIndex < 0 ? screens[^1] : screens[previousIndex], animated, onComplete);
+    }
     
+
     public void ShowScreenAnimated(Screen screen) => ShowScreen(screen, true,null);
     public void ShowScreenInstant(Screen screen) => ShowScreen(screen, false,null);
     
+    public void ShowNextScreenAnimated() => ShowNextScreen(true, null);
+    public void ShowNextScreenInstant() => ShowNextScreen(false, null);
+    
+    public void ShowPreviousScreenAnimated() => ShowPreviousScreen(true, null);
+    public void ShowPreviousScreenInstant() => ShowPreviousScreen(false, null);
+
+
+
 
 }

@@ -67,6 +67,33 @@ public class SpringyUI : MonoBehaviour
 
 
     }
+
+    public void ToggleSpringsLock(bool resetVelocity)
+    {
+        if (position)
+        {
+            if (positionSpring.IsLocked)
+            {
+                positionSpring.Unlock();
+            }
+            else
+            {
+                positionSpring.Lock(resetVelocity);
+            }
+        }
+
+        if (scale)
+        {
+            if (scaleSpring.IsLocked)
+            {
+                scaleSpring.Unlock();
+            }
+            else
+            {
+                scaleSpring.Lock(resetVelocity);
+            }
+        }
+    }
     
     [Button]
     public void AnimateFromOffset()
