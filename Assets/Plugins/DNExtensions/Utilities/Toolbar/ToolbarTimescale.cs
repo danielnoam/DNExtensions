@@ -15,7 +15,7 @@ namespace DNExtensions
         const float DefaultTimeScale = 1f;
         
 
-        [MainToolbarElement("Timescale/Slider", defaultDockPosition = MainToolbarDockPosition.Middle)]
+        [MainToolbarElement("Project/Timescale/Slider", defaultDockPosition = MainToolbarDockPosition.Middle)]
         public static MainToolbarElement TimeSlider()
         {
             var content = new MainToolbarContent("Time Scale", "Adjust the timescale of the game");
@@ -29,19 +29,19 @@ namespace DNExtensions
                         menu.AppendAction("Reset To Default", _ =>
                         {
                             Time.timeScale = DefaultTimeScale;
-                            MainToolbar.Refresh("Timescale/Slider");
+                            MainToolbar.Refresh("Project/Timescale/Slider");
                         });
                         
                         menu.AppendAction("Set Min", _ =>
                         {
                             Time.timeScale = MinTimeScale;
-                            MainToolbar.Refresh("Timescale/Slider");
+                            MainToolbar.Refresh("Project/Timescale/Slider");
                         });
                         
                         menu.AppendAction("Set Max", _ =>
                         {
                             Time.timeScale = MaxTimeScale;
-                            MainToolbar.Refresh("Timescale/Slider");
+                            MainToolbar.Refresh("Project/Timescale/Slider");
                         });
                     }
                 };
@@ -50,7 +50,7 @@ namespace DNExtensions
         }
 
 
-        [MainToolbarElement("Timescale/Reset Button", defaultDockPosition = MainToolbarDockPosition.Middle)]
+        [MainToolbarElement("Project/Timescale/Reset Button", defaultDockPosition = MainToolbarDockPosition.Middle)]
         public static MainToolbarElement ResetButton()
         {
             var icon = EditorGUIUtility.IconContent("Refresh").image as Texture2D;
@@ -60,7 +60,7 @@ namespace DNExtensions
             var button = new MainToolbarButton(content, () =>
             {
                 Time.timeScale = DefaultTimeScale;
-                MainToolbar.Refresh("Timescale/Slider");
+                MainToolbar.Refresh("Project/Timescale/Slider");
             });
 
             return button;

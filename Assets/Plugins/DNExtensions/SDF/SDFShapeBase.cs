@@ -315,6 +315,8 @@ namespace DNExtensions.Shapes
 
         public void ExportToPNG(int width, int height, string path)
         {
+            int tempLayer = 31; 
+            
             RenderTexture renderTexture = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.ARGB32);
             RenderTexture.active = renderTexture;
 
@@ -325,8 +327,10 @@ namespace DNExtensions.Shapes
             tempCamera.backgroundColor = Color.clear;
             tempCamera.orthographic = true;
             tempCamera.enabled = false;
+            tempCamera.cullingMask = 1 << tempLayer; // Only render objects on this layer
 
             GameObject tempCanvasObj = new GameObject("TempCanvas");
+            tempCanvasObj.layer = tempLayer; // Set canvas to temp layer
             Canvas tempCanvas = tempCanvasObj.AddComponent<Canvas>();
             tempCanvas.renderMode = RenderMode.ScreenSpaceCamera;
             tempCanvas.worldCamera = tempCamera;
@@ -335,13 +339,12 @@ namespace DNExtensions.Shapes
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
 
             GameObject tempShapeObj = new GameObject("TempShape");
+            tempShapeObj.layer = tempLayer; // Set shape to temp layer
             tempShapeObj.transform.SetParent(tempCanvas.transform, false);
 
-            // Create instance of the same type as this shape
             SDFShapeBase tempShape = (SDFShapeBase)tempShapeObj.AddComponent(GetType());
             RectTransform tempRect = tempShape.GetComponent<RectTransform>();
 
-            // Copy properties using reflection or implement CopyTo method
             CopyPropertiesTo(tempShape);
 
             tempRect.anchorMin = Vector2.zero;
