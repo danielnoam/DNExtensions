@@ -39,18 +39,22 @@ Material:
     m_Floats:
     - _Blur_Offset: 0
     - _ChromaticAberration: 0
-    - _Chromatic_Aberration: 0.005
+    - _Chromatic_Aberration: 0
     - _CurvatureStrength: 0.14
     - _NoiseIntensity: 0
     - _NoiseScale: 507.87
-    - _Noise_Intensity: 0.02
+    - _Noise_Intensity: 0.0168
     - _Noise_Scale: 1000
+    - _Overlay: 0
     - _Scan_Lines_Amount: 300
     - _Scan_Lines_Speed: 0.01
-    - _Wobble_Amount: 0.003
+    - _Warp: 0
+    - _Wobble_Amount: 0
     - _Wobble_Speed: 2
     m_Colors:
     - _Bloom_Color: {r: 3.9999998, g: 3.9999998, b: 3.9999998, a: 1}
+    - _Overlay_Warp: {r: 1, g: 1, b: 0, a: 0}
     - _ScreenCenter: {r: 0.5, g: 0.5, b: 0, a: 0}
+    - _Warp_Strength: {r: 0.51, g: 0.96, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

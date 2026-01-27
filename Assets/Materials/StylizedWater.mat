@@ -12,10 +12,12 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _FOAM_INTERSECTION_ONLY
+  - _FOAM_NOISE_GRADIENT_NOISE
   - _MOVEMENT_SWELL
   m_InvalidKeywords:
   - _ALPHAPREMULTIPLY_ON
+  - _FOAM_INTERSECTION_ONLY
+  - _FOAM_NOISE_B
   - _INTERSECTION_FOAM_ONLY
   - _SURFACE_TYPE_TRANSPARENT
   m_LightmapFlags: 2
@@ -25,10 +27,14 @@ Material:
   stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
-  m_LockedProperties: 
+  m_LockedProperties: _Wave_Amplitude
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _Foam_Texture:
+        m_Texture: {fileID: 2800000, guid: 059881e0ff561ea428dfc811cb4bcbd2, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Refraction_Texture:
         m_Texture: {fileID: 2800000, guid: 4e1b28a75f412574aa650eda95bb9686, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -57,13 +63,19 @@ Material:
     - _DstBlend: 10
     - _DstBlendAlpha: 10
     - _FOAM: 0
-    - _Foam_Amount: 0.61
+    - _FOAM_NOISE: 0
+    - _Float: 1.46
+    - _Foam_Amount: 0.57
     - _Foam_Cutoff: 2
-    - _Foam_Scale: 4.6
-    - _Foam_Speed: 25
+    - _Foam_Scale: 5.39
+    - _Foam_Speed: 8
+    - _Foam_Wave_Speed: 0.1
     - _INTERSECTION_FOAM_ONLY: 1
+    - _Intersection_Foam_Cutoff: 2
+    - _Intersection_Foam_Speed: 8
     - _MOVEMENT: 2
     - _Normal_Strength: 38.6
+    - _Offset: 1.33
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
@@ -76,6 +88,7 @@ Material:
     - _Swell_Displacement: 1
     - _Swell_Speed: 25
     - _Wave_Amplitude: 0.5
+    - _Wave_Foam_Speed: 0.02
     - _Wave_Hight_Frequency: 5.16
     - _Wave_Speed: 1
     - _WorkflowMode: 1
@@ -86,7 +99,9 @@ Material:
     - _Deep_Color: {r: 0.03174312, g: 0.05296935, b: 0.67295593, a: 0.023529412}
     - _Foam_Color: {r: 1, g: 1, b: 1, a: 1}
     - _Refraction_Scale: {r: 1, g: 1, b: 0, a: 0}
-    - _Surface_Color: {r: 0, g: 0.70980406, b: 1, a: 1}
+    - _Refraction_Scale_1: {r: -0.2, g: 0.2, b: 0, a: 0}
+    - _Surface_Color: {r: 0, g: 0.70980406, b: 1, a: 0.8235294}
+    - _Wave_Foam_Range: {r: 0.3, g: 0.6, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &3842766247868594805
