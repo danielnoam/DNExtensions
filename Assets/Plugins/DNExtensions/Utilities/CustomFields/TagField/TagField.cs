@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.CustomFields
 {
     /// <summary>
     /// A serializable field that provides Unity Inspector support for selecting tags.

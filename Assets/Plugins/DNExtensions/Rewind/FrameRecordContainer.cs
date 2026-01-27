@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DNExtensions.Rewind
+namespace DNExtensions.Utilities.Rewind
 {
     public class FrameRecordContainer<T>
     {

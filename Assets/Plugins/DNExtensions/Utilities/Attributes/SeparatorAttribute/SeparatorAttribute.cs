@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities
 {
     /// <summary>
     /// Attribute that creates a visual separator line in the Unity Inspector with an optional title.

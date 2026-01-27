@@ -1,5 +1,5 @@
 using UnityEngine;
-using DNExtensions.ControllerRumbleSystem;
+using DNExtensions.Utilities.ControllerRumbleSystem;
 using TMPro;
 
 public class ControllerRumbleUI : MonoBehaviour

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities
 {
     /// <summary>
     /// Utility functions for Vector3 operations

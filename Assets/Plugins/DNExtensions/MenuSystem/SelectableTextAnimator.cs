@@ -3,7 +3,7 @@ using UnityEngine;
 using TMPro;
 using PrimeTween;
 
-namespace DNExtensions.MenuSystem
+namespace DNExtensions.Utilities.MenuSystem
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(TextMeshProUGUI))]

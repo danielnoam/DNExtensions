@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace DNExtensions.SerializableSelector.Editor
+namespace DNExtensions.Utilities.SerializableSelector.Editor
 {
     public static class SerializableSelectorUtility
     {
@@ -15,6 +15,7 @@ namespace DNExtensions.SerializableSelector.Editor
             public string Namespace;
             public string Tooltip;
             public int SearchScore;
+            public bool AllowOnce;
         }
         
         /// <summary>
@@ -41,6 +42,14 @@ namespace DNExtensions.SerializableSelector.Editor
             }
             
             return true;
+        }
+        
+        /// <summary>
+        /// Check if type is marked with AllowOnce attribute
+        /// </summary>
+        public static bool IsAllowOnce(Type type)
+        {
+            return type.GetCustomAttribute<SerializableSelectorAllowOnceAttribute>() != null;
         }
         
         /// <summary>
@@ -161,7 +170,8 @@ namespace DNExtensions.SerializableSelector.Editor
                             DisplayName = GetTypeDisplayName(type),   
                             Namespace = categoryPath,                 
                             Tooltip = GetTypeTooltip(type),
-                            SearchScore = 0
+                            SearchScore = 0,
+                            AllowOnce = IsAllowOnce(type)
                         });
                     }
                 }

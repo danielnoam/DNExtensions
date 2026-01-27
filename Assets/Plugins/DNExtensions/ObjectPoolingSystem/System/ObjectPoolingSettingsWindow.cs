@@ -3,7 +3,7 @@ using System;
 using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions.ObjectPooling
+namespace DNExtensions.Utilities.ObjectPooling
 {
     public class ObjectPoolingSettingsWindow : EditorWindow
     {

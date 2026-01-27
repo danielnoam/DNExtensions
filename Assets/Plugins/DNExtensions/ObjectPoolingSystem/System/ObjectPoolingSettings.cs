@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace DNExtensions.ObjectPooling
+namespace DNExtensions.Utilities.ObjectPooling
 {
     /// <summary>
     /// Centralized settings asset for object pooling configuration.

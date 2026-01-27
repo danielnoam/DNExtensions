@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DNExtensions.ControllerRumbleSystem
+namespace DNExtensions.Utilities.ControllerRumbleSystem
 {
     public class ControllerRumbleEffect
     {

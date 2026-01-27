@@ -1,10 +1,11 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions.SerializableSelector.Editor
+namespace DNExtensions.Utilities.SerializableSelector.Editor
 {
     using TypeInfo = SerializableSelectorUtility.TypeInfo;
     
@@ -12,6 +13,7 @@ namespace DNExtensions.SerializableSelector.Editor
     {
         private TypeInfo[] _allTypes;
         private TypeInfo[] _filteredTypes;
+        private HashSet<Type> _existingTypes;
         private string _searchQuery = "";
         private Vector2 _scrollPosition;
         private Action<Type> _onTypeSelected;
@@ -29,16 +31,12 @@ namespace DNExtensions.SerializableSelector.Editor
         private static GUIStyle _itemStyle;
         private static GUIStyle _itemStyleSelected;
         
-        public static void Show(
-            Rect buttonRect, 
-            TypeInfo[] types, 
-            bool allowNull,
-            bool showSearch,
-            Action<Type> onTypeSelected)
+        public static void Show(Rect buttonRect, TypeInfo[] types, bool allowNull, bool showSearch, HashSet<Type> existingTypes, Action<Type> onTypeSelected)
         {
             var window = CreateInstance<SerializableSelectorPopup>();
             window._allTypes = types ?? new TypeInfo[0];
             window._filteredTypes = types ?? new TypeInfo[0];
+            window._existingTypes = existingTypes ?? new HashSet<Type>();
             window._allowNull = allowNull;
             window._showSearch = showSearch;
             window._onTypeSelected = onTypeSelected;
@@ -262,7 +260,7 @@ namespace DNExtensions.SerializableSelector.Editor
             {
                 bool isSelected = currentIndex == _selectedIndex;
                 if (DrawTypeItem(new Rect(0, currentY, contentRect.width, ItemHeight), 
-                    null, "<null>", "Clear the reference", isSelected, currentIndex))
+                    null, "<null>", "Clear the reference", isSelected, currentIndex, false))  // ← allowOnce = false for null
                 {
                     _onTypeSelected?.Invoke(null);
                     Close();
@@ -306,7 +304,7 @@ namespace DNExtensions.SerializableSelector.Editor
                     bool isSelected = currentIndex == _selectedIndex;
                     Rect itemRect = new Rect(0, currentY, contentRect.width, ItemHeight);
                     
-                    if (DrawTypeItem(itemRect, typeInfo.Type, typeInfo.DisplayName, typeInfo.Tooltip, isSelected, currentIndex))
+                    if (DrawTypeItem(itemRect, typeInfo.Type, typeInfo.DisplayName, typeInfo.Tooltip, isSelected, currentIndex, typeInfo.AllowOnce))  // ← Pass allowOnce flag
                     {
                         _onTypeSelected?.Invoke(typeInfo.Type);
                         Close();
@@ -323,20 +321,24 @@ namespace DNExtensions.SerializableSelector.Editor
             GUI.EndScrollView();
         }
         
-        private bool DrawTypeItem(Rect rect, Type type, string displayName, string tooltip, bool isSelected, int index)
+        
+        private bool DrawTypeItem(Rect rect, Type type, string displayName, string tooltip, bool isSelected, int index, bool allowOnce)  // ← NEW parameter
         {
             Event e = Event.current;
             bool isHovered = rect.Contains(e.mousePosition);
             
-            // Update selected index on hover
-            if (isHovered && e.type == EventType.MouseMove)
+            // Check if this type is already in the list and marked AllowOnce
+            bool isDisabled = allowOnce && type != null && _existingTypes.Contains(type);
+            
+            // Update selected index on hover (but not for disabled items)
+            if (isHovered && e.type == EventType.MouseMove && !isDisabled)
             {
                 _selectedIndex = index;
                 Repaint();
             }
             
             // Draw background for selection/hover
-            if (isSelected || isHovered)
+            if (!isDisabled && (isSelected || isHovered))
             {
                 Color bgColor = isSelected 
                     ? (EditorGUIUtility.isProSkin ? new Color(0.24f, 0.48f, 0.90f, 0.8f) : new Color(0.24f, 0.48f, 0.90f, 0.4f))
@@ -345,21 +347,39 @@ namespace DNExtensions.SerializableSelector.Editor
                 EditorGUI.DrawRect(rect, bgColor);
             }
             
-            // Draw type name
+            // Draw type name with disabled color if needed
             GUIContent content = new GUIContent(displayName, tooltip);
-            
-            // Use fallback style if _itemStyle is null
             GUIStyle itemStyle = _itemStyle ?? EditorStyles.label;
-            GUI.Label(rect, content, itemStyle);
             
-            // Draw tooltip on hover
-            if (isHovered && !string.IsNullOrEmpty(tooltip))
+            if (isDisabled)
             {
-                DrawTooltip(rect, tooltip);
+                // Create disabled style
+                GUIStyle disabledStyle = new GUIStyle(itemStyle);
+                disabledStyle.normal.textColor = EditorGUIUtility.isProSkin 
+                    ? new Color(0.5f, 0.5f, 0.5f) 
+                    : new Color(0.6f, 0.6f, 0.6f);
+                
+                GUI.Label(rect, content, disabledStyle);
+                
+                // Show "Already in list" tooltip
+                if (isHovered)
+                {
+                    DrawTooltip(rect, "Already in list (marked as AllowOnce)");
+                }
+            }
+            else
+            {
+                GUI.Label(rect, content, itemStyle);
+                
+                // Draw tooltip on hover
+                if (isHovered && !string.IsNullOrEmpty(tooltip))
+                {
+                    DrawTooltip(rect, tooltip);
+                }
             }
             
-            // Handle click
-            if (e.type == EventType.MouseDown && rect.Contains(e.mousePosition))
+            // Handle click (disabled items can't be clicked)
+            if (!isDisabled && e.type == EventType.MouseDown && rect.Contains(e.mousePosition))
             {
                 e.Use();
                 return true;

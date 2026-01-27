@@ -1,6 +1,6 @@
 using System;
 
-namespace DNExtensions.SerializableSelector
+namespace DNExtensions.Utilities.SerializableSelector
 {
     /// <summary>
     /// Add tooltip to types in SerializableSelector dropdown

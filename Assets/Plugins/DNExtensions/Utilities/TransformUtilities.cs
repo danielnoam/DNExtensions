@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities
 {
     /// <summary>
     /// Utility functions for Transform operations that extend MonoBehaviour

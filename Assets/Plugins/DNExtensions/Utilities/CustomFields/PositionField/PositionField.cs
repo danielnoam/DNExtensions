@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.CustomFields
 {
     [System.Serializable]
     public class PositionField

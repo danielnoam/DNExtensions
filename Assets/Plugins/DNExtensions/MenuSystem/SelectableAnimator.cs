@@ -1,6 +1,7 @@
 
 using System;
 using System.Linq;
+using DNExtensions.Utilities.AudioEvent;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.Events;
@@ -8,7 +9,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 
-namespace  DNExtensions.MenuSystem
+namespace  DNExtensions.Utilities.MenuSystem
 {
     
     [DisallowMultipleComponent]

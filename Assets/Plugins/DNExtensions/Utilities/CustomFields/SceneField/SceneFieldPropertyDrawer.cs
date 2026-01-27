@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.CustomFields
 {
     /// <summary>
     /// Custom property drawer for SceneField that displays build index and validation errors.

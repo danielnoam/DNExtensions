@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DNExtensions.Rewind
+namespace DNExtensions.Utilities.Rewind
 {
     public class RewindableTransform : Rewindable
     {

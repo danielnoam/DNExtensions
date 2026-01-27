@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.CustomFields
 {
     /// <summary>
     /// Custom property drawer for PositionField that displays a Vector3 field and Transform field.

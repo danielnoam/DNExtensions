@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.RangedValues
 {
     /// <summary>
     /// Attribute to define the minimum and maximum range limits for RangedFloat and RangedInt sliders in the Inspector.

@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-namespace DNExtensions
+namespace DNExtensions.Utilities
 {
     /// <summary>
     /// Base class for conditional attributes that show/hide or enable/disable fields based on other field values

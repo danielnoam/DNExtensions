@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using System.IO;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities
 {
     /// <summary>
     /// Custom property drawer for the Preview attribute that displays thumbnails of sprites, textures, and prefabs.

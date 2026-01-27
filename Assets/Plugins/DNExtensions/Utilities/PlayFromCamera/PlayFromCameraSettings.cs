@@ -4,7 +4,7 @@
 using UnityEditor;
 
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.PlayFromCamera
 {
     public static class PlayFromCameraSettings
     {

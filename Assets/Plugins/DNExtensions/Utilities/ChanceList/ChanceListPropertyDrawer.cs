@@ -5,7 +5,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities
 {
     [CustomPropertyDrawer(typeof(ChanceList<>), true)]
     public class ChanceListPropertyDrawer : PropertyDrawer

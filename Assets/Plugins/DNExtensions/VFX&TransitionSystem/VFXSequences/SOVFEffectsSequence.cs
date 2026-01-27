@@ -1,12 +1,12 @@
 using System;
-using DNExtensions.Button;
+using DNExtensions.Utilities.Button;
 using PrimeTween;
 using UnityEngine;
 
 
 
 
-namespace DNExtensions.VFXManager
+namespace DNExtensions.Utilities.VFXManager
 {
     
     [CreateAssetMenu(fileName = "VFX Sequence", menuName = "Scriptable Objects/New VFX Sequence")]

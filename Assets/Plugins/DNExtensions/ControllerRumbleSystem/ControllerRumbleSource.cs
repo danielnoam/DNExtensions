@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using DNExtensions.Button;
+using DNExtensions.Utilities.Button;
 using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions.ControllerRumbleSystem
+namespace DNExtensions.Utilities.ControllerRumbleSystem
 {
     public class ControllerRumbleSource : MonoBehaviour
     {

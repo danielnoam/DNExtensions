@@ -1,8 +1,9 @@
 using System;
+using DNExtensions.Utilities.RangedValues;
 using PrimeTween;
 using UnityEngine;
 
-namespace DNExtensions.VFXManager
+namespace DNExtensions.Utilities.VFXManager
 {
     [Serializable]
     public class SetCameraFOV : VFEffectsEffectBase

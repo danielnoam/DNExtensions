@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine.UI;
 
 
-namespace DNExtensions.MenuSystem
+namespace DNExtensions.Utilities.MenuSystemOld
 {
     [Serializable]
 

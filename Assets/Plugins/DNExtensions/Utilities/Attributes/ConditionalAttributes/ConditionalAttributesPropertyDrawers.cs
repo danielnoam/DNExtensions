@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities
 {
     /// <summary>
     /// Property drawer for ShowIf attribute

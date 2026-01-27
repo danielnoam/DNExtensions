@@ -6,7 +6,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions.SerializableSelector.Editor
+namespace DNExtensions.Utilities.SerializableSelector.Editor
 {
     using TypeInfo = SerializableSelectorUtility.TypeInfo;
     
@@ -152,15 +152,19 @@ namespace DNExtensions.SerializableSelector.Editor
             // Get types with caching
             TypeInfo[] types = GetCachedTypes(baseType, attr);
     
+            // Get existing types in list for AllowOnce checking
+            HashSet<Type> existingTypes = GetExistingTypesInList(property);
+    
             // Determine if we should show search field
             bool showSearch = attr.SearchThreshold >= 0 && types.Length >= attr.SearchThreshold;
     
             // Show popup window
-            SerializableSelectorPopup.Show( 
+            SerializableSelectorPopup.Show(
                 buttonRect,
                 types,
                 attr.AllowNull,
                 showSearch,
+                existingTypes,
                 selectedType => SetType(property, selectedType)
             );
         }
@@ -200,7 +204,6 @@ namespace DNExtensions.SerializableSelector.Editor
             _clipboardType = value.GetType();
             _clipboard = value.CopyReference();
             
-            Debug.Log($"Copied {_clipboardType.Name}");
         }
         
         private bool CanPaste(SerializedProperty property)
@@ -218,7 +221,40 @@ namespace DNExtensions.SerializableSelector.Editor
             property.managedReferenceValue = _clipboard.CopyReference();
             property.serializedObject.ApplyModifiedProperties();
             
-            Debug.Log($"Pasted {_clipboardType.Name}");
+        }
+        
+        private bool IsInArray(SerializedProperty property)
+        {
+            return property.propertyPath.Contains(".Array.data[");
+        }
+        
+        private HashSet<Type> GetExistingTypesInList(SerializedProperty property)
+        {
+            var existingTypes = new HashSet<Type>();
+    
+            if (!IsInArray(property))
+                return existingTypes;
+    
+            // Navigate to parent array
+            string arrayPath = property.propertyPath.Substring(0, property.propertyPath.LastIndexOf(".Array.data["));
+            SerializedProperty arrayProperty = property.serializedObject.FindProperty(arrayPath);
+    
+            if (arrayProperty == null || !arrayProperty.isArray)
+                return existingTypes;
+    
+            // Collect all types in the array
+            for (int i = 0; i < arrayProperty.arraySize; i++)
+            {
+                SerializedProperty element = arrayProperty.GetArrayElementAtIndex(i);
+        
+                if (element.managedReferenceValue != null)
+                {
+                    Type elementType = element.managedReferenceValue.GetType();
+                    existingTypes.Add(elementType);
+                }
+            }
+    
+            return existingTypes;
         }
         
         private void SetType(SerializedProperty property, Type type)

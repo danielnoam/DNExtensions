@@ -1,9 +1,10 @@
 using System;
+using DNExtensions.Utilities.CustomFields;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace DNExtensions.VFXManager
+namespace DNExtensions.Utilities.VFXManager
 {
     public static class TransitionManager
     {

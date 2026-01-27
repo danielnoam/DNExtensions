@@ -7,7 +7,7 @@ using UnityEngine;
 
 
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.PlayFromCamera
 {
     public class PlayFromCameraSettingsWindow : EditorWindow
     {

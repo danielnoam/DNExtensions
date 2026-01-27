@@ -1,14 +1,14 @@
 
+using DNExtensions.Utilities.RangedValues;
 using UnityEngine;
 using UnityEditor;
-using DNExtensions.ObjectPooling;
 using UnityEngine.Audio;
 using Random = UnityEngine.Random;
 
 
 
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.AudioEvent
 {
     
     [CreateAssetMenu(fileName = "New AudioEvent", menuName = "Scriptable Objects/New Audio Event")]

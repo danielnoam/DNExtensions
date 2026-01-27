@@ -4,7 +4,7 @@ using UnityEngine;
 using System.IO;
 using System.Xml;
 
-namespace DNExtensions.MobileHeptics.Editor
+namespace DNExtensions.Utilities.MobileHeptics.Editor
 {
     public class MobileHapticsSetupWindow : EditorWindow
     {

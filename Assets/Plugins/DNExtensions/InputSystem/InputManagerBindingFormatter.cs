@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine.InputSystem;
 
 
-namespace DNExtensions.InputSystem
+namespace DNExtensions.Utilities.InputSystem
 {
     
     public static class InputManagerBindingFormatter

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using PrimeTween;
-using DNExtensions.Button;
+using DNExtensions.Utilities.Button;
 
 public class UIbar : MonoBehaviour
 {

@@ -1,10 +1,11 @@
 using System;
+using DNExtensions.Utilities.RangedValues;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using Random = UnityEngine.Random;
 
-namespace DNExtensions.VFXManager
+namespace DNExtensions.Utilities.VFXManager
 {
     [Serializable]
     public class SetLensDistortionDynamic : VFEffectsEffectBase

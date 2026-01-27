@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using DNExtensions.Utilities.RangedValues;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.DualShock;
 
 
-namespace DNExtensions.ControllerRumbleSystem
+namespace DNExtensions.Utilities.ControllerRumbleSystem
 {
     public class ControllerRumbleListener : MonoBehaviour, IDualShockHaptics
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using DNExtensions.Button;
+using DNExtensions.Utilities.Button;
 using UnityEngine;
 
 public class PingPongDissolve : MonoBehaviour

@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace DNExtensions.InputSystem
+namespace DNExtensions.Utilities.InputSystem
 {
     
     /// <summary>

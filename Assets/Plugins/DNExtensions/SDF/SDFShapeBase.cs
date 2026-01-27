@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace DNExtensions.Shapes
+namespace DNExtensions.Utilities.Shapes
 {
     using UnityEngine;
     using UnityEngine.UI;

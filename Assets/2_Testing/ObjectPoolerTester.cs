@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using DNExtensions.Button;
-using DNExtensions.ObjectPooling;
+using DNExtensions.Utilities.Button;
+using DNExtensions.Utilities.ObjectPooling;
 using UnityEngine;
 
 public class ObjectPoolerTester : MonoBehaviour

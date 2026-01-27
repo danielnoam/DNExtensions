@@ -1796,7 +1796,9 @@ MonoBehaviour:
   serializableSelector:
     rid: 4802877415295025281
   serializableSelectorList:
-  - rid: 4802877415295025293
+  - rid: 4802877415295025300
+  - rid: 4802877415295025301
+  - rid: 4802877415295025302
   testImpulse:
     impulseChannel: 1
     impulseType: 0
@@ -1816,8 +1818,18 @@ MonoBehaviour:
       data:
         VarFloat: 0
         varBool: 0
-    - rid: 4802877415295025293
+    - rid: 4802877415295025300
+      type: {class: Behavior5, ns: , asm: Assembly-CSharp-firstpass}
+      data:
+        VarFloat: 0
+        varBool: 0
+    - rid: 4802877415295025301
       type: {class: Behavior4, ns: , asm: Assembly-CSharp-firstpass}
+      data:
+        VarFloat: 0
+        varBool: 0
+    - rid: 4802877415295025302
+      type: {class: Behavior2, ns: , asm: Assembly-CSharp-firstpass}
       data:
         VarFloat: 0
         varBool: 0

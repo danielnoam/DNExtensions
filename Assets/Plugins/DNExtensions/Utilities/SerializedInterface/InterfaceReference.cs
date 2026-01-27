@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace DNExtensions.SerializedInterface
+namespace DNExtensions.Utilities.SerializedInterface
 {
     /// <summary>
     /// A serializable reference to a UnityEngine.Object that implements a specific interface.

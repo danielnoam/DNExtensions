@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities
 {
     /// <summary>
     /// Custom property drawer for the Separator attribute.

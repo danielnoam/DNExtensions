@@ -3,7 +3,7 @@ using UnityEditor;
 
 #if UNITY_EDITOR
 
-namespace DNExtensions.GridSystem
+namespace DNExtensions.Utilities.GridSystem
 {
     [CustomPropertyDrawer(typeof(Grid))]
     public class GridDrawer : PropertyDrawer

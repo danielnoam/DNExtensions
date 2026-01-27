@@ -1,5 +1,5 @@
 using System;
-using DNExtensions.Button;
+using DNExtensions.Utilities.Button;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
 
-namespace DNExtensions.VFXManager
+namespace DNExtensions.Utilities.VFXManager
 {
     [DisallowMultipleComponent]
     public class VFXManager : MonoBehaviour

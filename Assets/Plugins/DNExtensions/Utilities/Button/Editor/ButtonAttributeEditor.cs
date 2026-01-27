@@ -6,7 +6,7 @@ using UnityEditor;
 using System.Reflection;
 using System.Linq;
 
-namespace DNExtensions.Button
+namespace DNExtensions.Utilities.Button
 {
     /// <summary>
     /// Contains method and attribute information for button drawing.

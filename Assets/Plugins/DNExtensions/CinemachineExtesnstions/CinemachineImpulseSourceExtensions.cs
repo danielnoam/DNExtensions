@@ -1,9 +1,9 @@
 ﻿using System;
 using UnityEngine;
 using Unity.Cinemachine;
-using DNExtensions;
+using DNExtensions.Utilities;
 
-namespace DNExtensions.CinemachineImpulseSystem
+namespace DNExtensions.CinemachineExtesnstions
 {
     /// <summary>
     /// Extension methods for CinemachineImpulseSource that allow generating impulses 

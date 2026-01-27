@@ -1,11 +1,11 @@
 using System;
 using UnityEngine;
 using System.Collections.Generic;
-using DNExtensions;
+using DNExtensions.Utilities;
 using PrimeTween;
 using UnityEngine.InputSystem;
 
-namespace DNExtensions.MenuSystem
+namespace  DNExtensions.Utilities.MenuSystemOld
 {
     
     [DisallowMultipleComponent]

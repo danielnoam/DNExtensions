@@ -1,8 +1,8 @@
-using DNExtensions.Button;
+using DNExtensions.Utilities.Button;
 using UnityEngine;
 using TMPro;
 
-namespace DNExtensions.InputSystem
+namespace DNExtensions.Utilities.InputSystem
 {
     
 

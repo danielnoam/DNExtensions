@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using DNExtensions.VFXManager;
+using DNExtensions.Utilities.VFXManager;
 
 namespace Editor
 {

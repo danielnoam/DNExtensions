@@ -1,5 +1,5 @@
 using System;
-using DNExtensions;
+using DNExtensions.Utilities;
 using UnityEngine;
 
 public class DitheringObject : MonoBehaviour

@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 
 
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.Toolbar
 {
     public class AssemblyReloadLock
     {

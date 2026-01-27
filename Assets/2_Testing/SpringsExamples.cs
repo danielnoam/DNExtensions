@@ -1,4 +1,4 @@
-using DNExtensions.Button;
+using DNExtensions.Utilities.Button;
 using UnityEngine;
 
 public class SpringExamples : MonoBehaviour

@@ -6,7 +6,7 @@ using UnityEditor;
 using Object = UnityEngine.Object;
 
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.PlayFromCamera
 {
     
     public enum PlayerSelectionMode

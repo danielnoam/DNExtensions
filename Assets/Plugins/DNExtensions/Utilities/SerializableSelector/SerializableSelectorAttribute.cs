@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DNExtensions.SerializableSelector
+namespace DNExtensions.Utilities.SerializableSelector
 {
     /// <summary>
     /// Enables type selection dropdown for [SerializeReference] fields

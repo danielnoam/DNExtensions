@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 
-namespace DNExtensions.Button
+namespace DNExtensions.Utilities.Button
 {
     public enum ButtonPlayMode
     {

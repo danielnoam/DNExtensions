@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 using UnityEditor;
 #endif
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.CustomFields
 {
     /// <summary>
     /// Serializable scene reference with validation and convenient loading methods.

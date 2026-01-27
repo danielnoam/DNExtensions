@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DNExtensions.SerializableSelector
+namespace DNExtensions.Utilities.SerializableSelector
 {
     /// <summary>
     /// Runtime utilities for working with [SerializeReference] fields

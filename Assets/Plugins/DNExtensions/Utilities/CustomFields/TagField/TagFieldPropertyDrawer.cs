@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Linq;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.CustomFields
 {
     /// <summary>
     /// Custom property drawer that provides a dropdown interface for selecting tags in the Unity Inspector.

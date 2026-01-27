@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities
 {
     /// <summary>
     /// Utility functions for MonoBehaviour and GameObject operations

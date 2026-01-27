@@ -1,9 +1,10 @@
 using System;
+using DNExtensions.Utilities.RangedValues;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DNExtensions.VFXManager
+namespace DNExtensions.Utilities.VFXManager
 {
     [Serializable]
     public class SetIconRotation : VFEffectsEffectBase

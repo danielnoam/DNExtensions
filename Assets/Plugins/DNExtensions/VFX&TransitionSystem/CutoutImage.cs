@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.Rendering;
 
 
-namespace DNExtensions.VFXManager
+namespace DNExtensions.Utilities.VFXManager
 {
     
     public class CutoutImage : Image

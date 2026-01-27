@@ -5,11 +5,11 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Linq;
 using UnityEngine.InputSystem;
-using DNExtensions;
-using DNExtensions.Button;
+using DNExtensions.Utilities;
+using DNExtensions.Utilities.Button;
 using UnityEngine.Events;
 
-namespace  DNExtensions.MenuSystem
+namespace  DNExtensions.Utilities.MenuSystemOld
 {
     
     [DisallowMultipleComponent]

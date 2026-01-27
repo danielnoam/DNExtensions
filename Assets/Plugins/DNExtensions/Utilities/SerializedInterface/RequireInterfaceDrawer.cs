@@ -10,7 +10,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace DNExtensions.SerializedInterface
+namespace DNExtensions.Utilities.SerializedInterface
 {
     /// <summary>
     /// Custom property drawer for fields with the RequireInterface attribute.

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities
 {
     /// <summary>
     /// Property attribute that displays a preview of sprites/2D textures and prefabs in the Unity Inspector.

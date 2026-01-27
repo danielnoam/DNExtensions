@@ -1,6 +1,6 @@
 using System;
 
-namespace DNExtensions.SerializableSelector
+namespace DNExtensions.Utilities.SerializableSelector
 {
     /// <summary>
     /// Customize the display name and optional category path for a type in SerializableSelector dropdown

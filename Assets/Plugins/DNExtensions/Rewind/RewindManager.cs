@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using DNExtensions.Button;
+using DNExtensions.Utilities.Button;
 using TMPro;
 using UnityEngine;
 
 
-namespace DNExtensions.Rewind
+namespace DNExtensions.Utilities.Rewind
 {
     
     [DisallowMultipleComponent]

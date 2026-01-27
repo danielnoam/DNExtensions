@@ -5,7 +5,7 @@ using UnityEditor;
 using System.Linq;
 
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.CustomFields
 {
     
     /// <summary>

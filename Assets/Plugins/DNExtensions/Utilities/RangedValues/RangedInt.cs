@@ -3,7 +3,7 @@
 using UnityEditor;
 #endif
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.RangedValues
 {
     #if UNITY_EDITOR
     [CustomPropertyDrawer(typeof(RangedInt), true)]

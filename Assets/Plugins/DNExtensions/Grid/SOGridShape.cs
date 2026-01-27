@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DNExtensions.GridSystem
+namespace DNExtensions.Utilities.GridSystem
 {
     [CreateAssetMenu(fileName = "Grid Shape", menuName = "Scriptable Objects/New Grid Shape")]
     public class SOGridShape : ScriptableObject

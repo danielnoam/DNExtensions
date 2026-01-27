@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.PlayFromCamera
 {
     public class PlayFromCameraToolbar
     {

@@ -2,7 +2,7 @@
 
 using System;
 
-namespace DNExtensions.VFXManager
+namespace DNExtensions.Utilities.VFXManager
 {
     [Serializable]
     public abstract class VFEffectsEffectBase

@@ -1,5 +1,5 @@
 using System.Collections;
-using DNExtensions.ObjectPooling;
+using DNExtensions.Utilities.ObjectPooling;
 using UnityEngine;
 
 public class PoolableParticleSystem : MonoBehaviour, IPoolable

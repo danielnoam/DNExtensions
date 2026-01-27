@@ -1,12 +1,14 @@
 
 using System;
 using System.Collections.Generic;
-using DNExtensions;
-using DNExtensions.SerializableSelector;
-using DNExtensions.Button;
-using DNExtensions.SerializedInterface;
-using DNExtensions.VFXManager;
-using DNExtensions.CinemachineImpulseSystem;
+using DNExtensions.CinemachineExtesnstions;
+using DNExtensions.Utilities;
+using DNExtensions.Utilities.SerializableSelector;
+using DNExtensions.Utilities.Button;
+using DNExtensions.Utilities.SerializedInterface;
+using DNExtensions.Utilities.VFXManager;
+using DNExtensions.Utilities.CustomFields;
+using DNExtensions.Utilities.RangedValues;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -114,6 +116,7 @@ public class Behavior4 : TestBehavior
 
 [Serializable]
 [SerializableSelectorTooltip("A tooltip")]
+[SerializableSelectorAllowOnce]
 [SerializableSelectorName("Direct Damage", "Damage")]
 public class Behavior5 : TestBehavior
 {

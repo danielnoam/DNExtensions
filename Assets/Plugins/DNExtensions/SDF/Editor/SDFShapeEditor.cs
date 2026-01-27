@@ -1,4 +1,4 @@
-namespace DNExtensions.Shapes
+namespace DNExtensions.Utilities.Shapes
 {
     
 

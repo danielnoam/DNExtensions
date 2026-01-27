@@ -1,10 +1,10 @@
 using System;
-using DNExtensions.Button;
+using DNExtensions.Utilities.Button;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace DNExtensions.InputSystem
+namespace DNExtensions.Utilities.InputSystem
 {
     public class InputManager : MonoBehaviour
     {

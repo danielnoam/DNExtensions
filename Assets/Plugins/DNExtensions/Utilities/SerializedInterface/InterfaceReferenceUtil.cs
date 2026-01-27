@@ -6,7 +6,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions.SerializedInterface
+namespace DNExtensions.Utilities.SerializedInterface
 {
     public class InterfaceReferenceUtil
     {

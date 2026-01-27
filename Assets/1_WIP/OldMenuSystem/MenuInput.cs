@@ -3,9 +3,9 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using DNExtensions.InputSystem;
+using DNExtensions.Utilities.InputSystem;
 
-namespace  DNExtensions.MenuSystem
+namespace   DNExtensions.Utilities.MenuSystemOld
 {
     
     public class MenuInput : InputReaderBase

@@ -1,9 +1,8 @@
 ﻿
-using DNExtensions.Button;
 using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions
+namespace DNExtensions.Utilities.Button
 {
     public class ButtonSettingsWindow : EditorWindow
     {

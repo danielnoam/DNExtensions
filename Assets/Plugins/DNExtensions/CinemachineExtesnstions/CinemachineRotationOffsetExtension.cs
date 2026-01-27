@@ -2,7 +2,7 @@
 using Unity.Cinemachine;
 
 
-namespace DNExtensions
+namespace DNExtensions.CinemachineExtesnstions
 {
     [AddComponentMenu("Cinemachine/Extensions/Rotation Offset Extension")]
         [SaveDuringPlay]

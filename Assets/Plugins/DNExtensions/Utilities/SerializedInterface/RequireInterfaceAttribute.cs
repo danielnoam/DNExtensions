@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DNExtensions.SerializedInterface
+namespace DNExtensions.Utilities.SerializedInterface
 {
     /// <summary>
     /// Attribute that enforces interface implementation on Unity Object fields in the inspector.
