@@ -1,0 +1,535 @@
+#if UNITY_EDITOR
+using System;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+
+namespace DNExtensions.SerializableSelector.Editor
+{
+    using TypeInfo = SerializableSelectorUtility.TypeInfo;
+    
+    public class SerializableSelectorPopup : EditorWindow
+    {
+        private TypeInfo[] _allTypes;
+        private TypeInfo[] _filteredTypes;
+        private string _searchQuery = "";
+        private Vector2 _scrollPosition;
+        private Action<Type> _onTypeSelected;
+        private bool _allowNull;
+        private bool _showSearch;
+        private int _selectedIndex = -1;
+        private bool _focusSearchField = true;
+        
+        private const float WindowMinWidth = 180f;
+        private const float WindowMaxWidth = 400f;
+        private const float WindowMaxHeight = 800f;
+        private const float ItemHeight = 20f;
+        
+        private static GUIStyle _headerStyle;
+        private static GUIStyle _itemStyle;
+        private static GUIStyle _itemStyleSelected;
+        
+        public static void Show(
+            Rect buttonRect, 
+            TypeInfo[] types, 
+            bool allowNull,
+            bool showSearch,
+            Action<Type> onTypeSelected)
+        {
+            var window = CreateInstance<SerializableSelectorPopup>();
+            window._allTypes = types ?? new TypeInfo[0];
+            window._filteredTypes = types ?? new TypeInfo[0];
+            window._allowNull = allowNull;
+            window._showSearch = showSearch;
+            window._onTypeSelected = onTypeSelected;
+    
+            // Calculate window width
+            float windowWidth = CalculateOptimalWidth(types ?? new TypeInfo[0]);
+    
+            // Calculate window height based on content
+            float windowHeight = CalculateInitialWindowHeight(types ?? new TypeInfo[0], allowNull, showSearch);
+    
+            Vector2 windowPosition = GUIUtility.GUIToScreenPoint(
+                new Vector2(buttonRect.x, buttonRect.y + buttonRect.height)
+            );
+    
+            // Ensure window stays on screen
+            float screenHeight = Screen.currentResolution.height;
+            if (windowPosition.y + windowHeight > screenHeight)
+            {
+                windowPosition.y = buttonRect.y - windowHeight;
+            }
+    
+            window.position = new Rect(
+                windowPosition.x,
+                windowPosition.y,
+                windowWidth,
+                windowHeight
+            );
+    
+            window.ShowPopup();
+            window.Focus();
+        }
+        
+        private static float CalculateOptimalWidth(TypeInfo[] types)
+        {
+            if (types == null || types.Length == 0)
+                return WindowMinWidth;
+            
+            float maxWidth = WindowMinWidth;
+            
+            // Use a simple default style that's always available
+            GUIStyle labelStyle = GUI.skin != null ? GUI.skin.label : new GUIStyle();
+            
+            // Check type names
+            foreach (var typeInfo in types)
+            {
+                string displayText = "  " + typeInfo.DisplayName;
+                Vector2 size = labelStyle.CalcSize(new GUIContent(displayText));
+                maxWidth = Mathf.Max(maxWidth, size.x + 30);
+            }
+            
+            // Check namespace headers
+            var namespaces = types
+                .Select(t => t.Namespace)
+                .Where(ns => !string.IsNullOrEmpty(ns))
+                .Distinct();
+            
+            foreach (string ns in namespaces)
+            {
+                Vector2 size = labelStyle.CalcSize(new GUIContent(ns));
+                maxWidth = Mathf.Max(maxWidth, size.x + 30);
+            }
+            
+            return Mathf.Clamp(maxWidth, WindowMinWidth, WindowMaxWidth);
+        }
+        
+        private static float CalculateInitialWindowHeight(TypeInfo[] types, bool allowNull, bool showSearch)
+        {
+            float searchAreaHeight = 0f;
+            if (types == null || types.Length == 0)
+            {
+                searchAreaHeight = showSearch ? 30f : 0f; // Reserve space for search + possible results count
+                return Mathf.Min(WindowMaxHeight, searchAreaHeight + 50f); // Minimum height
+            }
+    
+            // Count items
+            int itemCount = types.Length;
+            if (allowNull) itemCount++; // +1 for null option
+    
+            // Count namespace/category headers (each unique namespace gets a header)
+            int namespaceCount = types
+                .Select(t => t.Namespace)
+                .Where(ns => !string.IsNullOrEmpty(ns))
+                .Distinct()
+                .Count();
+    
+            // Calculate heights
+            searchAreaHeight = showSearch ? 30f : 0f; // Fixed space for search field + potential results
+            float topPadding = 4f;
+            float nullItemHeight = allowNull ? ItemHeight + 2 : 0f; // Null item + spacing
+            float separatorHeight = allowNull ? 4f : 0f; // Separator after null
+            float itemsHeight = itemCount * ItemHeight;
+            float namespacesHeight = namespaceCount * ItemHeight;
+            float groupSpacing = namespaceCount * 2f; // Small spacing between groups
+            float bottomPadding = 10f;
+    
+            float totalHeight = searchAreaHeight + topPadding + nullItemHeight + separatorHeight + 
+                                itemsHeight + namespacesHeight + groupSpacing + bottomPadding;
+    
+            return Mathf.Min(WindowMaxHeight, totalHeight);
+        }
+        
+        
+        private void InitializeStyles()
+        {
+            // Only initialize if not already done AND EditorStyles is ready
+            if (_headerStyle != null) return;
+            
+            try
+            {
+                _headerStyle = new GUIStyle(EditorStyles.boldLabel)
+                {
+                    fontSize = 11,
+                    padding = new RectOffset(6, 6, 2, 2)
+                };
+                
+                _itemStyle = new GUIStyle(EditorStyles.label)
+                {
+                    padding = new RectOffset(12, 6, 2, 2),
+                    margin = new RectOffset(0, 0, 0, 0)
+                };
+                
+                _itemStyleSelected = new GUIStyle(_itemStyle)
+                {
+                    normal = new GUIStyleState
+                    {
+                        background = CreateColorTexture(new Color(0.24f, 0.48f, 0.90f, 0.4f)),
+                        textColor = EditorStyles.label.normal.textColor
+                    }
+                };
+            }
+            catch
+            {
+                // If EditorStyles isn't ready yet, styles will be null
+                // and we'll use fallback rendering
+            }
+        }
+        
+        private void OnGUI()
+        {
+            // Initialize styles on first GUI call (when EditorStyles is ready)
+            if (_headerStyle == null)
+            {
+                InitializeStyles();
+            }
+            
+            // Safety check
+            if (_filteredTypes == null)
+            {
+                _filteredTypes = _allTypes ?? new TypeInfo[0];
+            }
+            
+            // Handle keyboard shortcuts
+            HandleKeyboardInput();
+            
+            // Draw with Unity's default background
+            DrawBackground();
+            
+            // Draw search field if enabled
+            if (_showSearch)
+            {
+                DrawSearchField();
+            }
+            
+            // Draw type list
+            DrawTypeList();
+        }
+        
+        private void DrawBackground()
+        {
+            Rect bgRect = new Rect(0, 0, position.width, position.height);
+            EditorGUI.DrawRect(bgRect, EditorGUIUtility.isProSkin 
+                ? new Color(0.22f, 0.22f, 0.22f) 
+                : new Color(0.76f, 0.76f, 0.76f));
+        }
+        
+        private void DrawSearchField()
+        {
+            Rect searchRect = new Rect(4, 4, position.width - 8, 18);
+            
+            GUI.SetNextControlName("SearchField");
+            
+            string newSearch = EditorGUI.TextField(searchRect, _searchQuery, EditorStyles.toolbarSearchField);
+            
+            if (newSearch != _searchQuery)
+            {
+                _searchQuery = newSearch;
+                UpdateFilteredTypes();
+                _selectedIndex = -1;
+            }
+            
+            // Auto-focus search field
+            if (_focusSearchField)
+            {
+                EditorGUI.FocusTextInControl("SearchField");
+                _focusSearchField = false;
+            }
+            
+            // Show result count
+            if (!string.IsNullOrEmpty(_searchQuery))
+            {
+                Rect countRect = new Rect(4, 24, position.width - 8, 14);
+                GUI.Label(countRect, $"{_filteredTypes.Length} of {_allTypes.Length} types", EditorStyles.miniLabel);
+            }
+        }
+        
+        private void DrawTypeList()
+        {
+            float yOffset = _showSearch ? (string.IsNullOrEmpty(_searchQuery) ? 26f : 40f) : 4f;
+            Rect scrollViewRect = new Rect(0, yOffset, position.width, position.height - yOffset);
+            
+            float contentHeight = CalculateContentHeight();
+            Rect contentRect = new Rect(0, 0, position.width - 20, contentHeight);
+            
+            _scrollPosition = GUI.BeginScrollView(scrollViewRect, _scrollPosition, contentRect, false, true);
+            
+            float currentY = 0;
+            int currentIndex = 0;
+            
+            // Draw null option
+            if (_allowNull)
+            {
+                bool isSelected = currentIndex == _selectedIndex;
+                if (DrawTypeItem(new Rect(0, currentY, contentRect.width, ItemHeight), 
+                    null, "<null>", "Clear the reference", isSelected, currentIndex))
+                {
+                    _onTypeSelected?.Invoke(null);
+                    Close();
+                }
+                currentY += ItemHeight + 2;
+                currentIndex++;
+                
+                // Separator
+                DrawSeparator(new Rect(4, currentY, contentRect.width - 8, 1));
+                currentY += 3;
+            }
+            
+            // Safety check
+            if (_filteredTypes == null || _filteredTypes.Length == 0)
+            {
+                GUI.EndScrollView();
+                return;
+            }
+            
+            // Group by namespace
+            var grouped = _filteredTypes
+                .GroupBy(t => string.IsNullOrEmpty(t.Namespace) ? "" : t.Namespace)
+                .OrderBy(g => g.Key);
+            
+            foreach (var group in grouped)
+            {
+                // Draw namespace header if not empty
+                if (!string.IsNullOrEmpty(group.Key))
+                {
+                    Rect headerRect = new Rect(0, currentY, contentRect.width, ItemHeight);
+                    
+                    // Use fallback style if _headerStyle is null
+                    GUIStyle headerStyle = _headerStyle ?? EditorStyles.boldLabel;
+                    GUI.Label(headerRect, group.Key, headerStyle);
+                    currentY += ItemHeight;
+                }
+                
+                // Draw types in group
+                foreach (TypeInfo typeInfo in group.OrderBy(t => t.DisplayName))
+                {
+                    bool isSelected = currentIndex == _selectedIndex;
+                    Rect itemRect = new Rect(0, currentY, contentRect.width, ItemHeight);
+                    
+                    if (DrawTypeItem(itemRect, typeInfo.Type, typeInfo.DisplayName, typeInfo.Tooltip, isSelected, currentIndex))
+                    {
+                        _onTypeSelected?.Invoke(typeInfo.Type);
+                        Close();
+                    }
+                    
+                    currentY += ItemHeight;
+                    currentIndex++;
+                }
+                
+                // Small spacing between groups
+                currentY += 2;
+            }
+            
+            GUI.EndScrollView();
+        }
+        
+        private bool DrawTypeItem(Rect rect, Type type, string displayName, string tooltip, bool isSelected, int index)
+        {
+            Event e = Event.current;
+            bool isHovered = rect.Contains(e.mousePosition);
+            
+            // Update selected index on hover
+            if (isHovered && e.type == EventType.MouseMove)
+            {
+                _selectedIndex = index;
+                Repaint();
+            }
+            
+            // Draw background for selection/hover
+            if (isSelected || isHovered)
+            {
+                Color bgColor = isSelected 
+                    ? (EditorGUIUtility.isProSkin ? new Color(0.24f, 0.48f, 0.90f, 0.8f) : new Color(0.24f, 0.48f, 0.90f, 0.4f))
+                    : (EditorGUIUtility.isProSkin ? new Color(1f, 1f, 1f, 0.1f) : new Color(0f, 0f, 0f, 0.1f));
+                
+                EditorGUI.DrawRect(rect, bgColor);
+            }
+            
+            // Draw type name
+            GUIContent content = new GUIContent(displayName, tooltip);
+            
+            // Use fallback style if _itemStyle is null
+            GUIStyle itemStyle = _itemStyle ?? EditorStyles.label;
+            GUI.Label(rect, content, itemStyle);
+            
+            // Draw tooltip on hover
+            if (isHovered && !string.IsNullOrEmpty(tooltip))
+            {
+                DrawTooltip(rect, tooltip);
+            }
+            
+            // Handle click
+            if (e.type == EventType.MouseDown && rect.Contains(e.mousePosition))
+            {
+                e.Use();
+                return true;
+            }
+            
+            return false;
+        }
+        
+        private void DrawTooltip(Rect itemRect, string tooltip)
+        {
+            GUIStyle tooltipStyle = new GUIStyle(GUI.skin.box)
+            {
+                wordWrap = true,
+                alignment = TextAnchor.MiddleLeft,
+                padding = new RectOffset(6, 6, 4, 4),
+                fontSize = 11
+            };
+            
+            GUIContent tooltipContent = new GUIContent(tooltip);
+            Vector2 tooltipSize = tooltipStyle.CalcSize(tooltipContent);
+            tooltipSize.x = Mathf.Min(tooltipSize.x, 250f);
+            tooltipSize.y = Mathf.Max(tooltipSize.y, 20f);
+            
+            // Position tooltip to the right, or left if not enough space
+            float tooltipX = itemRect.xMax + 8;
+            if (tooltipX + tooltipSize.x > position.width)
+            {
+                tooltipX = itemRect.x - tooltipSize.x - 8;
+            }
+            
+            Rect tooltipRect = new Rect(tooltipX, itemRect.y - 2, tooltipSize.x, tooltipSize.y);
+            
+            // Draw shadow
+            Rect shadowRect = tooltipRect;
+            shadowRect.x += 2;
+            shadowRect.y += 2;
+            EditorGUI.DrawRect(shadowRect, new Color(0, 0, 0, 0.3f));
+            
+            // Draw tooltip
+            GUI.Box(tooltipRect, tooltipContent, tooltipStyle);
+        }
+        
+        private void DrawSeparator(Rect rect)
+        {
+            EditorGUI.DrawRect(rect, new Color(0.6f, 0.6f, 0.6f));
+        }
+        
+        private float CalculateContentHeight()
+        {
+            // Safety check
+            if (_filteredTypes == null || _filteredTypes.Length == 0)
+                return ItemHeight * 2; // Minimum height
+    
+            int itemCount = _filteredTypes.Length;
+            if (_allowNull)
+            {
+                itemCount++; // +1 for null option
+            }
+    
+            // Add namespace headers
+            int namespaceCount = _filteredTypes
+                .Select(t => t.Namespace)
+                .Where(ns => !string.IsNullOrEmpty(ns))
+                .Distinct()
+                .Count();
+    
+            // Calculate total
+            float nullSeparatorHeight = _allowNull ? 5f : 0f;
+            float itemsHeight = itemCount * ItemHeight;
+            float namespacesHeight = namespaceCount * ItemHeight;
+            float groupSpacing = namespaceCount * 2f;
+            float padding = 10f;
+    
+            return nullSeparatorHeight + itemsHeight + namespacesHeight + groupSpacing + padding;
+        }
+        
+        private void HandleKeyboardInput()
+        {
+            Event e = Event.current;
+            if (e.type != EventType.KeyDown) return;
+            
+            switch (e.keyCode)
+            {
+                case KeyCode.Escape:
+                    Close();
+                    e.Use();
+                    break;
+                    
+                case KeyCode.Return:
+                case KeyCode.KeypadEnter:
+                    if (_selectedIndex >= 0 && _selectedIndex < GetTotalItemCount())
+                    {
+                        Type selectedType = GetTypeAtIndex(_selectedIndex);
+                        _onTypeSelected?.Invoke(selectedType);
+                        Close();
+                        e.Use();
+                    }
+                    break;
+                    
+                case KeyCode.UpArrow:
+                    _selectedIndex = Mathf.Max(0, _selectedIndex - 1);
+                    ScrollToSelected();
+                    e.Use();
+                    Repaint();
+                    break;
+                    
+                case KeyCode.DownArrow:
+                    _selectedIndex = Mathf.Min(GetTotalItemCount() - 1, _selectedIndex + 1);
+                    ScrollToSelected();
+                    e.Use();
+                    Repaint();
+                    break;
+            }
+        }
+        
+        private int GetTotalItemCount()
+        {
+            int count = _filteredTypes?.Length ?? 0;
+            if (_allowNull) count++;
+            return count;
+        }
+        
+        private Type GetTypeAtIndex(int index)
+        {
+            if (_allowNull)
+            {
+                if (index == 0) return null;
+                index--;
+            }
+            
+            if (_filteredTypes != null && index >= 0 && index < _filteredTypes.Length)
+                return _filteredTypes[index].Type;
+            
+            return null;
+        }
+        
+        private void ScrollToSelected()
+        {
+            if (_selectedIndex < 0) return;
+            
+            float itemY = _selectedIndex * ItemHeight;
+            float viewportHeight = position.height - (_showSearch ? 26f : 4f);
+            
+            if (itemY < _scrollPosition.y)
+            {
+                _scrollPosition.y = itemY;
+            }
+            else if (itemY + ItemHeight > _scrollPosition.y + viewportHeight)
+            {
+                _scrollPosition.y = itemY + ItemHeight - viewportHeight;
+            }
+        }
+        
+        private void UpdateFilteredTypes()
+        {
+            _filteredTypes = SerializableSelectorUtility.FilterBySearch(_allTypes ?? new TypeInfo[0], _searchQuery);
+        }
+        
+        private void OnLostFocus()
+        {
+            Close();
+        }
+        
+        private static Texture2D CreateColorTexture(Color color)
+        {
+            Texture2D tex = new Texture2D(1, 1);
+            tex.SetPixel(0, 0, color);
+            tex.Apply();
+            return tex;
+        }
+    }
+}
+#endif

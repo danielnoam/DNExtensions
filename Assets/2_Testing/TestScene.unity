@@ -1793,6 +1793,10 @@ MonoBehaviour:
   testInterface:
     underlyingValue: {fileID: 0}
   interactableObject: {fileID: 0}
+  serializableSelector:
+    rid: 4802877415295025281
+  serializableSelectorList:
+  - rid: 4802877415295025293
   testImpulse:
     impulseChannel: 1
     impulseType: 0
@@ -1804,6 +1808,19 @@ MonoBehaviour:
     dissipationRate: 0.25
     propagationSpeed: 343
   testImpulseSource: {fileID: 0}
+  references:
+    version: 2
+    RefIds:
+    - rid: 4802877415295025281
+      type: {class: Behavior5, ns: , asm: Assembly-CSharp-firstpass}
+      data:
+        VarFloat: 0
+        varBool: 0
+    - rid: 4802877415295025293
+      type: {class: Behavior4, ns: , asm: Assembly-CSharp-firstpass}
+      data:
+        VarFloat: 0
+        varBool: 0
 --- !u!114 &1526888421
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,5 +1,8 @@
 
+using System;
+using System.Collections.Generic;
 using DNExtensions;
+using DNExtensions.SerializableSelector;
 using DNExtensions.Button;
 using DNExtensions.SerializedInterface;
 using DNExtensions.VFXManager;
@@ -36,7 +39,11 @@ public class DNExtensionsExample : MonoBehaviour
     [Separator("Serialized Interface")]
     [SerializeField] private InterfaceReference<ITest> testInterface;
     [SerializeField, RequireInterface(typeof(ITest))] private MonoBehaviour interactableObject;
-
+    
+    [Separator("Serializable Selector")]
+    [SerializeReference, SerializableSelector] private TestBehavior serializableSelector;
+    [SerializeReference, SerializableSelector(SearchThreshold = 0)] private List<TestBehavior> serializableSelectorList;
+    
     [Separator("Cinemachine")]
     [SerializeField] private ImpulseSettings testImpulse;
     [SerializeField] private CinemachineImpulseSource testImpulseSource;
@@ -72,4 +79,43 @@ public class DNExtensionsExample : MonoBehaviour
 
 internal interface ITest
 {
+    
+}
+
+[Serializable]
+public abstract class TestBehavior
+{
+    public float VarFloat;
+}
+
+[Serializable]
+public class Behavior1 : TestBehavior
+{
+    public string varString;
+}
+
+[Serializable]
+public class Behavior2 : TestBehavior
+{
+    public bool varBool;
+}
+
+[Serializable]
+public class Behavior3 : TestBehavior
+{
+    public bool varBool;
+}
+
+[Serializable]
+public class Behavior4 : TestBehavior
+{
+    public bool varBool;
+}
+
+[Serializable]
+[SerializableSelectorTooltip("A tooltip")]
+[SerializableSelectorName("Direct Damage", "Damage")]
+public class Behavior5 : TestBehavior
+{
+    public bool varBool;
 }
