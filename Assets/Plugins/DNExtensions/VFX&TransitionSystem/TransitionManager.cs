@@ -9,7 +9,7 @@ namespace DNExtensions.Utilities.VFXManager
     public static class TransitionManager
     {
         private static Sequence _activeTransition;
-        private static SOVFEffectsSequence _pendingOutSequence;
+        private static EffectSequence _pendingOutSequence;
         private static bool _isInitialized;
         private static bool _playingASequence;
         
@@ -36,7 +36,7 @@ namespace DNExtensions.Utilities.VFXManager
             
             if (_pendingOutSequence && !_playingASequence)
             {
-                VFXManager.Instance.PlayVFX(_pendingOutSequence);
+                VFXManager.Instance.PlaySequence(_pendingOutSequence);
                 _pendingOutSequence = null;
             }
             else
@@ -50,7 +50,7 @@ namespace DNExtensions.Utilities.VFXManager
         /// <summary>
         /// Transitions to a new scene with optional visual effects sequences for in and out transitions.
         /// </summary>
-        public static void TransitionToScene(string sceneName, SOVFEffectsSequence vfxSequenceIn = null, SOVFEffectsSequence vfxSequenceOut = null)
+        public static void TransitionToScene(string sceneName, EffectSequence vfxSequenceIn = null, EffectSequence vfxSequenceOut = null)
         {
             if (!VFXManager.Instance)
             {
@@ -65,7 +65,7 @@ namespace DNExtensions.Utilities.VFXManager
             }
             
 
-            var transitionDuration = VFXManager.Instance.PlayVFX(vfxSequenceIn);
+            var transitionDuration = VFXManager.Instance.PlaySequence(vfxSequenceIn);
             _pendingOutSequence = vfxSequenceOut;
             _playingASequence = true;
             OnTransitionStarted?.Invoke();
@@ -83,7 +83,7 @@ namespace DNExtensions.Utilities.VFXManager
         /// <summary>
         /// Transitions to a new scene by index with optional visual effects sequences for in and out transitions.
         /// </summary>
-        public static void TransitionToScene(int sceneIndex, SOVFEffectsSequence vfxSequenceIn = null, SOVFEffectsSequence vfxSequenceOut = null)
+        public static void TransitionToScene(int sceneIndex, EffectSequence vfxSequenceIn = null, EffectSequence vfxSequenceOut = null)
         {
             if (!VFXManager.Instance)
             {
@@ -97,7 +97,7 @@ namespace DNExtensions.Utilities.VFXManager
                 VFXManager.Instance.ResetActiveEffects();
             }
             
-            var transitionDuration = VFXManager.Instance.PlayVFX(vfxSequenceIn);
+            var transitionDuration = VFXManager.Instance.PlaySequence(vfxSequenceIn);
             _pendingOutSequence = vfxSequenceOut;
             _playingASequence = true;
             OnTransitionStarted?.Invoke();
@@ -114,7 +114,7 @@ namespace DNExtensions.Utilities.VFXManager
         /// <summary>
         /// Transitions to a new scene using a SceneField with optional visual effects sequences for in and out transitions.
         /// </summary>
-        public static void TransitionToScene(SceneField scene, SOVFEffectsSequence vfxSequenceIn = null, SOVFEffectsSequence vfxSequenceOut = null)
+        public static void TransitionToScene(SceneField scene, EffectSequence vfxSequenceIn = null, EffectSequence vfxSequenceOut = null)
         {
             if (!VFXManager.Instance)
             {
@@ -128,7 +128,7 @@ namespace DNExtensions.Utilities.VFXManager
                 VFXManager.Instance.ResetActiveEffects();
             }
             
-            var transitionDuration = VFXManager.Instance.PlayVFX(vfxSequenceIn);
+            var transitionDuration = VFXManager.Instance.PlaySequence(vfxSequenceIn);
             _pendingOutSequence = vfxSequenceOut;
             _playingASequence = true;
             OnTransitionStarted?.Invoke();
@@ -146,7 +146,7 @@ namespace DNExtensions.Utilities.VFXManager
         /// <summary>
         /// Plays a transition then quits the application.
         /// </summary>
-        public static void TransitionQuit(SOVFEffectsSequence vfxSequenceIn = null) {
+        public static void TransitionQuit(EffectSequence vfxSequenceIn = null) {
     
             if (!VFXManager.Instance)
             {
@@ -160,7 +160,7 @@ namespace DNExtensions.Utilities.VFXManager
                 VFXManager.Instance.ResetActiveEffects();
             }
 
-            var transitionDuration = VFXManager.Instance.PlayVFX(vfxSequenceIn);
+            var transitionDuration = VFXManager.Instance.PlaySequence(vfxSequenceIn);
             _playingASequence = true;
             OnTransitionStarted?.Invoke();
 

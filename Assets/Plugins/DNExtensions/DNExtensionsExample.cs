@@ -6,9 +6,9 @@ using DNExtensions.Utilities;
 using DNExtensions.Utilities.SerializableSelector;
 using DNExtensions.Utilities.Button;
 using DNExtensions.Utilities.SerializedInterface;
-using DNExtensions.Utilities.VFXManager;
 using DNExtensions.Utilities.CustomFields;
 using DNExtensions.Utilities.RangedValues;
+using DNExtensions.Utilities.VFXManager;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -18,7 +18,6 @@ public class DNExtensionsExample : MonoBehaviour
 {
 
     [Header("DNExtensions")]
-    
     [InfoBox("This is an info box showing something")]
     [Separator("Attributes")]
     [ReadOnly] [SerializeField] private int testReadOnly;
@@ -68,14 +67,14 @@ public class DNExtensionsExample : MonoBehaviour
     [Button("Transitions", ButtonPlayMode.OnlyWhenPlaying)]
     public void TransitionQuit()
     {
-        TransitionManager.TransitionQuit(VFXManager.Instance.GetRandomEffect());
+        TransitionManager.TransitionQuit(VFXManager.Instance.GetRandomSequence());
     }
     
     [Button("Transitions",ButtonPlayMode.OnlyWhenPlaying)]
     public void TransitionReloadScene()
     {
         
-        TransitionManager.TransitionToScene(SceneManager.GetActiveScene().buildIndex, VFXManager.Instance.GetRandomEffect());
+        TransitionManager.TransitionToScene(SceneManager.GetActiveScene().buildIndex, VFXManager.Instance.GetRandomSequence());
     }
 }
 

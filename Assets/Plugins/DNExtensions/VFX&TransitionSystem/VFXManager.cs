@@ -27,10 +27,10 @@ namespace DNExtensions.Utilities.VFXManager
         [SerializeField] private Image iconImage;
         [SerializeField] private Image fullScreenImage;
         [SerializeField] private Canvas fullscreenCanvas;
-        [SerializeField] private SOVFEffectsSequence[] effectsSequences;
+        [SerializeField] private EffectSequence[] effectsSequences;
     
 
-        private SOVFEffectsSequence _currentSequence;
+        private EffectSequence _currentSequence;
         public LensDistortion LensDistortion { get; private set; }
         public ChromaticAberration ChromaticAberration { get; private set; }
         public MotionBlur MotionBlur { get; private set; }
@@ -73,8 +73,6 @@ namespace DNExtensions.Utilities.VFXManager
         public Image FullScreenImage => fullScreenImage;
         public Image IconImage => iconImage;
         
-        
-        public event Action<SOVFEffectsSequence> OnVFXSequenceStarted;
 
 
         private void OnValidate()
@@ -252,16 +250,15 @@ namespace DNExtensions.Utilities.VFXManager
         /// <summary>
         /// Plays a specific visual effects sequence.
         /// </summary>
-        /// <param name="vfxSequence">The visual effects sequence to play.</param>
-        /// <returns>The duration of the visual effects sequence.</returns>
-        public float PlayVFX(SOVFEffectsSequence vfxSequence)
+        /// <param name="sequence">The effects sequence to play.</param>
+        /// <returns>The duration of the effects sequence.</returns>
+        public float PlaySequence(EffectSequence sequence)
         {
-            if (!vfxSequence) return 0;
-            if (!vfxSequence.SequenceIsAdditive) ResetActiveEffects();
+            if (!sequence) return 0;
+            if (!sequence.SequenceIsAdditive) ResetActiveEffects();
 
-            _currentSequence = vfxSequence;
+            _currentSequence = sequence;
             var vfxDuration = _currentSequence.PlaySequence();
-            OnVFXSequenceStarted?.Invoke(vfxSequence);
 
             return vfxDuration;
 
@@ -271,8 +268,8 @@ namespace DNExtensions.Utilities.VFXManager
         /// <summary>
         /// Gets a random sequence from the sequence list.
         /// </summary>
-        /// <returns>A random SOVFEffectsSequence.</returns>
-        public SOVFEffectsSequence GetRandomEffect()
+        /// <returns>EffectSequence.</returns>
+        public EffectSequence GetRandomSequence()
         {
             var randomVFXIndex = Random.Range(0, effectsSequences.Length);
             var vfxSequence = effectsSequences[randomVFXIndex];
@@ -281,7 +278,7 @@ namespace DNExtensions.Utilities.VFXManager
         }
         
         /// <summary>
-        /// Resets all visual effects to their default state.
+        /// Resets all effects to their default state.
         /// </summary>
         [Button(ButtonPlayMode.OnlyWhenPlaying)]
         public void ResetActiveEffects() 
@@ -344,7 +341,7 @@ namespace DNExtensions.Utilities.VFXManager
                 PaniniProjection.cropToFit.value = DefaultPaniniProjectionCropToFit;
             }
 
-            // Reset DepthOfField
+            
             if (DepthOfField)
             {
                 DepthOfField.focusDistance.value = DefaultDepthOfFieldFocusDistance;
@@ -352,7 +349,6 @@ namespace DNExtensions.Utilities.VFXManager
                 DepthOfField.focalLength.value = DefaultDepthOfFieldFocalLength;
             }
             
-            // Reset Camera FOV
             if (mainCamera)
             {
                 mainCamera.fieldOfView = DefaultCameraFOV;

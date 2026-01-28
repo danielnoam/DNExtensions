@@ -80,7 +80,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1980, y: 1080}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -108,22 +108,6 @@ MonoBehaviour:
   effectsSequences:
   - {fileID: 11400000, guid: 2cf701e889338b54b9338039b720f844, type: 2}
   - {fileID: 11400000, guid: 661c164b035891047885f26f16312cc4, type: 2}
-  - {fileID: 11400000, guid: b695ba1e589406d4083e75e4c11d8c23, type: 2}
-  - {fileID: 11400000, guid: 03e5817f4bc74ca47b3e83b4db3728e4, type: 2}
-  - {fileID: 11400000, guid: ca346432e752af344a7fcc57d2ea097b, type: 2}
-  - {fileID: 11400000, guid: 5af91e5e6d8de4847a2be74741e02184, type: 2}
-  - {fileID: 11400000, guid: 2e35b66b446104d439c63e1ef37aea2c, type: 2}
-  - {fileID: 11400000, guid: 0cb2a92c033ef624fbe2cb88399d02df, type: 2}
-  - {fileID: 11400000, guid: ba20322501aa14a4687d9d150d54b4be, type: 2}
-  - {fileID: 11400000, guid: 7c02c86e0d540ba4db6b2cb801cf2d17, type: 2}
-  - {fileID: 11400000, guid: 4b5fd1323c54a3247b0dc8b3f7592481, type: 2}
-  - {fileID: 11400000, guid: 159aec6ef5903dd4fb58bd96a1b3bf4e, type: 2}
-  - {fileID: 11400000, guid: 64fe82cf4edea764684f25d104489cf4, type: 2}
-  - {fileID: 11400000, guid: fc2d8593e3160bb4aac654586741a6c9, type: 2}
-  - {fileID: 11400000, guid: d830480ecacb86844929496773842ca0, type: 2}
-  - {fileID: 11400000, guid: 7d13b0df3b8dca24aa62588f6d424369, type: 2}
-  - {fileID: 11400000, guid: 5c3037b3dac69da4aa47a102c2d1803f, type: 2}
-  - {fileID: 11400000, guid: dcebb77c647fc394087dc4b9d2920544, type: 2}
 --- !u!1 &7620994784586449836
 GameObject:
   m_ObjectHideFlags: 0
@@ -181,11 +165,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0}
+  m_Material: {fileID: 2100000, guid: fc91a4ca5ec9d584f87eda5c46c6acd4, type: 2}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
+  m_Maskable: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
