@@ -7,6 +7,7 @@ using DNExtensions.Utilities.SerializableSelector;
 using DNExtensions.Utilities.Button;
 using DNExtensions.Utilities.SerializedInterface;
 using DNExtensions.Utilities.CustomFields;
+using DNExtensions.Utilities.PrefabSelector;
 using DNExtensions.Utilities.RangedValues;
 using DNExtensions.Utilities.VFXManager;
 using Unity.Cinemachine;
@@ -42,8 +43,12 @@ public class DNExtensionsExample : MonoBehaviour
     [SerializeField, RequireInterface(typeof(ITest))] private MonoBehaviour interactableObject;
     
     [Separator("Serializable Selector")]
-    [SerializeReference, SerializableSelector] private TestBehavior serializableSelector;
+    [SerializeReference, SerializableSelector(SearchThreshold = -1)] private TestBehavior serializableSelector;
     [SerializeReference, SerializableSelector(SearchThreshold = 0)] private List<TestBehavior> serializableSelectorList;
+    
+    [Separator("Prefab Selector")]
+    [SerializeField, PrefabSelector("Assets/2_Testing")] private GameObject prefabSelector;
+    [SerializeField, PrefabSelector("Assets/2_Testing", LockDragDrop = true)] private GameObject prefabSelectorLocked;
     
     [Separator("Cinemachine")]
     [SerializeField] private ImpulseSettings testImpulse;

@@ -29,22 +29,21 @@ namespace DNExtensions.Utilities.SerializableSelector
         /// </summary>
         public int SearchThreshold { get; set; } = 5;
 
-        public SerializableSelectorAttribute(
-            string namespaceFilter = null, 
-            bool allowNull = true)
+        /// <summary>
+        /// Show category headers in the dropdown
+        /// </summary>
+        public bool ShowCategoryHeaders { get; set; } = true;
+
+        
+        
+        public SerializableSelectorAttribute(string namespaceFilter = null, bool allowNull = true)
         {
             NamespaceFilter = namespaceFilter;
             AllowNull = allowNull;
             RequireInterfaces = null;
         }
         
-        /// <summary>
-        /// Constructor with interface constraints
-        /// </summary>
-        public SerializableSelectorAttribute(
-            Type[] requireInterfaces,
-            string namespaceFilter = null, 
-            bool allowNull = true)
+        public SerializableSelectorAttribute(Type[] requireInterfaces, string namespaceFilter = null, bool allowNull = true)
         {
             NamespaceFilter = namespaceFilter;
             AllowNull = allowNull;

@@ -129,12 +129,22 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             if (string.IsNullOrEmpty(property.managedReferenceFullTypename))
                 return "<null>";
             
+            // Get the actual Type object
+            object value = property.managedReferenceValue;
+            if (value != null)
+            {
+                Type actualType = value.GetType();
+                // Return custom display name if it exists
+                return SerializableSelectorUtility.GetTypeDisplayName(actualType);
+            }
+            
+            // Fallback: parse the typename
             string[] parts = property.managedReferenceFullTypename.Split(' ');
             if (parts.Length == 2)
             {
                 string fullTypeName = parts[1];
                 string[] typeParts = fullTypeName.Split('.');
-                return typeParts[typeParts.Length - 1];
+                return typeParts[^1];
             }
             
             return property.managedReferenceFullTypename;
@@ -164,6 +174,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 types,
                 attr.AllowNull,
                 showSearch,
+                attr.ShowCategoryHeaders,
                 existingTypes,
                 selectedType => SetType(property, selectedType)
             );
@@ -236,7 +247,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 return existingTypes;
     
             // Navigate to parent array
-            string arrayPath = property.propertyPath.Substring(0, property.propertyPath.LastIndexOf(".Array.data["));
+            string arrayPath = property.propertyPath.Substring(0, property.propertyPath.LastIndexOf(".Array.data[", StringComparison.Ordinal));
             SerializedProperty arrayProperty = property.serializedObject.FindProperty(arrayPath);
     
             if (arrayProperty == null || !arrayProperty.isArray)
@@ -273,26 +284,32 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             {
                 if (part.Contains("["))
                 {
-                    string fieldName = part.Substring(0, part.IndexOf("["));
-                    FieldInfo field = parentType.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                    
-                    if (field == null) return null;
-                    
-                    Type fieldType = field.FieldType;
-                    if (fieldType.IsArray)
+                    string fieldName = part.Substring(0, part.IndexOf("[", StringComparison.Ordinal));
+                    if (parentType != null)
                     {
-                        parentType = fieldType.GetElementType();
-                    }
-                    else if (fieldType.IsGenericType)
-                    {
-                        parentType = fieldType.GetGenericArguments()[0];
+                        FieldInfo field = parentType.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    
+                        if (field == null) return null;
+                    
+                        Type fieldType = field.FieldType;
+                        if (fieldType.IsArray)
+                        {
+                            parentType = fieldType.GetElementType();
+                        }
+                        else if (fieldType.IsGenericType)
+                        {
+                            parentType = fieldType.GetGenericArguments()[0];
+                        }
                     }
                 }
                 else
                 {
-                    FieldInfo field = parentType.GetField(part, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (field == null) return null;
-                    parentType = field.FieldType;
+                    if (parentType != null)
+                    {
+                        FieldInfo field = parentType.GetField(part, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        if (field == null) return null;
+                        parentType = field.FieldType;
+                    }
                 }
             }
             

@@ -1794,11 +1794,13 @@ MonoBehaviour:
     underlyingValue: {fileID: 0}
   interactableObject: {fileID: 0}
   serializableSelector:
-    rid: 4802877415295025281
+    rid: 4802877459312672872
   serializableSelectorList:
-  - rid: 4802877415295025300
-  - rid: 4802877415295025301
-  - rid: 4802877415295025302
+  - rid: 4802877459312672866
+  - rid: 4802877459312672874
+  - rid: 4802877459312672873
+  prefabSelector: {fileID: 7400466940537088022, guid: 8d0551e5bcf576e439c70bf24f94b54a, type: 3}
+  prefabSelectorLocked: {fileID: 8842675776293222798, guid: 385e2d0b9f979d14ca7b058fc6b2988c, type: 3}
   testImpulse:
     impulseChannel: 1
     impulseType: 0
@@ -1813,23 +1815,23 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
-    - rid: 4802877415295025281
-      type: {class: Behavior5, ns: , asm: Assembly-CSharp-firstpass}
+    - rid: 4802877459312672866
+      type: {class: Behavior1, ns: , asm: Assembly-CSharp-firstpass}
+      data:
+        VarFloat: 0
+        varString: 
+    - rid: 4802877459312672872
+      type: {class: Behavior3, ns: , asm: Assembly-CSharp-firstpass}
       data:
         VarFloat: 0
         varBool: 0
-    - rid: 4802877415295025300
-      type: {class: Behavior5, ns: , asm: Assembly-CSharp-firstpass}
-      data:
-        VarFloat: 0
-        varBool: 0
-    - rid: 4802877415295025301
-      type: {class: Behavior4, ns: , asm: Assembly-CSharp-firstpass}
-      data:
-        VarFloat: 0
-        varBool: 0
-    - rid: 4802877415295025302
+    - rid: 4802877459312672873
       type: {class: Behavior2, ns: , asm: Assembly-CSharp-firstpass}
+      data:
+        VarFloat: 0
+        varBool: 0
+    - rid: 4802877459312672874
+      type: {class: Behavior3, ns: , asm: Assembly-CSharp-firstpass}
       data:
         VarFloat: 0
         varBool: 0

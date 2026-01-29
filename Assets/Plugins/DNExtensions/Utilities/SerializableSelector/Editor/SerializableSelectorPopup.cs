@@ -19,11 +19,10 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         private Action<Type> _onTypeSelected;
         private bool _allowNull;
         private bool _showSearch;
+        private bool _showNamespaceHeaders;
         private int _selectedIndex = -1;
         private bool _focusSearchField = true;
         
-        private const float WindowMinWidth = 180f;
-        private const float WindowMaxWidth = 400f;
         private const float WindowMaxHeight = 800f;
         private const float ItemHeight = 20f;
         
@@ -31,21 +30,22 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         private static GUIStyle _itemStyle;
         private static GUIStyle _itemStyleSelected;
         
-        public static void Show(Rect buttonRect, TypeInfo[] types, bool allowNull, bool showSearch, HashSet<Type> existingTypes, Action<Type> onTypeSelected)
+        public static void Show(Rect buttonRect, TypeInfo[] types, bool allowNull, bool showSearch, bool showNamespaceHeaders, HashSet<Type> existingTypes, Action<Type> onTypeSelected)
         {
             var window = CreateInstance<SerializableSelectorPopup>();
-            window._allTypes = types ?? new TypeInfo[0];
-            window._filteredTypes = types ?? new TypeInfo[0];
+            window._allTypes = types ?? Array.Empty<TypeInfo>();
+            window._filteredTypes = types ?? Array.Empty<TypeInfo>();
             window._existingTypes = existingTypes ?? new HashSet<Type>();
             window._allowNull = allowNull;
             window._showSearch = showSearch;
+            window._showNamespaceHeaders = showNamespaceHeaders;
             window._onTypeSelected = onTypeSelected;
     
-            // Calculate window width
-            float windowWidth = CalculateOptimalWidth(types ?? new TypeInfo[0]);
+            // Use dropdown button width
+            float windowWidth = buttonRect.width;
     
             // Calculate window height based on content
-            float windowHeight = CalculateInitialWindowHeight(types ?? new TypeInfo[0], allowNull, showSearch);
+            float windowHeight = CalculateInitialWindowHeight(types ?? Array.Empty<TypeInfo>(), allowNull, showSearch);
     
             Vector2 windowPosition = GUIUtility.GUIToScreenPoint(
                 new Vector2(buttonRect.x, buttonRect.y + buttonRect.height)
@@ -68,72 +68,37 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             window.ShowPopup();
             window.Focus();
         }
-        
-        private static float CalculateOptimalWidth(TypeInfo[] types)
-        {
-            if (types == null || types.Length == 0)
-                return WindowMinWidth;
-            
-            float maxWidth = WindowMinWidth;
-            
-            // Use a simple default style that's always available
-            GUIStyle labelStyle = GUI.skin != null ? GUI.skin.label : new GUIStyle();
-            
-            // Check type names
-            foreach (var typeInfo in types)
-            {
-                string displayText = "  " + typeInfo.DisplayName;
-                Vector2 size = labelStyle.CalcSize(new GUIContent(displayText));
-                maxWidth = Mathf.Max(maxWidth, size.x + 30);
-            }
-            
-            // Check namespace headers
-            var namespaces = types
-                .Select(t => t.Namespace)
-                .Where(ns => !string.IsNullOrEmpty(ns))
-                .Distinct();
-            
-            foreach (string ns in namespaces)
-            {
-                Vector2 size = labelStyle.CalcSize(new GUIContent(ns));
-                maxWidth = Mathf.Max(maxWidth, size.x + 30);
-            }
-            
-            return Mathf.Clamp(maxWidth, WindowMinWidth, WindowMaxWidth);
-        }
+
         
         private static float CalculateInitialWindowHeight(TypeInfo[] types, bool allowNull, bool showSearch)
         {
-            float searchAreaHeight = 0f;
+            float searchAreaHeight;
             if (types == null || types.Length == 0)
             {
                 searchAreaHeight = showSearch ? 30f : 0f; // Reserve space for search + possible results count
-                return Mathf.Min(WindowMaxHeight, searchAreaHeight + 50f); // Minimum height
+                return Mathf.Min(WindowMaxHeight, searchAreaHeight); 
             }
     
             // Count items
             int itemCount = types.Length;
             if (allowNull) itemCount++; // +1 for null option
     
-            // Count namespace/category headers (each unique namespace gets a header)
-            int namespaceCount = types
-                .Select(t => t.Namespace)
+            // Count category headers
+            int categoryCount = types
+                .Select(t => t.Category)
                 .Where(ns => !string.IsNullOrEmpty(ns))
                 .Distinct()
                 .Count();
     
             // Calculate heights
             searchAreaHeight = showSearch ? 30f : 0f; // Fixed space for search field + potential results
-            float topPadding = 4f;
             float nullItemHeight = allowNull ? ItemHeight + 2 : 0f; // Null item + spacing
             float separatorHeight = allowNull ? 4f : 0f; // Separator after null
             float itemsHeight = itemCount * ItemHeight;
-            float namespacesHeight = namespaceCount * ItemHeight;
-            float groupSpacing = namespaceCount * 2f; // Small spacing between groups
-            float bottomPadding = 10f;
+            float categoryHeight = categoryCount * ItemHeight;
+            float groupSpacing = categoryCount * 2f; // Small spacing between groups
     
-            float totalHeight = searchAreaHeight + topPadding + nullItemHeight + separatorHeight + 
-                                itemsHeight + namespacesHeight + groupSpacing + bottomPadding;
+            float totalHeight = searchAreaHeight + nullItemHeight + separatorHeight + itemsHeight + categoryHeight + groupSpacing;
     
             return Mathf.Min(WindowMaxHeight, totalHeight);
         }
@@ -169,7 +134,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             }
             catch
             {
-                // If EditorStyles isn't ready yet, styles will be null
+                // If EditorStyles isn't ready yet, styles will be null,
                 // and we'll use fallback rendering
             }
         }
@@ -183,10 +148,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             }
             
             // Safety check
-            if (_filteredTypes == null)
-            {
-                _filteredTypes = _allTypes ?? new TypeInfo[0];
-            }
+            _filteredTypes ??= _allTypes ?? Array.Empty<TypeInfo>();
             
             // Handle keyboard shortcuts
             HandleKeyboardInput();
@@ -206,7 +168,14 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         
         private void DrawBackground()
         {
-            Rect bgRect = new Rect(0, 0, position.width, position.height);
+            // Draw outline (larger rect, darker color)
+            Rect bgRectOutline = new Rect(0, 0, position.width, position.height);
+            EditorGUI.DrawRect(bgRectOutline, EditorGUIUtility.isProSkin 
+                ? new Color(0.1f, 0.1f, 0.1f) 
+                : new Color(0.5f, 0.5f, 0.5f));
+    
+            // Draw inner background (smaller rect, inset by 1 pixel on all sides)
+            Rect bgRect = new Rect(1, 1, position.width - 2, position.height - 2);
             EditorGUI.DrawRect(bgRect, EditorGUIUtility.isProSkin 
                 ? new Color(0.22f, 0.22f, 0.22f) 
                 : new Color(0.76f, 0.76f, 0.76f));
@@ -227,7 +196,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 _selectedIndex = -1;
             }
             
-            // Auto-focus search field
+            // Autofocus search field
             if (_focusSearchField)
             {
                 EditorGUI.FocusTextInControl("SearchField");
@@ -260,7 +229,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             {
                 bool isSelected = currentIndex == _selectedIndex;
                 if (DrawTypeItem(new Rect(0, currentY, contentRect.width, ItemHeight), 
-                    null, "<null>", "Clear the reference", isSelected, currentIndex, false))  // ← allowOnce = false for null
+                    null, "<null>", "Clear the reference", isSelected, currentIndex, false)) 
                 {
                     _onTypeSelected?.Invoke(null);
                     Close();
@@ -280,15 +249,15 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 return;
             }
             
-            // Group by namespace
+            // Group by Category
             var grouped = _filteredTypes
-                .GroupBy(t => string.IsNullOrEmpty(t.Namespace) ? "" : t.Namespace)
+                .GroupBy(t => string.IsNullOrEmpty(t.Category) ? "" : t.Category)
                 .OrderBy(g => g.Key);
             
             foreach (var group in grouped)
             {
-                // Draw namespace header if not empty
-                if (!string.IsNullOrEmpty(group.Key))
+                // Draw Category header if enabled and not empty
+                if (_showNamespaceHeaders && !string.IsNullOrEmpty(group.Key))
                 {
                     Rect headerRect = new Rect(0, currentY, contentRect.width, ItemHeight);
                     
@@ -354,11 +323,16 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             if (isDisabled)
             {
                 // Create disabled style
-                GUIStyle disabledStyle = new GUIStyle(itemStyle);
-                disabledStyle.normal.textColor = EditorGUIUtility.isProSkin 
-                    ? new Color(0.5f, 0.5f, 0.5f) 
-                    : new Color(0.6f, 0.6f, 0.6f);
-                
+                GUIStyle disabledStyle = new GUIStyle(itemStyle)
+                {
+                    normal =
+                    {
+                        textColor = EditorGUIUtility.isProSkin 
+                            ? new Color(0.5f, 0.5f, 0.5f) 
+                            : new Color(0.6f, 0.6f, 0.6f)
+                    }
+                };
+
                 GUI.Label(rect, content, disabledStyle);
                 
                 // Show "Already in list" tooltip
@@ -441,7 +415,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
     
             // Add namespace headers
             int namespaceCount = _filteredTypes
-                .Select(t => t.Namespace)
+                .Select(t => t.Category)
                 .Where(ns => !string.IsNullOrEmpty(ns))
                 .Distinct()
                 .Count();
@@ -535,7 +509,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         
         private void UpdateFilteredTypes()
         {
-            _filteredTypes = SerializableSelectorUtility.FilterBySearch(_allTypes ?? new TypeInfo[0], _searchQuery);
+            _filteredTypes = SerializableSelectorUtility.FilterBySearch(_allTypes ?? Array.Empty<TypeInfo>(), _searchQuery);
         }
         
         private void OnLostFocus()

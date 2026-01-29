@@ -12,7 +12,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         {
             public Type Type;
             public string DisplayName;
-            public string Namespace;
+            public string Category;
             public string Tooltip;
             public int SearchScore;
             public bool AllowOnce;
@@ -62,12 +62,12 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         }
 
         /// <summary>
-        /// Get custom category path from attribute or fallback to namespace
+        /// Get custom category path from attribute
         /// </summary>
         public static string GetTypeCategoryPath(Type type)
         {
             var attr = type.GetCustomAttribute<SerializableSelectorNameAttribute>();
-            return attr?.CategoryPath ?? type.Namespace ?? string.Empty;
+            return attr?.CategoryPath ?? string.Empty;
         }
         
         /// <summary>
@@ -102,8 +102,10 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         private static int CalculateSearchScore(TypeInfo typeInfo, string query)
         {
             string displayName = typeInfo.DisplayName.ToLower();
-            string categoryPath = typeInfo.Namespace.ToLower();
-            string fullPath = $"{categoryPath}/{displayName}".ToLower();
+            string categoryPath = typeInfo.Category.ToLower();
+            string fullPath = string.IsNullOrEmpty(categoryPath) 
+                ? displayName 
+                : $"{categoryPath}/{displayName}".ToLower();
     
             // Exact match on display name - highest score
             if (displayName == query)
@@ -117,8 +119,8 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             if (displayName.Contains(query))
                 return 250;
     
-            // Full path contains - low score
-            if (fullPath.Contains(query))
+            // Full path contains - low score (only if category exists)
+            if (!string.IsNullOrEmpty(categoryPath) && fullPath.Contains(query))
                 return 100;
     
             // Tooltip contains - lowest score
@@ -168,7 +170,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                         {
                             Type = type,
                             DisplayName = GetTypeDisplayName(type),   
-                            Namespace = categoryPath,                 
+                            Category = categoryPath,                 
                             Tooltip = GetTypeTooltip(type),
                             SearchScore = 0,
                             AllowOnce = IsAllowOnce(type)
