@@ -277,43 +277,61 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         private Type GetBaseType(SerializedProperty property)
         {
             Type parentType = property.serializedObject.targetObject.GetType();
-            
+    
             string[] pathParts = property.propertyPath.Replace(".Array.data[", "[").Split('.');
-            
+    
             foreach (string part in pathParts)
             {
                 if (part.Contains("["))
                 {
                     string fieldName = part.Substring(0, part.IndexOf("[", StringComparison.Ordinal));
-                    if (parentType != null)
+                    FieldInfo field = GetFieldIncludingBase(parentType, fieldName);
+            
+                    if (field == null)
                     {
-                        FieldInfo field = parentType.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                    
-                        if (field == null) return null;
-                    
-                        Type fieldType = field.FieldType;
-                        if (fieldType.IsArray)
-                        {
-                            parentType = fieldType.GetElementType();
-                        }
-                        else if (fieldType.IsGenericType)
-                        {
-                            parentType = fieldType.GetGenericArguments()[0];
-                        }
+                        Debug.LogError($"Could not find field '{fieldName}' in type '{parentType?.Name}' or its base classes");
+                        return null;
+                    }
+            
+                    Type fieldType = field.FieldType;
+                    if (fieldType.IsArray)
+                    {
+                        parentType = fieldType.GetElementType();
+                    }
+                    else if (fieldType.IsGenericType)
+                    {
+                        parentType = fieldType.GetGenericArguments()[0];
                     }
                 }
                 else
                 {
-                    if (parentType != null)
+                    FieldInfo field = GetFieldIncludingBase(parentType, part);
+                    if (field == null)
                     {
-                        FieldInfo field = parentType.GetField(part, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                        if (field == null) return null;
-                        parentType = field.FieldType;
+                        Debug.LogError($"Could not find field '{part}' in type '{parentType?.Name}' or its base classes");
+                        return null;
                     }
+                    parentType = field.FieldType;
                 }
             }
-            
+    
             return parentType;
+        }
+
+        private FieldInfo GetFieldIncludingBase(Type type, string fieldName)
+        {
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+    
+            FieldInfo field = null;
+            Type currentType = type;
+    
+            while (currentType != null && field == null)
+            {
+                field = currentType.GetField(fieldName, flags);
+                currentType = currentType.BaseType;
+            }
+    
+            return field;
         }
         
         private TypeInfo[] GetCachedTypes(Type baseType, SerializableSelectorAttribute attr)
