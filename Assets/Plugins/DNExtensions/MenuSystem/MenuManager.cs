@@ -117,6 +117,9 @@ namespace  DNExtenstions.MenuSystem
 
         public void ShowPreviousScreenAnimated() => ShowPreviousScreen(true, null);
         public void ShowPreviousScreenInstant() => ShowPreviousScreen(false, null);
+        
+        public void HideCurrentScreen(bool animated = true) => currentScreen?.Hide(animated);
+        
 
 
 
