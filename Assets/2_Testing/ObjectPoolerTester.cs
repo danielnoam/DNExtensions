@@ -11,6 +11,8 @@ public class ObjectPoolerTester : MonoBehaviour
     [SerializeField] private float bulletSpeed = 10f;
     [SerializeField] private GameObject bulletPrefab;
 
+    private bool _isShooting;
+    
     private void Start()
     {
         StartCoroutine(SpawnBulletsRoutine());
@@ -18,11 +20,15 @@ public class ObjectPoolerTester : MonoBehaviour
 
     private IEnumerator SpawnBulletsRoutine()
     {
-        while (true)
+        _isShooting = true;
+        
+        while (_isShooting)
         {
             SpawnBullet();
             yield return new WaitForSeconds(1f / rateOfFire);
         }
+        
+        yield break;
     }
 
     private void SpawnBullet()
@@ -33,6 +39,8 @@ public class ObjectPoolerTester : MonoBehaviour
 
     private IEnumerator BulletLifetimeRoutine(GameObject bullet)
     {
+        if (!bullet) yield break;
+        
         float elapsedTime = 0f;
         
         while (elapsedTime < bulletLifeTime)
@@ -41,7 +49,11 @@ public class ObjectPoolerTester : MonoBehaviour
             elapsedTime += Time.deltaTime;
             yield return null;
         }
-        
-        ObjectPooler.ReturnObjectToPool(bullet);
+
+        if (bullet)
+        {
+            ObjectPooler.ReturnObjectToPool(bullet);
+        }
+
     }
 }

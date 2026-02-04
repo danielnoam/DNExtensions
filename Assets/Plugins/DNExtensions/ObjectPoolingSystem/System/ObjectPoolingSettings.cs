@@ -74,18 +74,18 @@ namespace DNExtensions.Utilities.ObjectPooling
 
         public void AddPool(Pool pool)
         {
-            if (pools == null) pools = new List<Pool>();
+            pools ??= new List<Pool>();
             pools.Add(pool);
         }
 
         public void RemovePool(Pool pool)
         {
-            if (pools != null) pools.Remove(pool);
+            pools?.Remove(pool);
         }
 
         public void ClearPools()
         {
-            if (pools != null) pools.Clear();
+            pools?.Clear();
         }
     }
 }

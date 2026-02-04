@@ -90,10 +90,7 @@ namespace DNExtensions.Utilities.ObjectPooling
 
         private void DrawSettingsGUI()
         {
-            if (_serializedSettings == null)
-            {
-                _serializedSettings = new SerializedObject(_settings);
-            }
+            _serializedSettings ??= new SerializedObject(_settings);
 
             _serializedSettings.Update();
 

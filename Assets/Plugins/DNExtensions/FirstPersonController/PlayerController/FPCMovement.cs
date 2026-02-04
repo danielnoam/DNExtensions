@@ -95,6 +95,8 @@ public class FPCMovement : MonoBehaviour
 
     private void HandleMovement()
     {
+        if (!manager.CharacterController.enabled) return;
+        
         Vector3 cameraForward = manager.FPCCamera.GetMovementDirection();
         Vector3 cameraRight = Quaternion.Euler(0, 90, 0) * cameraForward;
         Vector3 moveDir = (cameraForward * _moveInput.y + cameraRight * _moveInput.x).normalized;
@@ -110,6 +112,7 @@ public class FPCMovement : MonoBehaviour
     
     private void HandleJump()
     {
+        if (!manager.CharacterController.enabled) return;
         
         if (_jumpBufferCounter > 0f)
         {
