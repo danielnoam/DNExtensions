@@ -1,9 +1,9 @@
-namespace DNExtensions.Utilities.Shapes
+namespace DNExtensions.Shapes
 {
     
 
 
-#if UNITY_EDITOR
+
     using UnityEditor;
     using UnityEditor.UI;
     using UnityEngine;
@@ -188,5 +188,5 @@ namespace DNExtensions.Utilities.Shapes
             }
         }
     }
-#endif
+
 }

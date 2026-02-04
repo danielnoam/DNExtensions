@@ -2,7 +2,7 @@ using System;
 using DNExtensions.Utilities.RangedValues;
 using UnityEngine;
 
-namespace DNExtensions.Utilities.VFXManager
+namespace DNExtensions.VFXManager
 {
 
     [Serializable]

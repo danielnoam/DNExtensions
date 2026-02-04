@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace DNExtensions.Utilities.ObjectPooling
+namespace DNExtensions.ObjectPooling
 {
     /// <summary>
     /// Singleton manager for multiple object pools with automatic scene management.

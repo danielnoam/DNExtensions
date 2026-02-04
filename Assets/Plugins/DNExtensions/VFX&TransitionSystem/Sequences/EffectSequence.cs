@@ -7,7 +7,7 @@ using UnityEngine;
 
 
 
-namespace DNExtensions.Utilities.VFXManager
+namespace DNExtensions.VFXManager
 {
     
     [CreateAssetMenu(fileName = "Sequence", menuName = "Scriptable Objects/Effect Sequence")]

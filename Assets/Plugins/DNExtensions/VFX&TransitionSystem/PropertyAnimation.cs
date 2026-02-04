@@ -2,7 +2,7 @@
 using PrimeTween;
 using UnityEngine;
 
-namespace DNExtensions.Utilities.VFXManager
+namespace DNExtensions.VFXManager
 {
     /// <summary>
     /// Encapsulates settings for animating a single property

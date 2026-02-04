@@ -16,33 +16,17 @@ MonoBehaviour:
   sequenceIsAdditive: 0
   resetEffectsOnComplete: 1
   effects:
-  - rid: 8175020232503984229
+  - rid: 4437625728757923921
   references:
     version: 2
     RefIds:
-    - rid: 8175020232503984229
-      type: {class: SetVignette, ns: DNExtensions.Utilities.VFXManager, asm: Assembly-CSharp-firstpass}
+    - rid: 4437625728757923921
+      type: {class: SetFullscreenColor, ns: DNExtensions.VFXManager, asm: Assembly-CSharp-firstpass}
       data:
         duration:
           minValue: 0
           maxValue: 1
-        intensity:
-          animate: 1
-          useDefault: 0
-          startValue: 0
-          endValue: 0.5
-          ease: 1
-        smoothness:
-          animate: 0
-          useDefault: 0
-          startValue: 0.2
-          endValue: 0.2
-          ease: 1
-        center:
-          animate: 0
-          useDefault: 0
-          startValue: {x: 0.5, y: 0.5}
-          endValue: {x: 0.5, y: 0.5}
-          ease: 1
-        useDefaultRoundness: 1
-        setRounded: 0
+        type: 0
+        startColor: {r: 0, g: 0, b: 0, a: 0}
+        endColor: {r: 0, g: 0, b: 0, a: 1}
+        ease: 1

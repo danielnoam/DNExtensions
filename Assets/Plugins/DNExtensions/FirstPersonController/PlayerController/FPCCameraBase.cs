@@ -72,7 +72,7 @@ public abstract class FPCCameraBase : MonoBehaviour
         if (!playerHead) return;
         
         float sensitivity = mouseLookSensitivity;
-        if (manager.FPCInput.IsCurrentDeviceGamepad)
+        if (manager.FPCInput.IsGamepad)
         {
             sensitivity = gamepadLookSensitivity * Time.deltaTime;
         }

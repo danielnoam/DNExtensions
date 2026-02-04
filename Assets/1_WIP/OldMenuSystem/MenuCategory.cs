@@ -4,7 +4,7 @@ using DNExtensions.Utilities;
 using PrimeTween;
 using UnityEngine.InputSystem;
 
-namespace  DNExtensions.Utilities.MenuSystemOld
+namespace  DNExtensions.MenuSystemOld
 {
     
     [DisallowMultipleComponent]

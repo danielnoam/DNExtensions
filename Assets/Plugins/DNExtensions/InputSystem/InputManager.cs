@@ -4,33 +4,45 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace DNExtensions.Utilities.InputSystem
+namespace DNExtensions.InputSystem
 {
+    public enum InputDeviceType
+    {
+        KeyboardMouse,
+        Gamepad,
+        Touch
+    }
+
     public class InputManager : MonoBehaviour
     {
         public static InputManager Instance { get; private set; }
-
+        
+        
+        [Header("Input")]
         [SerializeField] private PlayerInput playerInput;
-
-        [Header("Cursor Settings")]
         [SerializeField] private bool hideCursor = true;
         
-        
-        // Sprite assets has to be in /Resources/Sprite Assets/
-        [Header("Controls Sprite Assets")] 
+        [Header("Controls Sprite Assets")]
+        [Tooltip("Sprite assets has to be in /Resources/Sprite Assets/")]
         [SerializeField] private TMP_SpriteAsset keyboardMouseSpriteAsset;
+        [Tooltip("Sprite assets has to be in /Resources/Sprite Assets/")]
         [SerializeField] private TMP_SpriteAsset gamepadSpriteAsset;
 
 
+        public static InputDeviceType CurrentDevice { get; private set; }
+        public static bool IsMobile { get; private set; }
+        
+        public static bool IsGamepad => CurrentDevice == InputDeviceType.Gamepad;
+        public static bool IsKeyboardMouse => CurrentDevice == InputDeviceType.KeyboardMouse;
+        public static bool IsTouch => CurrentDevice == InputDeviceType.Touch;
+        public static event Action<PlayerInput> OnDeviceRegained;
+        public static event Action<PlayerInput> OnDeviceLost;
+        public static event Action<PlayerInput> OnControlsChanged;
 
-
-        public bool IsCurrentControlsGamepad { get; private set; }
-
+        
         public PlayerInput PlayerInput => playerInput;
 
-        public event Action<PlayerInput> OnDeviceRegainedEvent;
-        public event Action<PlayerInput> OnDeviceLostEvent;
-        public event Action<PlayerInput> OnControlsChangedEvent;
+
 
 
         private void OnValidate()
@@ -58,6 +70,9 @@ namespace DNExtensions.Utilities.InputSystem
                 Destroy(gameObject);
                 return;
             }
+            
+            IsMobile = Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer;
+            CurrentDevice = IsMobile ? InputDeviceType.Touch : InputDeviceType.KeyboardMouse;
 
             SetCursorVisibility(!hideCursor);
         }
@@ -66,18 +81,18 @@ namespace DNExtensions.Utilities.InputSystem
         {
             if (!playerInput) return;
 
-            playerInput.onDeviceRegained += OnDeviceRegained;
-            playerInput.onDeviceLost += OnDeviceLost;
-            playerInput.onControlsChanged += OnControlsChanged;
+            playerInput.onDeviceRegained += OnDeviceRegainedHandler;
+            playerInput.onDeviceLost += OnDeviceLostHandler;
+            playerInput.onControlsChanged += OnControlsChangedHandler;
         }
 
         private void OnDisable()
         {
             if (!playerInput) return;
 
-            playerInput.onDeviceRegained -= OnDeviceRegained;
-            playerInput.onDeviceLost -= OnDeviceLost;
-            playerInput.onControlsChanged -= OnControlsChanged;
+            playerInput.onDeviceRegained -= OnDeviceRegainedHandler;
+            playerInput.onDeviceLost -= OnDeviceLostHandler;
+            playerInput.onControlsChanged -= OnControlsChangedHandler;
         }
 
         private void OnDestroy()
@@ -88,29 +103,49 @@ namespace DNExtensions.Utilities.InputSystem
             }
         }
 
-        private void OnDeviceRegained(PlayerInput input)
+        private void OnDeviceRegainedHandler(PlayerInput input)
         {
-            UpdateActiveControlScheme(input);
-            OnDeviceRegainedEvent?.Invoke(input);
+            UpdateActiveDevice(input);
+            OnDeviceRegained?.Invoke(input);
         }
 
-        private void OnDeviceLost(PlayerInput input)
+        private void OnDeviceLostHandler(PlayerInput input)
         {
-            UpdateActiveControlScheme(input);
-            OnDeviceLostEvent?.Invoke(input);
+            UpdateActiveDevice(input);
+            OnDeviceLost?.Invoke(input);
         }
 
-        private void OnControlsChanged(PlayerInput input)
+        private void OnControlsChangedHandler(PlayerInput input)
         {
-            UpdateActiveControlScheme(input);
-            OnControlsChangedEvent?.Invoke(input);
+            UpdateActiveDevice(input);
+            OnControlsChanged?.Invoke(input);
         }
 
-        private void UpdateActiveControlScheme(PlayerInput input)
+        private void UpdateActiveDevice(PlayerInput input)
         {
-            IsCurrentControlsGamepad = input.currentControlScheme == "Gamepad";
+            if (IsMobile)
+            {
+                if (input.currentControlScheme == "Gamepad")
+                {
+                    CurrentDevice = InputDeviceType.Gamepad;
+                }
+                else
+                {
+                    CurrentDevice = InputDeviceType.Touch;
+                }
+            }
+            else
+            {
+                if (input.currentControlScheme == "Gamepad")
+                {
+                    CurrentDevice = InputDeviceType.Gamepad;
+                }
+                else
+                {
+                    CurrentDevice = InputDeviceType.KeyboardMouse;
+                }
+            }
         }
-
 
         /// <summary>
         /// Sets the cursor visibility and lock state.
@@ -148,36 +183,18 @@ namespace DNExtensions.Utilities.InputSystem
             }
         }
 
-        public static string ReplaceActionBindingsWithSprites(string text)
-        {
-            if (!Instance) return text;
-
-            TMP_SpriteAsset spriteAsset = Instance.IsCurrentControlsGamepad
-                ? Instance.gamepadSpriteAsset
-                : Instance.keyboardMouseSpriteAsset;
-
-            return InputManagerBindingFormatter.ReplaceActionBindings(text, true, Instance.playerInput, spriteAsset);
-        }
-
-        public static string ReplaceActionBindingsWithText(string text)
-        {
-            return InputManagerBindingFormatter.ReplaceActionBindings(text, false, Instance.playerInput);
-        }
-        
-        
-            
         /// <summary>
         /// Get binding for a specific InputAction
         /// </summary>
         public static string GetActionBinding(InputAction action, bool asSprite = true)
         {
             if (!Instance?.playerInput || action == null) return action?.name ?? "Unknown";
-    
-            TMP_SpriteAsset spriteAsset = asSprite ? Instance.IsCurrentControlsGamepad 
-                ? Instance.gamepadSpriteAsset 
+
+            TMP_SpriteAsset spriteAsset = asSprite ? IsGamepad
+                ? Instance.gamepadSpriteAsset
                 : Instance.keyboardMouseSpriteAsset : null;
-    
-            return InputManagerBindingFormatter.GetActionBinding(action, asSprite, Instance.playerInput, spriteAsset);
+
+            return InputBindingFormatter.GetActionBinding(action, asSprite, Instance.playerInput, spriteAsset);
         }
 
         /// <summary>
@@ -186,15 +203,14 @@ namespace DNExtensions.Utilities.InputSystem
         public static string GetActionBindings(InputAction[] actions, string separator = " | ", bool asSprites = true)
         {
             if (actions == null || actions.Length == 0) return "";
-    
+
             string[] bindings = new string[actions.Length];
             for (int i = 0; i < actions.Length; i++)
             {
                 bindings[i] = GetActionBinding(actions[i], asSprites);
             }
-    
+
             return string.Join(separator, bindings);
         }
-
     }
 }

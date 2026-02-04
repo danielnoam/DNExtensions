@@ -9,7 +9,7 @@ using DNExtensions.Utilities.SerializedInterface;
 using DNExtensions.Utilities.CustomFields;
 using DNExtensions.Utilities.PrefabSelector;
 using DNExtensions.Utilities.RangedValues;
-using DNExtensions.Utilities.VFXManager;
+using DNExtensions.VFXManager;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.SceneManagement;

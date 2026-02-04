@@ -1,7 +1,7 @@
 
 
 
-namespace DNExtensions.Utilities.MobileHeptics
+namespace DNExtensions.MobileHeptics
 {
     using UnityEngine;
     

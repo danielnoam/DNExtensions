@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
-namespace DNExtensions.Utilities.ObjectPooling
+namespace DNExtensions.ObjectPooling
 {
     /// <summary>
     /// High-performance object pool for managing GameObject instances with lifecycle callbacks.

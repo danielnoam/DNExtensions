@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-namespace DNExtensions.Utilities.GridSystem
+namespace DNExtensions.GridSystem
 {
     public enum GridOrientation
     {

@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using DNExtensions.Utilities;
-using DNExtensions.Utilities.ControllerRumbleSystem;
+using DNExtensions.ControllerRumbleSystem;
 
 
 [DisallowMultipleComponent]

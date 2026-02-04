@@ -3,7 +3,7 @@ using PrimeTween;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-namespace DNExtensions.Utilities.VFXManager
+namespace DNExtensions.VFXManager
 {
     [Serializable]
     public class SetVignette : EffectBase

@@ -7,9 +7,10 @@ using System.Linq;
 using UnityEngine.InputSystem;
 using DNExtensions.Utilities;
 using DNExtensions.Utilities.Button;
+using DNExtensions.Utilities.MenuSystemOld;
 using UnityEngine.Events;
 
-namespace  DNExtensions.Utilities.MenuSystemOld
+namespace  DNExtensions.MenuSystemOld
 {
     
     [DisallowMultipleComponent]

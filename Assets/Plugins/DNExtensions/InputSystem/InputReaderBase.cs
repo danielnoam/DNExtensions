@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace DNExtensions.Utilities.InputSystem
+namespace DNExtensions.InputSystem
 {
     
     /// <summary>
@@ -12,11 +12,14 @@ namespace DNExtensions.Utilities.InputSystem
     public class InputReaderBase : MonoBehaviour
     {
         [SerializeField] protected InputManager inputManager;
-    
-    
-        public bool IsCurrentDeviceGamepad => inputManager?.IsCurrentControlsGamepad ?? false;
-        protected PlayerInput PlayerInput => inputManager?.PlayerInput;
-        
+
+
+        public bool IsGamepad => InputManager.IsGamepad;
+        public bool IsKeyboardMouse => InputManager.IsKeyboardMouse;
+        public bool IsTouch => InputManager.IsTouch;
+        public bool IsMobile => InputManager.IsMobile;
+        public InputDeviceType CurrentDevice => InputManager.CurrentDevice;
+        protected PlayerInput PlayerInput => inputManager?.PlayerInput ?? InputManager.Instance?.PlayerInput;
         
 
         

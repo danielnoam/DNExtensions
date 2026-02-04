@@ -1,7 +1,5 @@
 using System.Collections;
-using System.Collections.Generic;
-using DNExtensions.Utilities.Button;
-using DNExtensions.Utilities.ObjectPooling;
+using DNExtensions.ObjectPooling;
 using UnityEngine;
 
 public class ObjectPoolerTester : MonoBehaviour
@@ -45,6 +43,8 @@ public class ObjectPoolerTester : MonoBehaviour
         
         while (elapsedTime < bulletLifeTime)
         {
+            if (!bullet) yield break;
+            
             bullet.transform.position += bullet.transform.forward * (bulletSpeed * Time.deltaTime);
             elapsedTime += Time.deltaTime;
             yield return null;

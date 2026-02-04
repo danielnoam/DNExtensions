@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions.Utilities.TubeRenderer
+namespace DNExtensions.TubeRenderer
 {
     [CustomEditor(typeof(TubeRenderer))]
     public class TubeRendererEditor : UnityEditor.Editor

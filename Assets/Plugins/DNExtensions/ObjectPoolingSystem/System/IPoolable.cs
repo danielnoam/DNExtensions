@@ -1,4 +1,4 @@
-namespace DNExtensions.Utilities.ObjectPooling
+namespace DNExtensions.ObjectPooling
 {
     /// <summary>
     /// Interface for objects that need lifecycle callbacks when used with ObjectPool.

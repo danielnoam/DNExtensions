@@ -1,6 +1,6 @@
 ﻿using System;
+using DNExtensions.ControllerRumbleSystem;
 using DNExtensions.Utilities;
-using DNExtensions.Utilities.ControllerRumbleSystem;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;

@@ -1,5 +1,5 @@
 ﻿using System;
-using DNExtensions.Utilities.InputSystem;
+using DNExtensions.InputSystem;
 using UnityEngine;
 using UnityEngine.InputSystem;
 

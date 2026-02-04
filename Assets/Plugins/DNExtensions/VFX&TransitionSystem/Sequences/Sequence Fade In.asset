@@ -16,57 +16,17 @@ MonoBehaviour:
   sequenceIsAdditive: 0
   resetEffectsOnComplete: 1
   effects:
-  - rid: 8175020232503984230
+  - rid: 4437625728757923920
   references:
     version: 2
     RefIds:
-    - rid: 8175020232503984230
-      type: {class: SetFullscreenShaderTransition, ns: DNExtensions.Utilities.VFXManager, asm: Assembly-CSharp-firstpass}
+    - rid: 4437625728757923920
+      type: {class: SetFullscreenColor, ns: DNExtensions.VFXManager, asm: Assembly-CSharp-firstpass}
       data:
         duration:
           minValue: 0
           maxValue: 1
-        transitionMaterial: {fileID: 0}
-        maskShape: 1
-        customMaskTexture: {fileID: 0}
-        sprite: {fileID: 21300000, guid: 84f6b48adf390874da0f6b406d825490, type: 3}
-        color:
-          animate: 1
-          useDefault: 0
-          startValue: {r: 0, g: 0, b: 0, a: 1}
-          endValue: {r: 0, g: 0, b: 0, a: 1}
-          ease: 1
-        tileCount:
-          animate: 0
-          useDefault: 0
-          startValue: {x: 1, y: 1}
-          endValue: {x: 1, y: 1}
-          ease: 1
-        offset:
-          animate: 0
-          useDefault: 0
-          startValue: {x: 0, y: 0}
-          endValue: {x: 0, y: 0}
-          ease: 1
-        rotation:
-          animate: 0
-          useDefault: 0
-          startValue: 0
-          endValue: 0
-          ease: 1
-        progress:
-          animate: 1
-          useDefault: 0
-          startValue: 0
-          endValue: 1
-          ease: 1
-        expansion:
-          animate: 0
-          useDefault: 0
-          startValue: 1
-          endValue: 1
-          ease: 1
-        edgeFeather: 0.215
-        scrollSpeed: {x: 1, y: 1}
-        noiseScale: 10
-        noiseStrength: 0
+        type: 0
+        startColor: {r: 0, g: 0, b: 0, a: 1}
+        endColor: {r: 0, g: 0, b: 0, a: 0}
+        ease: 1

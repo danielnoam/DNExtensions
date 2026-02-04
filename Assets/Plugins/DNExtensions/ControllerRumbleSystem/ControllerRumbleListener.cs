@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.DualShock;
 
 
-namespace DNExtensions.Utilities.ControllerRumbleSystem
+namespace DNExtensions.ControllerRumbleSystem
 {
     public class ControllerRumbleListener : MonoBehaviour, IDualShockHaptics
     {

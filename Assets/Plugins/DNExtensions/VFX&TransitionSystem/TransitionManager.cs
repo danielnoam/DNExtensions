@@ -4,7 +4,7 @@ using PrimeTween;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace DNExtensions.Utilities.VFXManager
+namespace DNExtensions.VFXManager
 {
     public static class TransitionManager
     {

@@ -1,65 +1,69 @@
 using System.Collections;
-using DNExtensions.Utilities.ObjectPooling;
 using UnityEngine;
 
-public class PoolableParticleSystem : MonoBehaviour, IPoolable
+namespace DNExtensions.ObjectPooling
 {
-    public ParticleSystem particle;
+    
 
-    
-    public void Play()
+    public class PoolableParticleSystem : MonoBehaviour, IPoolable
     {
-        if (!particle) return;
-        
-        particle.Play();
-        
-        float duration = particle.main.duration + particle.main.startLifetime.constantMax;
-        StartCoroutine(ReturnAfter(duration));
-    }
-    
-    public void Play(Vector3 position)
-    {
-        if (!particle) return;
-        
-        transform.position = position;
-        particle.Play();
-        
-        float duration = particle.main.duration + particle.main.startLifetime.constantMax;
-        StartCoroutine(ReturnAfter(duration));
-    }
-    
-    private IEnumerator DestroyAfter(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        Destroy(gameObject);
-    }
-    
-    private IEnumerator ReturnAfter(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        ObjectPooler.ReturnObjectToPool(gameObject);
-    }
+        public ParticleSystem particle;
 
-    public void OnPoolGet()
-    {
-        
-    }
 
-    public void OnPoolReturn()
-    {
-        if (particle)
+        public void Play()
         {
-            particle.Stop(true);
-            particle.Clear(true);
+            if (!particle) return;
+
+            particle.Play();
+
+            float duration = particle.main.duration + particle.main.startLifetime.constantMax;
+            StartCoroutine(ReturnAfter(duration));
         }
-    }
 
-    public void OnPoolRecycle()
-    {
-        if (particle)
+        public void Play(Vector3 position)
         {
-            particle.Stop(true);
-            particle.Clear(true);
+            if (!particle) return;
+
+            transform.position = position;
+            particle.Play();
+
+            float duration = particle.main.duration + particle.main.startLifetime.constantMax;
+            StartCoroutine(ReturnAfter(duration));
+        }
+
+        private IEnumerator DestroyAfter(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            Destroy(gameObject);
+        }
+
+        private IEnumerator ReturnAfter(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            ObjectPooler.ReturnObjectToPool(gameObject);
+        }
+
+        public void OnPoolGet()
+        {
+
+        }
+
+        public void OnPoolReturn()
+        {
+            if (particle)
+            {
+                particle.Stop(true);
+                particle.Clear(true);
+            }
+        }
+
+        public void OnPoolRecycle()
+        {
+            if (particle)
+            {
+                particle.Stop(true);
+                particle.Clear(true);
+            }
         }
     }
 }

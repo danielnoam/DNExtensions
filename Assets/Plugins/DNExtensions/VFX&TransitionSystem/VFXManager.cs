@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
 
-namespace DNExtensions.Utilities.VFXManager
+namespace DNExtensions.VFXManager
 {
     [DisallowMultipleComponent]
     public class VFXManager : MonoBehaviour

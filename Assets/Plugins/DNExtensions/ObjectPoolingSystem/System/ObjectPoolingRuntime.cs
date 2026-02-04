@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DNExtensions.Utilities.ObjectPooling
+namespace DNExtensions.ObjectPooling
 {
     public static class ObjectPoolingRuntime
     {

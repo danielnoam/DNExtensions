@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace DNExtensions.Utilities.Rewind
+namespace DNExtensions.Rewind
 {
     
     
