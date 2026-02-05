@@ -21,6 +21,8 @@ namespace DNExtensions.ObjectPooling
         private bool _isFirstScene;
         private Transform _dontDestroyOnLoadParent;
         private Transform _destroyOnLoadParent;
+        
+        public IReadOnlyList<Pool> Pools => _pools;
 
         /// <summary>
         /// Initializes the ObjectPooler with settings from the settings asset
@@ -97,7 +99,6 @@ namespace DNExtensions.ObjectPooling
         {
             if (!Instance) return;
 
-            // Let awake run if it's the first time the game is loaded
             if (Instance._isFirstScene)
             {
                 Instance._isFirstScene = false;
@@ -124,9 +125,20 @@ namespace DNExtensions.ObjectPooling
 
             foreach (var pool in poolsToReinitialize)
             {
-                var poolHolder = new GameObject() { name = $"{pool.poolName} Holder" };
-                poolHolder.transform.SetParent(Instance._destroyOnLoadParent);
-                pool.SetUpPool(poolHolder.transform);
+                Transform parent;
+
+                if (pool.usePoolHolder)
+                {
+                    var poolHolder = new GameObject() { name = $"{pool.poolName} Holder" };
+                    poolHolder.transform.SetParent(Instance._destroyOnLoadParent);
+                    parent = poolHolder.transform;
+                }
+                else
+                {
+                    parent = Instance._destroyOnLoadParent;
+                }
+
+                pool.SetUpPool(parent);
             }
         }
 
@@ -148,13 +160,24 @@ namespace DNExtensions.ObjectPooling
 
             foreach (var pool in _pools)
             {
-                var poolHolder = new GameObject() { name = $"{pool.poolName} Holder" };
+                Transform parent;
 
-                poolHolder.transform.SetParent(pool.dontDestroyOnLoad
-                    ? _dontDestroyOnLoadParent
-                    : _destroyOnLoadParent);
+                if (pool.usePoolHolder)
+                {
+                    var poolHolder = new GameObject() { name = $"{pool.poolName} Holder" };
+                    poolHolder.transform.SetParent(pool.dontDestroyOnLoad
+                        ? _dontDestroyOnLoadParent
+                        : _destroyOnLoadParent);
+                    parent = poolHolder.transform;
+                }
+                else
+                {
+                    parent = pool.dontDestroyOnLoad
+                        ? _dontDestroyOnLoadParent
+                        : _destroyOnLoadParent;
+                }
 
-                pool.SetUpPool(poolHolder.transform);
+                pool.SetUpPool(parent);
             }
         }
 
@@ -220,6 +243,28 @@ namespace DNExtensions.ObjectPooling
     
             Destroy(obj);
         }
+        
+        /// <summary>
+        /// Gets a typed component from the appropriate pool.
+        /// Allows passing a MonoBehaviour prefab reference directly.
+        /// </summary>
+        public static T GetObjectFromPool<T>(T prefab, Vector3 position = default, Quaternion rotation = default) where T : Component
+        {
+            GameObject obj = GetObjectFromPool(prefab.gameObject, position, rotation);
+            if (obj && obj.TryGetComponent(out T component))
+            {
+                return component;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Returns a component's GameObject to its appropriate pool.
+        /// </summary>
+        public static void ReturnObjectToPool<T>(T obj) where T : Component
+        {
+            if (obj) ReturnObjectToPool(obj.gameObject);
+        }
 
         public void AddPool(Pool pool)
         {
@@ -244,9 +289,16 @@ namespace DNExtensions.ObjectPooling
                     }
                 }
 
-                var poolHolder = new GameObject() { name = $"{pool.poolName} Holder" };
-                poolHolder.transform.SetParent(parent);
-                pool.SetUpPool(poolHolder.transform);
+                if (pool.usePoolHolder)
+                {
+                    var poolHolder = new GameObject() { name = $"{pool.poolName} Holder" };
+                    poolHolder.transform.SetParent(parent);
+                    pool.SetUpPool(poolHolder.transform);
+                }
+                else
+                {
+                    pool.SetUpPool(parent);
+                }
             }
         }
     }

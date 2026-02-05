@@ -7,7 +7,7 @@ namespace DNExtensions.Utilities.CustomFields.Editor
     public class OptionalFieldDrawer : PropertyDrawer
     {
         private const float IconWidth = 20f;
-        private const float Spacing = 2f;
+        private const float Spacing = 3f;
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -22,10 +22,9 @@ namespace DNExtensions.Utilities.CustomFields.Editor
 
             EditorGUI.BeginProperty(position, GUIContent.none, property);
 
-            var labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth - IconWidth, position.height);
-            var toggleRect = new Rect(position.x + EditorGUIUtility.labelWidth - IconWidth, position.y, IconWidth, position.height);
-            var valueRect = new Rect(position.x + EditorGUIUtility.labelWidth + Spacing, position.y, 
-                position.width - EditorGUIUtility.labelWidth - Spacing, position.height);
+            var labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, position.height);
+            var toggleRect = new Rect(position.x + EditorGUIUtility.labelWidth, position.y, IconWidth, position.height);
+            var valueRect = new Rect(position.x + EditorGUIUtility.labelWidth + IconWidth + Spacing, position.y, position.width - EditorGUIUtility.labelWidth - IconWidth - Spacing, position.height);
 
             EditorGUI.LabelField(labelRect, label);
             isSetProp.boolValue = EditorGUI.Toggle(toggleRect, isSetProp.boolValue);

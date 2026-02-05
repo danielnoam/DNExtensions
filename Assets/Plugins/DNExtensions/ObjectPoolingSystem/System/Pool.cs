@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DNExtensions.Utilities;
 using DNExtensions.Utilities.CustomFields;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -20,7 +21,9 @@ namespace DNExtensions.ObjectPooling
         [Min(1)] public int maxPoolSize = 50;
         public GameObject prefab;
         [Tooltip("Adds the pool to don't destroy list")]
-        public bool dontDestroyOnLoad = true;
+        public bool dontDestroyOnLoad;
+        [Tooltip("Create a parent holder GameObject to organize pooled objects. If false, objects parent directly to the pool category root")]
+        [DisableIf("dontDestroyOnLoad")] public bool usePoolHolder = true;
         [Tooltip("If max pool size reached and there are no objects in inactive pool, recycle the last active object (this is not recommended, objects are notified that they have been recycled but it is not performant")]
         public bool recycleActiveObjects;
 
@@ -28,15 +31,10 @@ namespace DNExtensions.ObjectPooling
         [Tooltip("Pre populate the pool")]
         public bool preWarmPool;
         [Tooltip("If pre warm pool, how many objects to pre warm")]
-        public int preWarmPoolSize = 5;
+        [EnableIf("preWarmPool")] public int preWarmPoolSize = 5;
         [Tooltip("If there are scenes, only pre warm pool if its in the selected scenes")]
-        public SceneField[] scenesToPreWarm = Array.Empty<SceneField>();
-
-        [Header("Debug")]
-        [SerializeField] private int poolSize;
-        [SerializeField] private int activePoolCount;
-        [SerializeField] private int inactivePoolCount;
-
+        [EnableIf("preWarmPool")] public SceneField[] scenesToPreWarm = Array.Empty<SceneField>();
+        
         private readonly List<GameObject> _activePool = new List<GameObject>();
         private readonly Queue<GameObject> _inactivePool = new Queue<GameObject>();
         private readonly HashSet<GameObject> _activePoolSet = new HashSet<GameObject>();
@@ -45,6 +43,10 @@ namespace DNExtensions.ObjectPooling
 
         private Transform _poolHolder;
         private bool _isInitialized;
+        
+        public int PoolSize => _activePool.Count + _inactivePool.Count;
+        public int ActiveCount => _activePool.Count;
+        public int InactiveCount => _inactivePool.Count;
 
         /// <summary>
         /// Gets an object from the pool or creates a new one if needed.
@@ -77,8 +79,7 @@ namespace DNExtensions.ObjectPooling
                 {
                     pooledObject.OnPoolGet();
                 }
-
-                UpdateDebugFields();
+                
                 return obj;
             }
             // Create a new object if under max pool size
@@ -97,8 +98,7 @@ namespace DNExtensions.ObjectPooling
                 {
                     pooledObject.OnPoolGet();
                 }
-
-                UpdateDebugFields();
+                
                 return obj;
             }
             // Recycle the oldest active object if allowed
@@ -120,7 +120,6 @@ namespace DNExtensions.ObjectPooling
                 obj.SetActive(true);
 
                 pooledObject?.OnPoolGet();
-                UpdateDebugFields();
                 return obj;
             }
 
@@ -166,7 +165,6 @@ namespace DNExtensions.ObjectPooling
             finally
             {
                 _objectsBeingReturned.Remove(obj);
-                UpdateDebugFields();
             }
         }
 
@@ -197,7 +195,6 @@ namespace DNExtensions.ObjectPooling
             _poolHolder = poolHolder;
             if (preWarmPool) WarmPool();
             _isInitialized = true;
-            UpdateDebugFields();
         }
 
         /// <summary>
@@ -222,9 +219,8 @@ namespace DNExtensions.ObjectPooling
             _pooledObjects.Clear();
             _inactivePool.Clear();
 
-            if (_poolHolder) Object.Destroy(_poolHolder.gameObject);
+            if (usePoolHolder && _poolHolder) Object.Destroy(_poolHolder.gameObject);
             _isInitialized = false;
-            UpdateDebugFields();
         }
 
         /// <summary>
@@ -234,13 +230,7 @@ namespace DNExtensions.ObjectPooling
         {
             preWarmPoolSize = !preWarmPool ? 0 : Mathf.Clamp(preWarmPoolSize, 1, maxPoolSize);
         }
-
-        private void UpdateDebugFields()
-        {
-            activePoolCount = _activePool.Count;
-            inactivePoolCount = _inactivePool.Count;
-            poolSize = activePoolCount + inactivePoolCount;
-        }
+        
 
         /// <summary>
         /// Pre-instantiates objects to avoid runtime allocation spikes.
@@ -270,9 +260,7 @@ namespace DNExtensions.ObjectPooling
                     }
                 }
             }
-
             
-            UpdateDebugFields();
         }
 
         /// <summary>
