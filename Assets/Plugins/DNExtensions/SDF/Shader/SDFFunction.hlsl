@@ -1,37 +1,62 @@
+// ============================================================
+// SDF Shape Functions
+// All shapes take raw 0-1 UV, apply centering internally
+// Rotation is handled separately via TransformUV
+// ============================================================
 
-// Shapes
-
-void CircleSDF_float(float2 UV, float Radius, out float Dist)
+// Shared UV transform: centers UV and applies rotation + offset
+void TransformUV_float(float2 UV, float Rotation, float2 Offset, out float2 Out)
 {
-    Dist = length(UV) - Radius;
+    // Center UV from 0-1 to -0.5 to 0.5, then apply offset
+    float2 centered = UV - 0.5 + Offset;
+    
+    // Rotate around center (0,0) in centered space
+    float rad = Rotation * 3.14159265359 / 180.0;
+    float s, c;
+    sincos(rad, s, c);
+    Out = float2(
+        centered.x * c - centered.y * s,
+        centered.x * s + centered.y * c
+    );
 }
 
-void RectangleSDF_float(float2 UV, float Width, float Height, float4 CornerRounding, float cornerRounding, out float Dist)
+// ============================================================
+// Shape SDFs
+// All take centered UV (-0.5 to 0.5 range) and RectSize
+// Return signed distance in pixel space (negative = inside)
+// ============================================================
+
+void CircleSDF_float(float2 UV, float Radius, float2 RectSize, out float Dist)
 {
-    float2 centered = UV;
-    float2 q = abs(centered);
+    float2 pixelUV = UV * RectSize;
+    Dist = length(pixelUV) - Radius;
+}
+
+void RectangleSDF_float(float2 UV, float Width, float Height, float4 CornerRounding, float cornerRounding, float2 RectSize, out float Dist)
+{
+    float2 pixelUV = UV * RectSize;
+    float2 q = abs(pixelUV);
     float2 size = float2(Width, Height);
     
-    float top_mask = step(0.0, centered.y);
-    float right_mask = step(0.0, centered.x);
+    float top_mask = step(0.0, pixelUV.y);
+    float right_mask = step(0.0, pixelUV.x);
     
     float left_side_rounding = lerp(CornerRounding.x, CornerRounding.y, top_mask);
     float right_side_rounding = lerp(CornerRounding.w, CornerRounding.z, top_mask);
     
     float r_individual = lerp(left_side_rounding, right_side_rounding, right_mask);
-    
     float r = r_individual + cornerRounding;
     
     float2 d = q - size + r;
     Dist = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - r;
 }
 
-
-void PolygonSDF_float(float2 UV, float Size, float InnerRadius, int Points, out float Dist)
+void PolygonSDF_float(float2 UV, float Size, float InnerRadius, int Points, float2 RectSize, out float Dist)
 {
+    float2 pixelUV = UV * RectSize;
+    
     Points = clamp(Points, 3, 12);
     
-    // Map InnerRadius (0-1) to m parameter (2 to Points)
     float m = lerp(2.0, float(Points), InnerRadius);
     
     float an = 3.14159265359 / float(Points);
@@ -40,53 +65,59 @@ void PolygonSDF_float(float2 UV, float Size, float InnerRadius, int Points, out 
     float2 acs = float2(cos(an), sin(an));
     float2 ecs = float2(cos(en), sin(en));
     
-    // Get angle and fold into one sector
-    float bn = fmod(atan2(UV.y, UV.x) + 3.14159265359, 2.0 * an) - an;
+    float bn = fmod(atan2(pixelUV.x, -pixelUV.y) + 3.14159265359, 2.0 * an) - an;
     
-    // Convert back to cartesian in folded space
-    float r = length(UV);
+    float r = length(pixelUV);
     float2 p = r * float2(cos(bn), abs(sin(bn)));
     
-    // Distance calculation
     p -= Size * acs;
     p += ecs * clamp(-dot(p, ecs), 0.0, Size * acs.y / ecs.y);
     
     Dist = length(p) * sign(p.x);
 }
 
-void HeartSDF_float(float2 UV, float Size, out float Dist)
+void HeartSDF_float(float2 UV, float Size, float2 RectSize, out float Dist)
 {
-    float2 p = UV / (Size * 2.0);
+    // Guard against zero size
+    if (Size <= 0.001)
+    {
+        Dist = 1000.0;
+        return;
+    }
     
-    p.y += 0.5;
+    float2 pixelUV = UV * RectSize;
     
+    // Normalize to unit heart space
+    float2 p = pixelUV / (Size * 1.65);
+    
+    // Flip and center vertically
+    p.y = p.y + 0.6;
     p.x = abs(p.x);
     
-    if (p.y + p.x > 1.0)
-    {
-        Dist = sqrt(dot(p - float2(0.25, 0.75), p - float2(0.25, 0.75))) - sqrt(2.0) / 4.0;
-    }
-    else
-    {
-        float d1 = dot(p - float2(0.0, 1.0), p - float2(0.0, 1.0));
-        float d2 = dot(p - 0.5 * max(p.x + p.y, 0.0), p - 0.5 * max(p.x + p.y, 0.0));
-        Dist = sqrt(min(d1, d2)) * sign(p.x - p.y);
-    }
+    // Branchless heart SDF (IQ formula)
+    float s = max(p.x + p.y, 0.0);
     
-    Dist *= Size;
+    float d1 = sqrt(dot(p - float2(0.25, 0.75), p - float2(0.25, 0.75))) - sqrt(2.0) / 4.0;
+    
+    float d2a = dot(p - float2(0.0, 1.0), p - float2(0.0, 1.0));
+    float d2b = dot(p - 0.5 * s * float2(1.0, 1.0), p - 0.5 * s * float2(1.0, 1.0));
+    float d2 = sqrt(min(d2a, d2b)) * sign(p.x - p.y);
+    
+    float t = saturate((p.y + p.x - 1.0) * 1000.0);
+    
+    Dist = lerp(d2, d1, t) * Size;
 }
-
-
-void RingSDF_float(float2 UV, float OuterRadius, float InnerRadius, out float Dist)
+void RingSDF_float(float2 UV, float OuterRadius, float InnerRadius, float2 RectSize, out float Dist)
 {
-    float d = length(UV) - OuterRadius;
+    float2 pixelUV = UV * RectSize;
+    float d = length(pixelUV) - OuterRadius;
     Dist = abs(d) - InnerRadius;
 }
 
-
-void CrossSDF_float(float2 UV, float Width, float Height, float Thickness, out float Dist)
+void CrossSDF_float(float2 UV, float Width, float Height, float Thickness, float2 RectSize, out float Dist)
 {
-    float2 p = abs(UV);
+    float2 pixelUV = UV * RectSize;
+    float2 p = abs(pixelUV);
     
     float2 d1 = p - float2(Width, Thickness);
     float dist1 = length(max(d1, 0.0)) + min(max(d1.x, d1.y), 0.0);
@@ -97,11 +128,12 @@ void CrossSDF_float(float2 UV, float Width, float Height, float Thickness, out f
     Dist = min(dist1, dist2);
 }
 
-
-void LineSDF_float(float2 UV, float2 StartPos, float2 EndPos, float Thickness, out float Dist)
+void LineSDF_float(float2 UV, float2 StartPos, float2 EndPos, float Thickness, float2 RectSize, out float Dist)
 {
+    float2 pixelUV = UV * RectSize;
+    
     float2 ba = EndPos - StartPos;
-    float2 pa = UV - StartPos;
+    float2 pa = pixelUV - StartPos;
     
     float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
     
@@ -109,62 +141,42 @@ void LineSDF_float(float2 UV, float2 StartPos, float2 EndPos, float Thickness, o
 }
 
 
+// ============================================================
+// Fill Functions
+// All take centered UV (-0.5 to 0.5 range, pre-rotation)
+// Return signed distance: negative = inside fill region
+// ============================================================
 
-// Outlines
-
-void OutlineSDF_float(float Distance, float Thickness, out float Dist)
-{
-    Dist = abs(Distance) - Thickness;
-}
-void InlineSDF_float(float Distance, float Thickness, out float Dist)
-{
-    Dist = max(Distance, -Distance - Thickness);
-}
-
-
-// Fill
 void RadialFillSDF_float(float2 UV, float FillAmount, float FillOrigin, out float Dist)
 {
-    // Rotate UV by origin
     float originRad = FillOrigin * 3.14159265359 / 180.0;
-    float2x2 rot = float2x2(cos(-originRad), -sin(-originRad), 
-                            sin(-originRad), cos(-originRad));
-    float2 p = mul(rot, UV);
+    float s, c;
+    sincos(-originRad, s, c);
+    float2 p = float2(UV.x * c - UV.y * s, UV.x * s + UV.y * c);
 
     float angle = atan2(p.y, p.x);
-    if (angle < 0.0) angle += 6.28318530718;
+    angle = angle < 0.0 ? angle + 6.28318530718 : angle;
     float fillAngle = FillAmount * 6.28318530718;
     
-    // Handle edge cases
-    if (FillAmount >= 0.9999)
-    {
-        Dist = -1.0;
-        return;
-    }
+    // Branchless edge cases
+    float fullFill = step(0.9999, FillAmount);
+    float emptyFill = step(FillAmount, 0.0001);
     
-    if (FillAmount <= 0.0001) 
-    {
-        Dist = 1.0;
-        return;
-    }
+    // Normal case: distance to fill boundary
+    float inside = step(angle, fillAngle);
+    float distToStart = angle;
+    float distToEnd = fillAngle - angle;
+    float normalDist = lerp(angle - fillAngle, -min(distToStart, distToEnd), inside);
     
-    // Normal case
-    if (angle <= fillAngle)
-    {
-        float distToStart = angle;
-        float distToEnd = fillAngle - angle;
-        Dist = -min(distToStart, distToEnd);
-    }
-    else
-    {
-        Dist = angle - fillAngle;
-    }
+    // Select based on edge cases
+    Dist = lerp(lerp(normalDist, -1.0, fullFill), 1.0, emptyFill);
 }
 
 void HorizontalFillSDF_float(float2 UV, float FillAmount, out float Dist)
 {
+    // UV is centered: -0.5 to 0.5
+    // Map to 0-1 range for fill comparison
     float normalizedX = UV.x + 0.5;
-    
     Dist = normalizedX - FillAmount;
 }
 
@@ -174,30 +186,82 @@ void VerticalFillSDF_float(float2 UV, float FillAmount, out float Dist)
     Dist = normalizedY - FillAmount;
 }
 
-void ApplyFillSDF_float(float Distance, int FillType, float2 UV, float FillAmount, float FillOrigin, out float Dist)
+
+// ============================================================
+// Outline SDF
+// ============================================================
+
+void OutlineSDF_float(float Distance, float Thickness, out float Dist)
 {
-    Dist = Distance; // Start with shape distance
+    Dist = abs(Distance) - Thickness;
+}
+
+
+// ============================================================
+// Main Render Function
+// Takes the raw SDF distance and all style parameters,
+// outputs final BaseColor and Alpha.
+//
+// This replaces all the smoothstep/subtract/saturate nodes
+// in the shader graph.
+// ============================================================
+
+void RenderSDF_float(float ShapeDist,float2 CenteredUV,int FillType,float FillAmount,float FillOrigin,float4 BaseColor,float OutlineThickness,float4 OutlineColor,out float3 OutColor,out float OutAlpha)
+{
+    // --- Anti-aliasing width from screen-space derivatives ---
+    float dd = abs(ddx(ShapeDist)) + abs(ddy(ShapeDist));
+    float aa = max(dd, 0.001);
     
-    if (FillType == 0) // None
+    // --- Shape mask (before fill) - used for outline ---
+    float shapeMask = smoothstep(aa, -aa, ShapeDist);
+    
+    // --- Outline mask: band around original shape edge ---
+    float outlineMask = 0.0;
+    if (OutlineThickness > 0.0)
     {
-        return;
+        float outlineDist = abs(ShapeDist) - OutlineThickness;
+        float ddOutline = abs(ddx(outlineDist)) + abs(ddy(outlineDist));
+        float aaOutline = max(ddOutline, 0.001);
+        float outerMask = smoothstep(aaOutline, -aaOutline, outlineDist);
+        // Outline is only the part outside the shape
+        outlineMask = saturate(outerMask - shapeMask);
     }
     
-    float fillDist = 0.0;
+    // --- Apply fill to shape ---
+    float fillDist = -1.0; // Default: fully filled
     
     if (FillType == 1) // Radial
     {
-        RadialFillSDF_float(UV, FillAmount, FillOrigin, fillDist);
+        RadialFillSDF_float(CenteredUV, FillAmount, FillOrigin, fillDist);
     }
     else if (FillType == 2) // Horizontal
     {
-        HorizontalFillSDF_float(UV, FillAmount, fillDist);
+        HorizontalFillSDF_float(CenteredUV, FillAmount, fillDist);
     }
     else if (FillType == 3) // Vertical
     {
-        VerticalFillSDF_float(UV, FillAmount, fillDist);
+        VerticalFillSDF_float(CenteredUV, FillAmount, fillDist);
     }
     
-    // Intersect shape with fill - max keeps only the overlapping region
-    Dist = max(Distance, fillDist);
+    // Filled shape = intersection of shape and fill region
+    float filledDist = max(ShapeDist, fillDist);
+    float ddFilled = abs(ddx(filledDist)) + abs(ddy(filledDist));
+    float aaFilled = max(ddFilled, 0.001);
+    float filledMask = smoothstep(aaFilled, -aaFilled, filledDist);
+    
+    // --- Composite layers ---
+    // Fill region gets base color
+    float3 fillColor = BaseColor.rgb * filledMask;
+    float fillAlpha = filledMask * BaseColor.a;
+    
+    // Outline gets outline color (never affected by fill)
+    float3 outColor = OutlineColor.rgb * outlineMask;
+    float outAlpha = outlineMask * OutlineColor.a;
+    
+    // Combine: outline behind fill (outline only visible outside shape)
+    OutColor = fillColor + outColor;
+    OutAlpha = saturate(fillAlpha + outAlpha);
+    
+    // Premultiply for Blend One OneMinusSrcAlpha
+    OutColor *= OutAlpha > 0.001 ? 1.0 : 0.0;
 }

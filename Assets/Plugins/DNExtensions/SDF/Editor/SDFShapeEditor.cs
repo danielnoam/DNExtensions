@@ -1,9 +1,5 @@
 namespace DNExtensions.Shapes
 {
-    
-
-
-
     using UnityEditor;
     using UnityEditor.UI;
     using UnityEngine;
@@ -25,19 +21,15 @@ namespace DNExtensions.Shapes
         private SerializedProperty m_FillOrigin;
         private SerializedProperty m_OutlineThickness;
         private SerializedProperty m_OutlineColor;
-        private SerializedProperty m_InlineThickness;
-        private SerializedProperty m_InlineColor;
         
         private int exportWidth = 512;
         private int exportHeight = 512;
         private bool m_ShowOutline;
-        private bool m_ShowInline;
         private bool m_ShowExport;
 
         protected override void OnEnable()
         {
             base.OnEnable();
-
 
             m_Color = serializedObject.FindProperty("m_Color");
             m_RaycastTarget = serializedObject.FindProperty("m_RaycastTarget");
@@ -52,17 +44,25 @@ namespace DNExtensions.Shapes
             m_Offset = serializedObject.FindProperty("m_Offset");
             m_OutlineThickness = serializedObject.FindProperty("m_OutlineThickness");
             m_OutlineColor = serializedObject.FindProperty("m_OutlineColor");
-            m_InlineThickness = serializedObject.FindProperty("m_InlineThickness");
-            m_InlineColor = serializedObject.FindProperty("m_InlineColor");
         }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-
+            
+            DrawGraphic();
             EditorGUILayout.Space();
+            DrawBaseShape();
+            EditorGUILayout.Space();
+            DrawShapeSpecificProperties();
+            EditorGUILayout.Space();
+            DrawExportSection();
 
-            // Base Graphic properties
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawGraphic()
+        {
             EditorGUILayout.LabelField("Graphic", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(m_Color);
             EditorGUILayout.PropertyField(m_RaycastTarget);
@@ -73,10 +73,10 @@ namespace DNExtensions.Shapes
             }
 
             EditorGUILayout.PropertyField(m_Maskable);
+        }
 
-            EditorGUILayout.Space();
-
-            // Base Shape properties 
+        private void DrawBaseShape()
+        {
             EditorGUILayout.LabelField("Shape", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(m_BaseColor);
             EditorGUILayout.PropertyField(m_Rotation);
@@ -92,34 +92,12 @@ namespace DNExtensions.Shapes
                     EditorGUILayout.PropertyField(m_FillOrigin);
                 }
             }
-            
-            EditorGUILayout.Space();
-            
-            DrawShapeSpecificProperties();
+            EditorGUILayout.PropertyField(m_OutlineThickness);
+            EditorGUILayout.PropertyField(m_OutlineColor);
+        }
 
-            EditorGUILayout.Space();
-
-            m_ShowOutline = EditorGUILayout.BeginFoldoutHeaderGroup(m_ShowOutline, "Outline");
-            if (m_ShowOutline)
-            {
-                EditorGUILayout.PropertyField(m_OutlineThickness);
-                EditorGUILayout.PropertyField(m_OutlineColor);
-            }
-
-            EditorGUILayout.EndFoldoutHeaderGroup();
-
-            m_ShowInline = EditorGUILayout.BeginFoldoutHeaderGroup(m_ShowInline, "Inline");
-            if (m_ShowInline)
-            {
-                EditorGUILayout.PropertyField(m_InlineThickness);
-                EditorGUILayout.PropertyField(m_InlineColor);
-            }
-
-            EditorGUILayout.EndFoldoutHeaderGroup();
-
-
-
-            // Export section
+        private void DrawExportSection()
+        {
             m_ShowExport = EditorGUILayout.BeginFoldoutHeaderGroup(m_ShowExport, "Export");
             if (m_ShowExport)
             {
@@ -145,10 +123,6 @@ namespace DNExtensions.Shapes
             }
 
             EditorGUILayout.EndFoldoutHeaderGroup();
-
-
-
-            serializedObject.ApplyModifiedProperties();
         }
 
         private void DrawShapeSpecificProperties()
@@ -172,8 +146,6 @@ namespace DNExtensions.Shapes
                     prop.name == "m_FillOrigin" ||
                     prop.name == "m_OutlineThickness" ||
                     prop.name == "m_OutlineColor" ||
-                    prop.name == "m_InlineThickness" ||
-                    prop.name == "m_InlineColor" ||
                     prop.name == "m_Color" ||
                     prop.name == "m_Material" ||
                     prop.name == "m_RaycastTarget" ||
@@ -188,5 +160,4 @@ namespace DNExtensions.Shapes
             }
         }
     }
-
 }

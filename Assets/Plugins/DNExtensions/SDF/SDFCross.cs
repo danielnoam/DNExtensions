@@ -21,9 +21,15 @@ namespace DNExtensions.Shapes
 
         protected override void SetShapeProperties()
         {
-            m_InstanceMaterial.SetFloat(WidthID, m_Width);
-            m_InstanceMaterial.SetFloat(HeightID, m_Height);
-            m_InstanceMaterial.SetFloat(ThicknessID, m_Thickness);
+            Vector2 rectSize = rectTransform.rect.size;
+    
+            float pixelWidth = m_Width * rectSize.x;
+            float pixelHeight = m_Height * rectSize.y;
+            float pixelThickness = m_Thickness * Mathf.Min(rectSize.x, rectSize.y);
+    
+            m_InstanceMaterial.SetFloat(WidthID, pixelWidth);
+            m_InstanceMaterial.SetFloat(HeightID, pixelHeight);
+            m_InstanceMaterial.SetFloat(ThicknessID, pixelThickness);
         }
 
         public float width

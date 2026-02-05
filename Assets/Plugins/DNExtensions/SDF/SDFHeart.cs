@@ -17,7 +17,12 @@ namespace DNExtensions.Shapes
 
         protected override void SetShapeProperties()
         {
-            m_InstanceMaterial.SetFloat(SizeID, m_Size);
+            Vector2 rectSize = rectTransform.rect.size;
+            float minDim = Mathf.Min(rectSize.x, rectSize.y);
+    
+            float pixelSize = m_Size * minDim;
+    
+            m_InstanceMaterial.SetFloat(SizeID, pixelSize);
         }
 
         public float size

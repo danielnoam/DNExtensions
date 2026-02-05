@@ -23,10 +23,19 @@ namespace DNExtensions.Shapes
 
         protected override void SetShapeProperties()
         {
-            m_InstanceMaterial.SetFloat(WidthID, m_Width);
-            m_InstanceMaterial.SetFloat(HeightID, m_Height);
-            m_InstanceMaterial.SetVector(CornersID, m_Corners);
-            m_InstanceMaterial.SetFloat(RoundingID, m_Rounding);
+            Vector2 rectSize = rectTransform.rect.size;
+    
+            float pixelWidth = m_Width * rectSize.x;
+            float pixelHeight = m_Height * rectSize.y;
+    
+            float minDim = Mathf.Min(rectSize.x, rectSize.y);
+            float pixelRounding = m_Rounding * minDim;
+            Vector4 pixelCorners = m_Corners * minDim;
+    
+            m_InstanceMaterial.SetFloat(WidthID, pixelWidth);
+            m_InstanceMaterial.SetFloat(HeightID, pixelHeight);
+            m_InstanceMaterial.SetFloat(RoundingID, pixelRounding);
+            m_InstanceMaterial.SetVector(CornersID, pixelCorners);
         }
 
         public float width

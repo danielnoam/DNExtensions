@@ -17,7 +17,12 @@ namespace DNExtensions.Shapes
 
         protected override void SetShapeProperties()
         {
-            m_InstanceMaterial.SetFloat(RadiusID, m_Radius);
+            Vector2 rectSize = rectTransform.rect.size;
+            float minDim = Mathf.Min(rectSize.x, rectSize.y);
+    
+            float pixelRadius = m_Radius * minDim;
+    
+            m_InstanceMaterial.SetFloat(RadiusID, pixelRadius);
         }
 
         public float radius
