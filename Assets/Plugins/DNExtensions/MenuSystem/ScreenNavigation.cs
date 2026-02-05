@@ -43,7 +43,7 @@ namespace DNExtenstions.MenuSystem
 
             if (enableMouseHoverSelection)
             {
-                SetupMouseHoverSelection();
+                selectables?.EnableMouseHoverSelection();
             }
         }
 
@@ -80,21 +80,19 @@ namespace DNExtenstions.MenuSystem
 
         public void SelectDefault()
         {
-            if (!EventSystem.current) return;
 
             if (rememberPreviousSelection && lastSelectedObject && lastSelectedObject.activeInHierarchy)
             {
-                var selectable = lastSelectedObject.GetComponent<Selectable>();
-                if (selectable && selectable.interactable)
+                if (lastSelectedObject.TryGetComponent(out Selectable selectable))
                 {
-                    EventSystem.current.SetSelectedGameObject(lastSelectedObject);
+                    selectable.SetSelected();
                     return;
                 }
             }
 
-            if (defaultSelectable && defaultSelectable.isActiveAndEnabled && defaultSelectable.interactable)
+            if (defaultSelectable)
             {
-                EventSystem.current.SetSelectedGameObject(defaultSelectable.gameObject);
+                defaultSelectable.SetSelected();
                 return;
             }
 
@@ -103,13 +101,11 @@ namespace DNExtenstions.MenuSystem
 
         private void SelectFirstAvailable()
         {
-            if (!EventSystem.current) return;
-
             foreach (var selectable in selectables)
             {
-                if (selectable && selectable.isActiveAndEnabled && selectable.interactable)
+                if (selectable)
                 {
-                    EventSystem.current.SetSelectedGameObject(selectable.gameObject);
+                    selectable.SetSelected();
                     return;
                 }
             }
@@ -117,8 +113,7 @@ namespace DNExtenstions.MenuSystem
 
         private bool IsNavigationInputPressed()
         {
-            var inputModule =
-                EventSystem.current.currentInputModule as InputSystemUIInputModule;
+            var inputModule = EventSystem.current.currentInputModule as InputSystemUIInputModule;
             if (!inputModule) return false;
 
             var moveAction = inputModule.move?.action;
@@ -127,29 +122,7 @@ namespace DNExtenstions.MenuSystem
             return moveAction.ReadValue<Vector2>() != Vector2.zero;
         }
 
-        private void SetupMouseHoverSelection()
-        {
-            foreach (var selectable in selectables)
-            {
-                if (!selectable) continue;
 
-                var trigger = selectable.GetOrAddComponent<EventTrigger>();
-
-
-                if (trigger.triggers.All(e => e.eventID != EventTriggerType.PointerEnter))
-                {
-                    var entry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-                    entry.callback.AddListener((data) =>
-                    {
-                        if (selectable && selectable.interactable && EventSystem.current)
-                        {
-                            EventSystem.current.SetSelectedGameObject(selectable.gameObject);
-                        }
-                    });
-                    trigger.triggers.Add(entry);
-                }
-            }
-        }
 
         private IEnumerator SelectDefaultDelayed()
         {

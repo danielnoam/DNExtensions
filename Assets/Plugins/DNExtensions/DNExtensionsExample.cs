@@ -27,6 +27,8 @@ public class DNExtensionsExample : MonoBehaviour
     [SerializeField] private SceneField testScene;
     [SerializeField] private SortingLayerField testLayer;
     [SerializeField] private TagField testTag;
+    [SerializeField] private OptionalField<Color> customColor;
+    [SerializeField] private AnimatorStateField customAnimatorState;
     
     
     [Separator("Ranged Values")]
