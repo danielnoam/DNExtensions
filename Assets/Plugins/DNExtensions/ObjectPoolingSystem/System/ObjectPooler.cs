@@ -166,8 +166,7 @@ namespace DNExtensions.ObjectPooling
         /// <param name="positon">World position for the object</param>
         /// <param name="rotation">World rotation for the object</param>
         /// <returns>GameObject from pool or new instance if no pool found</returns>
-        public static GameObject GetObjectFromPool(GameObject obj, Vector3 positon = default,
-            Quaternion rotation = default)
+        public static GameObject GetObjectFromPool(GameObject obj, Vector3 positon = default, Quaternion rotation = default)
         {
             if (Instance)
             {
@@ -187,7 +186,7 @@ namespace DNExtensions.ObjectPooling
                 }
             }
 
-            if (Instance._showDebugMessages) Debug.LogError($"Can't get object, No object pooler in scene");
+
             return Instantiate(obj, positon, rotation);
         }
 
@@ -218,8 +217,7 @@ namespace DNExtensions.ObjectPooling
                     return;
                 }
             }
-
-            if (Instance._showDebugMessages) Debug.LogError($"Can't return object, No object pooler in scene");
+    
             Destroy(obj);
         }
 

@@ -2,6 +2,10 @@ using UnityEngine;
 
 namespace DNExtensions.ObjectPooling
 {
+    /// <summary>
+    /// Automatically initializes the object pooling system at runtime.
+    /// Runs before scene load to ensure pools are ready.
+    /// </summary>
     public static class ObjectPoolingRuntime
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -11,9 +15,9 @@ namespace DNExtensions.ObjectPooling
             
             ObjectPoolingSettings settings = ObjectPoolingSettings.Instance;
             
-            if (!settings)
+            if (!settings || !settings.enabled)
             {
-                Debug.LogError("ObjectPoolingSettings not found in Resources folder! Create one via: Assets > Create > DNExtensions > Object Pooling Settings, then place it in a Resources folder.");
+                // Debug.LogError("ObjectPoolingSettings not found in Resources folder! Create one via: Tools > DNExtensions > Object Pooling Settings");
                 return;
             }
             

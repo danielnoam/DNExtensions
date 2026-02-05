@@ -5,10 +5,6 @@ using UnityEngine.InputSystem;
 
 namespace DNExtensions.InputSystem
 {
-    /// <summary>
-    /// Base class for displaying input bindings in TextMeshProUGUI components.
-    /// Automatically updates when input device changes.
-    /// </summary>
     public abstract class InputBindingDisplay : MonoBehaviour
     {
         [Header("References")]

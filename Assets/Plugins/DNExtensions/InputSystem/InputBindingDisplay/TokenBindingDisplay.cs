@@ -4,10 +4,6 @@ using UnityEngine.InputSystem;
 
 namespace DNExtensions.InputSystem
 {
-    /// <summary>
-    /// Maps custom tokens in text to input actions and displays their bindings.
-    /// Captures the original text as a template on Start and replaces specified tokens on each update.
-    /// </summary>
     [Serializable]
     public struct TokenActionPair
     {
@@ -15,7 +11,7 @@ namespace DNExtensions.InputSystem
         public string token;
         
         [Tooltip("The action to display when this token is found")]
-        public InputActionReference action;
+        public string actionName;
     }
 
     public class TokenBindingDisplay : InputBindingDisplay
@@ -40,20 +36,35 @@ namespace DNExtensions.InputSystem
             {
                 return null;
             }
+
+            var playerInput = InputManager.Instance?.PlayerInput;
+            if (!playerInput)
+            {
+                Debug.LogWarning("PlayerInput not found!", this);
+                return null;
+            }
             
             string result = templateText;
             
             foreach (var binding in tokenBindings)
             {
-                if (string.IsNullOrEmpty(binding.token) || binding.action?.action == null)
+                if (string.IsNullOrEmpty(binding.token) || string.IsNullOrEmpty(binding.actionName))
                 {
                     continue;
                 }
-                string replacement = InputManager.GetActionBinding(
-                    binding.action.action, 
-                    useSprites
-                );
-                result = result.Replace(binding.token, replacement);
+
+                var action = playerInput.actions.FindAction(binding.actionName);
+                if (action == null)
+                {
+                    Debug.LogWarning($"Action '{binding.actionName}' not found!", this);
+                    continue;
+                }
+
+                string replacement = InputManager.GetActionBinding(action, useSprites);
+                if (!string.IsNullOrEmpty(replacement))
+                {
+                    result = result.Replace(binding.token, replacement);
+                }
             }
 
             return result;

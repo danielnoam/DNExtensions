@@ -12,17 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdca1178cff54263ba82b954a66b51ce, type: 3}
   m_Name: ObjectPoolingSettings
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.ObjectPooling.ObjectPoolingSettings
+  enabled: 1
   instantiateAsFallback: 1
   destroyAsFallback: 1
   showDebugMessages: 0
   pools:
-  - poolName: BulletTest
-    maxPoolSize: 50
+  - poolName: Bullet
+    maxPoolSize: 55
     prefab: {fileID: 8842675776293222798, guid: 385e2d0b9f979d14ca7b058fc6b2988c, type: 3}
     dontDestroyOnLoad: 0
-    recycleActiveObjects: 0
+    recycleActiveObjects: 1
     preWarmPool: 1
-    preWarmPoolSize: 3
+    preWarmPoolSize: 5
     scenesToPreWarm:
     - sceneAsset: {fileID: 102900000, guid: 5db86f2bb95500b438ebfbf95acd3568, type: 3}
       sceneName: TestScene

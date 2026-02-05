@@ -8,12 +8,16 @@ namespace DNExtensions.InputSystem
 {
     public static class InputBindingFormatter
     {
-        // Small override dict for custom display names (Unity's ToDisplayString handles the rest)
         private static readonly Dictionary<string, string> TextOverrides = new()
         {
             { "Left Button", "Left Click" },
             { "Right Button", "Right Click" },
             { "Middle Button", "Middle Click" },
+            { "D-Pad/Up", "Up"},
+            { "D-Pad/Down", "Down"},
+            { "D-Pad/Left", "Left"},
+            { "D-Pad/Right", "Right"},
+            
         };
 
         #region Public API
@@ -22,7 +26,7 @@ namespace DNExtensions.InputSystem
         /// Get binding display for a specific InputAction
         /// </summary>
         public static string GetActionBinding(InputAction action, bool useSprites, PlayerInput playerInput,
-            TMP_SpriteAsset spriteAsset = null)
+            TMP_SpriteAsset spriteAsset = null, string compositePartFilter = "")
         {
             if (!playerInput || action == null)
             {
@@ -30,7 +34,7 @@ namespace DNExtensions.InputSystem
             }
 
             // Get relevant bindings for the current control scheme
-            List<InputBinding> bindings = GetDisplayBindingsForAction(action, playerInput.currentControlScheme);
+            List<InputBinding> bindings = GetDisplayBindingsForAction(action, playerInput.currentControlScheme, compositePartFilter);
 
             if (bindings.Count == 0)
             {
@@ -61,7 +65,7 @@ namespace DNExtensions.InputSystem
         /// <summary>
         /// Extract the bindings to display for an action based on the current control scheme
         /// </summary>
-        private static List<InputBinding> GetDisplayBindingsForAction(InputAction action, string currentScheme)
+        private static List<InputBinding> GetDisplayBindingsForAction(InputAction action, string currentScheme, string compositePartFilter = "")
         {
             List<InputBinding> displayBindings = new List<InputBinding>();
 
@@ -78,7 +82,11 @@ namespace DNExtensions.InputSystem
 
                         if (BindingMatchesScheme(partBinding, currentScheme))
                         {
-                            displayBindings.Add(partBinding);
+                            // Check composite part filter
+                            if (string.IsNullOrEmpty(compositePartFilter) || partBinding.name == compositePartFilter)
+                            {
+                                displayBindings.Add(partBinding);
+                            }
                         }
                     }
 
@@ -90,7 +98,7 @@ namespace DNExtensions.InputSystem
                 }
                 else if (!binding.isPartOfComposite)
                 {
-                    // Single binding
+                    // Single binding (not part of composite) - filter doesn't apply
                     if (BindingMatchesScheme(binding, currentScheme))
                     {
                         displayBindings.Add(binding);

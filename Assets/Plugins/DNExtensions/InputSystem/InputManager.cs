@@ -6,13 +6,6 @@ using UnityEngine.InputSystem;
 
 namespace DNExtensions.InputSystem
 {
-    public enum InputDeviceType
-    {
-        KeyboardMouse,
-        Gamepad,
-        Touch
-    }
-
     public class InputManager : MonoBehaviour
     {
         public static InputManager Instance { get; private set; }
@@ -186,7 +179,7 @@ namespace DNExtensions.InputSystem
         /// <summary>
         /// Get binding for a specific InputAction
         /// </summary>
-        public static string GetActionBinding(InputAction action, bool asSprite = true)
+        public static string GetActionBinding(InputAction action, bool asSprite = true, string compositePartFilter = "")
         {
             if (!Instance?.playerInput || action == null) return action?.name ?? "Unknown";
 
@@ -194,20 +187,20 @@ namespace DNExtensions.InputSystem
                 ? Instance.gamepadSpriteAsset
                 : Instance.keyboardMouseSpriteAsset : null;
 
-            return InputBindingFormatter.GetActionBinding(action, asSprite, Instance.playerInput, spriteAsset);
+            return InputBindingFormatter.GetActionBinding(action, asSprite, Instance.playerInput, spriteAsset, compositePartFilter);
         }
 
         /// <summary>
         /// Get bindings for multiple InputActions
         /// </summary>
-        public static string GetActionBindings(InputAction[] actions, string separator = " | ", bool asSprites = true)
+        public static string GetActionBindings(InputAction[] actions, string separator = " | ", bool asSprites = true, string compositePartFilter = "")
         {
             if (actions == null || actions.Length == 0) return "";
 
             string[] bindings = new string[actions.Length];
             for (int i = 0; i < actions.Length; i++)
             {
-                bindings[i] = GetActionBinding(actions[i], asSprites);
+                bindings[i] = GetActionBinding(actions[i], asSprites, compositePartFilter);
             }
 
             return string.Join(separator, bindings);
