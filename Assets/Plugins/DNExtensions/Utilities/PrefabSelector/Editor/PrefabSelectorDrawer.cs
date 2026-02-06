@@ -23,33 +23,22 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
         
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            // Only works with Object reference fields
             if (property.propertyType != SerializedPropertyType.ObjectReference)
             {
                 EditorGUI.LabelField(position, label.text, "[PrefabSelector] requires Object reference field");
                 return;
             }
-            
+    
             PrefabSelectorAttribute attr = attribute as PrefabSelectorAttribute;
-            
-            // Calculate rects
+    
+            Rect controlRect = EditorGUI.PrefixLabel(position, label);
+    
             float buttonWidth = 20f;
-            Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, EditorGUIUtility.singleLineHeight);
-            Rect objectFieldRect = new Rect(
-                position.x + EditorGUIUtility.labelWidth + 2,
-                position.y,
-                position.width - EditorGUIUtility.labelWidth - buttonWidth - 4,
-                EditorGUIUtility.singleLineHeight
-            );
-            Rect dropdownButtonRect = new Rect(
-                objectFieldRect.xMax + 2,
-                position.y,
-                buttonWidth,
-                EditorGUIUtility.singleLineHeight
-            );
-            
-            // Draw label
-            EditorGUI.LabelField(labelRect, label);
+            float spacing = 2f;
+            Rect objectFieldRect = new Rect(controlRect.x, controlRect.y, 
+                controlRect.width - buttonWidth - spacing, controlRect.height);
+            Rect dropdownButtonRect = new Rect(objectFieldRect.xMax + spacing, controlRect.y, 
+                buttonWidth, controlRect.height);
             
             // Draw object field (supports drag-drop)
             EditorGUI.BeginChangeCheck();
@@ -57,7 +46,7 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
             if (EditorGUI.EndChangeCheck())
             {
                 // Validate that it's a prefab if a value was set
-                if (newValue != null)
+                if (newValue)
                 {
                     GameObject prefab = null;
                     

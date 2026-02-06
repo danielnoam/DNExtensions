@@ -1714,6 +1714,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensionsExample
   testReadOnly: 0
+  conditionalCheck: 1
   testScene:
     sceneAsset: {fileID: 0}
     sceneName: 
@@ -1723,14 +1724,19 @@ MonoBehaviour:
     layerID: 0
   testTag:
     tagName: Untagged
-  customColor:
-    isSet: 0
-    value: {r: 1, g: 1, b: 1, a: 0}
+  customString:
+    isSet: 1
+    value: 1
   customAnimatorState:
     animator: {fileID: 1526888422}
     stateName: None
     stateHash: -542986255
     assigned: 0
+  positionField:
+    positionTransform: {fileID: 0}
+    positionVector: {x: 0, y: 0, z: 0}
+  prefabSelector: {fileID: 108853269857652447, guid: 21e745c46c771434d909d5f19b389203, type: 3}
+  prefabSelectorLocked: {fileID: 0}
   testRangedInt:
     minValue: -1
     maxValue: 0
@@ -1747,13 +1753,11 @@ MonoBehaviour:
     underlyingValue: {fileID: 0}
   interactableObject: {fileID: 0}
   serializableSelector:
-    rid: 4802877459312672872
+    rid: 5778561573593284705
   serializableSelectorList:
-  - rid: 4802877459312672866
-  - rid: 4802877459312672874
-  - rid: 4802877459312672873
-  prefabSelector: {fileID: 7400466940537088022, guid: 8d0551e5bcf576e439c70bf24f94b54a, type: 3}
-  prefabSelectorLocked: {fileID: 8842675776293222798, guid: 385e2d0b9f979d14ca7b058fc6b2988c, type: 3}
+  - rid: 5778561573593284706
+  - rid: 5778561573593284709
+  testImpulseSource: {fileID: 0}
   testImpulse:
     impulseChannel: 1
     impulseType: 0
@@ -1764,29 +1768,23 @@ MonoBehaviour:
     dissipationDistance: 100
     dissipationRate: 0.25
     propagationSpeed: 343
-  testImpulseSource: {fileID: 0}
   references:
     version: 2
     RefIds:
-    - rid: 4802877459312672866
+    - rid: 5778561573593284705
       type: {class: Behavior1, ns: , asm: Assembly-CSharp-firstpass}
       data:
-        VarFloat: 0
+        varFloat: 0
         varString: 
-    - rid: 4802877459312672872
-      type: {class: Behavior3, ns: , asm: Assembly-CSharp-firstpass}
+    - rid: 5778561573593284706
+      type: {class: Behavior1, ns: , asm: Assembly-CSharp-firstpass}
       data:
-        VarFloat: 0
-        varBool: 0
-    - rid: 4802877459312672873
-      type: {class: Behavior2, ns: , asm: Assembly-CSharp-firstpass}
+        varFloat: 0
+        varString: 
+    - rid: 5778561573593284709
+      type: {class: Behavior5, ns: , asm: Assembly-CSharp-firstpass}
       data:
-        VarFloat: 0
-        varBool: 0
-    - rid: 4802877459312672874
-      type: {class: Behavior3, ns: , asm: Assembly-CSharp-firstpass}
-      data:
-        VarFloat: 0
+        varFloat: 0
         varBool: 0
 --- !u!114 &1526888421
 MonoBehaviour:

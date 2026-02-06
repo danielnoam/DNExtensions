@@ -56,15 +56,13 @@ namespace DNExtensions.CinemachineExtesnstions
         [Min(0.01f)] public float duration = 0.3f;
         [Min(0.1f)] public float intensity = 1f;
         public Vector3 velocity = Vector3.one;
-
-        
-        [Header("Spatial (Dissipating/Propagating)")]
+        [ShowIf(nameof(impulseType), CinemachineImpulseDefinition.ImpulseTypes.Dissipating)]
         [Min(0f)] public float dissipationDistance = 100f;
+        [ShowIf(nameof(impulseType), CinemachineImpulseDefinition.ImpulseTypes.Dissipating)]
         [Range(0f, 1f)] public float dissipationRate = 0.25f;
+        [ShowIf(nameof(impulseType), CinemachineImpulseDefinition.ImpulseTypes.Propagating)]
         [Min(1f)] public float propagationSpeed = 343f;
-        
-        
-        
+
 
         
         public ImpulseSettings()
