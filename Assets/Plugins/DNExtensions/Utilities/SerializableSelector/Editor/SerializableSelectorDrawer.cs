@@ -90,7 +90,13 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                         propertyHeight
                     );
                     
+                    int oldIndent = EditorGUI.indentLevel;
+                    EditorGUI.indentLevel = 0;
+                    
                     EditorGUI.PropertyField(propertyRect, iterator, true);
+                    
+                    EditorGUI.indentLevel = oldIndent;
+                    
                     yOffset += propertyHeight + EditorGUIUtility.standardVerticalSpacing;
                     
                     enterChildren = false;
