@@ -29,7 +29,6 @@ public class DNExtensionsExample : MonoBehaviour
     [SerializeField] private TagField testTag;
     [SerializeField] private OptionalField<string> customString;
     [SerializeField] private AnimatorStateField customAnimatorState;
-    [EnableIf("conditionalCheck")]
     [SerializeField] private PositionField positionField;
     
     [Separator]
@@ -39,26 +38,22 @@ public class DNExtensionsExample : MonoBehaviour
     
     [Separator]
     [Header("Ranged Values")]
-    [EnableIf("conditionalCheck")]
     [SerializeField] private RangedInt testRangedInt;
     [SerializeField, MinMaxRange(-5f,5)] private RangedFloat testRangedFloat;
     
     [Separator]
     [Header("Chance List")]
-    [EnableIf("conditionalCheck")]
     [SerializeField] private ChanceList<string> testStrings;
     [SerializeField] private ChanceList<int> testInts;
     [SerializeField] private ChanceList<TestEnum> testEnums;
     
     [Separator]
     [Header("Serialized Interface")]
-    [EnableIf("conditionalCheck")]
     [SerializeField] private InterfaceReference<ITest> testInterface;
     [SerializeField, RequireInterface(typeof(ITest))] private MonoBehaviour interactableObject;
     
     [Separator]
     [Header("Serializable Selector")]
-    [EnableIf("conditionalCheck")]
     [SerializeReference, SerializableSelector(SearchThreshold = -1)] private TestBehavior serializableSelector;
     [SerializeReference, SerializableSelector(SearchThreshold = 0)] private List<TestBehavior> serializableSelectorList;
     
