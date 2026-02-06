@@ -125,9 +125,8 @@ namespace DNExtensions.Utilities.Button
             if (unsupportedParams.Count > 0)
             {
                 string warningKey = $"{target.GetType().Name}.{method.Name}";
-                if (!_loggedValidationErrors.Contains(warningKey))
+                if (_loggedValidationErrors.Add(warningKey))
                 {
-                    _loggedValidationErrors.Add(warningKey);
                     Debug.LogWarning(
                         $"[Button] Method '{method.Name}' in '{target.GetType().Name}' has unsupported parameter types and will not be shown: " +
                         $"{string.Join(", ", unsupportedParams)}. " +

@@ -30,16 +30,26 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             
             // Calculate rects
             float lineHeight = EditorGUIUtility.singleLineHeight;
-            Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, lineHeight);
-            Rect dropdownRect = new Rect(
-                position.x + EditorGUIUtility.labelWidth + 2, 
-                position.y, 
-                position.width - EditorGUIUtility.labelWidth - 2, 
-                lineHeight
-            );
+            bool inArray = IsInArray(property);
             
-            // Draw label
-            EditorGUI.LabelField(labelRect, label);
+            Rect dropdownRect;
+            
+            if (inArray)
+            {
+                dropdownRect = new Rect(position.x, position.y, position.width, lineHeight);
+            }
+            else
+            {
+                Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, lineHeight);
+                EditorGUI.LabelField(labelRect, label);
+                
+                dropdownRect = new Rect(
+                    position.x + EditorGUIUtility.labelWidth + 2, 
+                    position.y, 
+                    position.width - EditorGUIUtility.labelWidth - 2, 
+                    lineHeight
+                );
+            }
             
             // Get current type name
             string currentTypeName = GetTypeName(property);
@@ -155,7 +165,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                     Type type = Type.GetType($"{fullTypeName}, {assemblyName}");
                     if (type == null)
                     {
-                        return "<Missing Type>"; // Type was deleted
+                        return "<Missing Type>";
                     }
                 }
             }
@@ -181,16 +191,10 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 return;
             }
     
-            // Get types with caching
             TypeInfo[] types = GetCachedTypes(baseType, attr);
-    
-            // Get existing types in list for AllowOnce checking
             HashSet<Type> existingTypes = GetExistingTypesInList(property);
-    
-            // Determine if we should show search field
             bool showSearch = attr.SearchThreshold >= 0 && types.Length >= attr.SearchThreshold;
     
-            // Show popup window
             SerializableSelectorPopup.Show(
                 buttonRect,
                 types,
@@ -202,13 +206,10 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             );
         }
         
-        
-        
         private void ShowContextMenu(SerializedProperty property)
         {
             GenericMenu menu = new GenericMenu();
     
-            // Check if reference is broken
             bool isBroken = !string.IsNullOrEmpty(property.managedReferenceFullTypename) 
                             && property.managedReferenceValue == null;
     
@@ -240,7 +241,6 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 menu.AddDisabledItem(new GUIContent("Paste"));
             }
     
-            // List operations
             if (IsInArray(property))
             {
                 menu.AddSeparator("");
@@ -268,7 +268,6 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             
             _clipboardType = value.GetType();
             _clipboard = value.CopyReference();
-            
         }
         
         private bool CanPaste(SerializedProperty property)
@@ -285,7 +284,6 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             
             property.managedReferenceValue = _clipboard.CopyReference();
             property.serializedObject.ApplyModifiedProperties();
-            
         }
         
         private bool IsInArray(SerializedProperty property)
@@ -300,14 +298,12 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             if (!IsInArray(property))
                 return existingTypes;
     
-            // Navigate to parent array
             string arrayPath = property.propertyPath.Substring(0, property.propertyPath.LastIndexOf(".Array.data[", StringComparison.Ordinal));
             SerializedProperty arrayProperty = property.serializedObject.FindProperty(arrayPath);
     
             if (arrayProperty == null || !arrayProperty.isArray)
                 return existingTypes;
     
-            // Collect all types in the array
             for (int i = 0; i < arrayProperty.arraySize; i++)
             {
                 SerializedProperty element = arrayProperty.GetArrayElementAtIndex(i);
@@ -390,7 +386,6 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         
         private TypeInfo[] GetCachedTypes(Type baseType, SerializableSelectorAttribute attr)
         {
-            // Create cache key including all filters
             string interfaceKey = attr.RequireInterfaces != null 
                 ? string.Join(",", Array.ConvertAll(attr.RequireInterfaces, t => t.FullName))
                 : "";
@@ -409,7 +404,6 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             
             return TypeCache[cacheKey];
         }
-        
         
         private void CopyList(SerializedProperty property)
         {

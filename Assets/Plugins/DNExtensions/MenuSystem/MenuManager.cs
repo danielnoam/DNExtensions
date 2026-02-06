@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using DNExtensions.Utilities;
 using UnityEngine;
 
-namespace  DNExtenstions.MenuSystem
+namespace DNExtensions.MenuSystem
 {
 
     [DisallowMultipleComponent]

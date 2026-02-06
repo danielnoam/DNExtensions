@@ -1,5 +1,7 @@
 using System;
+using DNExtensions.FirstPersonController.Interactable;
 using DNExtensions.Utilities;
+using DNExtensions.Utilities.AutoGet;
 using DNExtensions.Utilities.RangedValues;
 using UnityEditor;
 using UnityEngine;
@@ -7,12 +9,12 @@ using UnityEngine.InputSystem;
 
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(FPCManager))]
+[RequireComponent(typeof(FpcManager))]
 public class FPCInteraction : MonoBehaviour
 {
     [Header("Interaction Settings")]
     [SerializeField] private float interactionRadius = 3f;
-    [SerializeField] private LayerMask interactionLayer;
+    [SerializeField] private LayerMask interactionLayer = 0;
     
     [Header("Held Object Settings")]
     [SerializeField] private float autoDropYOffset = 1f;
@@ -20,68 +22,65 @@ public class FPCInteraction : MonoBehaviour
     [SerializeField, MinMaxRange(1f,4f)] private RangedFloat throwHeldRange = new RangedFloat(1f, 4f);
     
     [Header("References")]
-    [SerializeField] private FPCManager manager;
+    [SerializeField, AutoGetSelf] private FpcManager manager;
     [SerializeField] private Transform holdPosition;
     [SerializeField] private Transform interactionPosition;
     
-    
     [Header("Debug")]
     [SerializeField] private bool drawInformation;
+    [SerializeField, ReadOnly] private PickableObject heldObject;
     
-    private Interactable _closestInteractable;
-    private PickableObject _heldObject;
+    private IInteractable _closestInteractable;
+
     private bool _throwInputHeld;
     private float _throwInputHoldTime;
-    
     
     public Transform HoldPosition => holdPosition;
 
     public PickableObject HeldObject
     {
-        get => _heldObject;
+        get => heldObject;
         set
         {
-            if (_heldObject == value) return;
+            if (heldObject == value) return;
 
-            if (_heldObject)
+            if (heldObject)
             {
-                _heldObject.Drop();
-                _heldObject = null;
+                heldObject.Drop();
+                heldObject = null;
             }
             
-            _heldObject = value;
+            heldObject = value;
         }
     }
 
     private void OnValidate()
     {
-        if (!manager) manager = GetComponent<FPCManager>();
+        if (!manager) manager = GetComponent<FpcManager>();
         if (!interactionPosition) interactionPosition = transform;
     }
 
 
     private void OnEnable()
     {
-        manager.FPCInput.OnInteractAction += OnInteract;
-        manager.FPCInput.OnThrowAction += OnThrow;
-        manager.FPCInput.OnDropAction += OnDrop;
+        manager.FpcInput.OnInteractAction += OnInteract;
+        manager.FpcInput.OnThrowAction += OnThrow;
+        manager.FpcInput.OnDropAction += OnDrop;
     }
 
     private void OnDisable()
     {
-        manager.FPCInput.OnInteractAction -= OnInteract;
-        manager.FPCInput.OnThrowAction -= OnThrow;
-        manager.FPCInput.OnDropAction -= OnDrop;
+        manager.FpcInput.OnInteractAction -= OnInteract;
+        manager.FpcInput.OnThrowAction -= OnThrow;
+        manager.FpcInput.OnDropAction -= OnDrop;
     }
     
     private void OnInteract(InputAction.CallbackContext context)
     {
         if (context.performed)
         {
-            if (_closestInteractable)
-            {
-                _closestInteractable.Interact(this);
-            }
+            var interactorData = new InteractorData(this);
+            _closestInteractable?.Interact(interactorData);
         }
     }
     
@@ -122,24 +121,24 @@ public class FPCInteraction : MonoBehaviour
 
     private void ThrowHeldObject()
     {
-        if (!_heldObject) return;
+        if (!heldObject) return;
         
         var force = throwForceRange.Lerp(_throwInputHoldTime / throwHeldRange.maxValue);
-        _heldObject.Throw(manager.FPCCamera.GetAimDirection(), force);
-        _heldObject = null;
+        heldObject.Throw(manager.FpcCamera.GetAimDirection(), force);
+        heldObject = null;
     }
 
     private void DropHeldObject()
     {
-        _heldObject?.Drop();
-        _heldObject = null;
+        heldObject?.Drop();
+        heldObject = null;
     }
 
     private void CheckHeldObjectHeight()
     {
-        if (!_heldObject) return;
+        if (!heldObject) return;
         
-        if (_heldObject.transform.position.y < (transform.position.y - autoDropYOffset))
+        if (heldObject.transform.position.y < (transform.position.y - autoDropYOffset))
         {
             DropHeldObject();
         }
@@ -147,7 +146,7 @@ public class FPCInteraction : MonoBehaviour
 
     private void UpdateHeldInputTime()
     {
-        if (!_heldObject) return;
+        if (!heldObject) return;
         
         if (_throwInputHeld && _throwInputHoldTime < throwHeldRange.maxValue)
         {
@@ -158,20 +157,15 @@ public class FPCInteraction : MonoBehaviour
     
     private void CheckForInteractable()
     {
-        var colliders = Physics.OverlapSphere(
-            interactionPosition.position, 
-            interactionRadius, 
-            interactionLayer
-        );
-
-        Interactable closestInteractable = null;
+        var colliders = Physics.OverlapSphere(interactionPosition.position, interactionRadius, interactionLayer);
+        IInteractable closestInteractable = null;
         float closestDistance = float.MaxValue;
 
         foreach (var col in colliders)
         {
-            if (col.TryGetComponent(out Interactable interactable))
+            if (col.TryGetComponent(out IInteractable interactable))
             {
-                if (!interactable.CanInteract) continue;
+                if (!interactable.CanInteract()) continue;
 
                 float distance = Vector3.Distance(interactionPosition.position, col.transform.position);
             
@@ -185,11 +179,9 @@ public class FPCInteraction : MonoBehaviour
 
         if (closestInteractable != _closestInteractable)
         {
-            if (_closestInteractable) _closestInteractable.UnHighlight();
-        
+            _closestInteractable?.HideInteractionTip();
+            _closestInteractable?.ShowInteractionTip();
             _closestInteractable = closestInteractable;
-    
-            if (_closestInteractable) _closestInteractable.Highlight();
         }
     }
     

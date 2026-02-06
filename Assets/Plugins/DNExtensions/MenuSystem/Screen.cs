@@ -7,7 +7,7 @@ using PrimeTween;
 using UnityEngine;
 
 
-namespace DNExtenstions.MenuSystem
+namespace DNExtensions.MenuSystem
 {
 
     [DisallowMultipleComponent]

@@ -1,48 +1,31 @@
 using System;
+using DNExtensions.FirstPersonController.Interactable;
 using DNExtensions.Utilities;
 using DNExtensions.Utilities.AudioEvent;
+using DNExtensions.Utilities.AutoGet;
 using UnityEngine;
 
 [SelectionBase]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(Interactable))]
+[RequireComponent(typeof(InteractableBase))]
 [RequireComponent(typeof(AudioSource))]
-public class PickableObject : MonoBehaviour
+public class PickableObject : InteractableBase
 {
 
     [Header("Pickable Object Settings")]
     [Tooltip( "Affects the players movement speed when this object is held, 1 has no effect.")]
     [SerializeField, Min(1)] private float objectWeight = 1f;
     [SerializeField] private float heldFollowForce = 15f;
-    [SerializeField] protected Rigidbody rigidBody;
-    [SerializeField] protected Interactable interactable;
-    [SerializeField] protected AudioSource audioSource;
+    [SerializeField, AutoGetSelf] private Rigidbody rigidBody;
+    [SerializeField, AutoGetSelf] private InteractableBase interactable;
+    [SerializeField, AutoGetSelf] private AudioSource audioSource;
     [SerializeField] private SOAudioEvent collisionSfx;
 
     private bool _isBeingHeld;
     private Transform _holdPosition;
-    
     public float ObjectWeight => objectWeight;
-    
-    private void OnValidate()
-    {
-        if (!rigidBody) rigidBody = this.GetOrAddComponent<Rigidbody>();
-        if (!interactable) interactable = this.GetOrAddComponent<Interactable>();
-        if (!audioSource) audioSource = this.GetOrAddComponent<AudioSource>();
-    }
-
-    protected virtual void OnEnable()
-    {
-        interactable.OnInteract += OnInteract;
-        
-    }
-    
-    protected virtual void OnDisable()
-    {
-        interactable.OnInteract -= OnInteract;
-    }   
     
     
     private void OnCollisionEnter(Collision collision)
@@ -53,21 +36,21 @@ public class PickableObject : MonoBehaviour
         }
     }
     
-    private void OnInteract(FPCInteraction interactor)
-    {
-        if (!rigidBody || !interactor) return;
-
-        if (!_isBeingHeld)
-        {
-            PickUp(interactor);
-        }
-
-    }
-    
 
     private void FixedUpdate()
     {
         FollowHoldPosition();
+    }
+    
+    public override void Interact(InteractorData interactorData)
+    {
+        if (!CanInteract() || _isBeingHeld) return;
+
+        if (!_isBeingHeld)
+        {
+            PickUp(interactorData);
+        }
+
     }
 
     private void FollowHoldPosition()
@@ -96,21 +79,22 @@ public class PickableObject : MonoBehaviour
     }
     
     
-    private void PickUp(FPCInteraction interactor)
+    private void PickUp(InteractorData interactorData)
     {
         if (!rigidBody || _isBeingHeld) return;
 
-        interactable?.SetCanInteract(false);
+        canInteract = false;
         rigidBody.useGravity = true;
         _isBeingHeld = true;
-        _holdPosition = interactor.HoldPosition;
-        interactor.HeldObject = this;
+        _holdPosition = interactorData.FpcInteraction.HoldPosition;
+        interactorData.FpcInteraction.HeldObject = this;
     }
 
     public void Drop()
     {
         if (!rigidBody || !_isBeingHeld) return;
-        interactable?.SetCanInteract(true);
+        
+        canInteract = true;
         rigidBody.useGravity = true;
         _isBeingHeld = false;
         _holdPosition = null;
@@ -120,7 +104,7 @@ public class PickableObject : MonoBehaviour
     {
         if (!rigidBody) return;
 
-        interactable?.SetCanInteract(true);
+        canInteract = true;
         rigidBody.useGravity = true;
         _isBeingHeld = false;
         _holdPosition = null;

@@ -24,9 +24,9 @@ namespace DNExtensions.Utilities.AutoGet
         [Tooltip("Validate AutoGet fields when saving scenes")]
         [SerializeField] private bool validateOnSceneSave = true;
         [Tooltip("Show populate button (🔄) next to AutoGet fields")]
-        [SerializeField] private bool showPopulateButton = true;
+        [SerializeField] private bool showPopulateButton;
         [Tooltip("Cache reflection data for better performance. Disable if using Hot Reload plugins.")]
-        [SerializeField] private bool cacheReflectionData = false;
+        [SerializeField] private bool cacheReflectionData;
 
         public AutoPopulateMode AutoPopulateMode => autoPopulateMode;
         public bool AutoPopulateInPrefabs => autoPopulateInPrefabs;

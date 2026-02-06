@@ -9,7 +9,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 
-namespace  DNExtensions.Utilities.MenuSystem
+namespace DNExtensions.Utilities.MenuSystem
 {
     
     [DisallowMultipleComponent]

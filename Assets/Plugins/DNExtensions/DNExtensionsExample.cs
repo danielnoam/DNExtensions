@@ -2,21 +2,21 @@ using System;
 using System.Collections.Generic;
 using DNExtensions.CinemachineExtesnstions;
 using DNExtensions.Utilities;
+using DNExtensions.Utilities.AudioEvent;
 using DNExtensions.Utilities.SerializableSelector;
 using DNExtensions.Utilities.Button;
 using DNExtensions.Utilities.SerializedInterface;
 using DNExtensions.Utilities.CustomFields;
+using DNExtensions.Utilities.InlineSO;
 using DNExtensions.Utilities.PrefabSelector;
 using DNExtensions.Utilities.RangedValues;
 using Unity.Cinemachine;
 using UnityEngine;
-using UnityEngine.Scripting.APIUpdating;
 
 [RequireComponent(typeof(CinemachineImpulseSource))]
 public class DNExtensionsExample : MonoBehaviour
 {
     
-
     [Header("Attributes")]
     [ReadOnly] [SerializeField] private int testReadOnly;
     [SerializeField] private bool conditionalCheck;
@@ -46,6 +46,10 @@ public class DNExtensionsExample : MonoBehaviour
     [SerializeField] private ChanceList<string> testStrings;
     [SerializeField] private ChanceList<int> testInts;
     [SerializeField] private ChanceList<TestEnum> testEnums;
+    
+    [Separator]
+    [Header("Inline So")]
+    [SerializeField, InlineSO] private SOAudioEvent testAudioEvent;
     
     [Separator]
     [Header("Serialized Interface")]

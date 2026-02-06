@@ -4,10 +4,11 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using DNExtensions.Utilities;
 using DNExtensions.ControllerRumbleSystem;
+using DNExtensions.Utilities.AutoGet;
 
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(FPCManager))]
+[RequireComponent(typeof(FpcManager))]
 public class FPCMovement : MonoBehaviour
 {
     [Header("Movement")]
@@ -22,12 +23,9 @@ public class FPCMovement : MonoBehaviour
     [SerializeField] private float jumpBufferTime = 0.1f;
     [SerializeField] private float coyoteTime = 0.1f;
     
-    
     [Header("References")] 
-    [SerializeField] private FPCManager manager;
+    [SerializeField, AutoGetSelf] private FpcManager manager;
 
-
-    
     
     private Vector3 _velocity;
     private Vector3 _dashDirection;
@@ -44,25 +42,20 @@ public class FPCMovement : MonoBehaviour
     public bool IsRunning { get; private set; }
     public bool IsJumping { get; private set; }
     public bool IsFalling { get; private set; }
-
-
-    private void OnValidate()
-    {
-        if (!manager) manager = GetComponent<FPCManager>();
-    }
+    
 
     private void OnEnable()
     {
-        manager.FPCInput.OnMoveAction += GetMovementInput;
-        manager.FPCInput.OnRunAction += GetRunningInput;
-        manager.FPCInput.OnJumpAction += GetJumpInput;
+        manager.FpcInput.OnMoveAction += GetMovementInput;
+        manager.FpcInput.OnRunAction += GetRunningInput;
+        manager.FpcInput.OnJumpAction += GetJumpInput;
     }
 
     private void OnDisable()
     {
-        manager.FPCInput.OnMoveAction -= GetMovementInput;
-        manager.FPCInput.OnRunAction -= GetRunningInput;
-        manager.FPCInput.OnJumpAction -= GetJumpInput;
+        manager.FpcInput.OnMoveAction -= GetMovementInput;
+        manager.FpcInput.OnRunAction -= GetRunningInput;
+        manager.FpcInput.OnJumpAction -= GetJumpInput;
     }
     
     private void Update()
@@ -97,15 +90,15 @@ public class FPCMovement : MonoBehaviour
     {
         if (!manager.CharacterController.enabled) return;
         
-        Vector3 cameraForward = manager.FPCCamera.GetMovementDirection();
+        Vector3 cameraForward = manager.FpcCamera.GetMovementDirection();
         Vector3 cameraRight = Quaternion.Euler(0, 90, 0) * cameraForward;
         Vector3 moveDir = (cameraForward * _moveInput.y + cameraRight * _moveInput.x).normalized;
 
         IsRunning = _runInput && canRun;
         float targetMoveSpeed = IsRunning ? runSpeed : walkSpeed;
-        if (manager.FPCInteraction.HeldObject)
+        if (manager.FpcInteraction.HeldObject)
         {
-            targetMoveSpeed /= manager.FPCInteraction.HeldObject.ObjectWeight;
+            targetMoveSpeed /= manager.FpcInteraction.HeldObject.ObjectWeight;
         }
         manager.CharacterController.Move(moveDir * (targetMoveSpeed * Time.deltaTime));
     }

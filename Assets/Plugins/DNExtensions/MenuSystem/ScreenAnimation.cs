@@ -4,7 +4,7 @@ using DNExtensions.Utilities.SerializableSelector;
 using PrimeTween;
 using UnityEngine;
 
-namespace DNExtenstions.MenuSystem
+namespace DNExtensions.MenuSystem
 {
     [Serializable]
     public abstract class ScreenAnimation

@@ -5,7 +5,7 @@ namespace DNExtensions.Utilities.Springs
 {
     
     [Serializable]
-    public class Spring
+    public class FloatSpring
     {
         [Tooltip("How tightly the spring pulls toward the target. Higher = snappier response, more bouncing.")]
         public float stiffness = 10f;

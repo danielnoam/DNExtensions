@@ -1,9 +1,11 @@
+using DNExtensions.Utilities.AutoGet;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(FPCManager))]
-public abstract class FPCCameraBase : MonoBehaviour
+[RequireComponent(typeof(FpcManager))]
+public class FPCCamera : MonoBehaviour
 {
     [Header("Settings")]
     [SerializeField] [Range(0, 0.1f)] private float mouseLookSensitivity = 0.04f;
@@ -14,13 +16,14 @@ public abstract class FPCCameraBase : MonoBehaviour
     [SerializeField] private bool invertVertical;
     
     [Header("FOV")]
-    [SerializeField] protected float baseFov = 60f;
-    [SerializeField] protected float runFovMultiplier = 1.3f;
-    [SerializeField] protected float fovChangeSmoothing = 5;
+    [SerializeField] private float baseFov = 60f;
+    [SerializeField] private float runFovMultiplier = 1.3f;
+    [SerializeField] private float fovChangeSmoothing = 5;
     
     [Header("References")]
-    [SerializeField] protected FPCManager manager;
-    [SerializeField] protected Transform playerHead;
+    [SerializeField, AutoGetSelf] private FpcManager manager;
+    [SerializeField, AutoGetChildren] private CinemachineCamera cinemachineCamera;
+    [SerializeField] private Transform playerHead;
 
     private float _currentPanAngle;
     private float _currentTiltAngle;
@@ -31,13 +34,15 @@ public abstract class FPCCameraBase : MonoBehaviour
 
     
 
-    protected virtual void OnValidate()
+    private void OnValidate()
     {
-        if (!manager) manager = GetComponent<FPCManager>();
-        UpdateFovInEditor();
+        if (cinemachineCamera) 
+        {
+            cinemachineCamera.Lens.FieldOfView = baseFov;
+        }
     }
 
-    protected virtual void Awake()
+    private void Awake()
     {
         _currentPanAngle = transform.eulerAngles.y;
         _currentTiltAngle = playerHead.localEulerAngles.x;
@@ -45,17 +50,17 @@ public abstract class FPCCameraBase : MonoBehaviour
         _targetTiltAngle = _currentTiltAngle;
     }
 
-    protected virtual void OnEnable()
+    private void OnEnable()
     {
-        manager.FPCInput.OnLookAction += OnLook;
+        manager.FpcInput.OnLookAction += OnLook;
     }
 
-    protected virtual void OnDisable()
+    private void OnDisable()
     {
-        manager.FPCInput.OnLookAction -= OnLook;
+        manager.FpcInput.OnLookAction -= OnLook;
     }
 
-    protected virtual void Update()
+    private void Update()
     {
         HandleLookInput();
         UpdateFov();
@@ -72,7 +77,7 @@ public abstract class FPCCameraBase : MonoBehaviour
         if (!playerHead) return;
         
         float sensitivity = mouseLookSensitivity;
-        if (manager.FPCInput.IsGamepad)
+        if (manager.FpcInput.IsGamepad)
         {
             sensitivity = gamepadLookSensitivity * Time.deltaTime;
         }
@@ -108,12 +113,19 @@ public abstract class FPCCameraBase : MonoBehaviour
     private void UpdateFov()
     {
         float targetFov = baseFov;
-        if (manager.FPCMovement.IsRunning)
+        if (manager.FpcMovement.IsRunning)
         {
             targetFov *= runFovMultiplier;
         }
 
-        SetFieldOfView(targetFov);
+        if (cinemachineCamera)
+        {
+            cinemachineCamera.Lens.FieldOfView = Mathf.Lerp(
+                cinemachineCamera.Lens.FieldOfView, 
+                targetFov, 
+                Time.deltaTime * fovChangeSmoothing
+            );
+        }
     }
     
     public Vector3 GetMovementDirection()
@@ -127,6 +139,4 @@ public abstract class FPCCameraBase : MonoBehaviour
         return Quaternion.Euler(_currentTiltAngle, _currentPanAngle, 0) * Vector3.forward;
     }
     
-    protected abstract void UpdateFovInEditor();
-    protected abstract void SetFieldOfView(float targetFov);
 }

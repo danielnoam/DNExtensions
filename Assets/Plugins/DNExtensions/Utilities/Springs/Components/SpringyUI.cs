@@ -8,6 +8,7 @@ using DNExtensions.Utilities.Button;
 namespace DNExtensions.Utilities.Springs
 {
 
+    [AddComponentMenu("DNExtensions/Springy UI")]
     [RequireComponent(typeof(RectTransform))]
     public class SpringyUI : MonoBehaviour
     {
@@ -34,7 +35,7 @@ namespace DNExtensions.Utilities.Springs
         [Header("Color (Requires Graphic)")] [SerializeField]
         private bool color;
         [SerializeField, ShowIf("color")] private Color colorOffset = Color.clear;
-        [SerializeField, ShowIf("color")] private Spring colorAlphaSpring = new Spring();
+        [SerializeField, ShowIf("color")] private FloatSpring colorAlphaFloatSpring = new FloatSpring();
 
         private Graphic _targetGraphic;
         private RectTransform _rectTransform;
@@ -74,7 +75,7 @@ namespace DNExtensions.Utilities.Springs
                 if (_targetGraphic)
                 {
                     _baseColor = _targetGraphic.color;
-                    colorAlphaSpring.target = _baseColor.a;
+                    colorAlphaFloatSpring.target = _baseColor.a;
                 }
             }
 
@@ -118,7 +119,7 @@ namespace DNExtensions.Utilities.Springs
 
                 if (color && _targetGraphic)
                 {
-                    colorAlphaSpring.Reset(_baseColor.a);
+                    colorAlphaFloatSpring.Reset(_baseColor.a);
                     _targetGraphic.color = _baseColor;
                 }
             }
@@ -148,9 +149,9 @@ namespace DNExtensions.Utilities.Springs
 
             if (color && _targetGraphic)
             {
-                colorAlphaSpring.Update(Time.deltaTime);
+                colorAlphaFloatSpring.Update(Time.deltaTime);
                 Color newColor = _baseColor;
-                newColor.a = colorAlphaSpring.Value;
+                newColor.a = colorAlphaFloatSpring.Value;
                 _targetGraphic.color = newColor;
             }
         }
@@ -183,10 +184,10 @@ namespace DNExtensions.Utilities.Springs
 
             if (color)
             {
-                if (colorAlphaSpring.IsLocked)
-                    colorAlphaSpring.Unlock();
+                if (colorAlphaFloatSpring.IsLocked)
+                    colorAlphaFloatSpring.Unlock();
                 else
-                    colorAlphaSpring.Lock(resetVelocity);
+                    colorAlphaFloatSpring.Lock(resetVelocity);
             }
         }
 
@@ -213,8 +214,8 @@ namespace DNExtensions.Utilities.Springs
 
             if (color && _targetGraphic)
             {
-                colorAlphaSpring.target = _baseColor.a;
-                colorAlphaSpring.SetValue(colorOffset.a);
+                colorAlphaFloatSpring.target = _baseColor.a;
+                colorAlphaFloatSpring.SetValue(colorOffset.a);
 
                 Color startColor = _baseColor;
                 startColor.a = colorOffset.a;
@@ -242,7 +243,7 @@ namespace DNExtensions.Utilities.Springs
 
             if (color && _targetGraphic)
             {
-                colorAlphaSpring.target = colorOffset.a;
+                colorAlphaFloatSpring.target = colorOffset.a;
             }
         }
 

@@ -14,14 +14,6 @@ namespace DNExtensions.Utilities
     public static class SelectableUtilities
     {
 
-        /// <summary>
-        /// Gets the first interactable Selectable in children
-        /// </summary>
-        public static Selectable GetFirstInteractableSelectable(this GameObject gameObject)
-        {
-            return gameObject.GetComponentsInChildren<Selectable>()
-                .FirstOrDefault(s => s.isActiveAndEnabled && s.interactable);
-        }
 
         /// <summary>
         /// Adds an event listener to a Selectable for the specified EventTriggerType
@@ -114,18 +106,18 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Enables mouse hover selection for all Selectables
         /// </summary>
-        public static void EnableMouseHoverSelection(this IEnumerable<Selectable> selectables)
+        public static void EnableOnPointerEnterSelection(this IEnumerable<Selectable> selectables)
         {
             foreach (var selectable in selectables)
             {
-                selectable.EnableMouseHoverSelection();
+                selectable.EnableOnPointerEnterSelection();
             }
         }
 
         /// <summary>
         /// Enables mouse hover selection for a single Selectable
         /// </summary>
-        public static void EnableMouseHoverSelection(this Selectable selectable)
+        public static void EnableOnPointerEnterSelection(this Selectable selectable)
         {
             selectable.OnPointerEnter(data =>
             {
@@ -135,6 +127,33 @@ namespace DNExtensions.Utilities
                 }
             });
         }
+        
+        /// <summary>
+        /// Enables mouse exit deselection for all selectables
+        /// </summary>
+        public static void EnableOnPointerExitDeselection(this IEnumerable<Selectable> selectables)
+        {
+            foreach (var selectable in selectables)
+            {
+                selectable.EnableOnPointerExitDeselection();
+            }
+        }
+        
+        
+        /// <summary>
+        /// Enables mouse click selection for all Selectables
+        /// </summary>
+        public static void EnableOnPointerExitDeselection(this Selectable selectable)
+        {
+            selectable.OnPointerExit(data =>
+            {
+                if (selectable.interactable && selectable.IsSelected())
+                {
+                    EventSystem.current.SetSelectedGameObject(null);
+                }
+            });
+        }
+
 
         /// <summary>
         /// Sets up navigation for a list of Selectables in order
@@ -206,15 +225,7 @@ namespace DNExtensions.Utilities
                 selectables[i].navigation = nav;
             }
         }
-
-        /// <summary>
-        /// Clears all navigation from a Selectable
-        /// </summary>
-        public static void ClearNavigation(this Selectable selectable)
-        {
-            var nav = new Navigation { mode = Navigation.Mode.None };
-            selectable.navigation = nav;
-        }
+        
 
         /// <summary>
         /// Checks if a Selectable is currently selected in the EventSystem

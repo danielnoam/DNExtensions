@@ -13,28 +13,54 @@ namespace DNExtensions.Utilities.CustomFields.Editor
         {
             var isSetProp = property.FindPropertyRelative("isSet");
             var valueProp = property.FindPropertyRelative("value");
+            var hideValueProp = property.FindPropertyRelative("hideValueIfSet");
 
             if (isSetProp == null || valueProp == null)
             {
                 EditorGUI.LabelField(position, label.text, "OptionalField property not found");
                 return;
             }
+            
+            HandleContextMenu(position, property, hideValueProp);
 
             EditorGUI.BeginProperty(position, label, property);
 
             var labelRect = EditorGUI.PrefixLabel(position, label);
             var toggleRect = new Rect(labelRect.x, labelRect.y, ToggleWidth, labelRect.height);
-            var valueRect = new Rect(labelRect.x + ToggleWidth + Spacing, labelRect.y, 
-                labelRect.width - ToggleWidth - Spacing, labelRect.height);
-
-            isSetProp.boolValue = EditorGUI.Toggle(toggleRect, isSetProp.boolValue);
-
-            var wasEnabled = GUI.enabled;
-            GUI.enabled = isSetProp.boolValue;
-            EditorGUI.PropertyField(valueRect, valueProp, GUIContent.none);
-            GUI.enabled = wasEnabled;
+            var valueRect = new Rect(labelRect.x + ToggleWidth + Spacing, labelRect.y, labelRect.width - ToggleWidth - Spacing, labelRect.height);
+            
+            EditorGUI.BeginChangeCheck();
+            bool newIsSet = EditorGUI.Toggle(toggleRect, isSetProp.boolValue);
+            if (EditorGUI.EndChangeCheck())
+            {
+                isSetProp.boolValue = newIsSet;
+            }
+            
+            if (!hideValueProp.boolValue || !isSetProp.boolValue)
+            {
+                var wasEnabled = GUI.enabled;
+                GUI.enabled = isSetProp.boolValue;
+                EditorGUI.PropertyField(valueRect, valueProp, GUIContent.none);
+                GUI.enabled = wasEnabled;
+            }
 
             EditorGUI.EndProperty();
+        }
+        
+        private void HandleContextMenu(Rect position, SerializedProperty property, SerializedProperty hideValueProp)
+        {
+            Event current = Event.current;
+            if (current.type == EventType.ContextClick && position.Contains(current.mousePosition))
+            {
+                GenericMenu menu = new GenericMenu();
+                menu.AddItem(new GUIContent("Hide Value If Set"), hideValueProp.boolValue, () =>
+                {
+                    hideValueProp.boolValue = !hideValueProp.boolValue;
+                    property.serializedObject.ApplyModifiedProperties();
+                });
+                menu.ShowAsContext();
+                current.Use();
+            }
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
