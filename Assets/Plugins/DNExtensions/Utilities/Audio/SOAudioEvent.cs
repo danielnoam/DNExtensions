@@ -1,7 +1,6 @@
 
 using DNExtensions.Utilities.RangedValues;
 using UnityEngine;
-using UnityEditor;
 using UnityEngine.Audio;
 using Random = UnityEngine.Random;
 
@@ -11,7 +10,7 @@ using Random = UnityEngine.Random;
 namespace DNExtensions.Utilities.AudioEvent
 {
     
-    [CreateAssetMenu(fileName = "New AudioEvent", menuName = "Scriptable Objects/New Audio Event")]
+    [CreateAssetMenu(fileName = "New AudioEvent", menuName = "Scriptable Objects/Audio Event")]
     public class SOAudioEvent : ScriptableObject
     {
 
@@ -27,8 +26,7 @@ namespace DNExtensions.Utilities.AudioEvent
         public bool bypassListenerEffects;
         public bool bypassReverbZones;
         public bool loop;
-
-        [Header("3D Sound")] public bool set3DSettings;
+        public bool set3DSettings;
         [EnableIf("set3DSettings")] [MinMaxRange(0f, 5f)] public float dopplerLevel = 1f;
         [EnableIf("set3DSettings")] [MinMaxRange(0f, 360f)] public float spread;
         [EnableIf("set3DSettings")] public AudioRolloffMode rolloffMode = AudioRolloffMode.Logarithmic;
@@ -185,61 +183,5 @@ namespace DNExtensions.Utilities.AudioEvent
         
         
     }
-
-
-    #region Editor ------------------------------------------------------------------------------------------------
-
-#if UNITY_EDITOR
-
     
-    [CustomEditor(typeof(SOAudioEvent), true)]
-    public class AudioEventEditor : UnityEditor.Editor
-    {
-
-        [SerializeField] private AudioSource previewer;
-
-        public void OnEnable()
-        {
-            previewer = EditorUtility
-                .CreateGameObjectWithHideFlags("Audio preview", HideFlags.HideAndDontSave, typeof(AudioSource))
-                .GetComponent<AudioSource>();
-        }
-
-        public void OnDisable()
-        {
-            DestroyImmediate(previewer.gameObject);
-        }
-
-        public override void OnInspectorGUI()
-        {
-            DrawDefaultInspector();
-
-            EditorGUI.BeginDisabledGroup(serializedObject.isEditingMultipleObjects);
-            if (GUILayout.Button("Preview Sound"))
-            {
-                ((SOAudioEvent)target).Play(previewer);
-
-                if (previewer.clip)
-                {
-                    Debug.Log("Playing " + previewer.clip.name);
-                }
-
-            }
-
-            if (GUILayout.Button("Stop Sound"))
-            {
-                ((SOAudioEvent)target).Stop(previewer);
-            }
-
-            EditorGUI.EndDisabledGroup();
-        }
-    }
-#endif
-
-    #endregion Editor ------------------------------------------------------------------------------------------------
-
-
-
-
-
 }

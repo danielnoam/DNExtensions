@@ -3,7 +3,7 @@ using DNExtensions.Utilities;
 using DNExtensions.Utilities.RangedValues;
 using UnityEngine;
 
-namespace DNExtensions
+namespace DNExtensions.Components
 {
     
 

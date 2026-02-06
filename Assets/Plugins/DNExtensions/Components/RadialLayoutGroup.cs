@@ -6,7 +6,7 @@ using UnityEditor;
 #endif
 
 
-namespace DNExtensions
+namespace DNExtensions.Components
 {
     [AddComponentMenu("DNExtensions/Radial Layout Group")]
     public class RadialLayoutGroup : LayoutGroup
@@ -150,7 +150,7 @@ namespace DNExtensions
 }
 
 #if UNITY_EDITOR
-namespace DNExtensions.Editor
+namespace DNExtensions.Components.Editor
 {
     [CustomEditor(typeof(RadialLayoutGroup))]
     public class RadialLayoutGroupEditor : UnityEditor.Editor

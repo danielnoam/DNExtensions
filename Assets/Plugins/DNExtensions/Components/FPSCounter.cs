@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DNExtensions
+namespace DNExtensions.Components
 {
     /// <summary>
     /// Displays FPS counter in screen overlay without requiring UI setup

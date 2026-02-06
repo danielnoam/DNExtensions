@@ -8,7 +8,6 @@ namespace DNExtensions.ObjectPooling
     /// Create via: Assets > Create > DNExtensions > Object Pooling Settings
     /// Must be placed in Resources folder for runtime access.
     /// </summary>
-    [CreateAssetMenu(fileName = "ObjectPoolingSettings", menuName = "DNExtensions/Object Pooling Settings", order = 1)]
     public class ObjectPoolingSettings : ScriptableObject
     {
         private static ObjectPoolingSettings _instance;
