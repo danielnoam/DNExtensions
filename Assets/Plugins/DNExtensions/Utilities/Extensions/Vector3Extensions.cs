@@ -1,19 +1,12 @@
-using System;
 using UnityEngine;
 
 namespace DNExtensions.Utilities
 {
-    /// <summary>
-    /// Utility functions for Vector3 operations
-    /// </summary>
-    public static class Vector3Utilities
+    public static class Vector3Extensions
     {
         /// <summary>
         /// Adds a Vector3 to this Vector3
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="addition">The vector to add</param>
-        /// <returns>A new Vector3 with the addition applied</returns>
         public static Vector3 Add(this Vector3 vector, Vector3 addition)
         {
             return vector + addition;
@@ -22,22 +15,22 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Adds values to individual components of the Vector3
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="x">Value to add to an X component</param>
-        /// <param name="y">Value to add to a Y component</param>
-        /// <param name="z">Value to add to a Z component</param>
-        /// <returns>A new Vector3 with the additions applied</returns>
         public static Vector3 Add(this Vector3 vector, float x = 0f, float y = 0f, float z = 0f)
         {
             return new Vector3(vector.x + x, vector.y + y, vector.z + z);
         }
 
         /// <summary>
+        /// Sets any x y z values of a Vector3 (null values are unchanged)
+        /// </summary>
+        public static Vector3 With(this Vector3 vector, float? x = null, float? y = null, float? z = null)
+        {
+            return new Vector3(x ?? vector.x, y ?? vector.y, z ?? vector.z);
+        }
+
+        /// <summary>
         /// Removes a Vector3 from this Vector3 (subtraction)
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="subtraction">The vector to remove</param>
-        /// <returns>A new Vector3 with the subtraction applied</returns>
         public static Vector3 Remove(this Vector3 vector, Vector3 subtraction)
         {
             return vector - subtraction;
@@ -46,11 +39,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Removes values from individual components of the Vector3
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="x">Value to remove from X component</param>
-        /// <param name="y">Value to remove from Y component</param>
-        /// <param name="z">Value to remove from Z component</param>
-        /// <returns>A new Vector3 with the subtractions applied</returns>
         public static Vector3 Remove(this Vector3 vector, float x = 0f, float y = 0f, float z = 0f)
         {
             return new Vector3(vector.x - x, vector.y - y, vector.z - z);
@@ -59,9 +47,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Adds a value to the X component only
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="value">The value to add to X</param>
-        /// <returns>A new Vector3 with modified X component</returns>
         public static Vector3 AddX(this Vector3 vector, float value)
         {
             return new Vector3(vector.x + value, vector.y, vector.z);
@@ -70,9 +55,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Adds a value to the Y component only
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="value">The value to add to Y</param>
-        /// <returns>A new Vector3 with modified Y component</returns>
         public static Vector3 AddY(this Vector3 vector, float value)
         {
             return new Vector3(vector.x, vector.y + value, vector.z);
@@ -81,9 +63,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Adds a value to the Z component only
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="value">The value to add to Z</param>
-        /// <returns>A new Vector3 with modified Z component</returns>
         public static Vector3 AddZ(this Vector3 vector, float value)
         {
             return new Vector3(vector.x, vector.y, vector.z + value);
@@ -92,9 +71,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Removes a value from the X component only
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="value">The value to remove from X</param>
-        /// <returns>A new Vector3 with modified X component</returns>
         public static Vector3 RemoveX(this Vector3 vector, float value)
         {
             return new Vector3(vector.x - value, vector.y, vector.z);
@@ -103,9 +79,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Removes a value from the Y component only
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="value">The value to remove from Y</param>
-        /// <returns>A new Vector3 with modified Y component</returns>
         public static Vector3 RemoveY(this Vector3 vector, float value)
         {
             return new Vector3(vector.x, vector.y - value, vector.z);
@@ -114,9 +87,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Removes a value from the Z component only
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="value">The value to remove from Z</param>
-        /// <returns>A new Vector3 with modified Z component</returns>
         public static Vector3 RemoveZ(this Vector3 vector, float value)
         {
             return new Vector3(vector.x, vector.y, vector.z - value);
@@ -125,9 +95,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Sets the X component to a specific value
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="value">The new X value</param>
-        /// <returns>A new Vector3 with modified X component</returns>
         public static Vector3 SetX(this Vector3 vector, float value)
         {
             return new Vector3(value, vector.y, vector.z);
@@ -136,9 +103,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Sets the Y component to a specific value
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="value">The new Y value</param>
-        /// <returns>A new Vector3 with modified Y component</returns>
         public static Vector3 SetY(this Vector3 vector, float value)
         {
             return new Vector3(vector.x, value, vector.z);
@@ -147,9 +111,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Sets the Z component to a specific value
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="value">The new Z value</param>
-        /// <returns>A new Vector3 with modified Z component</returns>
         public static Vector3 SetZ(this Vector3 vector, float value)
         {
             return new Vector3(vector.x, vector.y, value);
@@ -158,11 +119,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Multiplies each component by corresponding values
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="x">Multiplier for X component</param>
-        /// <param name="y">Multiplier for Y component</param>
-        /// <param name="z">Multiplier for Z component</param>
-        /// <returns>A new Vector3 with multiplied components</returns>
         public static Vector3 Multiply(this Vector3 vector, float x = 1f, float y = 1f, float z = 1f)
         {
             return new Vector3(vector.x * x, vector.y * y, vector.z * z);
@@ -171,11 +127,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Divides each component by corresponding values
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="x">Divisor for an X component</param>
-        /// <param name="y">Divisor for a Y component</param>
-        /// <param name="z">Divisor for a Z component</param>
-        /// <returns>A new Vector3 with divided components</returns>
         public static Vector3 Divide(this Vector3 vector, float x = 1f, float y = 1f, float z = 1f)
         {
             return new Vector3(
@@ -188,10 +139,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Clamps all components between min and max values
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="min">Minimum value for all components</param>
-        /// <param name="max">Maximum value for all components</param>
-        /// <returns>A new Vector3 with clamped components</returns>
         public static Vector3 Clamp(this Vector3 vector, float min, float max)
         {
             return new Vector3(
@@ -204,10 +151,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Clamps each component between corresponding min and max values
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <param name="min">Minimum values for each component</param>
-        /// <param name="max">Maximum values for each component</param>
-        /// <returns>A new Vector3 with clamped components</returns>
         public static Vector3 Clamp(this Vector3 vector, Vector3 min, Vector3 max)
         {
             return new Vector3(
@@ -220,8 +163,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Rounds all components to the nearest integer
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <returns>A new Vector3 with rounded components</returns>
         public static Vector3 Round(this Vector3 vector)
         {
             return new Vector3(
@@ -234,8 +175,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Gets the absolute value of all components
         /// </summary>
-        /// <param name="vector">The original vector</param>
-        /// <returns>A new Vector3 with absolute values</returns>
         public static Vector3 Abs(this Vector3 vector)
         {
             return new Vector3(
@@ -248,8 +187,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Converts Vector3 to Vector2 by dropping the Z component
         /// </summary>
-        /// <param name="vector">The Vector3 to convert</param>
-        /// <returns>A Vector2 with X and Y components</returns>
         public static Vector2 ToVector2(this Vector3 vector)
         {
             return new Vector2(vector.x, vector.y);
@@ -260,24 +197,20 @@ namespace DNExtensions.Utilities
         /// </summary>
         /// <param name="vector">The Vector3 to convert</param>
         /// <param name="dropAxis">The axis to drop (0=X, 1=Y, 2=Z)</param>
-        /// <returns>A Vector2 with the remaining components</returns>
         public static Vector2 ToVector2(this Vector3 vector, int dropAxis)
         {
             switch (dropAxis)
             {
-                case 0: return new Vector2(vector.y, vector.z); // Drop X
-                case 1: return new Vector2(vector.x, vector.z); // Drop Y
-                case 2: return new Vector2(vector.x, vector.y); // Drop Z
-                default: return new Vector2(vector.x, vector.y); // Default: drop Z
+                case 0: return new Vector2(vector.y, vector.z);
+                case 1: return new Vector2(vector.x, vector.z);
+                case 2: return new Vector2(vector.x, vector.y);
+                default: return new Vector2(vector.x, vector.y);
             }
         }
 
         /// <summary>
         /// Checks if all components are approximately equal to zero
         /// </summary>
-        /// <param name="vector">The vector to check</param>
-        /// <param name="tolerance">The tolerance for comparison</param>
-        /// <returns>True if all components are approximately zero</returns>
         public static bool IsApproximatelyZero(this Vector3 vector, float tolerance = 0.01f)
         {
             return Mathf.Abs(vector.x) < tolerance && 
@@ -286,10 +219,20 @@ namespace DNExtensions.Utilities
         }
 
         /// <summary>
+        /// Returns whether the current Vector3 is in a given range from another Vector3
+        /// </summary>
+        /// <param name="current">The current Vector3 position</param>
+        /// <param name="target">The Vector3 position to compare against</param>
+        /// <param name="range">The range value to compare against</param>
+        /// <returns>True if the current Vector3 is in the given range from the target Vector3</returns>
+        public static bool InRangeOf(this Vector3 current, Vector3 target, float range)
+        {
+            return (current - target).sqrMagnitude <= range * range;
+        }
+
+        /// <summary>
         /// Gets the component with the largest absolute value
         /// </summary>
-        /// <param name="vector">The vector to analyze</param>
-        /// <returns>The component with the largest absolute value</returns>
         public static float GetLargestComponent(this Vector3 vector)
         {
             float absX = Mathf.Abs(vector.x);
@@ -304,8 +247,6 @@ namespace DNExtensions.Utilities
         /// <summary>
         /// Gets the component with the smallest absolute value
         /// </summary>
-        /// <param name="vector">The vector to analyze</param>
-        /// <returns>The component with the smallest absolute value</returns>
         public static float GetSmallestComponent(this Vector3 vector)
         {
             float absX = Mathf.Abs(vector.x);
@@ -315,6 +256,26 @@ namespace DNExtensions.Utilities
             if (absX <= absY && absX <= absZ) return vector.x;
             if (absY <= absZ) return vector.y;
             return vector.z;
+        }
+
+        /// <summary>
+        /// Computes a random point in an annulus (ring-shaped area) around the origin point
+        /// </summary>
+        /// <param name="origin">The center point of the annulus</param>
+        /// <param name="minRadius">Minimum radius of the annulus</param>
+        /// <param name="maxRadius">Maximum radius of the annulus</param>
+        /// <returns>A random Vector3 point within the specified annulus (Y component matches origin)</returns>
+        public static Vector3 RandomPointInAnnulus(this Vector3 origin, float minRadius, float maxRadius)
+        {
+            float angle = Random.value * Mathf.PI * 2f;
+            Vector2 direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+
+            float minRadiusSquared = minRadius * minRadius;
+            float maxRadiusSquared = maxRadius * maxRadius;
+            float distance = Mathf.Sqrt(Random.value * (maxRadiusSquared - minRadiusSquared) + minRadiusSquared);
+
+            Vector2 position = direction * distance;
+            return new Vector3(origin.x + position.x, origin.y, origin.z + position.y);
         }
     }
 }

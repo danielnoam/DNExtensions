@@ -271,13 +271,13 @@ namespace DNExtensions.Utilities.Button
         private void DrawButton(MethodInfo method, ButtonAttribute buttonAttr, bool isInGroup = false)
         {
             // Resolve actual values from settings where not explicitly set
-            int actualHeight = buttonAttr.Height >= 0 ? buttonAttr.Height : ButtonSettings.ButtonHeight;
-            int actualSpace = buttonAttr.Space >= 0 ? buttonAttr.Space : ButtonSettings.ButtonSpace;
+            int actualHeight = buttonAttr.Height >= 0 ? buttonAttr.Height : ButtonSettings.Instance.ButtonHeight;
+            int actualSpace = buttonAttr.Space >= 0 ? buttonAttr.Space : ButtonSettings.Instance.ButtonSpace;
             ButtonPlayMode actualPlayMode = buttonAttr.PlayMode != ButtonPlayMode.UseDefault 
                 ? buttonAttr.PlayMode 
-                : ButtonSettings.ButtonPlayMode;
-            Color actualColor = buttonAttr.Color != Color.clear ? buttonAttr.Color : ButtonSettings.ButtonColor;
-            string actualGroup = !string.IsNullOrEmpty(buttonAttr.Group) ? buttonAttr.Group : ButtonSettings.ButtonGroup;
+                : ButtonSettings.Instance.ButtonPlayMode;
+            Color actualColor = buttonAttr.Color != Color.clear ? buttonAttr.Color : ButtonSettings.Instance.ButtonColor;
+            string actualGroup = !string.IsNullOrEmpty(buttonAttr.Group) ? buttonAttr.Group : ButtonSettings.Instance.ButtonGroup;
             
             // Reduce space for grouped buttons
             if (isInGroup && actualSpace > 0)

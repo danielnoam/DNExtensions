@@ -1,21 +1,10 @@
-
-
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using Object = UnityEngine.Object;
 
-
 namespace DNExtensions.Utilities.PlayFromCamera
 {
-    
-    public enum PlayerSelectionMode
-    {
-        ByTag = 0,
-        ByPath = 1
-    }
-    
-    
     [InitializeOnLoad]
     public static class PlayFromCamera
     {
@@ -23,7 +12,6 @@ namespace DNExtensions.Utilities.PlayFromCamera
         {
             EditorApplication.playModeStateChanged += OnPlayModeChanged;
         }
-        
         
         public static void PlayFromCurrentCamera()
         {
@@ -42,10 +30,10 @@ namespace DNExtensions.Utilities.PlayFromCamera
             EditorPrefs.SetString("PlayFromCamera_Position", $"{cameraPosition.x},{cameraPosition.y},{cameraPosition.z}");
             EditorPrefs.SetString("PlayFromCamera_Rotation", $"{cameraRotation.x},{cameraRotation.y},{cameraRotation.z},{cameraRotation.w}");
             EditorPrefs.SetBool("PlayFromCamera_Pending", true);
-            EditorPrefs.SetBool("PlayFromCamera_SetRotation", PlayFromCameraSettings.AlsoSetRotation);
-            EditorPrefs.SetString("PlayFromCamera_PlayerTag", PlayFromCameraSettings.PlayerTag);
-            EditorPrefs.SetString("PlayFromCamera_PlayerPath", PlayFromCameraSettings.PlayerObjectPath);
-            EditorPrefs.SetInt("PlayFromCamera_PlayerMode", (int)PlayFromCameraSettings.PlayerSelectionMode);
+            EditorPrefs.SetBool("PlayFromCamera_SetRotation", PlayFromCameraSettings.Instance.AlsoSetRotation);
+            EditorPrefs.SetString("PlayFromCamera_PlayerTag", PlayFromCameraSettings.Instance.PlayerTag);
+            EditorPrefs.SetString("PlayFromCamera_PlayerPath", PlayFromCameraSettings.Instance.PlayerObjectPath);
+            EditorPrefs.SetInt("PlayFromCamera_PlayerMode", (int)PlayFromCameraSettings.Instance.PlayerSelectionMode);
 
             EditorApplication.isPlaying = true;
         }
@@ -183,7 +171,5 @@ namespace DNExtensions.Utilities.PlayFromCamera
             return player;
         }
     }
-    
 }
-
 #endif

@@ -11,7 +11,7 @@ namespace DNExtensions.Utilities.AutoGet
         Default = 0,
         
         /// <summary>
-        /// Never auto-populate. Manual only via button or context menu.
+        /// Never autopopulate. Manual only via button or context menu.
         /// </summary>
         Never = 1,
         

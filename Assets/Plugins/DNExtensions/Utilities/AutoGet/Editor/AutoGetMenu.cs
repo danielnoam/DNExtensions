@@ -3,18 +3,12 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace DNExtensions.Utilities.AutoGet.Editor
+namespace DNExtensions.Utilities.AutoGet
 {
-    
-    /// <summary>
-    /// Provides menu items for AutoGet operations.
-    /// </summary>
     internal static class AutoGetMenu
     {
         private const string MenuRoot = "Tools/DNExtensions/AutoGet/";
         private const int MenuPriority = 1000;
-        
-        
         
         [MenuItem("CONTEXT/MonoBehaviour/Populate AutoGet Fields")]
         private static void PopulateAutoGetFieldsContext(MenuCommand command)
@@ -37,8 +31,7 @@ namespace DNExtensions.Utilities.AutoGet.Editor
         [MenuItem(MenuRoot + "Settings",  false,  MenuPriority)]
         private static void OpenSettings()
         {
-            Selection.activeObject = AutoGetSettings.Instance;
-            EditorGUIUtility.PingObject(AutoGetSettings.Instance);
+            SettingsService.OpenProjectSettings("Project/DNExtensions/AutoGet");
         }
         
         [MenuItem(MenuRoot + "Populate Selected", false, MenuPriority + 1)]
@@ -61,7 +54,6 @@ namespace DNExtensions.Utilities.AutoGet.Editor
             
             Debug.Log($"Populated AutoGet fields on {count} component(s).");
         }
-        
         
         [MenuItem(MenuRoot + "Populate Current Scene", false, MenuPriority + 2)]
         internal static void PopulateCurrentScene()
@@ -99,8 +91,6 @@ namespace DNExtensions.Utilities.AutoGet.Editor
         {
             return AutoGetSettings.Instance.CacheReflectionData && AutoGetCache.CacheSize > 0;
         }
-        
-
     }
 }
 #endif

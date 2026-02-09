@@ -1,4 +1,5 @@
 using System.IO;
+using UnityEditorInternal;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -7,13 +8,9 @@ using UnityEditor;
 
 namespace DNExtensions.Utilities.AutoGet
 {
-    /// <summary>
-    /// Settings for AutoGet system behavior.
-    /// Access via AutoGetSettings.Instance.
-    /// </summary>
     public class AutoGetSettings : ScriptableObject
     {
-        private const string SettingsPath = "Assets/Settings/Editor/AutoGetSettings.asset";
+        private const string SettingsPath = "ProjectSettings/DNExtensions_AutoGetSettings.asset";
         
         [Tooltip("When should fields be automatically populated?")]
         [SerializeField] private AutoPopulateMode autoPopulateMode = AutoPopulateMode.WhenEmpty;
@@ -37,10 +34,6 @@ namespace DNExtensions.Utilities.AutoGet
 
         private static AutoGetSettings _instance;
 
-        /// <summary>
-        /// Gets the singleton instance of AutoGetSettings.
-        /// Creates the asset if it doesn't exist.
-        /// </summary>
         public static AutoGetSettings Instance
         {
             get
@@ -48,29 +41,43 @@ namespace DNExtensions.Utilities.AutoGet
 #if UNITY_EDITOR
                 if (_instance == null)
                 {
-                    _instance = AssetDatabase.LoadAssetAtPath<AutoGetSettings>(SettingsPath);
-
-                    if (_instance == null)
-                    {
-                        _instance = CreateInstance<AutoGetSettings>();
-                        
-                        var directory = Path.GetDirectoryName(SettingsPath);
-                        if (!Directory.Exists(directory))
-                        {
-                            if (directory != null) Directory.CreateDirectory(directory);
-                        }
-
-                        AssetDatabase.CreateAsset(_instance, SettingsPath);
-                        AssetDatabase.SaveAssets();
-                    }
+                    _instance = LoadOrCreate();
                 }
-
                 return _instance;
 #else
                 return null;
 #endif
             }
         }
-        
+
+#if UNITY_EDITOR
+        private static AutoGetSettings LoadOrCreate()
+        {
+            var settings = CreateInstance<AutoGetSettings>();
+            
+            if (File.Exists(SettingsPath))
+            {
+                InternalEditorUtility.LoadSerializedFileAndForget(SettingsPath);
+            }
+            
+            return settings;
+        }
+
+        public void Save()
+        {
+            InternalEditorUtility.SaveToSerializedFileAndForget(new Object[] { this }, SettingsPath, true);
+        }
+
+        public void ResetToDefaults()
+        {
+            autoPopulateMode = AutoPopulateMode.WhenEmpty;
+            autoPopulateInPrefabs = true;
+            validateOnSelection = true;
+            validateOnSceneSave = true;
+            showPopulateButton = false;
+            cacheReflectionData = false;
+            Save();
+        }
+#endif
     }
 }

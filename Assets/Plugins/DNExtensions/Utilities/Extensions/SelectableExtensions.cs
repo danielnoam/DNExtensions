@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
@@ -8,18 +7,15 @@ using UnityEngine.UI;
 
 namespace DNExtensions.Utilities
 {
-    /// <summary>
-    /// Utility methods for working with UI Selectables and EventTriggers
-    /// </summary>
-    public static class SelectableUtilities
+    public static class SelectableExtensions
     {
-
-
         /// <summary>
         /// Adds an event listener to a Selectable for the specified EventTriggerType
         /// </summary>
         public static void AddEventListener(this Selectable selectable, EventTriggerType eventType, UnityAction<BaseEventData> callback)
         {
+            if (!selectable) return;
+            
             var eventTrigger = selectable.GetOrAddComponent<EventTrigger>();
             eventTrigger.AddEventListener(eventType, callback);
         }
@@ -29,6 +25,8 @@ namespace DNExtensions.Utilities
         /// </summary>
         public static void AddEventListener(this EventTrigger eventTrigger, EventTriggerType eventType, UnityAction<BaseEventData> callback)
         {
+            if (!eventTrigger) return;
+            
             var entry = eventTrigger.triggers.FirstOrDefault(e => e.eventID == eventType);
 
             if (entry != null)
@@ -48,6 +46,8 @@ namespace DNExtensions.Utilities
         /// </summary>
         public static void RemoveEventListener(this Selectable selectable, EventTriggerType eventType, UnityAction<BaseEventData> callback)
         {
+            if (!selectable) return;
+            
             var eventTrigger = selectable.GetComponent<EventTrigger>();
             if (!eventTrigger) return;
 
@@ -108,6 +108,8 @@ namespace DNExtensions.Utilities
         /// </summary>
         public static void EnableOnPointerEnterSelection(this IEnumerable<Selectable> selectables)
         {
+            if (selectables == null) return;
+            
             foreach (var selectable in selectables)
             {
                 selectable.EnableOnPointerEnterSelection();
@@ -119,6 +121,8 @@ namespace DNExtensions.Utilities
         /// </summary>
         public static void EnableOnPointerEnterSelection(this Selectable selectable)
         {
+            if (!selectable) return;
+            
             selectable.OnPointerEnter(data =>
             {
                 if (selectable.interactable && EventSystem.current)
@@ -133,27 +137,29 @@ namespace DNExtensions.Utilities
         /// </summary>
         public static void EnableOnPointerExitDeselection(this IEnumerable<Selectable> selectables)
         {
+            if (selectables == null) return;
+            
             foreach (var selectable in selectables)
             {
                 selectable.EnableOnPointerExitDeselection();
             }
         }
         
-        
         /// <summary>
-        /// Enables mouse click selection for all Selectables
+        /// Enables mouse exit deselection for a single Selectable
         /// </summary>
         public static void EnableOnPointerExitDeselection(this Selectable selectable)
         {
+            if (!selectable) return;
+            
             selectable.OnPointerExit(data =>
             {
-                if (selectable.interactable && selectable.IsSelected())
+                if (selectable.interactable && selectable.IsSelected() && EventSystem.current)
                 {
                     EventSystem.current.SetSelectedGameObject(null);
                 }
             });
         }
-
 
         /// <summary>
         /// Sets up navigation for a list of Selectables in order
@@ -164,6 +170,8 @@ namespace DNExtensions.Utilities
 
             for (int i = 0; i < selectables.Count; i++)
             {
+                if (!selectables[i]) continue;
+                
                 var nav = selectables[i].navigation;
                 nav.mode = Navigation.Mode.Explicit;
 
@@ -186,12 +194,14 @@ namespace DNExtensions.Utilities
         /// </summary>
         public static void SetupGridNavigation(this List<Selectable> selectables, int columns, bool wrap = false)
         {
-            if (selectables == null || selectables.Count == 0) return;
+            if (selectables == null || selectables.Count == 0 || columns <= 0) return;
 
             int rows = Mathf.CeilToInt((float)selectables.Count / columns);
 
             for (int i = 0; i < selectables.Count; i++)
             {
+                if (!selectables[i]) continue;
+                
                 int row = i / columns;
                 int col = i % columns;
 
@@ -225,14 +235,13 @@ namespace DNExtensions.Utilities
                 selectables[i].navigation = nav;
             }
         }
-        
 
         /// <summary>
         /// Checks if a Selectable is currently selected in the EventSystem
         /// </summary>
         public static bool IsSelected(this Selectable selectable)
         {
-            return EventSystem.current && EventSystem.current.currentSelectedGameObject == selectable.gameObject;
+            return selectable && EventSystem.current && EventSystem.current.currentSelectedGameObject == selectable.gameObject;
         }
 
         /// <summary>
@@ -240,6 +249,8 @@ namespace DNExtensions.Utilities
         /// </summary>
         public static void SetSelected(this Selectable selectable)
         {
+            if (!selectable) return;
+            
             if (EventSystem.current && selectable.isActiveAndEnabled && selectable.interactable)
             {
                 EventSystem.current.SetSelectedGameObject(selectable.gameObject);

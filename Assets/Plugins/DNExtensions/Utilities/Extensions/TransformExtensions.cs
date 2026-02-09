@@ -8,7 +8,7 @@ namespace DNExtensions.Utilities
     /// <summary>
     /// Utility functions for Transform operations that extend MonoBehaviour
     /// </summary>
-    public static class TransformUtilities
+    public static class TransformExtensions
     {
         /// <summary>
         /// Checks if a transform is a child of another transform (direct or indirect)

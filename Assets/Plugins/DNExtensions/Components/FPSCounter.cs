@@ -18,7 +18,7 @@ namespace DNExtensions.Components
         private int _frames;
         private float _fps;
         private GUIStyle _style;
-        
+
         private void Awake()
         {
             if (editorOnly && !Application.isEditor)

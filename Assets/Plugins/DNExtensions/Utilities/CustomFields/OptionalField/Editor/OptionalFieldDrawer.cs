@@ -36,7 +36,9 @@ namespace DNExtensions.Utilities.CustomFields.Editor
                 isSetProp.boolValue = newIsSet;
             }
             
-            if (!hideValueProp.boolValue || !isSetProp.boolValue)
+            var shouldHide = hideValueProp.boolValue && !isSetProp.boolValue;
+            
+            if (!shouldHide)
             {
                 var wasEnabled = GUI.enabled;
                 GUI.enabled = isSetProp.boolValue;
@@ -53,7 +55,7 @@ namespace DNExtensions.Utilities.CustomFields.Editor
             if (current.type == EventType.ContextClick && position.Contains(current.mousePosition))
             {
                 GenericMenu menu = new GenericMenu();
-                menu.AddItem(new GUIContent("Hide Value If Set"), hideValueProp.boolValue, () =>
+                menu.AddItem(new GUIContent("Hide Value If Disabled"), hideValueProp.boolValue, () =>
                 {
                     hideValueProp.boolValue = !hideValueProp.boolValue;
                     property.serializedObject.ApplyModifiedProperties();

@@ -70,7 +70,6 @@ namespace DNExtensions.MenuSystem
 
             if (_selectables.Count == 0)
             {
-                Debug.LogWarning($"ScreenNavigation on {gameObject.name} found no Selectables.");
                 return;
             }
 

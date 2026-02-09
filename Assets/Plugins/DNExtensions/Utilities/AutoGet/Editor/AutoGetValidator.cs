@@ -1,12 +1,11 @@
-#if UNITY_EDITOR
+
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace DNExtensions.Utilities.AutoGet.Editor
+namespace DNExtensions.Utilities.AutoGet
 {
-    using AutoGet;
     
     /// <summary>
     /// Handles automatic validation of AutoGet fields based on settings.
@@ -61,4 +60,3 @@ namespace DNExtensions.Utilities.AutoGet.Editor
         }
     }
 }
-#endif

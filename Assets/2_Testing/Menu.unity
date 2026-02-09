@@ -813,7 +813,7 @@ MonoBehaviour:
     maxEuler: {x: 360, y: 360, z: 360}
   color: 1
   colorOffset: {r: 0, g: 0, b: 0, a: 0}
-  colorAlphaSpring:
+  colorAlphaFloatSpring:
     stiffness: 10
     damping: 0.5
     target: 0
@@ -848,8 +848,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.027
   m_OutlineColor: {r: 0, g: 0.9176359, b: 1, a: 1}
-  m_InlineThickness: 0.08
-  m_InlineColor: {r: 0, g: 0.8803525, b: 1, a: 1}
   m_Size: 0.434
   m_Sides: 8
   m_InnerRadius: 0.266
@@ -1016,6 +1014,7 @@ GameObject:
   m_Component:
   - component: {fileID: 551287425}
   - component: {fileID: 551287426}
+  - component: {fileID: 551287427}
   m_Layer: 5
   m_Name: Menu
   m_TagString: Untagged
@@ -1061,6 +1060,27 @@ MonoBehaviour:
   autoShowFirstScreen: 1
   animateFirstScreen: 1
   crossAnimateScreens: 0
+--- !u!114 &551287427
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 551287424}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26dc2c5a462d4261bd29e096bdd9158f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenNavigation
+  autoSelectOnEnable: 1
+  autoSelectOnNavigate: 1
+  rememberPreviousSelection: 1
+  enableOnPointerEnterSelection: 1
+  enableOnPointerExitDeselection: 1
+  overrideDefaultSelectable:
+    isSet: 1
+    hideValueIfSet: 0
+    value: {fileID: 0}
 --- !u!1 &554429278
 GameObject:
   m_ObjectHideFlags: 0
@@ -1517,7 +1537,7 @@ MonoBehaviour:
     maxEuler: {x: 360, y: 360, z: 360}
   color: 0
   colorOffset: {r: 0, g: 0, b: 0, a: 0}
-  colorAlphaSpring:
+  colorAlphaFloatSpring:
     stiffness: 10
     damping: 0.5
     target: 0
@@ -1576,24 +1596,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Screen
   showAnimations:
-  - rid: 4802877415295025313
-  - rid: 4802877415295025314
+  - rid: 4437625843699154948
+  - rid: 4437625843699154949
   hideAnimations:
-  - rid: 4802877415295025315
-  - rid: 4802877415295025316
+  - rid: 4437625843699154950
+  - rid: 4437625843699154951
   references:
     version: 2
     RefIds:
-    - rid: 4802877415295025313
-      type: {class: FadeAnimation, ns: DNExtenstions.MenuSystem, asm: Assembly-CSharp-firstpass}
+    - rid: 4437625843699154948
+      type: {class: FadeAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
       data:
         duration: 0.25
         startFromCurrentAlpha: 0
         startAlpha: 0
         endAlpha: 1
         ease: 9
-    - rid: 4802877415295025314
-      type: {class: ScaleAnimation, ns: DNExtenstions.MenuSystem, asm: Assembly-CSharp-firstpass}
+    - rid: 4437625843699154949
+      type: {class: ScaleAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
       data:
         duration: 0.25
         startFromCurrentScale: 0
@@ -1601,16 +1621,16 @@ MonoBehaviour:
         startScale: {x: 0, y: 0, z: 0}
         endScale: {x: 1, y: 1, z: 1}
         ease: 27
-    - rid: 4802877415295025315
-      type: {class: FadeAnimation, ns: DNExtenstions.MenuSystem, asm: Assembly-CSharp-firstpass}
+    - rid: 4437625843699154950
+      type: {class: FadeAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
       data:
         duration: 0.25
         startFromCurrentAlpha: 1
         startAlpha: 0
         endAlpha: 0
         ease: 9
-    - rid: 4802877415295025316
-      type: {class: ScaleAnimation, ns: DNExtenstions.MenuSystem, asm: Assembly-CSharp-firstpass}
+    - rid: 4437625843699154951
+      type: {class: ScaleAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
       data:
         duration: 0.25
         startFromCurrentScale: 1
@@ -2352,7 +2372,7 @@ MonoBehaviour:
     maxEuler: {x: 360, y: 360, z: 360}
   color: 0
   colorOffset: {r: 0, g: 0, b: 0, a: 0}
-  colorAlphaSpring:
+  colorAlphaFloatSpring:
     stiffness: 10
     damping: 0.5
     target: 0
@@ -2696,8 +2716,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.02
   m_OutlineColor: {r: 0.72955966, g: 0.72955966, b: 0.72955966, a: 1}
-  m_InlineThickness: 0
-  m_InlineColor: {r: 0, g: 0, b: 1, a: 1}
   m_Width: 0.48
   m_Height: 0.48
   m_Rounding: 0.029
@@ -2837,24 +2855,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Screen
   showAnimations:
-  - rid: 4802877415295025308
-  - rid: 4802877415295025310
+  - rid: 4437625843699154944
+  - rid: 4437625843699154945
   hideAnimations:
-  - rid: 4802877415295025311
-  - rid: 4802877415295025312
+  - rid: 4437625843699154946
+  - rid: 4437625843699154947
   references:
     version: 2
     RefIds:
-    - rid: 4802877415295025308
-      type: {class: FadeAnimation, ns: DNExtenstions.MenuSystem, asm: Assembly-CSharp-firstpass}
+    - rid: 4437625843699154944
+      type: {class: FadeAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
       data:
         duration: 0.25
         startFromCurrentAlpha: 0
         startAlpha: 0
         endAlpha: 1
         ease: 9
-    - rid: 4802877415295025310
-      type: {class: ScaleAnimation, ns: DNExtenstions.MenuSystem, asm: Assembly-CSharp-firstpass}
+    - rid: 4437625843699154945
+      type: {class: ScaleAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
       data:
         duration: 0.25
         startFromCurrentScale: 0
@@ -2862,16 +2880,16 @@ MonoBehaviour:
         startScale: {x: 0, y: 0, z: 0}
         endScale: {x: 1, y: 1, z: 1}
         ease: 27
-    - rid: 4802877415295025311
-      type: {class: FadeAnimation, ns: DNExtenstions.MenuSystem, asm: Assembly-CSharp-firstpass}
+    - rid: 4437625843699154946
+      type: {class: FadeAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
       data:
         duration: 0.25
         startFromCurrentAlpha: 1
         startAlpha: 0
         endAlpha: 0
         ease: 9
-    - rid: 4802877415295025312
-      type: {class: ScaleAnimation, ns: DNExtenstions.MenuSystem, asm: Assembly-CSharp-firstpass}
+    - rid: 4437625843699154947
+      type: {class: ScaleAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
       data:
         duration: 0.25
         startFromCurrentScale: 1
@@ -3250,7 +3268,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1304603563}
   - component: {fileID: 1304603566}
-  - component: {fileID: 1304603565}
   - component: {fileID: 1304603564}
   - component: {fileID: 1304603567}
   m_Layer: 5
@@ -3313,36 +3330,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &1304603565
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1304603562}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!222 &1304603566
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3395,7 +3382,7 @@ MonoBehaviour:
     maxEuler: {x: 360, y: 360, z: 360}
   color: 0
   colorOffset: {r: 0, g: 0, b: 0, a: 0}
-  colorAlphaSpring:
+  colorAlphaFloatSpring:
     stiffness: 10
     damping: 0.5
     target: 0
@@ -3487,7 +3474,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1499850581}
   - component: {fileID: 1499850585}
-  - component: {fileID: 1499850584}
   - component: {fileID: 1499850583}
   - component: {fileID: 1499850582}
   m_Layer: 5
@@ -3564,7 +3550,7 @@ MonoBehaviour:
     maxEuler: {x: 360, y: 360, z: 360}
   color: 0
   colorOffset: {r: 0, g: 0, b: 0, a: 0}
-  colorAlphaSpring:
+  colorAlphaFloatSpring:
     stiffness: 10
     damping: 0.5
     target: 0
@@ -3601,36 +3587,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &1499850584
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1499850580}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!222 &1499850585
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3705,8 +3661,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.027
   m_OutlineColor: {r: 0, g: 0.9176359, b: 1, a: 1}
-  m_InlineThickness: 0.08
-  m_InlineColor: {r: 0, g: 0.8803525, b: 1, a: 1}
   m_Size: 0.434
   m_Sides: 8
   m_InnerRadius: 0.266
@@ -3762,7 +3716,7 @@ MonoBehaviour:
     maxEuler: {x: 360, y: 360, z: 360}
   color: 1
   colorOffset: {r: 0, g: 0, b: 0, a: 0}
-  colorAlphaSpring:
+  colorAlphaFloatSpring:
     stiffness: 10
     damping: 0.5
     target: 0
@@ -3904,7 +3858,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1551647187}
-  - component: {fileID: 1551647188}
   m_Layer: 5
   m_Name: ScreensPanel
   m_TagString: Untagged
@@ -3934,23 +3887,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -200, y: -1000}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1551647188
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1551647186}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26dc2c5a462d4261bd29e096bdd9158f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScreenNavigation
-  autoSelectOnEnable: 1
-  autoSelectOnNavigate: 1
-  rememberPreviousSelection: 1
-  enableMouseHoverSelection: 1
-  defaultSelectable: {fileID: 0}
 --- !u!1 &1552613227
 GameObject:
   m_ObjectHideFlags: 0
@@ -5262,8 +5198,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.02
   m_OutlineColor: {r: 0.72955966, g: 0.72955966, b: 0.72955966, a: 1}
-  m_InlineThickness: 0
-  m_InlineColor: {r: 0, g: 0, b: 1, a: 1}
   m_Width: 0.48
   m_Height: 0.48
   m_Rounding: 0.029
