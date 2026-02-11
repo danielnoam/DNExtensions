@@ -7,18 +7,18 @@ public class TestSaveInPlayMode : MonoBehaviour {
     public int health = 100;
     public Vector3 position;
     public Color color = Color.white;
-    
-    void Update() {
-        // Modify values during play mode
-        speed += Time.deltaTime;
-        health--;
-        position = transform.position;
-    }
 
 
-    [ComponentHeaderButton("Icon")]
+    [ComponentHeaderButton("Test")]
     private void TestButton()
     {
         Debug.Log("Button was pressed");
+        health += 10;
+    }
+    
+    [ComponentHeaderButton("Test2")]
+    private void Test2Button()
+    {
+        Debug.Log("Button 2 was pressed");
     }
 }
