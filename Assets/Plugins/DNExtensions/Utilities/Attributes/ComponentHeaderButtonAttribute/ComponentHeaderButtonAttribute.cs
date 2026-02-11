@@ -1,6 +1,7 @@
 ﻿using System;
 
-namespace DNExtensions.Utilities {
+namespace DNExtensions.Utilities 
+{
     
     /// <summary>
     /// Adds a button to the component header in the inspector.

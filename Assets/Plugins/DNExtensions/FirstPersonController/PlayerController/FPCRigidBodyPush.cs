@@ -1,27 +1,28 @@
 ﻿
-using System;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public class FPCRigidBodyPush : MonoBehaviour
+namespace DNExtensions.FirstPersonController
 {
-
-    [Header("Settings")]
-    [SerializeField] private bool enablePush = true;
-    [SerializeField, Min(0f)] private float pushPower = 2f;
-    
-
-    private void OnControllerColliderHit(ControllerColliderHit hit)
+    [DisallowMultipleComponent]
+    public class FPCRigidBodyPush : MonoBehaviour
     {
-        if (!enablePush) return;
+        [Header("Settings")]
+        [SerializeField] private bool enablePush = true;
+        [SerializeField, Min(0f)] private float pushPower = 2f;
         
-        Rigidbody rb = hit.collider.attachedRigidbody;
-        
-        if (!rb || rb.isKinematic) return;
-        if (hit.moveDirection.y < -0.3f) return;
-        
-        Vector3 pushDirection = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z);
-        rb.linearVelocity = pushDirection * pushPower;
-    }
 
+        private void OnControllerColliderHit(ControllerColliderHit hit)
+        {
+            if (!enablePush) return;
+            
+            Rigidbody rb = hit.collider.attachedRigidbody;
+            
+            if (!rb || rb.isKinematic) return;
+            if (hit.moveDirection.y < -0.3f) return;
+            
+            Vector3 pushDirection = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z);
+            rb.linearVelocity = pushDirection * pushPower;
+        }
+
+    }
 }

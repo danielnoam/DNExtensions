@@ -8,7 +8,8 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace DNExtensions.Utilities {
+namespace DNExtensions.Utilities 
+{
     
     /// <summary>
     /// Injects custom buttons into Unity component headers using UI Toolkit.

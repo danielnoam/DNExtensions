@@ -3,9 +3,11 @@ using DNExtensions.InputSystem;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[DisallowMultipleComponent]
-public class FPCInput : InputReaderBase
+namespace DNExtensions.FirstPersonController
 {
+    [DisallowMultipleComponent]
+    public class FPCInput : InputReaderBase
+    {
         private InputActionMap _playerActionMap;
         private InputAction _moveAction;
         private InputAction _lookAction;
@@ -140,6 +142,5 @@ public class FPCInput : InputReaderBase
             OnToggleMenuAction?.Invoke(context);
         }
         
-
-   
+    }
 }

@@ -5,7 +5,8 @@
 // using UnityEditor;
 // using UnityEngine;
 //
-// namespace DNExtensions.Utilities.SaveInPlayMode {
+// namespace DNExtensions.Utilities.SaveInPlayMode
+// {
 //     
 //     /// <summary>
 //     /// Automatically injects save buttons (💾/📌) into component headers during play mode.
