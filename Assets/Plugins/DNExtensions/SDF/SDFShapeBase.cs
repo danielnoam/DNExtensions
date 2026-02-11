@@ -8,6 +8,9 @@ namespace DNExtensions.Shapes
     [RequireComponent(typeof(CanvasRenderer))]
     public abstract class SDFShapeBase : MaskableGraphic, ISerializationCallbackReceiver, ILayoutElement, ICanvasRaycastFilter
     {
+        private static Shader _sdfShader;
+        
+        
         protected static readonly int BaseColorID = Shader.PropertyToID("_Base_Color");
         protected static readonly int RotationID = Shader.PropertyToID("_Rotation");
         protected static readonly int OffsetID = Shader.PropertyToID("_Offset");
@@ -29,6 +32,8 @@ namespace DNExtensions.Shapes
         [SerializeField] protected Color m_OutlineColor = Color.red;
 
         protected Material m_InstanceMaterial;
+        
+        [SerializeField, HideInInspector] private Shader m_SDFShader;
         
         public enum FillType
         {
@@ -60,10 +65,10 @@ namespace DNExtensions.Shapes
 
         protected virtual void CreateInstanceMaterial()
         {
-            Shader shader = Shader.Find("UI/SDFShape");
+            Shader shader = m_SDFShader != null ? m_SDFShader : Shader.Find("UI/SDFShape");
             if (!shader)
             {
-                Debug.LogError("SDFShape shader not found! Make sure it's named 'UI/SDFShape'");
+                Debug.LogError("SDFShape shader not found!");
                 return;
             }
 
@@ -119,6 +124,9 @@ namespace DNExtensions.Shapes
 #if UNITY_EDITOR
         protected override void OnValidate()
         {
+            if (m_SDFShader == null)
+                m_SDFShader = Shader.Find("UI/SDFShape");
+    
             base.OnValidate();
 
             if (m_InstanceMaterial)

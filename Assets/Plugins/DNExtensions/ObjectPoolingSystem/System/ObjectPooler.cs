@@ -16,6 +16,7 @@ namespace DNExtensions.ObjectPooling
         private bool _instantiateAsFallBack;
         private bool _destroyAsFallBack;
         private bool _showDebugMessages;
+        private bool _hidePoolHolders;
         private List<Pool> _pools = new List<Pool>();
 
         private bool _isFirstScene;
@@ -38,6 +39,7 @@ namespace DNExtensions.ObjectPooling
             _instantiateAsFallBack = settings.instantiateAsFallback;
             _destroyAsFallBack = settings.destroyAsFallback;
             _showDebugMessages = settings.showDebugMessages;
+            _hidePoolHolders = settings.hidePoolHolders;
             _pools = settings.GetPoolsCopy();
 
             if (Instance && Instance != this)
@@ -112,6 +114,7 @@ namespace DNExtensions.ObjectPooling
             }
 
             Instance._destroyOnLoadParent = new GameObject() { name = "ObjectPools - Destroy On Load" }.transform;
+            Instance._destroyOnLoadParent.gameObject.hideFlags = Instance._hidePoolHolders ? HideFlags.HideInHierarchy : HideFlags.None;
 
             List<Pool> poolsToReinitialize = new List<Pool>();
             foreach (var pool in Instance._pools)
@@ -150,11 +153,13 @@ namespace DNExtensions.ObjectPooling
             if (!_destroyOnLoadParent)
             {
                 _destroyOnLoadParent = new GameObject() { name = "ObjectPools - Destroy On Load" }.transform;
+                _destroyOnLoadParent.gameObject.hideFlags = _hidePoolHolders ? HideFlags.HideInHierarchy : HideFlags.None;
             }
 
             if (!_dontDestroyOnLoadParent)
             {
                 _dontDestroyOnLoadParent = new GameObject() { name = "ObjectPools - Dont Destroy On Load" }.transform;
+                _dontDestroyOnLoadParent.gameObject.hideFlags = _hidePoolHolders ? HideFlags.HideInHierarchy : HideFlags.None;
                 DontDestroyOnLoad(_dontDestroyOnLoadParent.gameObject);
             }
 
@@ -245,9 +250,13 @@ namespace DNExtensions.ObjectPooling
         }
         
         /// <summary>
-        /// Gets a typed component from the appropriate pool.
-        /// Allows passing a MonoBehaviour prefab reference directly.
+        /// Gets an object from the appropriate pool or instantiates as fallback.
+        /// Searches pools by matching prefab reference.
         /// </summary>
+        /// <param name="prefab">Prefab to get from pool</param>
+        /// <param name="position">World position for the object</param>
+        /// <param name="rotation">World rotation for the object</param>
+        /// <returns>Prefab from pool or new instance if no pool found</returns>
         public static T GetObjectFromPool<T>(T prefab, Vector3 position = default, Quaternion rotation = default) where T : Component
         {
             GameObject obj = GetObjectFromPool(prefab.gameObject, position, rotation);
@@ -259,47 +268,13 @@ namespace DNExtensions.ObjectPooling
         }
 
         /// <summary>
-        /// Returns a component's GameObject to its appropriate pool.
+        /// Returns an object to its appropriate pool or destroys as fallback.
+        /// Automatically finds the correct pool by checking object membership.
         /// </summary>
+        /// <param name="obj">GameObject to return to pool</param>
         public static void ReturnObjectToPool<T>(T obj) where T : Component
         {
             if (obj) ReturnObjectToPool(obj.gameObject);
-        }
-
-        public void AddPool(Pool pool)
-        {
-            if (_pools == null) _pools = new List<Pool>();
-            _pools.Add(pool);
-
-            if (_dontDestroyOnLoadParent || _destroyOnLoadParent)
-            {
-                Transform parent = pool.dontDestroyOnLoad ? _dontDestroyOnLoadParent : _destroyOnLoadParent;
-                if (!parent)
-                {
-                    if (pool.dontDestroyOnLoad)
-                    {
-                        _dontDestroyOnLoadParent = new GameObject() { name = "ObjectPools - Dont Destroy On Load" }.transform;
-                        DontDestroyOnLoad(_dontDestroyOnLoadParent.gameObject);
-                        parent = _dontDestroyOnLoadParent;
-                    }
-                    else
-                    {
-                        _destroyOnLoadParent = new GameObject() { name = "ObjectPools - Destroy On Load" }.transform;
-                        parent = _destroyOnLoadParent;
-                    }
-                }
-
-                if (pool.usePoolHolder)
-                {
-                    var poolHolder = new GameObject() { name = $"{pool.poolName} Holder" };
-                    poolHolder.transform.SetParent(parent);
-                    pool.SetUpPool(poolHolder.transform);
-                }
-                else
-                {
-                    pool.SetUpPool(parent);
-                }
-            }
         }
     }
 }

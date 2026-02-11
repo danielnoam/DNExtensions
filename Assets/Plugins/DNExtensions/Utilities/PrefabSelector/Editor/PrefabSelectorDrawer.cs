@@ -63,7 +63,7 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
                     if (prefab && PrefabUtility.GetPrefabAssetType(prefab) != PrefabAssetType.NotAPrefab)
                     {
                         // If LockDragDrop is enabled, validate against filter
-                        if (attr is { LockDragDrop: true } && !IsValidPrefab(prefab, newValue, attr))
+                        if (attr is { LockToFilter: true } && !IsValidPrefab(prefab, newValue, attr))
                         {
                             Debug.LogWarning($"Prefab '{prefab.name}' does not match the folder/filter criteria for this field.");
                         }

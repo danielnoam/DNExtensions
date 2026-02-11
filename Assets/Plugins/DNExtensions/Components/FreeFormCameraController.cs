@@ -1,7 +1,9 @@
 
 using DNExtensions.Utilities;
+using DNExtensions.Utilities.AutoGet;
 using DNExtensions.Utilities.RangedValues;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace DNExtensions.Components
 {
@@ -17,7 +19,8 @@ namespace DNExtensions.Components
                  "- Move Up/Down: Space / Left Ctrl\n" +
                  "- Fast Movement: Left Shift\n" +
                  "- Rotate: Right Mouse Button + Mouse Move\n" +
-                 "- Zoom: Mouse Scroll Wheel", InfoBoxType.Info)]
+                 "- Zoom: Mouse Scroll Wheel", 
+        InfoBoxType.Info)]
         [Space(20)]
         
         [Header("Movement Settings")]
@@ -35,39 +38,16 @@ namespace DNExtensions.Components
         [SerializeField, Min(1f)] private float zoomSpeed = 10f;
         [SerializeField, MinMaxRange(0, 50)] private RangedFloat zoomLimits = new RangedFloat(5f, 50f);
 
-        [Header("References")] 
-        [SerializeField] private new Camera camera;
 
+        [SerializeField, AutoGetSelf, HideInInspector] private Camera cam;
 
-
-
-
-        private enum CameraRotationMode
-        {
-            RightMouseButton,
-            Always
-        }
-
-
-
-        private void OnValidate()
-        {
-            if (!camera) camera = GetComponent<Camera>();
-        }
-
-
-        private void Awake()
-        {
-            if (rotationMode == CameraRotationMode.Always)
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
-
-        }
+        private enum CameraRotationMode { RightMouseButton, Always }
+        
 
         private void Update()
         {
+            if (!cam) return;
+            
             HandleMovement();
             HandleRotation();
             HandleZoom();
@@ -82,11 +62,11 @@ namespace DNExtensions.Components
             Vector3 move = transform.right * moveX + transform.forward * moveZ;
 
 
-            if (Input.GetKey(KeyCode.Space))
+            if (Keyboard.current.spaceKey.isPressed)
             {
                 move += Vector3.up;
             }
-            else if (Input.GetKey(KeyCode.LeftControl))
+            else if (Keyboard.current.leftCtrlKey.isPressed)
             {
                 move += Vector3.down;
             }
@@ -99,28 +79,27 @@ namespace DNExtensions.Components
 
             if (rotationMode == CameraRotationMode.RightMouseButton)
             {
-                Cursor.lockState = Input.GetMouseButton(1) ? CursorLockMode.Locked : CursorLockMode.None;
-                Cursor.visible = !Input.GetMouseButton(1);
+                Cursor.lockState = Mouse.current.rightButton.isPressed ? CursorLockMode.Locked : CursorLockMode.None;
+                Cursor.visible = !Mouse.current.rightButton.isPressed;
             }
 
-            if (rotationMode == CameraRotationMode.RightMouseButton && !Input.GetMouseButton(1)) return;
+            if (rotationMode == CameraRotationMode.RightMouseButton && !Mouse.current.rightButton.isPressed) return;
 
             float mouseX = Input.GetAxis("Mouse X") * rotationSpeed * Time.deltaTime * (invertX ? -1 : 1);
             float mouseY = Input.GetAxis("Mouse Y") * rotationSpeed * Time.deltaTime * (invertY ? -1 : 1);
 
-            Quaternion targetRotation =
-                Quaternion.Euler(transform.eulerAngles.x - mouseY, transform.eulerAngles.y + mouseX, 0);
+            Quaternion targetRotation = Quaternion.Euler(transform.eulerAngles.x - mouseY, transform.eulerAngles.y + mouseX, 0);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSmoothing);
 
         }
 
         private void HandleZoom()
         {
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            float scroll = Mouse.current.scroll.y.value;
             if (scroll != 0f)
             {
-                float newFOV = camera.fieldOfView - scroll * zoomSpeed * 100f * Time.deltaTime;
-                camera.fieldOfView = Mathf.Clamp(newFOV, zoomLimits.minValue, zoomLimits.maxValue);
+                float newFOV = cam.fieldOfView - scroll * zoomSpeed * 100f * Time.deltaTime;
+                cam.fieldOfView = Mathf.Clamp(newFOV, zoomLimits.minValue, zoomLimits.maxValue);
             }
         }
     }

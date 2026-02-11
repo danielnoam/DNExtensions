@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions.ObjectPooling.Editor
+namespace DNExtensions.ObjectPooling
 {
     /// <summary>
     /// Editor utilities for ObjectPoolingSettings.

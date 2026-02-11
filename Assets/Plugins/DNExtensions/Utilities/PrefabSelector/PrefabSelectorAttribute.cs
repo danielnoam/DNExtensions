@@ -36,7 +36,7 @@ namespace DNExtensions.Utilities.PrefabSelector
         /// If true, prevents dragging prefabs that don't match the folder/filter criteria
         /// If false, allows any valid prefab to be dragged (default Unity behavior)
         /// </summary>
-        public bool LockDragDrop { get; set; } = false;
+        public bool LockToFilter { get; set; } = false;
 
         /// <summary>
         /// Basic prefab selector - searches all prefabs in project

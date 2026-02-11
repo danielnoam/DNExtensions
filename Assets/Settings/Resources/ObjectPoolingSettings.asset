@@ -15,6 +15,7 @@ MonoBehaviour:
   enabled: 1
   instantiateAsFallback: 1
   destroyAsFallback: 1
+  hidePoolHolders: 0
   showDebugMessages: 0
   pools:
   - poolName: Bullet

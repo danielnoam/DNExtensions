@@ -2,10 +2,10 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions.ObjectPooling.Editor
+namespace DNExtensions.ObjectPooling
 {
     [CustomEditor(typeof(ObjectPooler))]
-    public class ObjectPoolerEditor : UnityEditor.Editor
+    public class ObjectPoolerEditor : Editor
     {
         public override void OnInspectorGUI()
         {

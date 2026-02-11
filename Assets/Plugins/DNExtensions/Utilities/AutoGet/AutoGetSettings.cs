@@ -1,9 +1,8 @@
 using System.IO;
-using UnityEditorInternal;
 using UnityEngine;
 
 #if UNITY_EDITOR
-using UnityEditor;
+using UnityEditorInternal;
 #endif
 
 namespace DNExtensions.Utilities.AutoGet

@@ -1,14 +1,8 @@
-
 using UnityEngine;
 using UnityEditor;
 
 namespace DNExtensions.Utilities.CustomFields
 {
-    /// <summary>
-    /// Custom property drawer for PositionField that displays a Vector3 field and Transform field.
-    /// When a Transform is assigned, the Vector3 field becomes read-only and syncs with the transform's position.
-    /// </summary>
-    
     [CustomPropertyDrawer(typeof(PositionField))]
     public class PositionFieldPropertyDrawer : PropertyDrawer
     {
@@ -25,27 +19,11 @@ namespace DNExtensions.Utilities.CustomFields
             Rect line1 = new Rect(position.x, position.y, position.width, lineHeight);
             Rect line2 = new Rect(position.x, position.y + lineHeight + Spacing, position.width, lineHeight);
 
-            // Line 1: Vector3 field with main label
-            Rect vectorFieldRect = EditorGUI.PrefixLabel(line1, label);
-            
             bool hasTransform = transformProp.objectReferenceValue;
 
-            EditorGUI.BeginDisabledGroup(hasTransform);
+            Rect transformFieldRect = EditorGUI.PrefixLabel(line1, label);
             EditorGUI.BeginChangeCheck();
-            Vector3 newVector = EditorGUI.Vector3Field(vectorFieldRect, GUIContent.none, vectorProp.vector3Value);
-            if (EditorGUI.EndChangeCheck() && !hasTransform)
-            {
-                vectorProp.vector3Value = newVector;
-            }
-            EditorGUI.EndDisabledGroup();
-
-            // Line 2: Transform field with indented label
-            int oldIndent = EditorGUI.indentLevel;
-            EditorGUI.indentLevel++;
-            
-            EditorGUI.BeginChangeCheck();
-            Transform newTransform = EditorGUI.ObjectField(line2, "Transform", transformProp.objectReferenceValue, 
-                typeof(Transform), true) as Transform;
+            Transform newTransform = EditorGUI.ObjectField(transformFieldRect, GUIContent.none, transformProp.objectReferenceValue, typeof(Transform), true) as Transform;
             if (EditorGUI.EndChangeCheck())
             {
                 transformProp.objectReferenceValue = newTransform;
@@ -54,8 +32,18 @@ namespace DNExtensions.Utilities.CustomFields
                     vectorProp.vector3Value = newTransform.position;
                 }
             }
+
+            Rect vectorFieldRect = new Rect(transformFieldRect.x, line2.y, transformFieldRect.width, lineHeight);
             
-            EditorGUI.indentLevel = oldIndent;
+            EditorGUI.BeginDisabledGroup(hasTransform);
+            EditorGUI.BeginChangeCheck();
+            Vector3 newVector = EditorGUI.Vector3Field(vectorFieldRect, GUIContent.none, vectorProp.vector3Value);
+            if (EditorGUI.EndChangeCheck() && !hasTransform)
+            {
+                vectorProp.vector3Value = newVector;
+            }
+            EditorGUI.EndDisabledGroup();
+            
             EditorGUI.EndProperty();
         }
 

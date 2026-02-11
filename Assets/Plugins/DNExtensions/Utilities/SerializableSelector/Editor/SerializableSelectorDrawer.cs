@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -16,51 +15,59 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         private static readonly Dictionary<string, TypeInfo[]> TypeCache = new Dictionary<string, TypeInfo[]>();
         private static object _clipboard;
         private static Type _clipboardType;
-        private static List<object> _listClipboard; 
+        private static List<object> _listClipboard;
+        
+        private enum ErrorType
+        {
+            None,
+            InvalidPropertyType,
+            MissingType
+        }
+        
+        private struct ErrorInfo
+        {
+            public ErrorType Type;
+            public string Message;
+            public string Details;
+        }
         
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            if (property.propertyType != SerializedPropertyType.ManagedReference)
+            ErrorInfo error = ValidateProperty(property);
+            
+            if (error.Type != ErrorType.None)
             {
-                EditorGUI.LabelField(position, label.text, "[SerializableSelector] requires [SerializeReference]");
+                DrawError(position, property, label, error);
                 return;
             }
             
             SerializableSelectorAttribute attr = attribute as SerializableSelectorAttribute;
             
-            // Calculate rects
             float lineHeight = EditorGUIUtility.singleLineHeight;
             bool inArray = IsInArray(property);
             
-            Rect dropdownRect;
-            
-            if (inArray)
-            {
-                dropdownRect = new Rect(position.x, position.y, position.width, lineHeight);
-            }
-            else
-            {
-                Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, lineHeight);
-                EditorGUI.LabelField(labelRect, label);
-                
-                dropdownRect = new Rect(
+            Rect dropdownRect = inArray 
+                ? new Rect(position.x, position.y, position.width, lineHeight)
+                : new Rect(
                     position.x + EditorGUIUtility.labelWidth + 2, 
                     position.y, 
                     position.width - EditorGUIUtility.labelWidth - 2, 
                     lineHeight
                 );
+            
+            if (!inArray)
+            {
+                Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, lineHeight);
+                EditorGUI.LabelField(labelRect, label);
             }
             
-            // Get current type name
             string currentTypeName = GetTypeName(property);
             
-            // Draw dropdown button
             if (EditorGUI.DropdownButton(dropdownRect, new GUIContent(currentTypeName), FocusType.Keyboard))
             {
                 ShowTypeMenu(property, attr, dropdownRect);
             }
             
-            // Handle right-click context menu
             Event e = Event.current;
             if (e.type == EventType.ContextClick && dropdownRect.Contains(e.mousePosition))
             {
@@ -68,7 +75,6 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 e.Use();
             }
             
-            // Draw property fields if value is not null
             if (property.managedReferenceValue != null)
             {
                 Rect contentRect = new Rect(
@@ -80,7 +86,6 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 
                 EditorGUI.indentLevel++;
                 
-                // Draw all properties including base class fields
                 SerializedProperty iterator = property.Copy();
                 SerializedProperty endProperty = iterator.GetEndProperty();
                 
@@ -118,6 +123,14 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
+            ErrorInfo error = ValidateProperty(property);
+            
+            if (error.Type != ErrorType.None)
+            {
+                return EditorGUIUtility.singleLineHeight + 
+                       (string.IsNullOrEmpty(error.Details) ? 0 : EditorGUIUtility.singleLineHeight);
+            }
+            
             float height = EditorGUIUtility.singleLineHeight;
             
             if (property.managedReferenceValue != null)
@@ -141,6 +154,118 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             return height;
         }
         
+        /// <summary>
+        /// Validate property and return error information
+        /// </summary>
+        private ErrorInfo ValidateProperty(SerializedProperty property)
+        {
+            if (property.propertyType != SerializedPropertyType.ManagedReference)
+            {
+                return new ErrorInfo
+                {
+                    Type = ErrorType.InvalidPropertyType,
+                    Message = "[SerializableSelector] requires [SerializeReference]",
+                    Details = null
+                };
+            }
+            
+            if (property.managedReferenceValue == null && 
+                !string.IsNullOrEmpty(property.managedReferenceFullTypename))
+            {
+                string[] parts = property.managedReferenceFullTypename.Split(' ');
+                if (parts.Length == 2)
+                {
+                    string assemblyName = parts[0];
+                    string fullTypeName = parts[1];
+                    
+                    Type type = Type.GetType($"{fullTypeName}, {assemblyName}");
+                    if (type == null)
+                    {
+                        return new ErrorInfo
+                        {
+                            Type = ErrorType.MissingType,
+                            Message = "Missing type reference",
+                            Details = $"Type '{fullTypeName}' no longer exists.\nSet to null or select a new type."
+                        };
+                    }
+                }
+            }
+            
+            return new ErrorInfo { Type = ErrorType.None };
+        }
+        
+        /// <summary>
+        /// Draw error message with context menu option to clear
+        /// </summary>
+        private void DrawError(Rect position, SerializedProperty property, GUIContent label, ErrorInfo error)
+        {
+            float lineHeight = EditorGUIUtility.singleLineHeight;
+            bool inArray = IsInArray(property);
+            
+            Rect messageRect = new Rect(
+                position.x + (inArray ? 0 : EditorGUIUtility.labelWidth + 2),
+                position.y,
+                position.width - (inArray ? 0 : EditorGUIUtility.labelWidth + 2),
+                lineHeight
+            );
+            
+            if (!inArray)
+            {
+                Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, lineHeight);
+                EditorGUI.LabelField(labelRect, label);
+            }
+            
+            Color previousColor = GUI.color;
+            GUI.color = new Color(1f, 0.3f, 0.3f);
+            
+            string icon = error.Type == ErrorType.MissingType ? "✕" : "⚠";
+            GUIContent errorContent = new GUIContent($"{icon} {error.Message}");
+            
+            EditorGUI.LabelField(messageRect, errorContent);
+            GUI.color = previousColor;
+            
+            // Click to ping object
+            Event clickEvent = Event.current;
+            if (clickEvent.type == EventType.MouseDown && messageRect.Contains(clickEvent.mousePosition))
+            {
+                EditorGUIUtility.PingObject(property.serializedObject.targetObject);
+                clickEvent.Use();
+            }
+            
+            if (!string.IsNullOrEmpty(error.Details))
+            {
+                Rect detailsRect = new Rect(
+                    messageRect.x,
+                    messageRect.y + lineHeight,
+                    messageRect.width,
+                    lineHeight
+                );
+                
+                GUIStyle detailStyle = new GUIStyle(EditorStyles.miniLabel)
+                {
+                    normal = { textColor = Color.gray }
+                };
+                
+                EditorGUI.LabelField(detailsRect, error.Details, detailStyle);
+            }
+            
+            if (error.Type == ErrorType.MissingType)
+            {
+                Event e = Event.current;
+                if (e.type == EventType.ContextClick && messageRect.Contains(e.mousePosition))
+                {
+                    GenericMenu menu = new GenericMenu();
+                    menu.AddItem(new GUIContent("Set to Null"), false, () =>
+                    {
+                        property.managedReferenceValue = null;
+                        property.serializedObject.ApplyModifiedProperties();
+                    });
+                    menu.ShowAsContext();
+                    e.Use();
+                }
+            }
+        }
+        
         private string GetTypeName(SerializedProperty property)
         {
             if (string.IsNullOrEmpty(property.managedReferenceFullTypename))
@@ -153,7 +278,6 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 return SerializableSelectorUtility.GetTypeDisplayName(actualType);
             }
     
-            // Check if type still exists
             if (!string.IsNullOrEmpty(property.managedReferenceFullTypename))
             {
                 string[] parts = property.managedReferenceFullTypename.Split(' ');
@@ -170,7 +294,6 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 }
             }
     
-            // Fallback
             string[] typeParts = property.managedReferenceFullTypename.Split(' ');
             if (typeParts.Length == 2)
             {
@@ -192,6 +315,12 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             }
     
             TypeInfo[] types = GetCachedTypes(baseType, attr);
+            if (types == null)
+            {
+                Debug.LogError("Failed to retrieve types for SerializableSelector");
+                return;
+            }
+            
             HashSet<Type> existingTypes = GetExistingTypesInList(property);
             bool showSearch = attr.SearchThreshold >= 0 && types.Length >= attr.SearchThreshold;
     
@@ -209,55 +338,47 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         private void ShowContextMenu(SerializedProperty property)
         {
             GenericMenu menu = new GenericMenu();
-    
-            bool isBroken = !string.IsNullOrEmpty(property.managedReferenceFullTypename) 
-                            && property.managedReferenceValue == null;
-    
-            if (isBroken)
-            {
-                menu.AddItem(new GUIContent("Clear Broken Reference"), false, () => 
-                {
-                    property.managedReferenceValue = null;
-                    property.serializedObject.ApplyModifiedProperties();
-                });
-                menu.AddSeparator("");
-            }
-    
-            if (property.managedReferenceValue != null)
+            
+            bool hasValue = property.managedReferenceValue != null;
+            bool isInArray = IsInArray(property);
+            
+            if (hasValue)
             {
                 menu.AddItem(new GUIContent("Copy"), false, () => CopyValue(property));
+                menu.AddItem(new GUIContent("Set to Null"), false, () => SetType(property, null));
             }
             else
             {
                 menu.AddDisabledItem(new GUIContent("Copy"));
+                menu.AddDisabledItem(new GUIContent("Set to Null"));
             }
-    
-            if (_clipboard != null && CanPaste(property))
+            
+            if (CanPaste(property))
             {
-                menu.AddItem(new GUIContent($"Paste ({_clipboardType.Name})"), false, () => PasteValue(property));
+                menu.AddItem(new GUIContent("Paste"), false, () => PasteValue(property));
             }
             else
             {
                 menu.AddDisabledItem(new GUIContent("Paste"));
             }
-    
-            if (IsInArray(property))
+            
+            if (isInArray)
             {
                 menu.AddSeparator("");
-                menu.AddItem(new GUIContent("List/Copy Entire List"), false, () => CopyList(property));
-        
-                if (_listClipboard is { Count: > 0 })
+                menu.AddItem(new GUIContent("Copy List"), false, () => CopyList(property));
+                
+                if (_listClipboard != null && _listClipboard.Count > 0)
                 {
-                    menu.AddItem(new GUIContent($"List/Paste Entire List ({_listClipboard.Count} items)"), false, () => PasteList(property));
+                    menu.AddItem(new GUIContent("Paste List"), false, () => PasteList(property));
                 }
                 else
                 {
-                    menu.AddDisabledItem(new GUIContent("List/Paste Entire List"));
+                    menu.AddDisabledItem(new GUIContent("Paste List"));
                 }
-        
-                menu.AddItem(new GUIContent("List/Clear Entire List"), false, () => ClearList(property));
+                
+                menu.AddItem(new GUIContent("Clear List"), false, () => ClearList(property));
             }
-    
+            
             menu.ShowAsContext();
         }
         
@@ -338,10 +459,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                     FieldInfo field = GetFieldIncludingBase(parentType, fieldName);
             
                     if (field == null)
-                    {
-                        Debug.LogError($"Could not find field '{fieldName}' in type '{parentType?.Name}' or its base classes");
                         return null;
-                    }
             
                     Type fieldType = field.FieldType;
                     if (fieldType.IsArray)
@@ -357,10 +475,8 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 {
                     FieldInfo field = GetFieldIncludingBase(parentType, part);
                     if (field == null)
-                    {
-                        Debug.LogError($"Could not find field '{part}' in type '{parentType?.Name}' or its base classes");
                         return null;
-                    }
+                    
                     parentType = field.FieldType;
                 }
             }
@@ -394,12 +510,20 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             
             if (!TypeCache.ContainsKey(cacheKey))
             {
-                TypeInfo[] types = SerializableSelectorUtility.GetDerivedTypes(
-                    baseType,
-                    attr.NamespaceFilter,
-                    attr.RequireInterfaces
-                );
-                TypeCache[cacheKey] = types;
+                try
+                {
+                    TypeInfo[] types = SerializableSelectorUtility.GetDerivedTypes(
+                        baseType,
+                        attr.NamespaceFilter,
+                        attr.RequireInterfaces
+                    );
+                    TypeCache[cacheKey] = types;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to cache types for {baseType.Name}: {e.Message}");
+                    return Array.Empty<TypeInfo>();
+                }
             }
             
             return TypeCache[cacheKey];

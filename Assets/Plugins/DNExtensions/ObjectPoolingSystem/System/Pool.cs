@@ -16,14 +16,17 @@ namespace DNExtensions.ObjectPooling
     [Serializable]
     public class Pool
     {
-        [Header("Pool Settings")] 
+        [Tooltip("Name of the pool for identification purposes")]
         public string poolName = "New Pool";
+        [Tooltip("Maximum number of objects allowed in the pool")]
         [Min(1)] public int maxPoolSize = 50;
+        [Tooltip("The prefab to pool")]
         public GameObject prefab;
         [Tooltip("Adds the pool to don't destroy list")]
         public bool dontDestroyOnLoad;
         [Tooltip("Create a parent holder GameObject to organize pooled objects. If false, objects parent directly to the pool category root")]
-        [DisableIf("dontDestroyOnLoad")] public bool usePoolHolder = true;
+        [DisableIf("dontDestroyOnLoad")] 
+        public bool usePoolHolder = true;
         [Tooltip("If max pool size reached and there are no objects in inactive pool, recycle the last active object (this is not recommended, objects are notified that they have been recycled but it is not performant")]
         public bool recycleActiveObjects;
 
@@ -31,9 +34,11 @@ namespace DNExtensions.ObjectPooling
         [Tooltip("Pre populate the pool")]
         public bool preWarmPool;
         [Tooltip("If pre warm pool, how many objects to pre warm")]
-        [EnableIf("preWarmPool")] public int preWarmPoolSize = 5;
+        [EnableIf("preWarmPool")] 
+        public int preWarmPoolSize = 5;
         [Tooltip("If there are scenes, only pre warm pool if its in the selected scenes")]
-        [EnableIf("preWarmPool")] public SceneField[] scenesToPreWarm = Array.Empty<SceneField>();
+        [EnableIf("preWarmPool")] 
+        public SceneField[] scenesToPreWarm = Array.Empty<SceneField>();
         
         private readonly List<GameObject> _activePool = new List<GameObject>();
         private readonly Queue<GameObject> _inactivePool = new Queue<GameObject>();

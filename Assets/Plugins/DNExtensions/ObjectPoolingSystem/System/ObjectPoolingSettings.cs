@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using DNExtensions.Utilities;
 using UnityEngine;
 
 namespace DNExtensions.ObjectPooling
@@ -31,18 +32,27 @@ namespace DNExtensions.ObjectPooling
             }
         }
         
-        [Header("Settings")]
+            
+        [Space(10)]
         [Tooltip("Enable or disable the object pooling system")]
         public bool enabled;
         [Tooltip("If no pool exists for an object, instantiate it instead of returning null")]
+        [EnableIf("enabled")]
         public bool instantiateAsFallback = true;
         [Tooltip("If returning an object that doesn't belong to any pool, destroy it")]
+        [EnableIf("enabled")]
         public bool destroyAsFallback = true;
+        [Tooltip("Hide pool holder objects in Hierarchy window")]
+        [EnableIf("enabled")]
+        public bool hidePoolHolders;
         [Tooltip("Show debug messages in console for pool operations")]
-        public bool showDebugMessages = false;
+        [EnableIf("enabled")]
+        public bool showDebugMessages;
+        
+        
+        [Space(10)]
         [SerializeField] private List<Pool> pools = new List<Pool>();
-
-        public List<Pool> Pools => pools;
+        
 
         private void OnValidate()
         {
@@ -73,22 +83,6 @@ namespace DNExtensions.ObjectPooling
             }
             
             return poolsCopy;
-        }
-
-        public void AddPool(Pool pool)
-        {
-            pools ??= new List<Pool>();
-            pools.Add(pool);
-        }
-
-        public void RemovePool(Pool pool)
-        {
-            pools?.Remove(pool);
-        }
-
-        public void ClearPools()
-        {
-            pools?.Clear();
         }
     }
 }
