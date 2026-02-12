@@ -1,5 +1,5 @@
 using System;
-using DNExtensions.Utilities.RangedValues;
+using DNExtensions.Utilities;
 using UnityEngine;
 
 namespace DNExtensions.VFXManager

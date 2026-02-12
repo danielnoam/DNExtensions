@@ -1,12 +1,9 @@
-
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
 
-
 namespace DNExtensions.Utilities.CustomFields
 {
-    
     /// <summary>
     /// Custom property drawer that provides a dropdown interface for selecting sorting layers in the Unity Inspector.
     /// Shows layer validation status and includes a convenience button to access project settings.
@@ -28,26 +25,23 @@ namespace DNExtensions.Utilities.CustomFields
             SerializedProperty layerName = property.FindPropertyRelative("layerName");
             SerializedProperty layerID = property.FindPropertyRelative("layerID");
             
-            // Reserve space for status icon and settings button
-            float iconWidth = 20f;
+            string[] sortingLayerNames = SortingLayer.layers.Select(l => l.name).ToArray();
+            int[] layerIDs = SortingLayer.layers.Select(l => l.id).ToArray();
+            
+            int currentIndex = System.Array.IndexOf(sortingLayerNames, layerName.stringValue);
+            bool layerExists = currentIndex != -1;
+            bool hasIssue = string.IsNullOrEmpty(layerName.stringValue) || !layerExists;
+            
+            float iconWidth = hasIssue ? 20f : 0f;
             float buttonWidth = 25f;
+            
             Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth - iconWidth, position.height);
             Rect iconRect = new Rect(position.x + EditorGUIUtility.labelWidth - iconWidth, position.y, iconWidth, position.height);
             Rect popupRect = new Rect(position.x + EditorGUIUtility.labelWidth, position.y, position.width - EditorGUIUtility.labelWidth - buttonWidth, position.height);
             Rect buttonRect = new Rect(position.x + position.width - buttonWidth, position.y, buttonWidth, position.height);
 
-            // Draw label
             EditorGUI.LabelField(labelRect, label);
-
-            // Get all sorting layers
-            string[] sortingLayerNames = SortingLayer.layers.Select(l => l.name).ToArray();
-            int[] layerIDs = SortingLayer.layers.Select(l => l.id).ToArray();
             
-            // Find current selection
-            int currentIndex = System.Array.IndexOf(sortingLayerNames, layerName.stringValue);
-            bool layerExists = currentIndex != -1;
-            
-            // If layer doesn't exist, add it as a missing option
             if (!layerExists && !string.IsNullOrEmpty(layerName.stringValue))
             {
                 var tempNames = sortingLayerNames.ToList();
@@ -57,10 +51,9 @@ namespace DNExtensions.Utilities.CustomFields
             }
             else if (!layerExists)
             {
-                currentIndex = 0; // Default to first layer
+                currentIndex = 0;
             }
             
-            // Draw popup
             EditorGUI.BeginChangeCheck();
             int newIndex = EditorGUI.Popup(popupRect, currentIndex, sortingLayerNames);
             
@@ -68,7 +61,6 @@ namespace DNExtensions.Utilities.CustomFields
             {
                 if (!layerExists && newIndex == 0)
                 {
-                    // User selected the missing option, don't change anything
                 }
                 else
                 {
@@ -81,10 +73,11 @@ namespace DNExtensions.Utilities.CustomFields
                 }
             }
 
-            // Draw status icon
-            DrawStatusIcon(iconRect, layerName.stringValue, layerExists);
+            if (hasIssue)
+            {
+                DrawStatusIcon(iconRect, layerName.stringValue, layerExists);
+            }
 
-            // Settings button
             if (GUI.Button(buttonRect, new GUIContent("⚙", "Open Tags and Layers settings")))
             {
                 EditorApplication.ExecuteMenuItem("Edit/Project Settings...");
@@ -93,14 +86,8 @@ namespace DNExtensions.Utilities.CustomFields
             
             EditorGUI.EndProperty();
         }
-
-        /// <summary>
-        /// Draws a status icon indicating whether the sorting layer exists and is valid.
-        /// </summary>
-        /// <param name="rect">The rectangle to draw the icon in</param>
-        /// <param name="layerName">The name of the sorting layer</param>
-        /// <param name="layerExists">Whether the layer exists in the project</param>
-        private void DrawStatusIcon(Rect rect, string layerName, bool layerExists)
+        
+        private static void DrawStatusIcon(Rect rect, string layerName, bool layerExists)
         {
             string icon;
             string tooltip;
@@ -110,7 +97,7 @@ namespace DNExtensions.Utilities.CustomFields
             {
                 icon = "⚠";
                 tooltip = "No sorting layer selected";
-                iconColor = new Color(1f, 0.6f, 0f); // Orange
+                iconColor = new Color(1f, 0.6f, 0f);
             }
             else if (!layerExists)
             {
@@ -120,12 +107,9 @@ namespace DNExtensions.Utilities.CustomFields
             }
             else
             {
-                icon = "✓";
-                tooltip = $"Sorting layer '{layerName}' is valid";
-                iconColor = new Color(0f, 0.6f, 0f); // Green
+                return;
             }
 
-            // Draw icon with color and tooltip
             Color originalColor = GUI.color;
             GUI.color = iconColor;
             
@@ -141,5 +125,4 @@ namespace DNExtensions.Utilities.CustomFields
             GUI.color = originalColor;
         }
     }
-
 }

@@ -6,16 +6,16 @@ namespace DNExtensions.Utilities
 {
     /// <summary>
     /// Custom property drawer for the Separator attribute.
-    /// Draws a visual separator line with optional title text above the property.
+    /// Draws a visual separator line with optional title text centered on the line.
     /// </summary>
     [CustomPropertyDrawer(typeof(SeparatorAttribute))]
     public class SeparatorDrawer : DecoratorDrawer
     {
-        // Visual constants - easily editable
         private static readonly Color LineColor = new Color(0.6f, 0.6f, 0.6f, 1f);
-        private const float LineThickness = 4f;
+        private const float LineThickness = 2f;
         private const float LineTopSpacingMultiplier = 3f;
         private const float LineBottomSpacingMultiplier = 2f;
+        private const float TitlePadding = 8f;
         
         /// <summary>
         /// Gets the SeparatorAttribute for this drawer.
@@ -30,85 +30,92 @@ namespace DNExtensions.Utilities
         {
             float height = 0f;
             
-            // Add spacing above if requested
             if (SeparatorAttribute.AddSpacing)
             {
                 height += EditorGUIUtility.standardVerticalSpacing * LineTopSpacingMultiplier;
             }
             
-            // Add height for title if present
             if (!string.IsNullOrEmpty(SeparatorAttribute.Title))
             {
                 height += EditorGUIUtility.singleLineHeight;
-                height += EditorGUIUtility.standardVerticalSpacing;
+            }
+            else
+            {
+                height += LineThickness;
             }
             
-            // Add height for separator line
-            height += LineThickness;
-            
-            // Add spacing below
             height += EditorGUIUtility.standardVerticalSpacing * LineBottomSpacingMultiplier;
             
             return height;
         }
 
         /// <summary>
-        /// Draws the separator line and optional title in the inspector.
+        /// Draws the separator line with optional title centered on the line.
         /// </summary>
         /// <param name="position">Rectangle on the screen to use for the separator</param>
         public override void OnGUI(Rect position)
         {
             float currentY = position.y;
             
-            // Add spacing above if requested
             if (SeparatorAttribute.AddSpacing)
             {
                 currentY += EditorGUIUtility.standardVerticalSpacing * LineTopSpacingMultiplier;
             }
             
-            // Draw title if present
             if (!string.IsNullOrEmpty(SeparatorAttribute.Title))
             {
-                Rect titleRect = new Rect(position.x, currentY, position.width, EditorGUIUtility.singleLineHeight);
-                
                 GUIStyle titleStyle = new GUIStyle(EditorStyles.label)
                 {
                     fontStyle = SeparatorAttribute.TitleStyle,
-                    alignment = TextAnchor.MiddleLeft
+                    alignment = TextAnchor.MiddleCenter
                 };
                 
-                // Use default Unity text color for title
-                EditorGUI.LabelField(titleRect, SeparatorAttribute.Title, titleStyle);
+                GUIContent titleContent = new GUIContent(SeparatorAttribute.Title);
+                Vector2 titleSize = titleStyle.CalcSize(titleContent);
                 
-                currentY += EditorGUIUtility.singleLineHeight;
-                currentY += EditorGUIUtility.standardVerticalSpacing;
+                float lineCenterY = currentY + EditorGUIUtility.singleLineHeight * 0.5f;
+                
+                float leftLineWidth = (position.width - titleSize.x - TitlePadding * 2f) * 0.5f;
+                float rightLineStart = position.x + leftLineWidth + titleSize.x + TitlePadding * 2f;
+                float rightLineWidth = position.width - leftLineWidth - titleSize.x - TitlePadding * 2f;
+                
+                Rect leftLineRect = new Rect(
+                    position.x,
+                    lineCenterY - LineThickness * 0.5f,
+                    leftLineWidth,
+                    LineThickness
+                );
+                
+                Rect rightLineRect = new Rect(
+                    rightLineStart,
+                    lineCenterY - LineThickness * 0.5f,
+                    rightLineWidth,
+                    LineThickness
+                );
+                
+                EditorGUI.DrawRect(leftLineRect, LineColor);
+                EditorGUI.DrawRect(rightLineRect, LineColor);
+                
+                Rect titleRect = new Rect(
+                    position.x + leftLineWidth + TitlePadding,
+                    currentY,
+                    titleSize.x,
+                    EditorGUIUtility.singleLineHeight
+                );
+                
+                EditorGUI.LabelField(titleRect, SeparatorAttribute.Title, titleStyle);
             }
-            
-            // Draw separator line
-            Rect lineRect = new Rect(
-                position.x, 
-                currentY, 
-                position.width, 
-                LineThickness
-            );
-            
-            DrawSeparatorLine(lineRect, LineColor);
-        }
-
-        /// <summary>
-        /// Draws a horizontal separator line with the specified color.
-        /// </summary>
-        /// <param name="rect">The rectangle to draw the line in</param>
-        /// <param name="color">The color of the line</param>
-        private void DrawSeparatorLine(Rect rect, Color color)
-        {
-            Color originalColor = GUI.color;
-            GUI.color = color;
-            
-            // Draw the line using GUI.DrawTexture with a white texture
-            EditorGUI.DrawRect(rect, color);
-            
-            GUI.color = originalColor;
+            else
+            {
+                Rect lineRect = new Rect(
+                    position.x,
+                    currentY,
+                    position.width,
+                    LineThickness
+                );
+                
+                EditorGUI.DrawRect(lineRect, LineColor);
+            }
         }
     }
 }

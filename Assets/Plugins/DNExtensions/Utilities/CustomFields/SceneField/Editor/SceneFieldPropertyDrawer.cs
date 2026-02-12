@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEditor;
 
@@ -18,15 +17,15 @@ namespace DNExtensions.Utilities.CustomFields
             SerializedProperty sceneName = property.FindPropertyRelative("sceneName");
             SerializedProperty scenePath = property.FindPropertyRelative("scenePath");
             
-            // Reserve space for status icon and settings button
-            float iconWidth = 20f;
+            bool hasIssue = sceneAsset.objectReferenceValue == null || HasBuildIssue(scenePath.stringValue);
+            
+            float iconWidth = hasIssue ? 20f : 0f;
             float buttonWidth = 25f;
             Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth - iconWidth, position.height);
             Rect iconRect = new Rect(position.x + EditorGUIUtility.labelWidth - iconWidth, position.y, iconWidth, position.height);
             Rect fieldRect = new Rect(position.x + EditorGUIUtility.labelWidth, position.y, position.width - EditorGUIUtility.labelWidth - buttonWidth, position.height);
             Rect buttonRect = new Rect(position.x + position.width - buttonWidth, position.y, buttonWidth, position.height);
             
-            // Draw label
             EditorGUI.LabelField(labelRect, label);
             
             if (sceneAsset != null)
@@ -52,18 +51,12 @@ namespace DNExtensions.Utilities.CustomFields
                     }
                 }
 
-                // Draw status icon next to label
-                if (sceneAsset.objectReferenceValue && !string.IsNullOrEmpty(scenePath.stringValue))
+                if (hasIssue)
                 {
-                    DrawStatusIcon(iconRect, sceneName.stringValue, scenePath.stringValue);
-                }
-                else if (sceneAsset.objectReferenceValue == null)
-                {
-                    DrawEmptyStatusIcon(iconRect);
+                    DrawStatusIcon(iconRect, sceneName.stringValue, scenePath.stringValue, sceneAsset.objectReferenceValue == null);
                 }
             }
             
-            // Draw settings button
             if (GUI.Button(buttonRect, new GUIContent("⚙", "Open Build Settings")))
             {
                 EditorWindow.GetWindow(System.Type.GetType("UnityEditor.BuildPlayerWindow,UnityEditor"));
@@ -72,16 +65,35 @@ namespace DNExtensions.Utilities.CustomFields
             EditorGUI.EndProperty();
         }
 
+        private bool HasBuildIssue(string scenePath)
+        {
+            if (string.IsNullOrEmpty(scenePath))
+                return false;
+            
+            EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
+            for (int i = 0; i < scenes.Length; i++)
+            {
+                if (scenes[i].path == scenePath)
+                {
+                    return !scenes[i].enabled;
+                }
+            }
+            
+            return true;
+        }
+
         /// <summary>
         /// Draws a status icon next to the label with tooltip on hover and click to open build settings.
-        /// Uses the same visual style as SortingLayerField and TagField for consistency.
         /// </summary>
-        private void DrawStatusIcon(Rect rect, string sceneName, string scenePath)
+        private static void DrawStatusIcon(Rect rect, string sceneName, string scenePath, bool isEmpty)
         {
-            // Check build settings status
+            if (isEmpty)
+            {
+                return;
+            }
+            
             bool sceneInBuild = false;
             bool sceneEnabled = false;
-            int buildIndex = -1;
             
             EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
             for (int i = 0; i < scenes.Length; i++)
@@ -90,15 +102,10 @@ namespace DNExtensions.Utilities.CustomFields
                 {
                     sceneInBuild = true;
                     sceneEnabled = scenes[i].enabled;
-                    if (sceneEnabled)
-                    {
-                        buildIndex = i;
-                    }
                     break;
                 }
             }
 
-            // Determine icon and tooltip
             string icon;
             string tooltip;
             Color iconColor;
@@ -106,40 +113,21 @@ namespace DNExtensions.Utilities.CustomFields
             if (!sceneInBuild)
             {
                 icon = "✕";
-                tooltip = $"Scene '{sceneName}' is not in build settings!\nAdd it to build settings to use at runtime.\n\nClick to open Build Settings.";
+                tooltip = $"Scene '{sceneName}' is not in build settings!\nAdd it to build settings to use at runtime.";
                 iconColor = Color.red;
             }
             else if (!sceneEnabled)
             {
                 icon = "⚠";
-                tooltip = $"Scene '{sceneName}' is disabled in build settings!\nEnable it in build settings to use at runtime.\n\nClick to open Build Settings.";
-                iconColor = new Color(1f, 0.6f, 0f); // Orange
+                tooltip = $"Scene '{sceneName}' is disabled in build settings!\nEnable it in build settings to use at runtime.";
+                iconColor = new Color(1f, 0.6f, 0f);
             }
             else
             {
-                icon = "✓";
-                tooltip = $"Scene '{sceneName}' is ready!\nBuild Index: {buildIndex}\n\nClick to open Build Settings.";
-                iconColor = new Color(0f, 0.6f, 0f); // Green
+                return;
             }
+            
 
-            // Handle click event
-            if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
-            {
-                if (Event.current.button == 0) // Left mouse button
-                {
-                    // Open Build Settings window using the original working method
-                    EditorWindow.GetWindow(System.Type.GetType("UnityEditor.BuildPlayerWindow,UnityEditor"));
-                    Event.current.Use();
-                }
-            }
-
-            // Change cursor to pointer when hovering
-            if (rect.Contains(Event.current.mousePosition))
-            {
-                EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
-            }
-
-            // Draw icon with color and tooltip
             Color originalColor = GUI.color;
             GUI.color = iconColor;
             
@@ -154,31 +142,7 @@ namespace DNExtensions.Utilities.CustomFields
             EditorGUI.LabelField(rect, iconContent, iconStyle);
             GUI.color = originalColor;
         }
-
-        /// <summary>
-        /// Draws a warning icon when no scene is assigned.
-        /// </summary>
-        private void DrawEmptyStatusIcon(Rect rect)
-        {
-            string icon = "⚠";
-            string tooltip = "No scene assigned";
-            Color iconColor = new Color(1f, 0.6f, 0f); // Orange
-
-            // Draw icon with color and tooltip
-            Color originalColor = GUI.color;
-            GUI.color = iconColor;
-            
-            GUIContent iconContent = new GUIContent(icon, tooltip);
-            GUIStyle iconStyle = new GUIStyle(EditorStyles.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 12,
-                fontStyle = FontStyle.Bold
-            };
-            
-            EditorGUI.LabelField(rect, iconContent, iconStyle);
-            GUI.color = originalColor;
-        }
+        
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {

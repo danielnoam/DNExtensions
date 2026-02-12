@@ -26,7 +26,7 @@ namespace DNExtensions.Utilities
             HandleEntryContextMenu(position, property);
         }
 
-        void HandleDragAndDrop(Rect dropRect, SerializedProperty property)
+        private void HandleDragAndDrop(Rect dropRect, SerializedProperty property)
         {
             Event evt = Event.current;
             
@@ -49,13 +49,17 @@ namespace DNExtensions.Utilities
                             
                             foreach (var draggedObject in DragAndDrop.objectReferences)
                             {
-                                if (draggedObject is Component comp)
+                                if (draggedObject is GameObject go)
+                                {
+                                    objectsToDrop.Add(go);
+                                }
+                                else if (draggedObject is Component comp)
                                 {
                                     objectsToDrop.Add(comp);
                                 }
-                                else if (draggedObject is GameObject go)
+                                else if (draggedObject is ScriptableObject so)
                                 {
-                                    objectsToDrop.Add(go);
+                                    objectsToDrop.Add(so);
                                 }
                             }
                             
@@ -87,7 +91,7 @@ namespace DNExtensions.Utilities
             }
         }
 
-        void HandleEntryContextMenu(Rect position, SerializedProperty property)
+        private void HandleEntryContextMenu(Rect position, SerializedProperty property)
         {
             Event evt = Event.current;
             
@@ -114,7 +118,7 @@ namespace DNExtensions.Utilities
             }
         }
 
-        void ShowHeaderContextMenu(SerializedProperty property)
+        private void ShowHeaderContextMenu(SerializedProperty property)
         {
             var menu = new GenericMenu();
             var callsProperty = property.FindPropertyRelative("m_PersistentCalls.m_Calls");
@@ -153,7 +157,7 @@ namespace DNExtensions.Utilities
             menu.ShowAsContext();
         }
 
-        void ShowEntryContextMenu(SerializedProperty property, int index)
+        private void ShowEntryContextMenu(SerializedProperty property, int index)
         {
             var menu = new GenericMenu();
             
@@ -171,7 +175,7 @@ namespace DNExtensions.Utilities
             menu.ShowAsContext();
         }
 
-        void ShowComponentMenu(SerializedProperty property, GameObject go)
+        private void ShowComponentMenu(SerializedProperty property, GameObject go)
         {
             var components = go.GetComponents<Component>();
             
@@ -208,7 +212,7 @@ namespace DNExtensions.Utilities
             menu.ShowAsContext();
         }
 
-        void AddEventWithTarget(SerializedProperty property, UnityEngine.Object target)
+        private void AddEventWithTarget(SerializedProperty property, UnityEngine.Object target)
         {
             var callsProperty = property.FindPropertyRelative("m_PersistentCalls.m_Calls");
             
@@ -228,7 +232,7 @@ namespace DNExtensions.Utilities
                 "UnityEngine.Object, UnityEngine";
         }
 
-        void CopySingleEvent(SerializedProperty property, int index)
+        private void CopySingleEvent(SerializedProperty property, int index)
         {
             var callsProperty = property.FindPropertyRelative("m_PersistentCalls.m_Calls");
             
@@ -240,7 +244,7 @@ namespace DNExtensions.Utilities
             }
         }
 
-        void CopyAllEvents(SerializedProperty property)
+        private void CopyAllEvents(SerializedProperty property)
         {
             var callsProperty = property.FindPropertyRelative("m_PersistentCalls.m_Calls");
             CopiedEvents.Clear();
@@ -252,7 +256,7 @@ namespace DNExtensions.Utilities
             }
         }
 
-        void PasteEvents(SerializedProperty property, bool pasteAll)
+        private void PasteEvents(SerializedProperty property, bool pasteAll)
         {
             if (CopiedEvents.Count == 0) return;
             
@@ -269,7 +273,7 @@ namespace DNExtensions.Utilities
             property.serializedObject.ApplyModifiedProperties();
         }
 
-        void PasteEventAtIndex(SerializedProperty property, int index)
+        private void PasteEventAtIndex(SerializedProperty property, int index)
         {
             if (CopiedEvents.Count != 1) return;
             
@@ -283,7 +287,7 @@ namespace DNExtensions.Utilities
             }
         }
 
-        SerializedEventData SerializeEventCall(SerializedProperty call)
+        private SerializedEventData SerializeEventCall(SerializedProperty call)
         {
             var data = new SerializedEventData
             {
@@ -304,7 +308,7 @@ namespace DNExtensions.Utilities
             return data;
         }
 
-        void DeserializeEventCall(SerializedProperty call, SerializedEventData data)
+        private void DeserializeEventCall(SerializedProperty call, SerializedEventData data)
         {
             call.FindPropertyRelative("m_Target").objectReferenceValue = data.target;
             call.FindPropertyRelative("m_MethodName").stringValue = data.methodName;
@@ -321,7 +325,7 @@ namespace DNExtensions.Utilities
         }
 
         [Serializable]
-        class SerializedEventData
+        private class SerializedEventData
         {
             public UnityEngine.Object target;
             public string methodName;

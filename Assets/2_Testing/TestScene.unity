@@ -1802,7 +1802,7 @@ Transform:
   m_GameObject: {fileID: 1526888418}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 7.63, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1820,28 +1820,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 552f8876cc78dbc459183ef952b3f7a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensionsExample
-  testReadOnly: 0
+  readOnly: 0
+  inline: {fileID: 1526888424}
   conditionalCheck: 0
-  conditionalFloat: 6.17
-  conditionalInt: 0
+  conditionalFloat: 6.38
+  conditionalInt: 17
+  prefabSelector: {fileID: 8842675776293222798, guid: 385e2d0b9f979d14ca7b058fc6b2988c, type: 3}
+  prefabSelectorLocked: {fileID: 108853269857652447, guid: 21e745c46c771434d909d5f19b389203, type: 3}
   sceneField:
     sceneAsset: {fileID: 0}
     sceneName: 
     scenePath: 
-  layerField:
+  sortingLayerField:
     layerName: Default
     layerID: 0
   tagField:
     tagName: Untagged
   optionalField:
-    isSet: 0
+    isSet: 1
     hideValueIfSet: 0
     value: 
   animatorStateField:
     animator: {fileID: 1526888422}
-    stateName: None
-    stateHash: -542986255
-    assigned: 0
+    stateName: New State
+    stateHash: -499022955
+    assigned: 1
   animatorTriggerField:
     controllerNameOrPath: New Animator Controller
     triggerName: 
@@ -1851,29 +1854,23 @@ MonoBehaviour:
   noteField:
     note: Note Field Example
     isEditable: 0
-  noteFieldEditable:
-    note: Editable Note Field Example
-    isEditable: 1
-  prefabSelector: {fileID: 0}
-  prefabSelectorLocked: {fileID: 0}
-  testRangedInt:
-    minValue: 0
+  rangedInt:
+    minValue: -1
     maxValue: 0
-  testRangedFloat:
-    minValue: 0
-    maxValue: 0
+  rangedFloat:
+    minValue: -2.6964288
+    maxValue: 1.5178561
   testStrings:
     internalItems: []
   testInts:
     internalItems: []
   testEnums:
     internalItems: []
-  testAudioEvent: {fileID: 0}
   testInterface:
     underlyingValue: {fileID: 0}
   interactableObject: {fileID: 0}
   serializableSelector:
-    rid: 4437625887323586821
+    rid: 5778561708745818191
   serializableSelectorList:
   - rid: 4437625887323586819
   - rid: 4437625887323586820
@@ -1905,16 +1902,16 @@ MonoBehaviour:
       data:
         varFloat: 0
         varBool: 0
-    - rid: 4437625887323586821
-      type: {class: Behavior1, ns: , asm: Assembly-CSharp-firstpass}
-      data:
-        varFloat: 0
-        varString: 
     - rid: 4437625887323586822
       type: {class: Behavior5, ns: , asm: Assembly-CSharp-firstpass}
       data:
         varFloat: 0
         varBool: 0
+    - rid: 5778561708745818191
+      type: {class: Behavior1, ns: , asm: Assembly-CSharp-firstpass}
+      data:
+        varFloat: 0
+        varString: 
 --- !u!114 &1526888421
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2019,7 +2016,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Utilities.Note
   text:
-    note: DNExtenstions asdasdasdas
+    note: 'DNExtenstions asdasdasdas as
+
+'
     isEditable: 1
   showInSceneView: 1
   gizmoColor: {r: 1, g: 1, b: 0.5, a: 1}
@@ -2093,7 +2092,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1851155228
 Transform:
   m_ObjectHideFlags: 0

@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace DNExtensions.Utilities.PrefabSelector.Editor
+namespace DNExtensions.Utilities.PrefabSelector
 {
     public struct PrefabInfo
     {
@@ -18,7 +18,6 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
     [CustomPropertyDrawer(typeof(PrefabSelectorAttribute))]
     public class PrefabSelectorDrawer : PropertyDrawer
     {
-        
         private static readonly Dictionary<string, PrefabInfo[]> PrefabCache = new Dictionary<string, PrefabInfo[]>();
         
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -31,6 +30,14 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
     
             PrefabSelectorAttribute attr = attribute as PrefabSelectorAttribute;
     
+            Event evt = Event.current;
+            if (evt.type == EventType.ContextClick && position.Contains(evt.mousePosition))
+            {
+                ShowContextMenu(property, attr);
+                evt.Use();
+                return;
+            }
+    
             Rect controlRect = EditorGUI.PrefixLabel(position, label);
     
             float buttonWidth = 20f;
@@ -40,12 +47,10 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
             Rect dropdownButtonRect = new Rect(objectFieldRect.xMax + spacing, controlRect.y, 
                 buttonWidth, controlRect.height);
             
-            // Draw object field (supports drag-drop)
             EditorGUI.BeginChangeCheck();
             Object newValue = EditorGUI.ObjectField(objectFieldRect, property.objectReferenceValue, fieldInfo.FieldType, false);
             if (EditorGUI.EndChangeCheck())
             {
-                // Validate that it's a prefab if a value was set
                 if (newValue)
                 {
                     GameObject prefab = null;
@@ -59,10 +64,8 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
                         prefab = comp.gameObject;
                     }
                     
-                    // Check if it's actually a prefab
                     if (prefab && PrefabUtility.GetPrefabAssetType(prefab) != PrefabAssetType.NotAPrefab)
                     {
-                        // If LockDragDrop is enabled, validate against filter
                         if (attr is { LockToFilter: true } && !IsValidPrefab(prefab, newValue, attr))
                         {
                             Debug.LogWarning($"Prefab '{prefab.name}' does not match the folder/filter criteria for this field.");
@@ -85,10 +88,8 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
                 }
             }
             
-            // Draw dropdown button
             if (GUI.Button(dropdownButtonRect, "▼", EditorStyles.miniButton))
             {
-                // Create combined rect for popup (objectField + button)
                 Rect combinedRect = new Rect(
                     objectFieldRect.x,
                     objectFieldRect.y,
@@ -98,16 +99,41 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
                 ShowPrefabMenu(property, attr, combinedRect);
             }
         }
+
+        private void ShowContextMenu(SerializedProperty property, PrefabSelectorAttribute attr)
+        {
+            GenericMenu menu = new GenericMenu();
+            
+            if (property.objectReferenceValue)
+            {
+                menu.AddItem(new GUIContent("Ping Asset"), false, () =>
+                {
+                    property.objectReferenceValue.Ping();
+                });
+                
+                menu.AddSeparator("");
+            }
+            
+            
+            if (!string.IsNullOrEmpty(attr.FolderPath))
+            {
+                menu.AddItem(new GUIContent("Copy Path"), false, () =>
+                {
+                    attr.FolderPath.CopyToClipboard();
+                    Debug.Log($"Copied filter path: {attr.FolderPath}");
+                });
+            }
+            
+            menu.AddItem(new GUIContent("Clear Cache"), false, ClearCache);
+            
+            menu.ShowAsContext();
+        }
         
         private void ShowPrefabMenu(SerializedProperty property, PrefabSelectorAttribute attr, Rect fieldRect)
         {
-            // Get or cache prefabs
             PrefabInfo[] prefabs = GetPrefabs(property, attr);
-            
-            // Determine if we should show search
             bool showSearch = prefabs.Length >= attr.SearchThreshold;
             
-            // Show popup under the full field (object field + button)
             PrefabSelectorPopup.Show(
                 fieldRect,
                 prefabs,
@@ -119,47 +145,37 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
         
         private bool IsValidPrefab(GameObject prefab, Object value, PrefabSelectorAttribute attr)
         {
-            // Get the path of the prefab
             string prefabPath = AssetDatabase.GetAssetPath(prefab);
             
-            // Check folder filter
             if (!string.IsNullOrEmpty(attr.FolderPath))
             {
                 if (!prefabPath.StartsWith(attr.FolderPath))
                     return false;
             }
             
-            // Check search filter (basic name matching)
             if (!string.IsNullOrEmpty(attr.SearchFilter))
             {
                 if (!prefab.name.ToLower().Contains(attr.SearchFilter.ToLower()))
                     return false;
             }
             
-            // Component type is already validated by Unity's ObjectField type constraint
-            // So we don't need to check that here
-            
             return true;
         }
         
         private PrefabInfo[] GetPrefabs(SerializedProperty property, PrefabSelectorAttribute attr)
         {
-            // Create cache key
             Type fieldType = fieldInfo.FieldType;
             string cacheKey = $"{fieldType.FullName}|{attr.FolderPath ?? ""}|{attr.SearchFilter ?? ""}";
             
             if (PrefabCache.TryGetValue(cacheKey, out var prefabs))
                 return prefabs;
             
-            // Find all prefabs
             List<PrefabInfo> prefabList = new List<PrefabInfo>();
             
-            // Build search filter
             string searchQuery = "t:Prefab";
             if (!string.IsNullOrEmpty(attr.SearchFilter))
                 searchQuery += " " + attr.SearchFilter;
             
-            // Search for prefabs
             var guids = !string.IsNullOrEmpty(attr.FolderPath) 
                 ? AssetDatabase.FindAssets(searchQuery, new[] { attr.FolderPath }) 
                 : AssetDatabase.FindAssets(searchQuery);
@@ -172,14 +188,12 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
                 if (!prefab)
                     continue;
                 
-                // If field is a Component type, only include prefabs that have that component
                 if (typeof(Component).IsAssignableFrom(fieldType))
                 {
                     Component comp = prefab.GetComponent(fieldType);
                     if (!comp)
                         continue;
                 }
-                // If field is GameObject, no filtering needed
                 
                 prefabList.Add(new PrefabInfo
                 {
@@ -189,7 +203,6 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
                 });
             }
             
-            // Sort by name
             var sortedPrefabs = prefabList.OrderBy(p => p.DisplayName).ToArray();
             PrefabCache[cacheKey] = sortedPrefabs;
             
@@ -198,7 +211,6 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
         
         private void SetPrefab(SerializedProperty property, GameObject prefab)
         {
-            // If field type is Component, get the component from the prefab
             Type fieldType = fieldInfo.FieldType;
             
             if (!prefab)
@@ -217,7 +229,6 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
             
             property.serializedObject.ApplyModifiedProperties();
         }
-        
 
         public static void ClearCache()
         {

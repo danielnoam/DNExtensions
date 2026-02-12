@@ -2,7 +2,6 @@ using System;
 using DNExtensions.FirstPersonController.Interactable;
 using DNExtensions.Utilities;
 using DNExtensions.Utilities.AutoGet;
-using DNExtensions.Utilities.RangedValues;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;

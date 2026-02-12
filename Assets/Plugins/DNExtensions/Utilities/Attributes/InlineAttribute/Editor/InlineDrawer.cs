@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions.Utilities.InlineSO.Editor
+namespace DNExtensions.Utilities.Inline.Editor
 {
-    [CustomPropertyDrawer(typeof(InlineSOAttribute))]
-    public class InlineSODrawer : PropertyDrawer
+    [CustomPropertyDrawer(typeof(InlineAttribute))]
+    public class InlineDrawer : PropertyDrawer
     {
         private static readonly Color BoxColor = new Color(0f, 0f, 0f, 0.15f);
         private static readonly Color BoxBorderColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
@@ -21,7 +21,7 @@ namespace DNExtensions.Utilities.InlineSO.Editor
         {
             float height = EditorGUIUtility.singleLineHeight;
 
-            if (!IsValid(property))
+            if (property.propertyType != SerializedPropertyType.ObjectReference)
                 return height;
 
             if (!property.isExpanded || property.objectReferenceValue == null)
@@ -35,7 +35,7 @@ namespace DNExtensions.Utilities.InlineSO.Editor
             so.UpdateIfRequiredOrScript();
 
             var iterator = so.GetIterator();
-            iterator.NextVisible(true); // skip m_Script
+            iterator.NextVisible(true);
 
             while (iterator.NextVisible(false))
                 height += EditorGUI.GetPropertyHeight(iterator, true) + PropertySpacing;
@@ -48,9 +48,9 @@ namespace DNExtensions.Utilities.InlineSO.Editor
         {
             EditorGUI.BeginProperty(position, label, property);
 
-            if (!IsValid(property))
+            if (property.propertyType != SerializedPropertyType.ObjectReference)
             {
-                EditorGUI.LabelField(position, label, new GUIContent("[InlineSO] only works on ScriptableObject fields"));
+                EditorGUI.LabelField(position, label, new GUIContent("[InlineSO] only works on Object reference fields"));
                 EditorGUI.EndProperty();
                 return;
             }
@@ -86,7 +86,7 @@ namespace DNExtensions.Utilities.InlineSO.Editor
 
             so.UpdateIfRequiredOrScript();
 
-            var attr = (InlineSOAttribute)attribute;
+            var attr = (InlineAttribute)attribute;
             float indent = EditorGUI.indentLevel * 15f;
 
             var boxRect = new Rect(
@@ -106,7 +106,7 @@ namespace DNExtensions.Utilities.InlineSO.Editor
             EditorGUI.indentLevel++;
 
             var iterator = so.GetIterator();
-            iterator.NextVisible(true); // skip m_Script
+            iterator.NextVisible(true);
 
             while (iterator.NextVisible(false))
             {
@@ -128,14 +128,6 @@ namespace DNExtensions.Utilities.InlineSO.Editor
             EditorGUI.EndProperty();
         }
 
-        private bool IsValid(SerializedProperty property)
-        {
-            if (property.propertyType != SerializedPropertyType.ObjectReference)
-                return false;
-
-            return typeof(ScriptableObject).IsAssignableFrom(fieldInfo.FieldType);
-        }
-
         private static SerializedObject GetOrCreateSerializedObject(SerializedProperty property)
         {
             var target = property.objectReferenceValue;
@@ -153,10 +145,8 @@ namespace DNExtensions.Utilities.InlineSO.Editor
                 }
                 catch (Exception)
                 {
-                    // disposed, fall through
+                    Cache.Remove(key);
                 }
-
-                Cache.Remove(key);
             }
 
             var so = new SerializedObject(target);
@@ -168,7 +158,6 @@ namespace DNExtensions.Utilities.InlineSO.Editor
         {
             EditorGUI.DrawRect(rect, BoxColor);
             
-            // borders
             EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1), BoxBorderColor);
             EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1, rect.width, 1), BoxBorderColor);
             EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1, rect.height), BoxBorderColor);

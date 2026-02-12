@@ -2,14 +2,12 @@ using System;
 using System.Collections.Generic;
 using DNExtensions.CinemachineExtesnstions;
 using DNExtensions.Utilities;
-using DNExtensions.Utilities.AudioEvent;
 using DNExtensions.Utilities.SerializableSelector;
 using DNExtensions.Utilities.Button;
 using DNExtensions.Utilities.SerializedInterface;
 using DNExtensions.Utilities.CustomFields;
-using DNExtensions.Utilities.InlineSO;
+using DNExtensions.Utilities.Inline;
 using DNExtensions.Utilities.PrefabSelector;
-using DNExtensions.Utilities.RangedValues;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Events;
@@ -19,39 +17,31 @@ public class DNExtensionsExample : MonoBehaviour
 {
     
     [Separator("Attributes")]
-    [ReadOnly] [SerializeField] private int testReadOnly;
-    [SerializeField] private bool conditionalCheck;
-    [SerializeField, DisableIf("conditionalCheck")] private float conditionalFloat;
-    [SerializeField, ShowIf("conditionalCheck")] private int conditionalInt;
     [InfoBox("This is an info box showing something")]
+    [SerializeField, ReadOnly] private int readOnly;
+    [SerializeField, Inline] private Component inline;
+    [SerializeField, Foldout("Conditional")] private bool conditionalCheck;
+    [SerializeField, DisableIf("conditionalCheck"), Foldout("Conditional")] private float conditionalFloat;
+    [SerializeField, ShowIf("conditionalCheck"), Foldout("Conditional")] private int conditionalInt;
+    [SerializeField, Foldout("Prefab Selector"), PrefabSelector("Assets/2_Testing")] private GameObject prefabSelector;
+    [SerializeField, Foldout("Prefab Selector"), PrefabSelector("Assets/2_Testing", LockToFilter = true)] private GameObject prefabSelectorLocked;
     
     [Separator("Fields")]
     [SerializeField] private SceneField sceneField;
-    [SerializeField] private SortingLayerField layerField;
+    [SerializeField] private SortingLayerField sortingLayerField;
     [SerializeField] private TagField tagField;
     [SerializeField] private OptionalField<string> optionalField;
     [SerializeField] private AnimatorStateField animatorStateField;
     [SerializeField] private AnimatorTriggerField animatorTriggerField = new AnimatorTriggerField("New Animator Controller");
     [SerializeField] private PositionField positionField;
-    [SerializeField] private NoteField noteField = new("Note Field Example", false);
-    [SerializeField] private NoteField noteFieldEditable = new("Editable Note Field Example", true);
-    
-    [Separator("Prefab Selector")]
-    [SerializeField, PrefabSelector("Assets/2_Testing")] private GameObject prefabSelector;
-    [SerializeField, PrefabSelector("Assets/2_Testing", LockToFilter = true)] private GameObject prefabSelectorLocked;
-    
-
-    [Separator("Ranged Values")]
-    [SerializeField] private RangedInt testRangedInt;
-    [SerializeField, MinMaxRange(-5f,5)] private RangedFloat testRangedFloat;
+    [SerializeField] private NoteField noteField = new("Note Field Example");
+    [SerializeField] private RangedInt rangedInt;
+    [SerializeField, MinMaxRange(-5f,5)] private RangedFloat rangedFloat;
     
     [Separator("Chance List")]
     [SerializeField] private ChanceList<string> testStrings;
     [SerializeField] private ChanceList<int> testInts;
     [SerializeField] private ChanceList<TestEnum> testEnums;
-    
-    [Separator("Inline So")]
-    [SerializeField, InlineSO] private SOAudioEvent testAudioEvent;
     
     [Separator("Serialized Interface")]
     [SerializeField] private InterfaceReference<ITest> testInterface;
@@ -127,3 +117,5 @@ public class Behavior5 : TestBehavior
 {
     public bool varBool;
 }
+
+

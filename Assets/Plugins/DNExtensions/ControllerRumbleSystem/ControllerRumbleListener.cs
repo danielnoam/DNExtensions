@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using DNExtensions.Utilities.RangedValues;
+using DNExtensions.Utilities;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;

@@ -11,14 +11,8 @@ namespace DNExtensions.Utilities
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-
-            // Position
             DrawVectorWithButtons("Position", "m_LocalPosition");
-            
-            // Rotation
             DrawVectorWithButtons("Rotation", "m_LocalEulerAnglesHint");
-            
-            // Scale
             DrawVectorWithButtons("Scale", "m_LocalScale");
 
             serializedObject.ApplyModifiedProperties();
@@ -38,13 +32,13 @@ namespace DNExtensions.Utilities
             
             EditorGUILayout.PropertyField(prop, new GUIContent(label), true);
             
-            // Copy button
             if (GUILayout.Button(new GUIContent("C", "Copy values to clipboard"), EditorStyles.miniButtonLeft, GUILayout.Width(20)))
             {
                 EditorGUIUtility.systemCopyBuffer = $"{prop.vector3Value.x},{prop.vector3Value.y},{prop.vector3Value.z}";
             }
             
-            // Paste button
+            bool canPaste = CanPasteVector3();
+            GUI.enabled = canPaste;
             if (GUILayout.Button(new GUIContent("P", "Paste values from clipboard"), EditorStyles.miniButtonMid, GUILayout.Width(20)))
             {
                 string[] values = EditorGUIUtility.systemCopyBuffer.Split(',');
@@ -57,15 +51,34 @@ namespace DNExtensions.Utilities
                     prop.vector3Value = new Vector3(x, y, z);
                 }
             }
+            GUI.enabled = true;
             
-            // Reset button
+            Vector3 defaultValue = propertyName == "m_LocalScale" ? Vector3.one : Vector3.zero;
+            bool isDefault = prop.vector3Value == defaultValue;
+            GUI.enabled = !isDefault;
             if (GUILayout.Button(new GUIContent("R", $"Reset {label.ToLower()} to default"), EditorStyles.miniButtonRight, GUILayout.Width(20)))
             {
                 Undo.RecordObjects(targets, $"Reset {label}");
-                prop.vector3Value = propertyName == "m_LocalScale" ? Vector3.one : Vector3.zero;
+                prop.vector3Value = defaultValue;
             }
+            GUI.enabled = true;
             
             EditorGUILayout.EndHorizontal();
+        }
+
+        private bool CanPasteVector3()
+        {
+            string clipboard = EditorGUIUtility.systemCopyBuffer;
+            if (string.IsNullOrEmpty(clipboard))
+                return false;
+
+            string[] values = clipboard.Split(',');
+            if (values.Length != 3)
+                return false;
+
+            return float.TryParse(values[0], out _) && 
+                   float.TryParse(values[1], out _) && 
+                   float.TryParse(values[2], out _);
         }
     }
 }

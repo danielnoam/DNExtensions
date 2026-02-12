@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions.Utilities.PrefabSelector.Editor
+namespace DNExtensions.Utilities.PrefabSelector
 {
     public class PrefabSelectorPopup : EditorWindow
     {
@@ -24,8 +24,8 @@ namespace DNExtensions.Utilities.PrefabSelector.Editor
         public static void Show(Rect buttonRect, PrefabInfo[] prefabs, bool allowNull, bool showSearch, Action<GameObject> onPrefabSelected)
         {
             var window = CreateInstance<PrefabSelectorPopup>();
-            window._allPrefabs = prefabs ?? new PrefabInfo[0];
-            window._filteredPrefabs = prefabs ?? new PrefabInfo[0];
+            window._allPrefabs = prefabs ?? Array.Empty<PrefabInfo>();
+            window._filteredPrefabs = prefabs ?? Array.Empty<PrefabInfo>();
             window._allowNull = allowNull;
             window._showSearch = showSearch;
             window._onPrefabSelected = onPrefabSelected;

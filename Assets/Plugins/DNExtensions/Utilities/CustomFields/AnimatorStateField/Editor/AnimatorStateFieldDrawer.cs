@@ -9,13 +9,13 @@ namespace DNExtensions.Utilities.CustomFields.Editor
     public class AnimatorStateFieldDrawer : PropertyDrawer
     {
         private const string NoStateSelected = "None";
+        private const string NoAnimator = "No Animator";
+        private const string NoController = "No Controller";
         private static readonly string[] EmptyStates = { NoStateSelected };
+        private static readonly string[] NoAnimatorStates = { NoAnimator };
+        private static readonly string[] NoControllerStates = { NoController };
         
-        private const float IconWidth = 20f;
         private const float Spacing = 2f;
-        
-        private static readonly Color WarningColor = new Color(1f, 0.7f, 0.3f);
-        private static readonly Color AssignedColor = new Color(0.3f, 0.8f, 0.4f);
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -24,46 +24,34 @@ namespace DNExtensions.Utilities.CustomFields.Editor
             var stateHashProperty = property.FindPropertyRelative("stateHash");
             var assignedProperty = property.FindPropertyRelative("assigned");
 
-            EditorGUI.BeginProperty(position, GUIContent.none, property);
+            EditorGUI.BeginProperty(position, label, property);
+
+            position = EditorGUI.PrefixLabel(position, label);
 
             var animator = FindAnimator(property, animatorProperty);
             
-            var labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth - IconWidth, position.height);
-            var iconRect = new Rect(position.x + EditorGUIUtility.labelWidth - IconWidth, position.y, IconWidth, position.height);
+            var fieldRect = new Rect(position.x, position.y, 
+                position.width * 0.35f, position.height);
+            var animatorRect = new Rect(fieldRect.xMax + Spacing, position.y, 
+                position.width * 0.65f - Spacing, position.height);
 
-            EditorGUI.LabelField(labelRect, label);
-
-            if (animator == null)
+            if (!animator)
             {
-                DrawWarningIcon(iconRect, "No Animator assigned");
-                
-                var animatorRect = new Rect(position.x + EditorGUIUtility.labelWidth + Spacing, position.y, 
-                    position.width - EditorGUIUtility.labelWidth - Spacing, position.height);
+                EditorGUI.Popup(fieldRect, 0, NoAnimatorStates);
                 EditorGUI.ObjectField(animatorRect, animatorProperty, GUIContent.none);
             }
             else
             {
                 var controller = GetAnimatorController(animator);
-                if (controller == null)
+                if (!controller)
                 {
-                    DrawWarningIcon(iconRect, "Animator has no Controller");
-                    
-                    var animatorRect = new Rect(position.x + EditorGUIUtility.labelWidth + Spacing, position.y, 
-                        position.width - EditorGUIUtility.labelWidth - Spacing, position.height);
+                    EditorGUI.Popup(fieldRect, 0, NoControllerStates);
                     EditorGUI.ObjectField(animatorRect, animatorProperty, GUIContent.none);
                 }
                 else
                 {
-                    var fieldRect = new Rect(position.x + EditorGUIUtility.labelWidth + Spacing, position.y, 
-                        (position.width - EditorGUIUtility.labelWidth - Spacing) * 0.35f, position.height);
-                    var animatorRect = new Rect(fieldRect.xMax + Spacing, position.y, 
-                        (position.width - EditorGUIUtility.labelWidth - Spacing) * 0.65f - Spacing, position.height);
-                    
                     var states = GetAnimatorStates(controller);
                     var currentIndex = GetCurrentStateIndex(states, stateNameProperty.stringValue);
-                    var isAssigned = currentIndex > 0;
-
-                    DrawStatusIcon(iconRect, isAssigned);
 
                     var newIndex = EditorGUI.Popup(fieldRect, currentIndex, states);
                     EditorGUI.ObjectField(animatorRect, animatorProperty, GUIContent.none);
@@ -82,53 +70,14 @@ namespace DNExtensions.Utilities.CustomFields.Editor
             EditorGUI.EndProperty();
         }
 
-        private void DrawStatusIcon(Rect rect, bool isAssigned)
+        private static Animator FindAnimator(SerializedProperty property, SerializedProperty animatorProperty)
         {
-            var icon = isAssigned ? "▶" : "○";
-            var tooltip = isAssigned ? "State assigned" : "No state selected";
-            var iconColor = isAssigned ? AssignedColor : WarningColor;
-
-            var originalColor = GUI.color;
-            GUI.color = iconColor;
-            
-            var iconContent = new GUIContent(icon, tooltip);
-            var iconStyle = new GUIStyle(EditorStyles.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 12,
-                fontStyle = FontStyle.Bold
-            };
-            
-            EditorGUI.LabelField(rect, iconContent, iconStyle);
-            GUI.color = originalColor;
-        }
-
-        private void DrawWarningIcon(Rect rect, string tooltip)
-        {
-            var originalColor = GUI.color;
-            GUI.color = WarningColor;
-            
-            var iconContent = new GUIContent("⚠", tooltip);
-            var iconStyle = new GUIStyle(EditorStyles.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 12,
-                fontStyle = FontStyle.Bold
-            };
-            
-            EditorGUI.LabelField(rect, iconContent, iconStyle);
-            GUI.color = originalColor;
-        }
-
-        private Animator FindAnimator(SerializedProperty property, SerializedProperty animatorProperty)
-        {
-            if (animatorProperty.objectReferenceValue != null)
-                return animatorProperty.objectReferenceValue as Animator;
+            if (animatorProperty.objectReferenceValue) return animatorProperty.objectReferenceValue as Animator;
             
             var component = property.serializedObject.targetObject as Component;
             var animator = component?.GetComponentInChildren<Animator>(true);
             
-            if (animator != null)
+            if (animator)
             {
                 animatorProperty.objectReferenceValue = animator;
                 animatorProperty.serializedObject.ApplyModifiedProperties();
@@ -137,7 +86,7 @@ namespace DNExtensions.Utilities.CustomFields.Editor
             return animator;
         }
 
-        private string[] GetAnimatorStates(AnimatorController controller)
+        private static string[] GetAnimatorStates(AnimatorController controller)
         {
             var stateNames = controller.layers
                 .SelectMany(layer => layer.stateMachine.states)
@@ -149,7 +98,7 @@ namespace DNExtensions.Utilities.CustomFields.Editor
             return EmptyStates.Concat(stateNames).ToArray();
         }
 
-        private AnimatorController GetAnimatorController(Animator animator)
+        private static AnimatorController GetAnimatorController(Animator animator)
         {
             if (animator.runtimeAnimatorController is AnimatorController controller)
                 return controller;
@@ -160,7 +109,7 @@ namespace DNExtensions.Utilities.CustomFields.Editor
             return null;
         }
 
-        private int GetCurrentStateIndex(string[] states, string currentStateName)
+        private static int GetCurrentStateIndex(string[] states, string currentStateName)
         {
             if (string.IsNullOrEmpty(currentStateName)) return 0;
 
