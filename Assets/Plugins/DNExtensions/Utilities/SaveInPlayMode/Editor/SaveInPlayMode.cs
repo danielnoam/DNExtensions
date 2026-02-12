@@ -14,16 +14,10 @@ namespace DNExtensions.Utilities {
     /// </summary>
     [InitializeOnLoad]
     internal static class SaveInPlayModeHandler {
+        
+        
         private const string SaveIcon = "💾";
         private static readonly Color StyleBackgroundColor = new Color(0.3f, 0.7f, 0.3f, 0.3f);
-
-        private static readonly HashSet<Type> BlacklistedTypes = new HashSet<Type> {
-            typeof(Canvas),
-            typeof(CanvasRenderer),
-            typeof(Animator),
-            typeof(CanvasScaler),
-        };
-
         private static readonly HashSet<string> MarkedForSave = new HashSet<string>();
         private static readonly Dictionary<string, string> SavedData = new Dictionary<string, string>();
 
@@ -75,7 +69,9 @@ namespace DNExtensions.Utilities {
         /// Shows for all components during play mode except blacklisted types.
         /// </summary>
         private static bool ShouldShowSaveButton(Type type) {
-            return EditorApplication.isPlaying && !BlacklistedTypes.Contains(type);
+            if (!SaveInPlayModeSettings.Instance.Enabled) return false;
+            if (!EditorApplication.isPlaying) return false;
+            return !SaveInPlayModeSettings.Instance.IsBlacklisted(type);
         }
         
         /// <summary>
