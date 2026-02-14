@@ -54,6 +54,7 @@ namespace DNExtensions.Utilities {
                 "UnityEngine.CanvasRenderer",
                 "UnityEngine.Animator",
                 "UnityEngine.UI.CanvasScaler",
+                "UnityEngine.SignalReceiver",
                 "DNExtensions.VFXManager.VFXManager",
             };
         }

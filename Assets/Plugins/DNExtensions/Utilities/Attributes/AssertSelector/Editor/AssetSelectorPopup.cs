@@ -1,18 +1,23 @@
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using System;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
-namespace DNExtensions.Utilities.PrefabSelector
+namespace DNExtensions.Utilities
 {
-    public class PrefabSelectorPopup : EditorWindow
+    /// <summary>
+    /// Generic popup window for selecting Unity assets with search and keyboard navigation.
+    /// </summary>
+    /// <typeparam name="T">Type of Unity asset to select</typeparam>
+    public class AssetSelectorPopup<T> : EditorWindow where T : Object
     {
-        private PrefabInfo[] _allPrefabs;
-        private PrefabInfo[] _filteredPrefabs;
+        private AssetInfo<T>[] _allAssets;
+        private AssetInfo<T>[] _filteredAssets;
         private string _searchQuery = "";
         private Vector2 _scrollPosition;
-        private Action<GameObject> _onPrefabSelected;
+        private Action<T> _onAssetSelected;
         private bool _allowNull;
         private bool _showSearch;
         private int _selectedIndex = -1;
@@ -21,20 +26,32 @@ namespace DNExtensions.Utilities.PrefabSelector
         private const float ItemHeight = 20f;
         private const float WindowMaxHeight = 400f;
         
-        public static void Show(Rect buttonRect, PrefabInfo[] prefabs, bool allowNull, bool showSearch, Action<GameObject> onPrefabSelected)
+        /// <summary>
+        /// Shows the asset selector popup below the specified button rect.
+        /// Called from concrete derived classes.
+        /// </summary>
+        protected static TWindow ShowPopup<TWindow>(Rect buttonRect, AssetInfo<T>[] assets, bool allowNull, bool showSearch, Action<T> onAssetSelected) 
+            where TWindow : AssetSelectorPopup<T>
         {
-            var window = CreateInstance<PrefabSelectorPopup>();
-            window._allPrefabs = prefabs ?? Array.Empty<PrefabInfo>();
-            window._filteredPrefabs = prefabs ?? Array.Empty<PrefabInfo>();
+            var window = ScriptableObject.CreateInstance<TWindow>();
+            if (window == null)
+            {
+                Debug.LogError($"Failed to create {typeof(TWindow).Name} instance");
+                return null;
+            }
+            
+            window._allAssets = assets ?? Array.Empty<AssetInfo<T>>();
+            window._filteredAssets = assets ?? Array.Empty<AssetInfo<T>>();
             window._allowNull = allowNull;
             window._showSearch = showSearch;
-            window._onPrefabSelected = onPrefabSelected;
+            window._onAssetSelected = onAssetSelected;
             
-            // Calculate height
-            float windowHeight = CalculateHeight(prefabs?.Length ?? 0, allowNull, showSearch);
+            float windowHeight = CalculateHeight(assets?.Length ?? 0, allowNull, showSearch);
             
-            // ShowAsDropDown handles everything - positioning, closing on click outside, etc.
-            window.ShowAsDropDown(GUIUtility.GUIToScreenRect(buttonRect), new Vector2(buttonRect.width, windowHeight));
+            Rect screenRect = GUIUtility.GUIToScreenRect(buttonRect);
+            window.ShowAsDropDown(screenRect, new Vector2(buttonRect.width, windowHeight));
+            
+            return window;
         }
         
         private static float CalculateHeight(int itemCount, bool allowNull, bool showSearch)
@@ -42,7 +59,7 @@ namespace DNExtensions.Utilities.PrefabSelector
             float height = showSearch ? 26f : 4f;
             
             if (allowNull)
-                height += ItemHeight + 6; // null item + separator
+                height += ItemHeight + 6;
             
             height += itemCount * ItemHeight + 10f;
             
@@ -57,18 +74,16 @@ namespace DNExtensions.Utilities.PrefabSelector
             if (_showSearch)
                 DrawSearchField();
             
-            DrawPrefabList();
+            DrawAssetList();
         }
         
         private void DrawBackground()
         {
-            // Draw outline
             Rect bgRectOutline = new Rect(0, 0, position.width, position.height);
             EditorGUI.DrawRect(bgRectOutline, EditorGUIUtility.isProSkin 
                 ? new Color(0.1f, 0.1f, 0.1f) 
                 : new Color(0.5f, 0.5f, 0.5f));
             
-            // Draw inner background
             Rect bgRect = new Rect(1, 1, position.width - 2, position.height - 2);
             EditorGUI.DrawRect(bgRect, EditorGUIUtility.isProSkin 
                 ? new Color(0.22f, 0.22f, 0.22f) 
@@ -85,7 +100,7 @@ namespace DNExtensions.Utilities.PrefabSelector
             if (newSearch != _searchQuery)
             {
                 _searchQuery = newSearch;
-                UpdateFilteredPrefabs();
+                UpdateFilteredAssets();
                 _selectedIndex = -1;
             }
             
@@ -96,7 +111,7 @@ namespace DNExtensions.Utilities.PrefabSelector
             }
         }
         
-        private void DrawPrefabList()
+        private void DrawAssetList()
         {
             float yOffset = _showSearch ? 26f : 4f;
             Rect scrollViewRect = new Rect(0, yOffset, position.width, position.height - yOffset);
@@ -109,30 +124,27 @@ namespace DNExtensions.Utilities.PrefabSelector
             float currentY = 0;
             int currentIndex = 0;
             
-            // Draw null option
             if (_allowNull)
             {
                 bool isSelected = currentIndex == _selectedIndex;
-                if (DrawPrefabItem(new Rect(0, currentY, contentRect.width, ItemHeight), null, "<null>", isSelected, currentIndex))
+                if (DrawAssetItem(new Rect(0, currentY, contentRect.width, ItemHeight), default, "<null>", isSelected, currentIndex))
                 {
-                    _onPrefabSelected?.Invoke(null);
+                    _onAssetSelected?.Invoke(null);
                     Close();
                 }
                 currentY += ItemHeight + 2;
                 currentIndex++;
                 
-                // Separator
                 EditorGUI.DrawRect(new Rect(4, currentY, contentRect.width - 8, 1), new Color(0.5f, 0.5f, 0.5f));
                 currentY += 4;
             }
             
-            // Draw prefabs
-            foreach (var prefabInfo in _filteredPrefabs)
+            foreach (var assetInfo in _filteredAssets)
             {
                 bool isSelected = currentIndex == _selectedIndex;
-                if (DrawPrefabItem(new Rect(0, currentY, contentRect.width, ItemHeight), prefabInfo.Prefab, prefabInfo.DisplayName, isSelected, currentIndex))
+                if (DrawAssetItem(new Rect(0, currentY, contentRect.width, ItemHeight), assetInfo.Asset, assetInfo.DisplayName, isSelected, currentIndex))
                 {
-                    _onPrefabSelected?.Invoke(prefabInfo.Prefab);
+                    _onAssetSelected?.Invoke(assetInfo.Asset);
                     Close();
                 }
                 currentY += ItemHeight;
@@ -142,7 +154,7 @@ namespace DNExtensions.Utilities.PrefabSelector
             GUI.EndScrollView();
         }
         
-        private bool DrawPrefabItem(Rect rect, GameObject prefab, string displayName, bool isSelected, int index)
+        private bool DrawAssetItem(Rect rect, T asset, string displayName, bool isSelected, int index)
         {
             Event e = Event.current;
             bool isHovered = rect.Contains(e.mousePosition);
@@ -153,7 +165,6 @@ namespace DNExtensions.Utilities.PrefabSelector
                 Repaint();
             }
             
-            // Draw background
             if (isSelected || isHovered)
             {
                 Color bgColor = isSelected 
@@ -163,20 +174,18 @@ namespace DNExtensions.Utilities.PrefabSelector
                 EditorGUI.DrawRect(rect, bgColor);
             }
             
-            // Draw prefab icon and name
             Rect iconRect = new Rect(rect.x + 4, rect.y + 2, 16, 16);
             Rect labelRect = new Rect(rect.x + 24, rect.y, rect.width - 24, rect.height);
             
-            if (prefab != null)
+            if (asset != null)
             {
-                Texture2D icon = AssetPreview.GetMiniThumbnail(prefab);
+                Texture2D icon = AssetPreview.GetMiniThumbnail(asset);
                 if (icon != null)
                     GUI.DrawTexture(iconRect, icon);
             }
             
             GUI.Label(labelRect, displayName, EditorStyles.label);
             
-            // Handle click
             if (e.type == EventType.MouseDown && rect.Contains(e.mousePosition))
             {
                 e.Use();
@@ -188,7 +197,7 @@ namespace DNExtensions.Utilities.PrefabSelector
         
         private float CalculateContentHeight()
         {
-            int itemCount = _filteredPrefabs?.Length ?? 0;
+            int itemCount = _filteredAssets?.Length ?? 0;
             if (_allowNull)
                 itemCount++;
             
@@ -212,8 +221,8 @@ namespace DNExtensions.Utilities.PrefabSelector
                 case KeyCode.KeypadEnter:
                     if (_selectedIndex >= 0)
                     {
-                        GameObject selected = GetPrefabAtIndex(_selectedIndex);
-                        _onPrefabSelected?.Invoke(selected);
+                        T selected = GetAssetAtIndex(_selectedIndex);
+                        _onAssetSelected?.Invoke(selected);
                         Close();
                         e.Use();
                     }
@@ -226,7 +235,7 @@ namespace DNExtensions.Utilities.PrefabSelector
                     break;
                     
                 case KeyCode.DownArrow:
-                    int totalItems = (_allowNull ? 1 : 0) + (_filteredPrefabs?.Length ?? 0);
+                    int totalItems = (_allowNull ? 1 : 0) + (_filteredAssets?.Length ?? 0);
                     _selectedIndex = Mathf.Min(totalItems - 1, _selectedIndex + 1);
                     e.Use();
                     Repaint();
@@ -234,7 +243,7 @@ namespace DNExtensions.Utilities.PrefabSelector
             }
         }
         
-        private GameObject GetPrefabAtIndex(int index)
+        private T GetAssetAtIndex(int index)
         {
             if (_allowNull)
             {
@@ -242,23 +251,23 @@ namespace DNExtensions.Utilities.PrefabSelector
                 index--;
             }
             
-            if (_filteredPrefabs != null && index >= 0 && index < _filteredPrefabs.Length)
-                return _filteredPrefabs[index].Prefab;
+            if (_filteredAssets != null && index >= 0 && index < _filteredAssets.Length)
+                return _filteredAssets[index].Asset;
             
             return null;
         }
         
-        private void UpdateFilteredPrefabs()
+        private void UpdateFilteredAssets()
         {
             if (string.IsNullOrEmpty(_searchQuery))
             {
-                _filteredPrefabs = _allPrefabs;
+                _filteredAssets = _allAssets;
                 return;
             }
             
             string query = _searchQuery.ToLower();
-            _filteredPrefabs = _allPrefabs
-                .Where(p => p.DisplayName.ToLower().Contains(query))
+            _filteredAssets = _allAssets
+                .Where(a => a.DisplayName.ToLower().Contains(query))
                 .ToArray();
         }
         

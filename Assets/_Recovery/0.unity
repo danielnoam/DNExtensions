@@ -1826,7 +1826,7 @@ MonoBehaviour:
   conditionalFloat: 6.38
   conditionalInt: 17
   prefabSelector: {fileID: 8842675776293222798, guid: 385e2d0b9f979d14ca7b058fc6b2988c, type: 3}
-  soSelector: {fileID: 11400000, guid: 9eb30a3edc84f4d4b921d3b0f252bda2, type: 2}
+  soSelector: {fileID: 0}
   sceneField:
     sceneAsset: {fileID: 0}
     sceneName: 
@@ -1870,7 +1870,7 @@ MonoBehaviour:
     underlyingValue: {fileID: 0}
   interactableObject: {fileID: 0}
   serializableSelector:
-    rid: 5778561754236715089
+    rid: 5778561708745818191
   serializableSelectorList:
   - rid: 4437625887323586819
   - rid: 4437625887323586820
@@ -1907,7 +1907,7 @@ MonoBehaviour:
       data:
         varFloat: 0
         varBool: 0
-    - rid: 5778561754236715089
+    - rid: 5778561708745818191
       type: {class: Behavior1, ns: , asm: Assembly-CSharp-firstpass}
       data:
         varFloat: 0
@@ -3346,8 +3346,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1439365873206089730}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0.070592895, z: -0, w: 0.99750525}
+  m_LocalPosition: {x: -5.83, y: 0.36, z: -14.33}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

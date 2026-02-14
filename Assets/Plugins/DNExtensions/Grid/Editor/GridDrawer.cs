@@ -73,7 +73,6 @@ namespace DNExtensions.GridSystem
             
             Rect currentRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
 
-            // Foldout with summary
             string summaryText = $"{label.text} ({size.x}x{size.y}, {activeCount} active)";
             _foldout = EditorGUI.Foldout(currentRect, _foldout, summaryText, true);
             
@@ -92,12 +91,10 @@ namespace DNExtensions.GridSystem
             int width = size.x;
             int height = size.y;
 
-            // Grid Width Slider
             EditorGUI.BeginChangeCheck();
             int newWidth = EditorGUI.IntSlider(currentRect, "Width", width, MinSize, MaxSize);
             currentRect.y += EditorGUIUtility.singleLineHeight + Spacing;
 
-            // Grid Height Slider
             int newHeight = EditorGUI.IntSlider(currentRect, "Height", height, MinSize, MaxSize);
             currentRect.y += EditorGUIUtility.singleLineHeight + Spacing;
 
@@ -109,28 +106,22 @@ namespace DNExtensions.GridSystem
                 height = newHeight;
             }
             
-            // Origin
             EditorGUI.PropertyField(currentRect, originProp, new GUIContent("Origin"));
             currentRect.y += EditorGUI.GetPropertyHeight(originProp) + Spacing;
 
-            // Cell Size
             EditorGUI.PropertyField(currentRect, cellSizeProp, new GUIContent("Cell Size"));
             currentRect.y += EditorGUI.GetPropertyHeight(cellSizeProp) + Spacing;
 
-            // Cell Spacing
             EditorGUI.PropertyField(currentRect, cellSpacingProp, new GUIContent("Cell Spacing"));
             currentRect.y += EditorGUI.GetPropertyHeight(cellSpacingProp) + Spacing;
 
-            // Orientation Selector
             SerializedProperty orientationProp = property.FindPropertyRelative("orientation");
             EditorGUI.PropertyField(currentRect, orientationProp, new GUIContent("Orientation"));
             currentRect.y += EditorGUIUtility.singleLineHeight + Spacing;
             
-            // Active Cell Count
             EditorGUI.LabelField(currentRect, $"Active Cells: {activeCount} / {width * height}");
             currentRect.y += EditorGUIUtility.singleLineHeight + Spacing;
 
-            // Shape Painter (Grid Visualization)
             float gridWidth = width * CellSize;
             float gridHeight = height * CellSize;
             Rect gridRect = new Rect(currentRect.x + (currentRect.width - gridWidth) / 2, currentRect.y, gridWidth, gridHeight);
@@ -139,7 +130,6 @@ namespace DNExtensions.GridSystem
 
             currentRect.y += gridHeight + Spacing;
 
-            // Buttons
             Rect buttonRect = new Rect(currentRect.x, currentRect.y, currentRect.width / 3 - 5, ButtonHeight);
 
             if (GUI.Button(buttonRect, "Activate All"))
@@ -180,21 +170,31 @@ namespace DNExtensions.GridSystem
             Event e = Event.current;
 
             EditorGUI.DrawRect(gridRect, BackgroundColor);
+            
+            int expectedSize = width * height;
+            if (cellsProp.arraySize != expectedSize)
+            {
+                EditorGUI.LabelField(gridRect, "Multi-object editing not supported for grids with different sizes", EditorStyles.centeredGreyMiniLabel);
+                return;
+            }
 
             if (e.type == EventType.MouseDown && gridRect.Contains(e.mousePosition))
             {
                 int x = Mathf.FloorToInt((e.mousePosition.x - gridRect.x) / CellSize);
                 int visualY = Mathf.FloorToInt((e.mousePosition.y - gridRect.y) / CellSize);
-                int y = height - 1 - visualY; // Flip Y: top of editor = bottom of grid
+                int y = height - 1 - visualY;
 
                 if (x >= 0 && x < width && y >= 0 && y < height)
                 {
                     _isDragging = true;
                     int index = y * width + x;
-                    _dragState = !cellsProp.GetArrayElementAtIndex(index).boolValue;
-                    cellsProp.GetArrayElementAtIndex(index).boolValue = _dragState;
-                    cellsProp.serializedObject.ApplyModifiedProperties();
-                    GUI.changed = true;
+                    if (index < cellsProp.arraySize)
+                    {
+                        _dragState = !cellsProp.GetArrayElementAtIndex(index).boolValue;
+                        cellsProp.GetArrayElementAtIndex(index).boolValue = _dragState;
+                        cellsProp.serializedObject.ApplyModifiedProperties();
+                        GUI.changed = true;
+                    }
                     e.Use();
                 }
             }
@@ -208,7 +208,7 @@ namespace DNExtensions.GridSystem
                 if (x >= 0 && x < width && y >= 0 && y < height)
                 {
                     int index = y * width + x;
-                    if (cellsProp.GetArrayElementAtIndex(index).boolValue != _dragState)
+                    if (index < cellsProp.arraySize && cellsProp.GetArrayElementAtIndex(index).boolValue != _dragState)
                     {
                         cellsProp.GetArrayElementAtIndex(index).boolValue = _dragState;
                         cellsProp.serializedObject.ApplyModifiedProperties();
@@ -228,6 +228,9 @@ namespace DNExtensions.GridSystem
                 for (int x = 0; x < width; x++)
                 {
                     int index = y * width + x;
+                    
+                    if (index >= cellsProp.arraySize)
+                        continue;
 
                     bool isActive = cellsProp.GetArrayElementAtIndex(index).boolValue;
 

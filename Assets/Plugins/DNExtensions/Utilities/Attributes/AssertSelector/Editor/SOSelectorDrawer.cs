@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,29 +6,22 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace DNExtensions.Utilities.PrefabSelector
+namespace DNExtensions.Utilities
 {
-    public struct PrefabInfo
+    [CustomPropertyDrawer(typeof(SOSelectorAttribute))]
+    public class SOSelectorDrawer : PropertyDrawer
     {
-        public GameObject Prefab;
-        public string DisplayName;
-        public string Path;
-    }
-    
-    [CustomPropertyDrawer(typeof(PrefabSelectorAttribute))]
-    public class PrefabSelectorDrawer : PropertyDrawer
-    {
-        private static readonly Dictionary<string, PrefabInfo[]> PrefabCache = new Dictionary<string, PrefabInfo[]>();
+        private static readonly Dictionary<string, AssetInfo<ScriptableObject>[]> SOCache = new Dictionary<string, AssetInfo<ScriptableObject>[]>();
         
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             if (property.propertyType != SerializedPropertyType.ObjectReference)
             {
-                EditorGUI.LabelField(position, label.text, "[PrefabSelector] requires Object reference field");
+                EditorGUI.LabelField(position, label.text, "[SOSelector] requires Object reference field");
                 return;
             }
     
-            PrefabSelectorAttribute attr = attribute as PrefabSelectorAttribute;
+            SOSelectorAttribute attr = attribute as SOSelectorAttribute;
     
             Event evt = Event.current;
             if (evt.type == EventType.ContextClick && position.Contains(evt.mousePosition))
@@ -53,22 +46,13 @@ namespace DNExtensions.Utilities.PrefabSelector
             {
                 if (newValue)
                 {
-                    GameObject prefab = null;
+                    ScriptableObject so = newValue as ScriptableObject;
                     
-                    if (newValue is GameObject go)
+                    if (so)
                     {
-                        prefab = go;
-                    }
-                    else if (newValue is Component comp)
-                    {
-                        prefab = comp.gameObject;
-                    }
-                    
-                    if (prefab && PrefabUtility.GetPrefabAssetType(prefab) != PrefabAssetType.NotAPrefab)
-                    {
-                        if (attr is { LockToFilter: true } && !IsValidPrefab(prefab, newValue, attr))
+                        if (attr is { LockToFilter: true } && !IsValidSO(so, attr))
                         {
-                            Debug.LogWarning($"Prefab '{prefab.name}' does not match the folder/filter criteria for this field.");
+                            Debug.LogWarning($"ScriptableObject '{so.name}' does not match the folder/filter criteria for this field.");
                         }
                         else
                         {
@@ -78,7 +62,7 @@ namespace DNExtensions.Utilities.PrefabSelector
                     }
                     else
                     {
-                        Debug.LogWarning($"Only prefab assets can be assigned to fields with [PrefabSelector]");
+                        Debug.LogWarning($"Only ScriptableObject assets can be assigned to fields with [SOSelector]");
                     }
                 }
                 else
@@ -96,11 +80,11 @@ namespace DNExtensions.Utilities.PrefabSelector
                     objectFieldRect.width + buttonWidth + 2,
                     objectFieldRect.height
                 );
-                ShowPrefabMenu(property, attr, combinedRect);
+                ShowSOMenu(property, attr, combinedRect);
             }
         }
 
-        private void ShowContextMenu(SerializedProperty property, PrefabSelectorAttribute attr)
+        private void ShowContextMenu(SerializedProperty property, SOSelectorAttribute attr)
         {
             GenericMenu menu = new GenericMenu();
             
@@ -113,7 +97,6 @@ namespace DNExtensions.Utilities.PrefabSelector
                 
                 menu.AddSeparator("");
             }
-            
             
             if (!string.IsNullOrEmpty(attr.FolderPath))
             {
@@ -129,50 +112,64 @@ namespace DNExtensions.Utilities.PrefabSelector
             menu.ShowAsContext();
         }
         
-        private void ShowPrefabMenu(SerializedProperty property, PrefabSelectorAttribute attr, Rect fieldRect)
+        private void ShowSOMenu(SerializedProperty property, SOSelectorAttribute attr, Rect fieldRect)
         {
-            PrefabInfo[] prefabs = GetPrefabs(property, attr);
-            bool showSearch = prefabs.Length >= attr.SearchThreshold;
+            AssetInfo<ScriptableObject>[] scriptableObjects = GetScriptableObjects(property, attr);
+            bool showSearch = scriptableObjects.Length >= attr.SearchThreshold;
             
-            PrefabSelectorPopup.Show(
+            SOSelectorPopup.Show(
                 fieldRect,
-                prefabs,
+                scriptableObjects,
                 attr.AllowNull,
                 showSearch,
-                selectedPrefab => SetPrefab(property, selectedPrefab)
+                selectedSO => SetSO(property, selectedSO)
             );
         }
         
-        private bool IsValidPrefab(GameObject prefab, Object value, PrefabSelectorAttribute attr)
+        private bool IsValidSO(ScriptableObject so, SOSelectorAttribute attr)
         {
-            string prefabPath = AssetDatabase.GetAssetPath(prefab);
+            string soPath = AssetDatabase.GetAssetPath(so);
             
             if (!string.IsNullOrEmpty(attr.FolderPath))
             {
-                if (!prefabPath.StartsWith(attr.FolderPath))
+                if (!soPath.StartsWith(attr.FolderPath))
+                    return false;
+            }
+            
+            if (attr.TypeFilter != null)
+            {
+                if (!attr.TypeFilter.IsInstanceOfType(so))
+                    return false;
+            }
+            
+            if (attr.InterfaceFilter != null)
+            {
+                if (!attr.InterfaceFilter.IsInstanceOfType(so))
                     return false;
             }
             
             if (!string.IsNullOrEmpty(attr.SearchFilter))
             {
-                if (!prefab.name.ToLower().Contains(attr.SearchFilter.ToLower()))
+                if (!so.name.ToLower().Contains(attr.SearchFilter.ToLower()))
                     return false;
             }
             
             return true;
         }
         
-        private PrefabInfo[] GetPrefabs(SerializedProperty property, PrefabSelectorAttribute attr)
+        private AssetInfo<ScriptableObject>[] GetScriptableObjects(SerializedProperty property, SOSelectorAttribute attr)
         {
             Type fieldType = fieldInfo.FieldType;
-            string cacheKey = $"{fieldType.FullName}|{attr.FolderPath ?? ""}|{attr.SearchFilter ?? ""}";
+            Type searchType = attr.TypeFilter ?? fieldType;
             
-            if (PrefabCache.TryGetValue(cacheKey, out var prefabs))
-                return prefabs;
+            string cacheKey = $"{searchType.FullName}|{attr.InterfaceFilter?.FullName ?? ""}|{attr.FolderPath ?? ""}|{attr.SearchFilter ?? ""}";
             
-            List<PrefabInfo> prefabList = new List<PrefabInfo>();
+            if (SOCache.TryGetValue(cacheKey, out var scriptableObjects))
+                return scriptableObjects;
             
-            string searchQuery = "t:Prefab";
+            List<AssetInfo<ScriptableObject>> soList = new List<AssetInfo<ScriptableObject>>();
+            
+            string searchQuery = $"t:{searchType.Name}";
             if (!string.IsNullOrEmpty(attr.SearchFilter))
                 searchQuery += " " + attr.SearchFilter;
             
@@ -183,56 +180,43 @@ namespace DNExtensions.Utilities.PrefabSelector
             foreach (string guid in guids)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
-                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                ScriptableObject so = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
                 
-                if (!prefab)
+                if (!so)
                     continue;
                 
-                if (typeof(Component).IsAssignableFrom(fieldType))
-                {
-                    Component comp = prefab.GetComponent(fieldType);
-                    if (!comp)
-                        continue;
-                }
+                if (!fieldType.IsInstanceOfType(so))
+                    continue;
                 
-                prefabList.Add(new PrefabInfo
+                if (attr.TypeFilter != null && !attr.TypeFilter.IsInstanceOfType(so))
+                    continue;
+                
+                if (attr.InterfaceFilter != null && !attr.InterfaceFilter.IsInstanceOfType(so))
+                    continue;
+                
+                soList.Add(new AssetInfo<ScriptableObject>
                 {
-                    Prefab = prefab,
-                    DisplayName = prefab.name,
+                    Asset = so,
+                    DisplayName = so.name,
                     Path = path
                 });
             }
             
-            var sortedPrefabs = prefabList.OrderBy(p => p.DisplayName).ToArray();
-            PrefabCache[cacheKey] = sortedPrefabs;
+            var sortedSOs = soList.OrderBy(s => s.DisplayName).ToArray();
+            SOCache[cacheKey] = sortedSOs;
             
-            return sortedPrefabs;
+            return sortedSOs;
         }
         
-        private void SetPrefab(SerializedProperty property, GameObject prefab)
+        private void SetSO(SerializedProperty property, ScriptableObject so)
         {
-            Type fieldType = fieldInfo.FieldType;
-            
-            if (!prefab)
-            {
-                property.objectReferenceValue = null;
-            }
-            else if (typeof(Component).IsAssignableFrom(fieldType))
-            {
-                Component comp = prefab.GetComponent(fieldType);
-                property.objectReferenceValue = comp;
-            }
-            else
-            {
-                property.objectReferenceValue = prefab;
-            }
-            
+            property.objectReferenceValue = so;
             property.serializedObject.ApplyModifiedProperties();
         }
 
         public static void ClearCache()
         {
-            PrefabCache.Clear();
+            SOCache.Clear();
         }
     }
 }

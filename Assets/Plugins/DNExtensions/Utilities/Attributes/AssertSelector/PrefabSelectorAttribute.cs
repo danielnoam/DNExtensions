@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DNExtensions.Utilities.PrefabSelector
+namespace DNExtensions.Utilities
 {
     /// <summary>
     /// Enables prefab selection dropdown for GameObject/Component fields.

@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using DNExtensions.CinemachineExtesnstions;
 using DNExtensions.Utilities;
+using DNExtensions.Utilities.AudioEvent;
 using DNExtensions.Utilities.SerializableSelector;
 using DNExtensions.Utilities.Button;
 using DNExtensions.Utilities.SerializedInterface;
 using DNExtensions.Utilities.CustomFields;
 using DNExtensions.Utilities.Inline;
-using DNExtensions.Utilities.PrefabSelector;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Events;
@@ -23,8 +23,8 @@ public class DNExtensionsExample : MonoBehaviour
     [SerializeField, Foldout("Conditional")] private bool conditionalCheck;
     [SerializeField, DisableIf("conditionalCheck"), Foldout("Conditional")] private float conditionalFloat;
     [SerializeField, ShowIf("conditionalCheck"), Foldout("Conditional")] private int conditionalInt;
-    [SerializeField, Foldout("Prefab Selector"), PrefabSelector("Assets/2_Testing")] private GameObject prefabSelector;
-    [SerializeField, Foldout("Prefab Selector"), PrefabSelector("Assets/2_Testing", LockToFilter = true)] private GameObject prefabSelectorLocked;
+    [SerializeField, Foldout("Asset Selector"), PrefabSelector("Assets/2_Testing")] private GameObject prefabSelector;
+    [SerializeField, Foldout("Asset Selector"), SOSelector("Assets/2_Testing", LockToFilter = true)] private SOAudioEvent soSelector;
     
     [Separator("Fields")]
     [SerializeField] private SceneField sceneField;
