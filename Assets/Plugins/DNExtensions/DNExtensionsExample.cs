@@ -70,19 +70,18 @@ namespace DNExtensions
         [SerializeField, Inline] private SOAudioEvent soAudioEvent;
         public SOFloat soFloat;
         public SOInt soInt;
+        public SOBool soBool;
+        public SOString soString;
+        public SOVector3 soVector3;
+        public SOColor soColor;
+        public SOVector4 soVector4;
+        public SOQuaternion soQuaternion;
+        public SOLayerMask soLayerMask;
+        public SOAnimationCurve soAnimationCurve;
+        public SOEvent soEvent;
         
 
-        public enum TestEnum
-        {
-            Option1,
-            Option2,
-            Option3
-        }
-
-
-
-
-
+        
         [Button(ButtonPlayMode.Both)]
         public void TestImpulse()
         {
@@ -93,6 +92,14 @@ namespace DNExtensions
     public interface ITest
     {
 
+    }
+    
+    
+    public enum TestEnum
+    {
+        Option1,
+        Option2,
+        Option3
     }
     
     [Serializable]

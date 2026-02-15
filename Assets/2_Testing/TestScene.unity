@@ -1750,7 +1750,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1341880981}
-  - component: {fileID: 1341880982}
   m_Layer: 0
   m_Name: -----------------------------------------------
   m_TagString: Untagged
@@ -1773,22 +1772,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1341880982
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1341880980}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 349c769e8bba44f4987decf61551cb4d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Components.FPSCounter
-  editorOnly: 0
-  updateInterval: 0.5
-  targetFPS: 60
-  anchor: 0
 --- !u!1 &1526888418
 GameObject:
   m_ObjectHideFlags: 0
@@ -1798,9 +1781,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1526888419}
-  - component: {fileID: 1526888421}
   - component: {fileID: 1526888420}
   - component: {fileID: 1526888422}
+  - component: {fileID: 1526888421}
   m_Layer: 0
   m_Name: DNExtenstions
   m_TagString: Untagged
@@ -1836,7 +1819,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensionsExample
   readOnly: 0
-  inline: {fileID: 0}
+  inline: {fileID: 1526888421}
   conditionalCheck: 0
   conditionalFloat: 6.38
   conditionalInt: 17
@@ -1890,7 +1873,7 @@ MonoBehaviour:
   - rid: 4437625887323586819
   - rid: 4437625887323586820
   - rid: 4437625887323586822
-  testImpulseSource: {fileID: 0}
+  testImpulseSource: {fileID: 1526888421}
   testImpulse:
     impulseChannel: 1
     impulseType: 0
@@ -1907,6 +1890,15 @@ MonoBehaviour:
   soAudioEvent: {fileID: 11400000, guid: 912340073a9c9b04caca4f1bb0af32eb, type: 2}
   soFloat: {fileID: 11400000, guid: f5882c7bdfa00f24cb914ae5707b5e2c, type: 2}
   soInt: {fileID: 11400000, guid: 4d95fdc19848d114c99212dc3aabc97f, type: 2}
+  soBool: {fileID: 11400000, guid: 1130ea7b48efaf74db82161e51c29bd5, type: 2}
+  soString: {fileID: 11400000, guid: bb1220a90881f6c4983ef07bef349720, type: 2}
+  soVector3: {fileID: 11400000, guid: d2bee4a775aaa714ea88fecb39f0bf7a, type: 2}
+  soColor: {fileID: 11400000, guid: 3dc8116aab59503469a4e7d932370651, type: 2}
+  soVector4: {fileID: 11400000, guid: 1300144eb97519b4ba29d107d807338a, type: 2}
+  soQuaternion: {fileID: 11400000, guid: 5e5c5d09fca23a1448c90d9e7e383d8c, type: 2}
+  soLayerMask: {fileID: 11400000, guid: 96fbcfbb71363524cbbe1adcd3d8301c, type: 2}
+  soAnimationCurve: {fileID: 11400000, guid: a7e17dced47b47e448d07683c930d6e0, type: 2}
+  soEvent: {fileID: 11400000, guid: 49b49b563de60294da9f038f50f57d25, type: 2}
   references:
     version: 2
     RefIds:
