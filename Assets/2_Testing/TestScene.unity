@@ -1750,6 +1750,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1341880981}
+  - component: {fileID: 1341880982}
   m_Layer: 0
   m_Name: -----------------------------------------------
   m_TagString: Untagged
@@ -1772,6 +1773,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1341880982
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1341880980}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 349c769e8bba44f4987decf61551cb4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Components.FPSCounter
+  editorOnly: 0
+  updateInterval: 0.5
+  targetFPS: 60
+  anchor: 0
 --- !u!1 &1526888418
 GameObject:
   m_ObjectHideFlags: 0
@@ -1781,11 +1798,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1526888419}
-  - component: {fileID: 1526888424}
   - component: {fileID: 1526888421}
   - component: {fileID: 1526888420}
   - component: {fileID: 1526888422}
-  - component: {fileID: 1526888423}
   m_Layer: 0
   m_Name: DNExtenstions
   m_TagString: Untagged
@@ -1821,7 +1836,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensionsExample
   readOnly: 0
-  inline: {fileID: 1526888424}
+  inline: {fileID: 0}
   conditionalCheck: 0
   conditionalFloat: 6.38
   conditionalInt: 17
@@ -1850,7 +1865,7 @@ MonoBehaviour:
     triggerName: 
   positionField:
     positionTransform: {fileID: 0}
-    positionVector: {x: 0, y: 0, z: 0}
+    positionVector: {x: 0, y: -0.32, z: 0}
   noteField:
     note: Note Field Example
     isEditable: 0
@@ -1987,41 +2002,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &1526888423
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1526888418}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 349c769e8bba44f4987decf61551cb4d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.FPSCounter
-  editorOnly: 0
-  updateInterval: 0.5
-  targetFPS: 60
-  anchor: 0
---- !u!114 &1526888424
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1526888418}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ce7efc4b7614c3881ad59b7c665725e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Utilities.Note
-  text:
-    note: 'DNExtenstions asdasdasdas as
-
-'
-    isEditable: 1
-  showInSceneView: 1
-  gizmoColor: {r: 1, g: 1, b: 0.5, a: 1}
 --- !u!224 &1540825174 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1149309876145945581, guid: 9bc61873b59f292449bdb68f0df7d8a1, type: 3}

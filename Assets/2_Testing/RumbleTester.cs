@@ -1,7 +1,7 @@
 using System;
 using DNExtensions.Utilities;
 using DNExtensions.Utilities.Button;
-using DNExtensions.ControllerRumbleSystem;
+using DNExtensions.ControllerRumble;
 using PrimeTween;
 using UnityEngine;
 

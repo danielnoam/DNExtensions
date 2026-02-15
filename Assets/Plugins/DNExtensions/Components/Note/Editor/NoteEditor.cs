@@ -13,7 +13,7 @@ namespace DNExtensions.Utilities
 
             SerializedProperty textProp = serializedObject.FindProperty("text");
             SerializedProperty showInSceneViewProp = serializedObject.FindProperty("showInSceneView");
-            SerializedProperty gizmoColorProp = serializedObject.FindProperty("gizmoColor");
+            SerializedProperty gizmoColorProp = serializedObject.FindProperty("textColor");
 
             EditorGUILayout.PropertyField(textProp);
             EditorGUILayout.PropertyField(showInSceneViewProp);

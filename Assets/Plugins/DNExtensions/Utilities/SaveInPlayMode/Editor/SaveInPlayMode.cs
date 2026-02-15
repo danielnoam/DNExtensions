@@ -25,8 +25,6 @@ namespace DNExtensions.Utilities {
         static SaveInPlayModeHandler() {
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
             EditorApplication.quitting += ClearAllData;
-            
-            // Register with ComponentHeaderButtonInjector
             ComponentHeaderButtonInjector.RegisterDynamicButtonProvider(GetButtonForComponent);
         }
         

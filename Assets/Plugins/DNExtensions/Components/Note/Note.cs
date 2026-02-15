@@ -3,14 +3,16 @@ using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditorInternal;
 #endif
 
 namespace DNExtensions.Utilities
 {
     /// <summary>
-    /// Attach notes to GameObjects for documentation and reminders.
+    /// Attach note to GameObjects for documentation and reminders.
     /// Notes are displayed in the inspector and optionally in the scene view via gizmos.
     /// </summary>
+    [ExecuteInEditMode]
     [AddComponentMenu("DNExtensions/Note")]
     [DisallowMultipleComponent]
     public class Note : MonoBehaviour
@@ -18,20 +20,44 @@ namespace DNExtensions.Utilities
         [SerializeField] private NoteField text = new("Add your note here...", isEditable: true);
         [Space(10)]
         [SerializeField] private bool showInSceneView;
-        [SerializeField] private Color gizmoColor = new Color(1f, 1f, 0.5f, 1f);
+        [SerializeField] private Color textColor = new Color(1f, 1f, 0.5f, 1f);
 
-        /// <summary>
-        /// Gets or sets the note text.
-        /// </summary>
+        private void OnEnable()
+        {
+            #if UNITY_EDITOR
+            EditorApplication.update += ValidatePosition;
+            #endif
+        }
+        
+        private void OnDisable()
+        {
+            #if UNITY_EDITOR
+            EditorApplication.update -= ValidatePosition;
+            #endif
+        }
+        
+        #if UNITY_EDITOR
+        private void ValidatePosition()
+        {
+            if (Application.isPlaying) return;
+        
+            if (Selection.activeGameObject != gameObject) return;
+
+            Component[] components = gameObject.GetComponents<Component>();
+        
+            if (components.Length > 1 && components[1] != this)
+            {
+                while (ComponentUtility.MoveComponentUp(this)) { }
+            }
+        }
+        #endif
+
         public string Text
         {
             get => text;
             set => text.Note = value;
         }
 
-        /// <summary>
-        /// Gets or sets whether the note is visible in the scene view.
-        /// </summary>
         public bool ShowInSceneView
         {
             get => showInSceneView;
@@ -51,7 +77,7 @@ namespace DNExtensions.Utilities
         {
             GUIStyle style = new GUIStyle(GUI.skin.box)
             {
-                normal = { textColor = gizmoColor },
+                normal = { textColor = textColor },
                 fontSize = 12,
                 alignment = TextAnchor.MiddleCenter,
                 wordWrap = true,

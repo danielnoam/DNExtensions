@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using DNExtensions.CinemachineExtesnstions;
 using DNExtensions.Utilities;
 using DNExtensions.Utilities.AudioEvent;
 using DNExtensions.Utilities.SerializableSelector;
 using DNExtensions.Utilities.Button;
+using DNExtensions.Utilities.CinemachineExtensions;
 using DNExtensions.Utilities.SerializedInterface;
 using DNExtensions.Utilities.CustomFields;
 using DNExtensions.Utilities.Inline;
