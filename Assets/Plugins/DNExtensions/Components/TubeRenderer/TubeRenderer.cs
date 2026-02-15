@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DNExtensions.TubeRenderer
+namespace DNExtensions.Components
 {
     public enum RadiusMode
     {

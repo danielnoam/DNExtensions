@@ -1,5 +1,5 @@
 ﻿using System;
-using DNExtensions.Utilities.AudioEvent;
+using DNExtensions.Systems.ScriptableObjects;
 using PrimeTween;
 using UnityEngine;
 

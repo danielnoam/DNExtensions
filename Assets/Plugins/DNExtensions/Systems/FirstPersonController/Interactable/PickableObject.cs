@@ -1,5 +1,5 @@
 
-using DNExtensions.Utilities.AudioEvent;
+using DNExtensions.Systems.ScriptableObjects;
 using DNExtensions.Utilities.AutoGet;
 using UnityEngine;
 

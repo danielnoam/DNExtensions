@@ -1,7 +1,7 @@
 
 using System;
 using System.Linq;
-using DNExtensions.Utilities.AudioEvent;
+using DNExtensions.Systems.ScriptableObjects;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.Events;

@@ -1904,26 +1904,29 @@ MonoBehaviour:
   testEvent:
     m_PersistentCalls:
       m_Calls: []
+  soAudioEvent: {fileID: 11400000, guid: 912340073a9c9b04caca4f1bb0af32eb, type: 2}
+  soFloat: {fileID: 11400000, guid: f5882c7bdfa00f24cb914ae5707b5e2c, type: 2}
+  soInt: {fileID: 11400000, guid: 4d95fdc19848d114c99212dc3aabc97f, type: 2}
   references:
     version: 2
     RefIds:
     - rid: 4437625887323586819
-      type: {class: Behavior1, ns: , asm: Assembly-CSharp-firstpass}
+      type: {class: Behavior1, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
       data:
         varFloat: 0
         varString: 
     - rid: 4437625887323586820
-      type: {class: Behavior4, ns: , asm: Assembly-CSharp-firstpass}
+      type: {class: Behavior4, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
       data:
         varFloat: 0
         varBool: 0
     - rid: 4437625887323586822
-      type: {class: Behavior5, ns: , asm: Assembly-CSharp-firstpass}
+      type: {class: Behavior5, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
       data:
         varFloat: 0
         varBool: 0
     - rid: 5778561754236715089
-      type: {class: Behavior1, ns: , asm: Assembly-CSharp-firstpass}
+      type: {class: Behavior1, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
       data:
         varFloat: 0
         varString: 

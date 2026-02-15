@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 
 
 
-namespace DNExtensions.Utilities.Toolbar
+namespace DNExtensions.Utilities
 {
     public class ToolbarTimescale
     {
