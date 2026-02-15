@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DNExtensions.FirstPersonController.Interactable
+namespace DNExtensions.Systems.FirstPersonController.Interactable
 {
     [DisallowMultipleComponent]
     public class InteractableBase : MonoBehaviour, IInteractable

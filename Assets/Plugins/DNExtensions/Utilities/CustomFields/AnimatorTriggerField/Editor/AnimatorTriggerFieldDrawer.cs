@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -35,7 +36,7 @@ namespace DNExtensions.Utilities.CustomFields.Editor
             }
 
             string displayValue = string.IsNullOrEmpty(triggerProp.stringValue) ? "None" : triggerProp.stringValue;
-            int currentIndex = System.Array.IndexOf(triggers, displayValue);
+            int currentIndex = Array.IndexOf(triggers, displayValue);
             if (currentIndex == -1) currentIndex = 0;
 
             EditorGUI.BeginChangeCheck();

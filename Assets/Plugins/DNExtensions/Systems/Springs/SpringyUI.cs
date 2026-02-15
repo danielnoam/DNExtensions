@@ -6,7 +6,7 @@ using DNExtensions.Utilities.Button;
 
 
 
-namespace DNExtensions.Springs
+namespace DNExtensions.Systems.Springs
 {
 
     [AddComponentMenu("DNExtensions/Springs/Springy UI")]

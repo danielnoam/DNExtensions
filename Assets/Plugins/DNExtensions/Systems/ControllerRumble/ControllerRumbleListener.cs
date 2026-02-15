@@ -1,18 +1,21 @@
 using System.Collections.Generic;
 using DNExtensions.Utilities;
+using DNExtensions.Utilities.AutoGet;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.DualShock;
 
 
-namespace DNExtensions.ControllerRumble
+namespace DNExtensions.Systems.ControllerRumble
 {
+    /// <summary>
+    /// Listens for rumble effects from connected ControllerRumbleSources and processes them to control gamepad haptics.
+    /// </summary>
     public class ControllerRumbleListener : MonoBehaviour, IDualShockHaptics
     {
-        
         [Header("Settings")]
-        [SerializeField] private PlayerInput playerInput;
+        [SerializeField, AutoGetScene] private PlayerInput playerInput;
         [SerializeField, MinMaxRange(0f,1f)] private RangedFloat lowFrequencyRange = new RangedFloat(0, 1f);
         [SerializeField, MinMaxRange(0f,1f)] private RangedFloat highFrequencyRange = new RangedFloat(0, 1f);
 

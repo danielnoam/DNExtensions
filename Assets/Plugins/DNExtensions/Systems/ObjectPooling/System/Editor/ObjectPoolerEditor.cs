@@ -2,8 +2,12 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions.ObjectPooling
+namespace DNExtensions.Systems.ObjectPooling
 {
+    
+    /// <summary>
+    /// Custom editor for ObjectPooler to display pool information at runtime.
+    /// </summary>
     [CustomEditor(typeof(ObjectPooler))]
     public class ObjectPoolerEditor : Editor
     {

@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace DNExtensions.InputSystem
+namespace DNExtensions.Systems.InputSystem
 {
     public class InputManager : MonoBehaviour
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace DNExtensions.InputSystem
+namespace DNExtensions.Systems.InputSystem
 {
     public class ActionBindingDisplay : InputBindingDisplay
     {

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
@@ -26,7 +27,7 @@ namespace DNExtensions.Utilities.CustomFields
             
             string[] allTags = UnityEditorInternal.InternalEditorUtility.tags;
             
-            int currentIndex = System.Array.IndexOf(allTags, tagName.stringValue);
+            int currentIndex = Array.IndexOf(allTags, tagName.stringValue);
             bool tagExists = currentIndex != -1;
             bool hasIssue = string.IsNullOrEmpty(tagName.stringValue) || !tagExists;
             

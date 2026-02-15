@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 
@@ -20,7 +21,7 @@ namespace DNExtensions.Utilities.CustomFields
     /// }
     /// </code>
     /// </example>
-    [System.Serializable]
+    [Serializable]
     public class SortingLayerField
     {
         /// <summary>

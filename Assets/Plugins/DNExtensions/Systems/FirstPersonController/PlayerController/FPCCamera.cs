@@ -3,7 +3,7 @@ using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace DNExtensions.FirstPersonController
+namespace DNExtensions.Systems.FirstPersonController
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(FpcManager))]

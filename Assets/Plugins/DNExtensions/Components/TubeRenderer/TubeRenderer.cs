@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DNExtensions.Components
@@ -164,7 +165,7 @@ namespace DNExtensions.Components
                 return;
             }
 
-            System.Collections.Generic.List<int> sharpCorners = new System.Collections.Generic.List<int>();
+            List<int> sharpCorners = new List<int>();
             for (int i = 1; i < positions.Length - 1; i++)
             {
                 Vector3 prevDir = (positions[i] - positions[i - 1]).normalized;
@@ -188,8 +189,8 @@ namespace DNExtensions.Components
                 return;
             }
 
-            System.Collections.Generic.List<Vector3> processedList = new System.Collections.Generic.List<Vector3>();
-            System.Collections.Generic.List<float> pathTList = new System.Collections.Generic.List<float>();
+            List<Vector3> processedList = new List<Vector3>();
+            List<float> pathTList = new List<float>();
 
             processedList.Add(positions[0]);
             pathTList.Add(0f);

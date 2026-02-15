@@ -1,9 +1,8 @@
 
 
 
-namespace DNExtensions.MobileHeptics
+namespace DNExtensions.Systems.MobileHeptics
 {
-    using UnityEngine;
     
     /// <summary>
     /// Provides cross-platform haptic feedback (vibration) for mobile devices.

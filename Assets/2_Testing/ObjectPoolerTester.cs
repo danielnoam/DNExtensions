@@ -1,5 +1,5 @@
 using System.Collections;
-using DNExtensions.ObjectPooling;
+using DNExtensions.Systems.ObjectPooling;
 using UnityEngine;
 
 public class ObjectPoolerTester : MonoBehaviour

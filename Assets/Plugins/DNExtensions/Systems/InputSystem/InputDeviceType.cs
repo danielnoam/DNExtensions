@@ -1,4 +1,4 @@
-namespace DNExtensions.InputSystem
+namespace DNExtensions.Systems.InputSystem
 {
     public enum InputDeviceType
     {

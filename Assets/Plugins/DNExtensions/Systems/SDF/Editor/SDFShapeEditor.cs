@@ -1,4 +1,4 @@
-namespace DNExtensions.Shapes
+namespace DNExtensions.Systems.Shapes
 {
     using UnityEditor;
     using UnityEditor.UI;

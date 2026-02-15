@@ -2,7 +2,7 @@ using System;
 using DNExtensions.Utilities;
 using UnityEngine;
 
-namespace DNExtensions.VFXManager
+namespace DNExtensions.Systems.VFXManager
 {
 
     [Serializable]

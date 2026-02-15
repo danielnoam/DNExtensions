@@ -1,7 +1,7 @@
 
 using UnityEngine;
 
-namespace DNExtensions.Rewind
+namespace DNExtensions.Systems.Rewind
 {
     [RequireComponent(typeof(AudioSource))]
     public class RewindableAudioSource : Rewindable

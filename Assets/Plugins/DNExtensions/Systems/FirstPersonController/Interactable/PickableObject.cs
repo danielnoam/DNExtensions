@@ -3,7 +3,7 @@ using DNExtensions.Systems.ScriptableObjects;
 using DNExtensions.Utilities.AutoGet;
 using UnityEngine;
 
-namespace DNExtensions.FirstPersonController.Interactable
+namespace DNExtensions.Systems.FirstPersonController.Interactable
 {
         [SelectionBase]
         [DisallowMultipleComponent]

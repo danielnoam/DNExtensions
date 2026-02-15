@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using DNExtensions.Systems.ScriptableObjects;
+using DNExtensions.Utilities;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.Events;
@@ -9,7 +10,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 
-namespace DNExtensions.Utilities.MenuSystem
+namespace DNExtensions.Systems.MenuSystem
 {
     
     [DisallowMultipleComponent]

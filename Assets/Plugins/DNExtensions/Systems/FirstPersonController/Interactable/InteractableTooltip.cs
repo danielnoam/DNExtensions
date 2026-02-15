@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DNExtensions.FirstPersonController.Interactable
+namespace DNExtensions.Systems.FirstPersonController.Interactable
 {
 	[DisallowMultipleComponent]
 	public class InteractableTooltip : MonoBehaviour

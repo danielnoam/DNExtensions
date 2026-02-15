@@ -1,4 +1,6 @@
+using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace DNExtensions.Utilities
 {
@@ -6,7 +8,7 @@ namespace DNExtensions.Utilities
     /// A serializable struct that represents a range of float values with utility methods.
     /// Provides a min-max slider interface in the Unity Inspector when used with the MinMaxRangeAttribute.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public struct RangedFloat
     {
         /// <summary>

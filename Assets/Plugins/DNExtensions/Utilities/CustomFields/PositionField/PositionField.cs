@@ -1,8 +1,9 @@
+using System;
 using UnityEngine;
 
 namespace DNExtensions.Utilities.CustomFields
 {
-    [System.Serializable]
+    [Serializable]
     public class PositionField
     {
         [SerializeField] private Transform positionTransform;

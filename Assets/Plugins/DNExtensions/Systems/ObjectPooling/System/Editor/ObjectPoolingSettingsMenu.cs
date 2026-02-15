@@ -1,8 +1,9 @@
 ﻿#if UNITY_EDITOR
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions.ObjectPooling
+namespace DNExtensions.Systems.ObjectPooling
 {
     /// <summary>
     /// Editor utilities for ObjectPoolingSettings.
@@ -53,7 +54,7 @@ namespace DNExtensions.ObjectPooling
             var settings = ScriptableObject.CreateInstance<ObjectPoolingSettings>();
             
             // Ensure directory exists
-            string directory = System.IO.Path.GetDirectoryName(SettingsPath);
+            string directory = Path.GetDirectoryName(SettingsPath);
             if (!AssetDatabase.IsValidFolder(directory))
             {
                 // Create nested folders

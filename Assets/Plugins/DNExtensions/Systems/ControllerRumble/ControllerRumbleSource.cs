@@ -4,8 +4,12 @@ using DNExtensions.Utilities;
 using DNExtensions.Utilities.Button;
 using UnityEngine;
 
-namespace DNExtensions.ControllerRumble
+namespace DNExtensions.Systems.ControllerRumble
 {
+    /// <summary>
+    /// Connects to ControllerRumbleListeners in the scene to trigger rumble effects on compatible controllers.
+    /// Provides various methods to trigger different types of rumble effects (fade in/out, pulse, continuous).
+    /// </summary>
     public class ControllerRumbleSource : MonoBehaviour
     {
         [Header("Settings")]

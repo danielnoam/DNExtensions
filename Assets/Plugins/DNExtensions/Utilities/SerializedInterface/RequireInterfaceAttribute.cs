@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace DNExtensions.Utilities.SerializedInterface
@@ -116,9 +118,7 @@ namespace DNExtensions.Utilities.SerializedInterface
 
             bool isValid = true;
             var type = behaviour.GetType();
-            var fields = type.GetFields(System.Reflection.BindingFlags.Instance | 
-                                       System.Reflection.BindingFlags.Public | 
-                                       System.Reflection.BindingFlags.NonPublic);
+            var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
             foreach (var field in fields)
             {
@@ -155,11 +155,9 @@ namespace DNExtensions.Utilities.SerializedInterface
             if (behaviour == null)
                 return new string[] { "Behaviour is null" };
 
-            var errors = new System.Collections.Generic.List<string>();
+            var errors = new List<string>();
             var type = behaviour.GetType();
-            var fields = type.GetFields(System.Reflection.BindingFlags.Instance | 
-                                       System.Reflection.BindingFlags.Public | 
-                                       System.Reflection.BindingFlags.NonPublic);
+            var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
             foreach (var field in fields)
             {

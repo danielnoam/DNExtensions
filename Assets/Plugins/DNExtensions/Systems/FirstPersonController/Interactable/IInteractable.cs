@@ -1,6 +1,6 @@
 ﻿
 
-namespace DNExtensions.FirstPersonController.Interactable
+namespace DNExtensions.Systems.FirstPersonController.Interactable
 {
     public interface IInteractable
     {

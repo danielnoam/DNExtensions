@@ -3,7 +3,7 @@ using PrimeTween;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DNExtensions.VFXManager
+namespace DNExtensions.Systems.VFXManager
 {
     [Serializable]
     public class SetFullscreenShaderTransition : EffectBase

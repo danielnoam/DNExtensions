@@ -3,10 +3,10 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using DNExtensions.Utilities;
-using DNExtensions.ControllerRumble;
+using DNExtensions.Systems.ControllerRumble;
 using DNExtensions.Utilities.AutoGet;
 
-namespace DNExtensions.FirstPersonController
+namespace DNExtensions.Systems.FirstPersonController
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(FpcManager))]

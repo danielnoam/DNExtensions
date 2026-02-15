@@ -1,5 +1,7 @@
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -10,7 +12,7 @@ namespace DNExtensions.Utilities.CustomFields
     /// Serializable scene reference with validation and convenient loading methods.
     /// Provides type-safe scene management with build settings validation.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class SceneField
     {
         [SerializeField] private Object sceneAsset;

@@ -3,7 +3,7 @@ using UnityEngine;
 using DNExtensions.Utilities.Button;
 using DNExtensions.Utilities.CustomFields;
 
-namespace DNExtensions.Springs
+namespace DNExtensions.Systems.Springs
 {
     public enum SpaceMode
     {

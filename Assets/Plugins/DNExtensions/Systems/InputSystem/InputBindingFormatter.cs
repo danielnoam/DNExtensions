@@ -1,10 +1,9 @@
-using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.InputSystem;
 
 
-namespace DNExtensions.InputSystem
+namespace DNExtensions.Systems.InputSystem
 {
     public static class InputBindingFormatter
     {

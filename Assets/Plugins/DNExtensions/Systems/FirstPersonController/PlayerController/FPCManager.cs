@@ -1,8 +1,8 @@
-﻿using DNExtensions.ControllerRumble;
+﻿using DNExtensions.Systems.ControllerRumble;
 using DNExtensions.Utilities.AutoGet;
 using UnityEngine;
 
-namespace DNExtensions.FirstPersonController
+namespace DNExtensions.Systems.FirstPersonController
 {
     [SelectionBase]
     [DisallowMultipleComponent]

@@ -1,11 +1,11 @@
 
 
 using System;
-using DNExtensions.InputSystem;
+using DNExtensions.Systems.InputSystem;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace   DNExtensions.MenuSystemOld
+namespace DNExtensions.MenuSystemOld
 {
     
     public class MenuInput : InputReaderBase

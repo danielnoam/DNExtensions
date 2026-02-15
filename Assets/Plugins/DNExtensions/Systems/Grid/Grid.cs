@@ -1,10 +1,11 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
-namespace DNExtensions.Grid
+namespace DNExtensions.Systems.Grid
 {
     public enum GridOrientation
     {
@@ -12,7 +13,7 @@ namespace DNExtensions.Grid
         Horizontal
     }
 
-    [System.Serializable]
+    [Serializable]
     public class Grid
     {
         public Vector2Int size;

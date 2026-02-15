@@ -3,7 +3,7 @@ using DNExtensions.Systems.ScriptableObjects;
 using PrimeTween;
 using UnityEngine;
 
-namespace DNExtensions.FirstPersonController.Interactable
+namespace DNExtensions.Systems.FirstPersonController.Interactable
 {
     [RequireComponent(typeof(AudioSource))]
     [RequireComponent(typeof(Collider))]

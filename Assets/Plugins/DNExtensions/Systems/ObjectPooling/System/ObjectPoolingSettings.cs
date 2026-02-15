@@ -2,7 +2,7 @@
 using DNExtensions.Utilities;
 using UnityEngine;
 
-namespace DNExtensions.ObjectPooling
+namespace DNExtensions.Systems.ObjectPooling
 {
     /// <summary>
     /// Centralized settings asset for object pooling configuration.

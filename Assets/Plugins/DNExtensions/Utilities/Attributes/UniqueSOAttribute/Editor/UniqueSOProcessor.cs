@@ -1,7 +1,9 @@
 ﻿#if UNITY_EDITOR
+using System;
 using UnityEditor;
 using UnityEngine;
 using System.Linq;
+using Object = UnityEngine.Object;
 
 namespace DNExtensions.Utilities
 {
@@ -32,7 +34,7 @@ namespace DNExtensions.Utilities
             }
         }
 
-        private static void CheckForDuplicates(Object asset, string assetPath, System.Type assetType)
+        private static void CheckForDuplicates(Object asset, string assetPath, Type assetType)
         {
             string[] guids = AssetDatabase.FindAssets($"t:{assetType.Name}");
             

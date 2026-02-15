@@ -2,7 +2,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace DNExtensions.ObjectPooling
+namespace DNExtensions.Systems.ObjectPooling
 {
     
 

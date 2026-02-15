@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DNExtensions.Utilities;
@@ -8,7 +7,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
-namespace DNExtensions.MenuSystem
+namespace DNExtensions.Systems.MenuSystem
 {
     
     [DisallowMultipleComponent]

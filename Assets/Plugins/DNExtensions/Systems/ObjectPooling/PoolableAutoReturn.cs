@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DNExtensions.ObjectPooling
+namespace DNExtensions.Systems.ObjectPooling
 {
     /// <summary>
     /// Automatically returns object after a specified lifetime.

@@ -1,7 +1,7 @@
 ﻿
 using UnityEngine;
 
-namespace DNExtensions.FirstPersonController
+namespace DNExtensions.Systems.FirstPersonController
 {
     [DisallowMultipleComponent]
     public class FPCRigidBodyPush : MonoBehaviour

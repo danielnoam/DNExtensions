@@ -1,6 +1,7 @@
 using UnityEngine;
 
 #if UNITY_EDITOR
+using System;
 using UnityEditor;
 using System.Reflection;
 #endif
@@ -29,7 +30,7 @@ namespace DNExtensions.Utilities
     
             var methodInfo = targetType.GetMethod(_variableName, 
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                null, System.Type.EmptyTypes, null);
+                null, Type.EmptyTypes, null);
     
             if (methodInfo != null && methodInfo.ReturnType == typeof(bool))
             {
@@ -42,9 +43,9 @@ namespace DNExtensions.Utilities
             {
                 object currentValue = GetSerializedPropertyValue(siblingProperty);
                 
-                if (siblingProperty.propertyType == SerializedPropertyType.Enum && _variableValue is System.Enum)
+                if (siblingProperty.propertyType == SerializedPropertyType.Enum && _variableValue is Enum)
                 {
-                    int enumIndex = System.Convert.ToInt32(_variableValue);
+                    int enumIndex = Convert.ToInt32(_variableValue);
                     return Equals(currentValue, enumIndex);
                 }
         

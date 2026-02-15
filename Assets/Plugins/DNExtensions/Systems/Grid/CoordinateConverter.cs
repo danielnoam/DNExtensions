@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DNExtensions.Grid
+namespace DNExtensions.Systems.Grid
 {
     public abstract class CoordinateConverter
     {

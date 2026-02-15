@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace DNExtensions.Utilities.CustomFields
@@ -19,7 +20,7 @@ namespace DNExtensions.Utilities.CustomFields
     /// }
     /// </code>
     /// </example>
-    [System.Serializable]
+    [Serializable]
     public class TagField
     {
         /// <summary>
@@ -118,7 +119,7 @@ namespace DNExtensions.Utilities.CustomFields
         /// <returns>True if the tags match, false otherwise</returns>
         public bool Matches(string tag)
         {
-            return string.Equals(tagName, tag, System.StringComparison.Ordinal);
+            return string.Equals(tagName, tag, StringComparison.Ordinal);
         }
 
         /// <summary>
@@ -139,11 +140,11 @@ namespace DNExtensions.Utilities.CustomFields
         {
             if (obj is TagField other)
             {
-                return string.Equals(tagName, other.tagName, System.StringComparison.Ordinal);
+                return string.Equals(tagName, other.tagName, StringComparison.Ordinal);
             }
             if (obj is string str)
             {
-                return string.Equals(tagName, str, System.StringComparison.Ordinal);
+                return string.Equals(tagName, str, StringComparison.Ordinal);
             }
             return false;
         }

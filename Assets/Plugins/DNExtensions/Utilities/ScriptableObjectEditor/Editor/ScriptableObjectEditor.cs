@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -680,7 +681,7 @@ namespace DNExtensions.Utilities
             if (_allAssets.Count > 0 && _allAssets[0] != null)
             {
                 string existingPath = AssetDatabase.GetAssetPath(_allAssets[0]);
-                folder = System.IO.Path.GetDirectoryName(existingPath);
+                folder = Path.GetDirectoryName(existingPath);
             }
             
             string path = AssetDatabase.GenerateUniqueAssetPath($"{folder}/New {_currentType.Name}.asset");
@@ -709,9 +710,9 @@ namespace DNExtensions.Utilities
         private void DuplicateAsset(ScriptableObject asset)
         {
             string path = AssetDatabase.GetAssetPath(asset);
-            string directory = System.IO.Path.GetDirectoryName(path);
-            string filename = System.IO.Path.GetFileNameWithoutExtension(path);
-            string extension = System.IO.Path.GetExtension(path);
+            string directory = Path.GetDirectoryName(path);
+            string filename = Path.GetFileNameWithoutExtension(path);
+            string extension = Path.GetExtension(path);
             
             string newPath = AssetDatabase.GenerateUniqueAssetPath($"{directory}/{filename}{extension}");
             

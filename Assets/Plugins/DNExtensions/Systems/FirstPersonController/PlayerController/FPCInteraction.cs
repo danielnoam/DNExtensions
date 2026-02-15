@@ -1,12 +1,12 @@
 using System;
-using DNExtensions.FirstPersonController.Interactable;
+using DNExtensions.Systems.FirstPersonController.Interactable;
 using DNExtensions.Utilities;
 using DNExtensions.Utilities.AutoGet;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace DNExtensions.FirstPersonController
+namespace DNExtensions.Systems.FirstPersonController
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(FpcManager))]

@@ -1,7 +1,12 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
-namespace DNExtensions.ControllerRumble
+namespace DNExtensions.Systems.ControllerRumble
 {
+    
+    /// <summary>
+    /// Represents a single rumble effect for a controller, with support for both timed effects (with duration and animation curves) and continuous effects (without duration or curves).
+    /// </summary>
     public class ControllerRumbleEffect
     {
         public readonly float LowFrequency;
@@ -54,7 +59,7 @@ namespace DNExtensions.ControllerRumble
     }
     
     
-    [System.Serializable]
+    [Serializable]
     public class ControllerRumbleEffectSettings
     {
         [Range(0f,1f)] public float lowFrequency = 0.3f;

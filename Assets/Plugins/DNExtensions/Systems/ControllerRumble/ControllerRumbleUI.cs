@@ -1,24 +1,25 @@
 using UnityEngine;
 using TMPro;
 
-namespace  DNExtensions.ControllerRumble
+namespace  DNExtensions.Systems.ControllerRumble
 {
+    
+    /// <summary>
+    /// Listens to a ControllerRumbleListener and applies a shaking effect to a UI element based on the rumble intensity.
+    /// </summary>
+    [DisallowMultipleComponent]
     public class ControllerRumbleUI : MonoBehaviour
     {
         [Header("Settings")]
         [Tooltip("The maximum movement distance (in UI units) based on full rumble intensity (1.0).")]
-        [SerializeField]
-        private float maxMovementDistance = 10f;
-
+        [SerializeField] private float maxMovementDistance = 10f;
         [Tooltip("How quickly the UI element moves towards the shake position. Higher = Snappier.")] [SerializeField]
         private float shakeSpeed = 25f;
-
         [Tooltip("Minimum intensity threshold to start shaking (prevents micro-jitters).")] [SerializeField]
         private float intensityThreshold = 0.01f;
 
-        [Header("References")] [SerializeField]
-        private ControllerRumbleListener listener;
-
+        [Header("References")] 
+        [SerializeField] private ControllerRumbleListener listener;
         [SerializeField] private RectTransform uiRectTransform;
         [SerializeField] private TextMeshProUGUI infoText;
 

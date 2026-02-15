@@ -1,13 +1,14 @@
+using System;
 using System.Collections.Generic;
 
-namespace DNExtensions.Rewind
+namespace DNExtensions.Systems.Rewind
 {
     public class FrameRecordContainer<T>
     {
         private readonly List<int> _frames = new List<int>();
         private readonly List<T> _values = new List<T>();
 
-        public void Record(int frame, T value, System.Func<T, bool> hasChanged)
+        public void Record(int frame, T value, Func<T, bool> hasChanged)
         {
             if (hasChanged(value))
             {

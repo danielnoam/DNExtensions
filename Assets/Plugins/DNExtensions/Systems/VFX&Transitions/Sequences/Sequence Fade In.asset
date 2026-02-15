@@ -16,17 +16,17 @@ MonoBehaviour:
   sequenceIsAdditive: 0
   resetEffectsOnComplete: 1
   effects:
-  - rid: 4437625728757923920
+  - rid: 5778561776532062467
   references:
     version: 2
     RefIds:
-    - rid: 4437625728757923920
-      type: {class: SetFullscreenColor, ns: DNExtensions.VFXManager, asm: Assembly-CSharp-firstpass}
+    - rid: 5778561776532062467
+      type: {class: SetFullscreenColor, ns: DNExtensions.Systems.VFXManager, asm: Assembly-CSharp-firstpass}
       data:
         duration:
           minValue: 0
           maxValue: 1
         type: 0
-        startColor: {r: 0, g: 0, b: 0, a: 1}
-        endColor: {r: 0, g: 0, b: 0, a: 0}
+        startColor: {r: 0, g: 0, b: 0, a: 0}
+        endColor: {r: 0, g: 0, b: 0, a: 1}
         ease: 1

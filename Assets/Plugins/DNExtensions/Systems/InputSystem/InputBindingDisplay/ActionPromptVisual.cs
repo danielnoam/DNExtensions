@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using TMPro;
 
-namespace DNExtensions.InputSystem
+namespace DNExtensions.Systems.InputSystem
 {
     [RequireComponent(typeof(ActionBindingDisplay))]
     public class ActionPromptVisual : MonoBehaviour

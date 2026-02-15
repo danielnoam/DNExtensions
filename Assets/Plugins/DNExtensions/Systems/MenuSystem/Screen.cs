@@ -1,4 +1,5 @@
 
+
 using System;
 using System.Collections.Generic;
 using DNExtensions.Utilities;
@@ -7,7 +8,7 @@ using PrimeTween;
 using UnityEngine;
 
 
-namespace DNExtensions.MenuSystem
+namespace DNExtensions.Systems.MenuSystem
 {
 
     [DisallowMultipleComponent]

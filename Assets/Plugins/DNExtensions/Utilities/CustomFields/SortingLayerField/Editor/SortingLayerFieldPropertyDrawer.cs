@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
@@ -28,7 +29,7 @@ namespace DNExtensions.Utilities.CustomFields
             string[] sortingLayerNames = SortingLayer.layers.Select(l => l.name).ToArray();
             int[] layerIDs = SortingLayer.layers.Select(l => l.id).ToArray();
             
-            int currentIndex = System.Array.IndexOf(sortingLayerNames, layerName.stringValue);
+            int currentIndex = Array.IndexOf(sortingLayerNames, layerName.stringValue);
             bool layerExists = currentIndex != -1;
             bool hasIssue = string.IsNullOrEmpty(layerName.stringValue) || !layerExists;
             

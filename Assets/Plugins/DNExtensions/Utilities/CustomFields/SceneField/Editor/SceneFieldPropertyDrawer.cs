@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEditor;
 
@@ -59,7 +60,7 @@ namespace DNExtensions.Utilities.CustomFields
             
             if (GUI.Button(buttonRect, new GUIContent("⚙", "Open Build Settings")))
             {
-                EditorWindow.GetWindow(System.Type.GetType("UnityEditor.BuildPlayerWindow,UnityEditor"));
+                EditorWindow.GetWindow(Type.GetType("UnityEditor.BuildPlayerWindow,UnityEditor"));
             }
             
             EditorGUI.EndProperty();

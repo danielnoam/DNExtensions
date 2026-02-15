@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DNExtensions.Rewind
+namespace DNExtensions.Systems.Rewind
 {
     [RequireComponent(typeof(Rigidbody))]
     public class RewindableRigidbody : Rewindable

@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace DNExtensions.InputSystem
+namespace DNExtensions.Systems.InputSystem
 {
     [Serializable]
     public struct TokenActionPair

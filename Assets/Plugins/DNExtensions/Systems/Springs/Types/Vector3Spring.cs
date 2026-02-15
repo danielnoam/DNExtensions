@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DNExtensions.Springs
+namespace DNExtensions.Systems.Springs
 {
     
     [Serializable]
