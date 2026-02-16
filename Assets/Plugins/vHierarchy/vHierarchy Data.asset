@@ -26,7 +26,7 @@ MonoBehaviour:
           isColorRecursive: 0
   bookmarks: []
   bookmarkedScenePaths:
-  - Assets/2_Testing/TestScene.unity
-  - Assets/2_Testing/Shaders.unity
-  - Assets/2_Testing/Models.unity
-  - Assets/2_Testing/Menu.unity
+  - Assets/Scenes/TestScene.unity
+  - Assets/Scenes/Shaders.unity
+  - Assets/Scenes/Menu.unity
+  - Assets/Scenes/Models.unity

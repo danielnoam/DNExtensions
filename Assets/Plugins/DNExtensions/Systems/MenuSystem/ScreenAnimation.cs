@@ -2,10 +2,10 @@
 
 
 using System;
+using DNExtensions.Systems.Springs;
 using DNExtensions.Utilities.SerializableSelector;
 using PrimeTween;
 using UnityEngine;
-using Screen = DNExtensions.Systems.MenuSystem.Screen;
 
 namespace DNExtensions.Systems.MenuSystem
 {
@@ -140,6 +140,61 @@ namespace DNExtensions.Systems.MenuSystem
                     duration,
                     ease
                 ));
+        }
+        
+    }
+
+    [Serializable]
+    [SerializableSelectorAllowOnce]
+    public class SpringyUIAnimation : ScreenAnimation
+    {
+        public float delayBetweenElements = 0.1f;
+        public SpringAnimationMode animationMode = SpringAnimationMode.AnimateFromOffset;
+        public RectSpring[] springyUIElements = Array.Empty<RectSpring>();
+
+
+        public void FindAllSpringyUIElementsInChildren(Screen screen)
+        {
+            springyUIElements = screen.GetComponentsInChildren<RectSpring>(includeInactive: true);
+        }
+
+        public enum SpringAnimationMode
+        {
+            AnimateFromOffset,
+            AnimateToOffset,
+
+        }
+
+        public override Sequence CreateSequence(Screen screen)
+        {
+            if (springyUIElements == null || springyUIElements.Length == 0) return Sequence.Create();
+
+            var sequence = Sequence.Create();
+
+            for (int i = 0; i < springyUIElements.Length; i++)
+            {
+                var element = springyUIElements[i];
+
+                sequence.ChainCallback(() =>
+                {
+                    if (animationMode == SpringAnimationMode.AnimateFromOffset)
+                    {
+                        element.AnimateFromOffset();
+                    }
+                    else
+                    {
+                        element.AnimateToOffset();
+                    }
+
+                });
+
+                if (i < springyUIElements.Length - 1)
+                {
+                    sequence.ChainDelay(delayBetweenElements);
+                }
+            }
+
+            return sequence;
         }
     }
 }

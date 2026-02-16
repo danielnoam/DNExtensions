@@ -16,10 +16,9 @@ namespace DNExtensions.Systems.MenuSystem
     public class Screen : MonoBehaviour
     {
         [Header("Animations")]
-        [SerializeReference, SerializableSelector] 
-        private List<ScreenAnimation> showAnimations;
-        [SerializeReference, SerializableSelector]
-        private List<ScreenAnimation> hideAnimations;
+        [SerializeField] private bool disableInteractionsDuringAnimation = true;
+        [SerializeReference, SerializableSelector] private List<ScreenAnimation> showAnimations;
+        [SerializeReference, SerializableSelector] private List<ScreenAnimation> hideAnimations;
 
         private Sequence _animationSequence;
         private CanvasGroup _canvasGroup;
@@ -57,7 +56,7 @@ namespace DNExtensions.Systems.MenuSystem
             }
 
             CanvasGroup.alpha = 0f;
-            CanvasGroup.interactable = false;
+            CanvasGroup.interactable = disableInteractionsDuringAnimation;
             CanvasGroup.blocksRaycasts = false;
 
             _animationSequence = Sequence.Create();

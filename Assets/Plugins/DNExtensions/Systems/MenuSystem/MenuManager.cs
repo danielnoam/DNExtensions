@@ -17,28 +17,28 @@ namespace DNExtensions.Systems.MenuSystem
         [SerializeField] private bool crossAnimateScreens;
 
 
-        private readonly List<Screen> screens = new List<Screen>();
-        private Screen currentScreen;
+        private readonly List<Screen> _screens = new List<Screen>();
+        private Screen _currentScreen;
 
         private void Awake()
         {
-            screens.AddRange(GetComponentsInChildren<Screen>(true));
+            _screens.AddRange(GetComponentsInChildren<Screen>(true));
         }
 
         private void Start()
         {
             HideAllScreens(false);
-            if (autoShowFirstScreen) ShowScreen(screens[0], animateFirstScreen);
+            if (autoShowFirstScreen) ShowScreen(_screens[0], animateFirstScreen);
         }
 
         private void HideAllScreens(bool animated)
         {
-            foreach (var screen in screens)
+            foreach (var screen in _screens)
             {
                 screen.Hide(animated);
             }
 
-            currentScreen = null;
+            _currentScreen = null;
         }
 
         public void ShowScreen(Screen screen, bool animated = true, Action onComplete = null)
@@ -52,29 +52,29 @@ namespace DNExtensions.Systems.MenuSystem
 
             if (crossAnimateScreens)
             {
-                if (currentScreen)
+                if (_currentScreen)
                 {
-                    currentScreen.Hide(animated);
+                    _currentScreen.Hide(animated);
                 }
 
                 screen.Show(animated, onComplete);
-                currentScreen = screen;
+                _currentScreen = screen;
 
             }
             else
             {
-                if (currentScreen)
+                if (_currentScreen)
                 {
-                    currentScreen.Hide(animated, () =>
+                    _currentScreen.Hide(animated, () =>
                     {
                         screen.Show(animated, onComplete);
-                        currentScreen = screen;
+                        _currentScreen = screen;
                     });
                 }
                 else
                 {
                     screen.Show(animated, onComplete);
-                    currentScreen = screen;
+                    _currentScreen = screen;
                 }
             }
 
@@ -84,28 +84,28 @@ namespace DNExtensions.Systems.MenuSystem
 
         public void ShowNextScreen(bool animated = true, Action onComplete = null)
         {
-            if (!currentScreen)
+            if (!_currentScreen)
             {
-                ShowScreen(screens[0], animated, onComplete);
+                ShowScreen(_screens[0], animated, onComplete);
             }
 
-            var currentIndex = screens.IndexOf(currentScreen);
+            var currentIndex = _screens.IndexOf(_currentScreen);
             var nextIndex = currentIndex + 1;
 
-            ShowScreen(nextIndex >= screens.Count ? screens[0] : screens[nextIndex], animated, onComplete);
+            ShowScreen(nextIndex >= _screens.Count ? _screens[0] : _screens[nextIndex], animated, onComplete);
         }
 
         public void ShowPreviousScreen(bool animated = true, Action onComplete = null)
         {
-            if (!currentScreen)
+            if (!_currentScreen)
             {
-                ShowScreen(screens[0], animated, onComplete);
+                ShowScreen(_screens[0], animated, onComplete);
             }
 
-            var currentIndex = screens.IndexOf(currentScreen);
+            var currentIndex = _screens.IndexOf(_currentScreen);
             var previousIndex = currentIndex - 1;
 
-            ShowScreen(previousIndex < 0 ? screens[^1] : screens[previousIndex], animated, onComplete);
+            ShowScreen(previousIndex < 0 ? _screens[^1] : _screens[previousIndex], animated, onComplete);
         }
 
 
@@ -118,7 +118,7 @@ namespace DNExtensions.Systems.MenuSystem
         public void ShowPreviousScreenAnimated() => ShowPreviousScreen(true, null);
         public void ShowPreviousScreenInstant() => ShowPreviousScreen(false, null);
         
-        public void HideCurrentScreen(bool animated = true) => currentScreen?.Hide(animated);
+        public void HideCurrentScreen(bool animated = true) => _currentScreen?.Hide(animated);
         
 
 
