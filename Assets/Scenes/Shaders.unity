@@ -288,6 +288,7 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.02
   m_OutlineColor: {r: 1, g: 0, b: 0, a: 1}
+  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_Size: 0.4
   m_Sides: 5
   m_InnerRadius: 0.357
@@ -452,7 +453,7 @@ MonoBehaviour:
   zoomLimits:
     minValue: 5
     maxValue: 50
-  camera: {fileID: 64537488}
+  cam: {fileID: 64537488}
 --- !u!1 &81214968
 GameObject:
   m_ObjectHideFlags: 0
@@ -1375,6 +1376,7 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.02
   m_OutlineColor: {r: 1, g: 0, b: 0, a: 1}
+  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_Size: 0.347
 --- !u!1 &391639028
 GameObject:
@@ -1651,6 +1653,7 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.02
   m_OutlineColor: {r: 1, g: 0, b: 0, a: 1}
+  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_StartPos: {x: -0.3, y: 0}
   m_EndPos: {x: 0.3, y: 0}
   m_Thickness: 0.05
@@ -2182,6 +2185,7 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.039
   m_OutlineColor: {r: 1, g: 0, b: 0, a: 1}
+  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_Radius: 0.4
 --- !u!1 &750012326
 GameObject:
@@ -4564,6 +4568,7 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.02
   m_OutlineColor: {r: 1, g: 0, b: 0, a: 1}
+  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_OuterRadius: 0.3
   m_InnerRadius: 0.1
 --- !u!1 &1831802525
@@ -4882,6 +4887,7 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.02
   m_OutlineColor: {r: 1, g: 0, b: 0, a: 1}
+  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_Width: 0.4
   m_Height: 0.4
   m_Thickness: 0.1
@@ -5567,6 +5573,7 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.02
   m_OutlineColor: {r: 1, g: 0, b: 0, a: 1}
+  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_Width: 0.4
   m_Height: 0.4
   m_Rounding: 0.05

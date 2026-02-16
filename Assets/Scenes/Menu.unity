@@ -336,6 +336,7 @@ GameObject:
   - component: {fileID: 190320828}
   - component: {fileID: 190320827}
   - component: {fileID: 190320826}
+  - component: {fileID: 190320829}
   m_Layer: 5
   m_Name: Button (1)
   m_TagString: Untagged
@@ -457,6 +458,64 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 190320824}
   m_CullTransparentMesh: 1
+--- !u!114 &190320829
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 190320824}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22c641a4da1748fa866e29dd0aa259af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.MenuSystem.SelectableAnimator
+  positionEffectType: 2
+  positionOffset: {x: 0, y: 10, z: 0}
+  positionDuration: 0.15
+  positionEase: 31
+  shakeOnDeselect: 0
+  shakeStrength: {x: 3, y: 3, z: 0}
+  shakeFrequency: 10
+  shakeDuration: 0.5
+  shakeEase: 0
+  animateRotation: 0
+  rotationOffset: {x: 0, y: 0, z: 15}
+  rotationDuration: 0.15
+  rotationEase: 31
+  animateScale: 0
+  scaleMultiplier: 1.1
+  scaleDuration: 0.15
+  scaleEase: 31
+  animateAlpha: 0
+  selectedAlpha: 1
+  alphaDuration: 0.5
+  alphaCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  selectable: {fileID: 190320826}
+  rectTransform: {fileID: 190320825}
 --- !u!1 &228357739
 GameObject:
   m_ObjectHideFlags: 0
@@ -848,6 +907,7 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.027
   m_OutlineColor: {r: 0, g: 0.9176359, b: 1, a: 1}
+  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_Size: 0.434
   m_Sides: 8
   m_InnerRadius: 0.266
@@ -871,6 +931,7 @@ GameObject:
   - component: {fileID: 401712581}
   - component: {fileID: 401712580}
   - component: {fileID: 401712579}
+  - component: {fileID: 401712582}
   m_Layer: 5
   m_Name: Button
   m_TagString: Untagged
@@ -1004,6 +1065,64 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 401712577}
   m_CullTransparentMesh: 1
+--- !u!114 &401712582
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 401712577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22c641a4da1748fa866e29dd0aa259af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.MenuSystem.SelectableAnimator
+  positionEffectType: 2
+  positionOffset: {x: 0, y: 10, z: 0}
+  positionDuration: 0.15
+  positionEase: 31
+  shakeOnDeselect: 0
+  shakeStrength: {x: 3, y: 3, z: 0}
+  shakeFrequency: 10
+  shakeDuration: 0.5
+  shakeEase: 0
+  animateRotation: 0
+  rotationOffset: {x: 0, y: 0, z: 15}
+  rotationDuration: 0.15
+  rotationEase: 31
+  animateScale: 0
+  scaleMultiplier: 1.1
+  scaleDuration: 0.15
+  scaleEase: 31
+  animateAlpha: 0
+  selectedAlpha: 1
+  alphaDuration: 0.5
+  alphaCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  selectable: {fileID: 401712579}
+  rectTransform: {fileID: 401712578}
 --- !u!1 &551287424
 GameObject:
   m_ObjectHideFlags: 0
@@ -1059,7 +1178,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuManager
   autoShowFirstScreen: 1
   animateFirstScreen: 1
-  crossAnimateScreens: 0
+  crossAnimateScreens: 1
 --- !u!114 &551287427
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1078,7 +1197,7 @@ MonoBehaviour:
   enableOnPointerEnterSelection: 1
   enableOnPointerExitDeselection: 1
   overrideDefaultSelectable:
-    isSet: 1
+    isSet: 0
     hideValueIfSet: 0
     value: {fileID: 0}
 --- !u!1 &554429278
@@ -1595,49 +1714,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ef3bbb82197ca04a8d17adf2d9adec3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Screen
-  showAnimations:
-  - rid: 4437625843699154948
-  - rid: 4437625843699154949
-  hideAnimations:
-  - rid: 4437625843699154950
-  - rid: 4437625843699154951
+  showAnimations: []
+  hideAnimations: []
   references:
     version: 2
-    RefIds:
-    - rid: 4437625843699154948
-      type: {class: FadeAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
-      data:
-        duration: 0.25
-        startFromCurrentAlpha: 0
-        startAlpha: 0
-        endAlpha: 1
-        ease: 9
-    - rid: 4437625843699154949
-      type: {class: ScaleAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
-      data:
-        duration: 0.25
-        startFromCurrentScale: 0
-        endInOriginalScale: 1
-        startScale: {x: 0, y: 0, z: 0}
-        endScale: {x: 1, y: 1, z: 1}
-        ease: 27
-    - rid: 4437625843699154950
-      type: {class: FadeAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
-      data:
-        duration: 0.25
-        startFromCurrentAlpha: 1
-        startAlpha: 0
-        endAlpha: 0
-        ease: 9
-    - rid: 4437625843699154951
-      type: {class: ScaleAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
-      data:
-        duration: 0.25
-        startFromCurrentScale: 1
-        endInOriginalScale: 0
-        startScale: {x: 0, y: 0, z: 0}
-        endScale: {x: 0, y: 0, z: 0}
-        ease: 27
+    RefIds: []
 --- !u!82 &610518586
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1960,6 +2041,7 @@ GameObject:
   - component: {fileID: 773254155}
   - component: {fileID: 773254154}
   - component: {fileID: 773254153}
+  - component: {fileID: 773254156}
   m_Layer: 5
   m_Name: Button
   m_TagString: Untagged
@@ -2081,6 +2163,64 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 773254151}
   m_CullTransparentMesh: 1
+--- !u!114 &773254156
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 773254151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22c641a4da1748fa866e29dd0aa259af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.MenuSystem.SelectableAnimator
+  positionEffectType: 2
+  positionOffset: {x: 0, y: 10, z: 0}
+  positionDuration: 0.15
+  positionEase: 31
+  shakeOnDeselect: 0
+  shakeStrength: {x: 3, y: 3, z: 0}
+  shakeFrequency: 10
+  shakeDuration: 0.5
+  shakeEase: 0
+  animateRotation: 0
+  rotationOffset: {x: 0, y: 0, z: 15}
+  rotationDuration: 0.15
+  rotationEase: 31
+  animateScale: 0
+  scaleMultiplier: 1.1
+  scaleDuration: 0.15
+  scaleEase: 31
+  animateAlpha: 0
+  selectedAlpha: 1
+  alphaDuration: 0.5
+  alphaCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  selectable: {fileID: 773254153}
+  rectTransform: {fileID: 773254152}
 --- !u!1 &826891074
 GameObject:
   m_ObjectHideFlags: 0
@@ -2518,6 +2658,7 @@ GameObject:
   - component: {fileID: 1097352193}
   - component: {fileID: 1097352192}
   - component: {fileID: 1097352191}
+  - component: {fileID: 1097352194}
   m_Layer: 5
   m_Name: Button
   m_TagString: Untagged
@@ -2651,6 +2792,64 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1097352189}
   m_CullTransparentMesh: 1
+--- !u!114 &1097352194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097352189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22c641a4da1748fa866e29dd0aa259af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.MenuSystem.SelectableAnimator
+  positionEffectType: 2
+  positionOffset: {x: 0, y: 10, z: 0}
+  positionDuration: 0.15
+  positionEase: 31
+  shakeOnDeselect: 0
+  shakeStrength: {x: 3, y: 3, z: 0}
+  shakeFrequency: 10
+  shakeDuration: 0.5
+  shakeEase: 0
+  animateRotation: 0
+  rotationOffset: {x: 0, y: 0, z: 15}
+  rotationDuration: 0.15
+  rotationEase: 31
+  animateScale: 0
+  scaleMultiplier: 1.1
+  scaleDuration: 0.15
+  scaleEase: 31
+  animateAlpha: 0
+  selectedAlpha: 1
+  alphaDuration: 0.5
+  alphaCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  selectable: {fileID: 1097352191}
+  rectTransform: {fileID: 1097352190}
 --- !u!1 &1175395523
 GameObject:
   m_ObjectHideFlags: 0
@@ -2716,6 +2915,7 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.02
   m_OutlineColor: {r: 0.72955966, g: 0.72955966, b: 0.72955966, a: 1}
+  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_Width: 0.48
   m_Height: 0.48
   m_Rounding: 0.029
@@ -2854,49 +3054,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ef3bbb82197ca04a8d17adf2d9adec3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Screen
-  showAnimations:
-  - rid: 4437625843699154944
-  - rid: 4437625843699154945
-  hideAnimations:
-  - rid: 4437625843699154946
-  - rid: 4437625843699154947
+  showAnimations: []
+  hideAnimations: []
   references:
     version: 2
-    RefIds:
-    - rid: 4437625843699154944
-      type: {class: FadeAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
-      data:
-        duration: 0.25
-        startFromCurrentAlpha: 0
-        startAlpha: 0
-        endAlpha: 1
-        ease: 9
-    - rid: 4437625843699154945
-      type: {class: ScaleAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
-      data:
-        duration: 0.25
-        startFromCurrentScale: 0
-        endInOriginalScale: 1
-        startScale: {x: 0, y: 0, z: 0}
-        endScale: {x: 1, y: 1, z: 1}
-        ease: 27
-    - rid: 4437625843699154946
-      type: {class: FadeAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
-      data:
-        duration: 0.25
-        startFromCurrentAlpha: 1
-        startAlpha: 0
-        endAlpha: 0
-        ease: 9
-    - rid: 4437625843699154947
-      type: {class: ScaleAnimation, ns: DNExtensions.MenuSystem, asm: Assembly-CSharp-firstpass}
-      data:
-        duration: 0.25
-        startFromCurrentScale: 1
-        endInOriginalScale: 0
-        startScale: {x: 0, y: 0, z: 0}
-        endScale: {x: 0, y: 0, z: 0}
-        ease: 27
+    RefIds: []
 --- !u!225 &1283884210
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -3214,7 +3376,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1244931439}
   m_HandleRect: {fileID: 1244931438}
   m_Direction: 0
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -3661,6 +3823,7 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.027
   m_OutlineColor: {r: 0, g: 0.9176359, b: 1, a: 1}
+  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_Size: 0.434
   m_Sides: 8
   m_InnerRadius: 0.266
@@ -4964,6 +5127,7 @@ GameObject:
   - component: {fileID: 2037856118}
   - component: {fileID: 2037856117}
   - component: {fileID: 2037856116}
+  - component: {fileID: 2037856119}
   m_Layer: 5
   m_Name: Button (1)
   m_TagString: Untagged
@@ -5097,6 +5261,64 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2037856114}
   m_CullTransparentMesh: 1
+--- !u!114 &2037856119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2037856114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22c641a4da1748fa866e29dd0aa259af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.MenuSystem.SelectableAnimator
+  positionEffectType: 2
+  positionOffset: {x: 0, y: 10, z: 0}
+  positionDuration: 0.15
+  positionEase: 31
+  shakeOnDeselect: 0
+  shakeStrength: {x: 3, y: 3, z: 0}
+  shakeFrequency: 10
+  shakeDuration: 0.5
+  shakeEase: 0
+  animateRotation: 0
+  rotationOffset: {x: 0, y: 0, z: 15}
+  rotationDuration: 0.15
+  rotationEase: 31
+  animateScale: 0
+  scaleMultiplier: 1.1
+  scaleDuration: 0.15
+  scaleEase: 31
+  animateAlpha: 0
+  selectedAlpha: 1
+  alphaDuration: 0.5
+  alphaCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  selectable: {fileID: 2037856116}
+  rectTransform: {fileID: 2037856115}
 --- !u!1 &2089224225
 GameObject:
   m_ObjectHideFlags: 0
@@ -5198,6 +5420,7 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.02
   m_OutlineColor: {r: 0.72955966, g: 0.72955966, b: 0.72955966, a: 1}
+  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_Width: 0.48
   m_Height: 0.48
   m_Rounding: 0.029
