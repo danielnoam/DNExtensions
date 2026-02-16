@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace DNExtensions.Utilities
 {
@@ -35,6 +37,18 @@ namespace DNExtensions.Utilities
         private bool _renameNeedsFocus;
         private bool _isMultiRename;
         private int _lastSelectedIndex = -1;
+
+        private struct ReferenceResult
+        {
+            public UnityEngine.Object SourceObject;
+            public string Label;
+            public string AssetPath;
+            public bool IsSceneObject;
+        }
+
+        private List<ReferenceResult> _foundReferences = new List<ReferenceResult>();
+        private Vector2 _referenceScrollPos;
+        private bool _isSearchingReferences;
         
         private const string RenameControlName = "SOEditor_RenameField";
         private const float ListWidth = 250f;
@@ -151,7 +165,6 @@ namespace DNExtensions.Utilities
             
             _listScrollPosition = EditorGUILayout.BeginScrollView(_listScrollPosition);
             
-            // Build multi-rename preview names if active
             Dictionary<ScriptableObject, string> renamePreview = null;
             if (_isMultiRename && _renamingAsset != null)
             {
@@ -372,16 +385,157 @@ namespace DNExtensions.Utilities
                         }
                     }
                 }
+
+                if (_selectedAssets.Count == 1)
+                {
+                    EditorGUILayout.Space(20);
+                    DrawReferencesSection();
+                }
                 
                 EditorGUILayout.EndScrollView();
             }
             
             EditorGUILayout.EndVertical();
         }
+
+        private void DrawReferencesSection()
+        {
+            EditorGUILayout.LabelField("References", EditorStyles.boldLabel);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+            if (_isSearchingReferences)
+            {
+                EditorGUILayout.LabelField("Searching...", EditorStyles.centeredGreyMiniLabel);
+            }
+            else if (_foundReferences.Count > 0)
+            {
+                if (GUILayout.Button("Refresh References"))
+                {
+                    FindReferences(_selectedAssets.First());
+                }
+
+                _referenceScrollPos = EditorGUILayout.BeginScrollView(_referenceScrollPos, GUILayout.Height(150));
+                
+                float iconSize = 16f; 
+                EditorGUIUtility.SetIconSize(new Vector2(iconSize, iconSize));
+
+                foreach (var refResult in _foundReferences)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    
+                    GUIContent icon = refResult.SourceObject != null 
+                        ? EditorGUIUtility.ObjectContent(refResult.SourceObject, refResult.SourceObject.GetType())
+                        : EditorGUIUtility.IconContent("GameObject Icon");
+                    
+                    if (refResult.IsSceneObject)
+                    {
+                        // Note: If your icon is very large, you might want to add GUILayout.Height(iconSize) to the button options
+                        if (GUILayout.Button(new GUIContent(refResult.Label, icon.image), EditorStyles.label))
+                        {
+                            if (refResult.SourceObject != null)
+                            {
+                                Selection.activeObject = refResult.SourceObject;
+                                EditorGUIUtility.PingObject(refResult.SourceObject);
+                            }
+                        }
+                        GUILayout.Label("(Scene)", EditorStyles.miniLabel, GUILayout.Width(45));
+                    }
+                    else
+                    {
+                        if (GUILayout.Button(new GUIContent(refResult.Label, icon.image), EditorStyles.label))
+                        {
+                            UnityEngine.Object obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(refResult.AssetPath);
+                            Selection.activeObject = obj;
+                            EditorGUIUtility.PingObject(obj);
+                        }
+                        GUILayout.Label("(Asset)", EditorStyles.miniLabel, GUILayout.Width(45));
+                    }
+                    
+                    EditorGUILayout.EndHorizontal();
+                }
+
+                // 2. Reset the icon size after the loop (Important!)
+                EditorGUIUtility.SetIconSize(Vector2.zero);
+                
+                EditorGUILayout.EndScrollView();
+            }
+            else
+            {
+                if (GUILayout.Button("Find References"))
+                {
+                    FindReferences(_selectedAssets.First());
+                }
+                EditorGUILayout.LabelField("Click to search for usages in project and active scene.", EditorStyles.miniLabel);
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private void FindReferences(ScriptableObject target)
+        {
+            _isSearchingReferences = true;
+            _foundReferences.Clear();
+            string targetPath = AssetDatabase.GetAssetPath(target);
+            
+            string[] guids = AssetDatabase.FindAssets("t:Scene t:Prefab t:ScriptableObject");
+            
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (path == targetPath) continue;
+
+                string[] dependencies = AssetDatabase.GetDependencies(path, false);
+                if (dependencies.Contains(targetPath))
+                {
+                    _foundReferences.Add(new ReferenceResult
+                    {
+                        AssetPath = path,
+                        Label = Path.GetFileNameWithoutExtension(path),
+                        IsSceneObject = false,
+                        SourceObject = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path)
+                    });
+                }
+            }
+
+            GameObject[] rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
+            foreach (GameObject root in rootObjects)
+            {
+                Component[] components = root.GetComponentsInChildren<Component>(true);
+                foreach (Component comp in components)
+                {
+                    if (comp == null) continue;
+
+                    SerializedObject so = new SerializedObject(comp);
+                    SerializedProperty sp = so.GetIterator();
+
+                    bool found = false;
+                    while (sp.NextVisible(true)) 
+                    {
+                        if (sp.propertyType == SerializedPropertyType.ObjectReference &&
+                            sp.objectReferenceValue == target)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (found)
+                    {
+                        _foundReferences.Add(new ReferenceResult
+                        {
+                            SourceObject = comp.gameObject,
+                            Label = $"{comp.gameObject.name} ({comp.GetType().Name})",
+                            IsSceneObject = true
+                        });
+                    }
+                }
+            }
+            
+            _isSearchingReferences = false;
+        }
         
         private void ShowAssetContextMenu(ScriptableObject asset)
         {
-            // If right-clicking an unselected asset, select it
             if (!_selectedAssets.Contains(asset))
             {
                 _selectedAssets.Clear();
@@ -459,6 +613,7 @@ namespace DNExtensions.Utilities
             }
             
             _lastSelectedIndex = _allAssets.IndexOf(asset);
+            _foundReferences.Clear();
             UpdateInspector();
             Repaint();
         }
@@ -541,6 +696,7 @@ namespace DNExtensions.Utilities
             }
             
             _lastSelectedIndex = newIndex;
+            _foundReferences.Clear();
             UpdateInspector();
             ScrollToIndex(newIndex);
             Repaint();
@@ -786,7 +942,6 @@ namespace DNExtensions.Utilities
             string newName = _renameText;
             bool isMulti = _isMultiRename;
             
-            // Capture selected assets before CancelRename clears state
             List<ScriptableObject> assetsToRename = isMulti
                 ? _allAssets.Where(a => a != null && _selectedAssets.Contains(a)).ToList()
                 : null;

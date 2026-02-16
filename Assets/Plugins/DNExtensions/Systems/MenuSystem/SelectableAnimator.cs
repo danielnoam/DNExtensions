@@ -1,30 +1,16 @@
-
-using System;
-using System.Linq;
-using DNExtensions.Systems.ScriptableObjects;
 using DNExtensions.Utilities;
+using DNExtensions.Utilities.AutoGet;
 using PrimeTween;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-
 namespace DNExtensions.Systems.MenuSystem
 {
-    
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Selectable))]
-    [RequireComponent(typeof(EventTrigger))]
-
     public class SelectableAnimator : MonoBehaviour
     {
-        [Header("Settings")]
-        [SerializeField] private bool mouseSelectsSelectable;
-        [SerializeField] private SOAudioEvent selectSfx;
-        [SerializeField] private SOAudioEvent submitSfx;
-        
-        
         [Header("Position")] 
         [SerializeField] private PositionEffectType positionEffectType = PositionEffectType.Shake;
         [ShowIf("IsOffsetMode"), SerializeField] private Vector3 positionOffset = new Vector3(0, 10, 0);
@@ -56,135 +42,56 @@ namespace DNExtensions.Systems.MenuSystem
         [SerializeField] private AnimationCurve alphaCurve = AnimationCurve.Linear(0, 0, 1, 1);
 
         [Space(10)] 
-        [SerializeField] public AudioSource audioSource;
-        [SerializeField, ReadOnly] private Selectable selectable;
-        [SerializeField, ReadOnly] private EventTrigger eventTrigger;
-        [SerializeField, ReadOnly] private RectTransform rectTransform;
+        [SerializeField, ReadOnly, AutoGetSelf] private Selectable selectable;
+        [SerializeField, ReadOnly, AutoGetSelf] private RectTransform rectTransform;
 
         private Vector3 _originalPosition;
         private Vector3 _originalScale;
         private Vector3 _originalRotation;
         private float _originalAlpha;
-        private bool _originalInteractionState;
         private bool IsOffsetMode => positionEffectType == PositionEffectType.Offset;
         private bool IsShakeMode => positionEffectType == PositionEffectType.Shake;
+        
         private enum PositionEffectType { None, Offset, Shake }
-        
-        
-        public event Action OnSelectEvent;
-        public event Action OnDeselectEvent;
-        public event Action OnSubmitEvent;
-
-
-        private void OnValidate()
-        {
-            if (!eventTrigger) eventTrigger = GetComponent<EventTrigger>();
-            if (!selectable) selectable = GetComponent<Selectable>();
-            if (!rectTransform) rectTransform = GetComponent<RectTransform>();
-        }
 
         private void Awake()
         {
-            _originalInteractionState = selectable.interactable;
             _originalScale = selectable.transform.localScale;
             _originalRotation = selectable.transform.localRotation.eulerAngles;
-            _originalAlpha = selectable.image.color.a;
+            _originalAlpha = selectable.targetGraphic.color.a;
             _originalPosition = rectTransform.anchoredPosition3D;
 
-            AddEventTriggerEntry(EventTriggerType.Select, OnSelect);
-            AddEventTriggerEntry(EventTriggerType.Deselect, OnDeselect);
-            AddEventTriggerEntry(EventTriggerType.Submit, OnSubmit);
-            AddEventTriggerEntry(EventTriggerType.PointerClick, OnSubmit);
-            
-            if (mouseSelectsSelectable)
-            {
-                AddEventTriggerEntry(EventTriggerType.PointerEnter, OnPointerEnter);
-                AddEventTriggerEntry(EventTriggerType.PointerExit, OnPointerExit);
-            }
+            selectable.AddEventListener(EventTriggerType.Select, OnSelect);
+            selectable.AddEventListener(EventTriggerType.Deselect, OnDeselect);
         }
 
         private void OnDisable()
         {
-            if (positionEffectType == PositionEffectType.Offset) selectable.transform.position = _originalPosition;
+            if (positionEffectType == PositionEffectType.Offset) rectTransform.anchoredPosition3D = _originalPosition;
             if (animateScale) selectable.transform.localScale = _originalScale;
             if (animateRotation) selectable.transform.localRotation = Quaternion.Euler(_originalRotation);
-            if (animateAlpha)
+            if (animateAlpha && selectable.targetGraphic)
             {
-                var color = selectable.image.color;
+                var color = selectable.targetGraphic.color;
                 color.a = _originalAlpha;
-                selectable.image.color = color;
+                selectable.targetGraphic.color = color;
             }
         }
-
-        private void AddEventTriggerEntry(EventTriggerType type, UnityAction<BaseEventData> callback)
-        {
-            if (!eventTrigger) return;
-
-
-            var existingEntry = eventTrigger.triggers.FirstOrDefault(entry => entry.eventID == type);
-
-            if (existingEntry != null)
-            {
-                existingEntry.callback.AddListener(callback);
-            }
-            else
-            {
-                var newEntry = new EventTrigger.Entry
-                {
-                    eventID = type,
-                    callback = new EventTrigger.TriggerEvent()
-                };
-                newEntry.callback.AddListener(callback);
-                eventTrigger.triggers.Add(newEntry);
-            }
-        }
-
-        private void OnSubmit(BaseEventData eventData)
-        {
-
-            OnSubmitEvent?.Invoke();
-            submitSfx?.Play(audioSource);
-        }
+        
 
         private void OnSelect(BaseEventData eventData)
         {
-            if (!eventData.selectedObject.activeSelf || !selectable.interactable) return;
-
-            Select();
+            PlaySelectAnimations();
         }
 
         private void OnDeselect(BaseEventData eventData)
         {
-            if (!eventData.selectedObject.activeSelf || !selectable.interactable) return;
-
-            Deselect();
+            PlayDeselectAnimations();
         }
         
-        private void OnPointerEnter(BaseEventData eventData)
-        {
-            if (!selectable.interactable) return;
-
-            if (eventData is PointerEventData pointerEventData)
-            {
-                pointerEventData.selectedObject = pointerEventData.pointerEnter;
-            }
-        }
-
-        private void OnPointerExit(BaseEventData eventData)
-        {
-            if (!selectable.interactable) return;
-            
-            if (eventData is PointerEventData pointerEventData)
-            {
-                pointerEventData.selectedObject = null;
-            }
-        }
         
-        public void Select()
+        public void PlaySelectAnimations()
         {
-            
-            OnSelectEvent?.Invoke();
-            
             switch (positionEffectType)
             {
                 case PositionEffectType.Offset:
@@ -199,14 +106,10 @@ namespace DNExtensions.Systems.MenuSystem
             if (animateRotation) PlayRotateAnimation(true);
             if (animateAlpha) PlayAlphaAnimation(true);
             
-            selectSfx?.Play(audioSource);
         }
 
-
-        public void Deselect()
+        public void PlayDeselectAnimations()
         {
-            OnDeselectEvent?.Invoke();
-            
             switch (positionEffectType)
             {
                 case PositionEffectType.Offset:
@@ -221,7 +124,6 @@ namespace DNExtensions.Systems.MenuSystem
             if (animateRotation) PlayRotateAnimation(false);
             if (animateAlpha) PlayAlphaAnimation(false);
         }
-
 
         private void PlayPositionAnimation(bool selected)
         {
@@ -243,7 +145,6 @@ namespace DNExtensions.Systems.MenuSystem
             Tween.Scale(transform, endScale, scaleDuration, scaleEase, useUnscaledTime: true);
         }
 
-
         private void PlayShakeAnimation()
         {
             Tween.ShakeLocalPosition(transform, shakeStrength, shakeDuration, shakeFrequency,
@@ -252,11 +153,10 @@ namespace DNExtensions.Systems.MenuSystem
 
         private void PlayAlphaAnimation(bool selected)
         {
+            if (!selectable.targetGraphic) return;
             var endAlpha = selected ? selectedAlpha : _originalAlpha;
             var curve = selected ? alphaCurve : AnimationCurve.Linear(0, 0, 1, 1);
-            Tween.Alpha(selectable.image, endAlpha, alphaDuration, curve, useUnscaledTime: true);
+            Tween.Alpha(selectable.targetGraphic, endAlpha, alphaDuration, curve, useUnscaledTime: true);
         }
-
-
     }
 }
