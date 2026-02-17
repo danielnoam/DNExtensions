@@ -1,37 +1,12 @@
 # DNExtensions
 
-A comprehensive collection of Unity extensions and utilities to accelerate game development.
+A comprehensive collection of Unity extensions, systems, components, and utilities to accelerate game development.
 
 ## Table of Contents
 
-- [Cinemachine Extensions](#cinemachine-extensions)
 - [Components](#components)
-- [Controller Rumble System](#controller-rumble-system)
-- [First Person Controller](#first-person-controller)
-- [Grid System](#grid-system)
-- [Input System](#input-system)
-- [Menu System](#menu-system)
-- [Mobile Haptics](#mobile-haptics)
-- [Object Pooling System](#object-pooling-system)
-- [Rewind System](#rewind-system)
-- [SDF (Signed Distance Fields)](#sdf-signed-distance-fields)
-- [Shaders](#shaders)
-- [Tube Renderer](#tube-renderer)
-- [VFX & Transition System](#vfx--transition-system)
+- [Systems](#systems)
 - [Utilities](#utilities)
-
----
-
-## Cinemachine Extensions
-
-Extensions for Unity's Cinemachine camera system.
-
-### Features
-- **CinemachineRotationOffsetExtension**: Adds additional rotation offset to Cinemachine virtual cameras
-- **CinemachineImpulseSourceExtensions**: Helper extensions for working with Cinemachine impulse sources
-
-### Usage
-Add the `CinemachineRotationOffsetExtension` component to your Cinemachine virtual camera to apply custom rotation offsets programmatically.
 
 ---
 
@@ -39,28 +14,68 @@ Add the `CinemachineRotationOffsetExtension` component to your Cinemachine virtu
 
 General-purpose Unity components for common game functionality.
 
-### Features
-- **FreeFormCameraController**: A flexible camera controller for scene navigation
-- **FPSCounter**: Displays frames per second in your game
-- **Note**: Editor component for adding notes to GameObjects
-- **RadialLayoutGroup**: Arranges UI elements in a circular/radial pattern
+### Billboard
+Automatically rotates an object to face the camera.
 
-### Usage
-Attach these components to GameObjects as needed. The Note component is particularly useful for leaving development reminders in the scene.
+### FPSCounter
+Displays frames per second in your game with customizable styling and update rates.
+
+```csharp
+// Add to a GameObject to display FPS
+gameObject.AddComponent<FPSCounter>();
+```
+
+### FreeFormCameraController
+A flexible camera controller for scene navigation and free-form camera movement.
+
+### Note
+Editor component for adding notes and reminders to GameObjects directly in the Inspector.
+
+```csharp
+// Visible in the Inspector - useful for leaving development reminders
+```
+
+### RadialLayoutGroup
+Arranges UI elements in a circular/radial pattern. Perfect for radial menus, circular inventories, and more.
+
+```csharp
+// Add to a UI GameObject to arrange children in a circle
+RadialLayoutGroup radialLayout = gameObject.AddComponent<RadialLayoutGroup>();
+radialLayout.radius = 100f;
+radialLayout.startAngle = 0f;
+```
+
+### TubeRenderer
+Renders tubes/pipes along paths defined by transform points.
+
+**Features:**
+- Dynamic tube mesh generation
+- Custom radius and segments
+- Visual editor for path editing
+
+**Usage:**
+1. Add TubeRenderer component
+2. Assign transform points to define the path
+3. Configure tube radius and segments
+4. The tube mesh updates automatically
 
 ---
 
-## Controller Rumble System
+## Systems
+
+Complete gameplay systems ready to integrate into your projects.
+
+### Controller Rumble System
 
 A comprehensive system for managing gamepad haptic feedback.
 
-### Features
+**Components:**
 - **ControllerRumbleEffect**: Defines rumble effects with curves and duration
 - **ControllerRumbleListener**: Global manager for processing rumble effects
 - **ControllerRumbleSource**: Trigger rumble effects from any GameObject
 - **ControllerRumbleUI**: UI integration for rumble feedback
 
-### Usage
+**Usage:**
 ```csharp
 // Add a rumble source to your GameObject
 ControllerRumbleSource rumbleSource = gameObject.AddComponent<ControllerRumbleSource>();
@@ -71,11 +86,11 @@ rumbleSource.Rumble(new ControllerRumbleEffectSettings(0.5f, 0.7f, 0.3f));
 
 ---
 
-## First Person Controller
+### First Person Controller
 
 A complete first-person controller system with interaction support.
 
-### Features
+**Features:**
 - **FPCCamera**: First-person camera with mouse/gamepad look, FOV changes
 - **FPCInput**: Input handling using Unity's new Input System
 - **FPCMovement**: Character movement with walking, running, jumping, coyote time, and jump buffering
@@ -85,7 +100,7 @@ A complete first-person controller system with interaction support.
 - **Interactable System**: Base classes and interfaces for creating interactable objects
 - **PickableObject**: Objects that can be picked up, held, and thrown
 
-### Usage
+**Usage:**
 1. Add `FpcManager` component to your player GameObject
 2. Configure character controller settings
 3. Create interactable objects by inheriting from `InteractableBase`
@@ -104,17 +119,17 @@ public class MyDoor : InteractableBase
 
 ---
 
-## Grid System
+### Grid System
 
 A flexible 2D grid system with customizable orientation and cell management.
 
-### Features
+**Features:**
 - **Grid**: 2D grid with horizontal/vertical orientation
 - **CoordinateConverter**: Convert between world space and grid coordinates
 - **Grid Editor**: Visual grid editing in the Unity editor
 - **SOGridShape**: Scriptable Object for storing grid shapes
 
-### Usage
+**Usage:**
 ```csharp
 // Create a grid
 Grid grid = new Grid(8, 8);
@@ -133,18 +148,18 @@ grid.DeactivateCell(x, y);
 
 ---
 
-## Input System
+### Input System
 
 Base classes and utilities for Unity's Input System.
 
-### Features
+**Features:**
 - **InputManager**: Centralized input management
 - **InputReaderBase**: Base class for input handling
 - **InputBindingDisplay**: Display input bindings in UI
 - **ActionPromptVisual**: Visual representation of input actions
 - **InputDeviceType**: Device type detection (Keyboard/Mouse, Gamepad, Touch)
 
-### Usage
+**Usage:**
 ```csharp
 public class MyInputReader : InputReaderBase
 {
@@ -160,11 +175,11 @@ public class MyInputReader : InputReaderBase
 
 ---
 
-## Menu System
+### Menu System
 
 A robust menu navigation and UI animation system.
 
-### Features
+**Features:**
 - **MenuManager**: Manages menu screen transitions
 - **Screen**: Base class for menu screens
 - **ScreenNavigation**: Navigation between screens
@@ -172,7 +187,7 @@ A robust menu navigation and UI animation system.
 - **SelectableAnimator**: Animate UI selectable elements
 - **SelectableTextAnimator**: Animated text for UI selections
 
-### Usage
+**Usage:**
 ```csharp
 // Navigate to a screen
 MenuManager.Instance.OpenScreen("MainMenu");
@@ -183,15 +198,15 @@ MenuManager.Instance.GoBack();
 
 ---
 
-## Mobile Haptics
+### Mobile Haptics
 
 Cross-platform mobile haptic feedback system.
 
-### Features
+**Features:**
 - **MobileHaptics**: Trigger haptic feedback on iOS and Android
 - **MobileHapticsSetupWindow**: Editor setup window
 
-### Usage
+**Usage:**
 ```csharp
 // Trigger haptic feedback
 MobileHaptics.TriggerHaptic(HapticType.Light);
@@ -201,11 +216,11 @@ MobileHaptics.TriggerHaptic(HapticType.Heavy);
 
 ---
 
-## Object Pooling System
+### Object Pooling System
 
 High-performance object pooling to reduce instantiation overhead.
 
-### Features
+**Features:**
 - **ObjectPooler**: Main pooling manager
 - **Pool**: Individual object pool
 - **IPoolable**: Interface for poolable objects
@@ -213,7 +228,7 @@ High-performance object pooling to reduce instantiation overhead.
 - **PoolableParticleSystem**: Pooled particle systems
 - **PoolableAutoReturn**: Automatically return objects to pool
 
-### Usage
+**Usage:**
 ```csharp
 // Get object from pool
 GameObject obj = ObjectPooler.Instance.Get("BulletPool", position, rotation);
@@ -224,11 +239,11 @@ ObjectPooler.Instance.Return(obj, "BulletPool");
 
 ---
 
-## Rewind System
+### Rewind System
 
 Time rewind system for gameplay mechanics or debugging.
 
-### Features
+**Features:**
 - **RewindManager**: Manages recording and playback
 - **Rewindable**: Base component for rewindable objects
 - **RewindableTransform**: Record and rewind transform changes
@@ -236,7 +251,7 @@ Time rewind system for gameplay mechanics or debugging.
 - **RewindableAudioSource**: Rewind audio playback
 - **FrameRecordContainer**: Stores frame data
 
-### Usage
+**Usage:**
 ```csharp
 // Start recording
 RewindManager.Instance.StartRecording();
@@ -250,77 +265,115 @@ RewindManager.Instance.StopRewind();
 
 ---
 
-## SDF (Signed Distance Fields)
+### ScriptableObject System
+
+ScriptableObject-based systems for data management and events.
+
+#### Audio Event System
+ScriptableObject-based audio event system for flexible sound management.
+
+```csharp
+// Create an audio event asset
+[CreateAssetMenu(menuName = "Audio/Audio Event")]
+public class SOAudioEvent : ScriptableObject
+{
+    public AudioClip[] clips;
+    public Vector2 volumeRange = new Vector2(1f, 1f);
+    public Vector2 pitchRange = new Vector2(1f, 1f);
+
+    public void Play(AudioSource source)
+    {
+        // Plays random clip with random volume/pitch
+    }
+}
+
+// Usage in your scripts
+[SerializeField] private SOAudioEvent footstepSound;
+[SerializeField] private AudioSource audioSource;
+
+footstepSound.Play(audioSource);
+```
+
+#### Event System
+**SOEvent**: ScriptableObject-based event system for decoupled communication.
+
+#### Value System
+ScriptableObject wrappers for various value types:
+- **SOFloat**, **SOInt**, **SOBool**, **SOString**
+- **SOVector3**, **SOVector4**, **SOQuaternion**
+- **SOColor**, **SOAnimationCurve**, **SOLayerMask**
+
+---
+
+### SDF (Signed Distance Fields)
 
 Runtime SDF shape generation for procedural graphics.
 
-### Features
+**Features:**
 - **SDFShapeBase**: Base class for SDF shapes
 - **SDFCircle**, **SDFRectangle**, **SDFRing**: Basic shapes
 - **SDFPolygon**, **SDFCross**, **SDFLine**: Additional shapes
 - **SDFHeart**: Complex shape example
 
-### Usage
+**Usage:**
 Add SDF components to GameObjects to generate procedural shapes at runtime using signed distance field techniques.
 
 ---
 
-## Shaders
+### Springs
 
-Collection of shader scripts and visual effects.
+Physics-based spring animation system for smooth, natural motion.
 
-### Features
-- **2D**: Shadow casting sprites, special 2D effects
-- **3D**: Dissolve effects, hologram, liquid wobble, dithering
-- **Canvas**: UI shader effects, health bars
-- **Dissolve**: Multiple dissolve implementations (texture-based, shape-based, HLSL)
-- **Liquid**: Advanced liquid simulation and wobble effects
-- **Hologram**: Holographic glitch effects
+#### Spring Types
+- **FloatSpring**: Animate float values
+- **Vector3Spring**: Animate Vector3 values
+- **QuaternionSpring**: Animate rotations
+- **ColorSpring**: Animate colors
 
-### Usage
-Attach shader scripts to renderers or materials. For example:
+#### Spring Components
+- **TransformSpring**: Spring-based transform animation
+- **RectSpring**: Spring animations for RectTransform
+- **VisualizedSpring**: Debug visualization for springs
+
+#### Usage
+
 ```csharp
-// Wobble liquid
-WobbleLiquid wobble = gameObject.AddComponent<WobbleLiquid>();
-wobble.maxWobble = 0.03f;
-wobble.wobbleSpeed = 1f;
+// Float spring
+FloatSpring spring = new FloatSpring(frequency: 2f, damping: 0.5f);
+spring.Target = 100f;
+float value = spring.Update(Time.deltaTime);
+
+// Vector3 spring for smooth following
+Vector3Spring positionSpring = new Vector3Spring(3f, 0.8f);
+positionSpring.Target = targetPosition;
+transform.position = positionSpring.Update(Time.deltaTime);
+
+// Quaternion spring for smooth rotation
+QuaternionSpring rotationSpring = new QuaternionSpring(4f, 0.7f);
+rotationSpring.Target = targetRotation;
+transform.rotation = rotationSpring.Update(Time.deltaTime);
 ```
 
 ---
 
-## Tube Renderer
-
-Render tubes/pipes along paths defined by transforms.
-
-### Features
-- **TubeRenderer**: Renders a tube mesh along a path
-- **TubeRendererEditor**: Custom editor for visual editing
-
-### Usage
-1. Add TubeRenderer component
-2. Assign transform points to define the path
-3. Configure tube radius and segments
-4. The tube mesh updates automatically
-
----
-
-## VFX & Transition System
+### VFX & Transition System
 
 Powerful visual effects and screen transition system.
 
-### Features
+**Features:**
 - **VFXManager**: Manages visual effects
 - **TransitionManager**: Handles screen transitions
 - **EffectBase**: Base class for custom effects
 - **EffectSequence**: Chain multiple effects
 - **PropertyAnimation**: Animate shader properties
 
-### Built-in Effects
+**Built-in Effects:**
 - **SetFullscreenColor**: Fullscreen color overlay
 - **SetFullscreenShaderTransition**: Custom shader transitions
 - **SetVignette**: Post-processing vignette control
+- Additional legacy effects for camera, icons, and post-processing
 
-### Usage
+**Usage:**
 ```csharp
 // Play a transition effect
 TransitionManager.Instance.PlayTransition("FadeToBlack");
@@ -337,8 +390,6 @@ sequence.Play();
 ## Utilities
 
 An extensive collection of editor and runtime utilities designed to enhance your Unity workflow and boost productivity.
-
----
 
 ### Attributes
 
@@ -376,6 +427,22 @@ Preview assets directly in the Inspector.
 [SerializeField] private Sprite characterSprite;
 ```
 
+#### Foldout Attribute
+Group related fields under a foldout in the Inspector.
+
+```csharp
+[Foldout("Advanced Settings")]
+[SerializeField] private bool enableDebug;
+```
+
+#### Inline Attribute
+Edit ScriptableObject fields inline in the Inspector without creating separate assets.
+
+```csharp
+[SerializeField, Inline]
+private MyScriptableObject inlineData;
+```
+
 #### Conditional Attributes
 Show, hide, enable, or disable fields based on conditions.
 
@@ -393,7 +460,7 @@ Show, hide, enable, or disable fields based on conditions.
 [DisableIf("isLocked")] [SerializeField] private float value;
 ```
 
-#### Component Header Button Attribute
+#### ComponentHeaderButton Attribute
 Add custom buttons to component headers in the Inspector.
 
 ```csharp
@@ -407,9 +474,61 @@ public class MyComponent : MonoBehaviour
 }
 ```
 
+#### Button Attribute
+Add inspector buttons that call methods with a single click.
+
+```csharp
+public class TestScript : MonoBehaviour
+{
+    [Button]
+    public void TestMethod()
+    {
+        Debug.Log("Button clicked!");
+    }
+
+    [Button(ButtonPlayMode.PlayModeOnly)]
+    public void RuntimeOnly()
+    {
+        // Only shows in play mode
+    }
+
+    [Button(ButtonPlayMode.EditModeOnly)]
+    public void EditorOnly()
+    {
+        // Only shows in edit mode
+    }
+}
+```
+
 ---
 
-### Auto Get System
+### Asset Selector
+
+Browse and select assets from specific project folders.
+
+#### PrefabSelector
+Select prefabs from specific folders with filtering.
+
+```csharp
+[SerializeField, PrefabSelector("Assets/Prefabs/Characters")]
+private GameObject characterPrefab;
+
+// Lock to specific folder only
+[SerializeField, PrefabSelector("Assets/Prefabs/Weapons", LockToFilter = true)]
+private GameObject weaponPrefab;
+```
+
+#### SOSelector
+Select ScriptableObjects from specific folders.
+
+```csharp
+[SerializeField, SOSelector("Assets/Data")]
+private MyScriptableObject data;
+```
+
+---
+
+### AutoGet System
 
 Automatically populate serialized field references using attributes. Eliminates manual dragging and dropping of components.
 
@@ -451,34 +570,8 @@ Configure auto-populate behavior through the project settings:
 
 ---
 
-### Audio System
+### Audio Preview
 
-#### Audio Event System
-ScriptableObject-based audio event system for flexible sound management.
-
-```csharp
-// Create an audio event asset
-[CreateAssetMenu(menuName = "Audio/Audio Event")]
-public class SOAudioEvent : ScriptableObject
-{
-    public AudioClip[] clips;
-    public Vector2 volumeRange = new Vector2(1f, 1f);
-    public Vector2 pitchRange = new Vector2(1f, 1f);
-
-    public void Play(AudioSource source)
-    {
-        // Plays random clip with random volume/pitch
-    }
-}
-
-// Usage in your scripts
-[SerializeField] private SOAudioEvent footstepSound;
-[SerializeField] private AudioSource audioSource;
-
-footstepSound.Play(audioSource);
-```
-
-#### Audio Preview
 Preview audio clips directly in the Inspector without entering play mode.
 
 ---
@@ -499,35 +592,6 @@ Improved UnityEvent property drawer with better visual organization and ease of 
 
 ---
 
-### Button Attribute
-
-Add inspector buttons that call methods with a single click.
-
-```csharp
-public class TestScript : MonoBehaviour
-{
-    [Button]
-    public void TestMethod()
-    {
-        Debug.Log("Button clicked!");
-    }
-
-    [Button(ButtonPlayMode.PlayModeOnly)]
-    public void RuntimeOnly()
-    {
-        // Only shows in play mode
-    }
-
-    [Button(ButtonPlayMode.EditModeOnly)]
-    public void EditorOnly()
-    {
-        // Only shows in edit mode
-    }
-}
-```
-
----
-
 ### Chance List
 
 A list where each element has an associated probability weight for random selection.
@@ -540,6 +604,19 @@ A list where each element has an associated probability weight for random select
 GameObject randomEnemy = enemySpawns.GetRandom();
 Color randomColor = rarityColors.GetRandom();
 ```
+
+---
+
+### Cinemachine Extensions
+
+Extensions for Unity's Cinemachine camera system.
+
+**Features:**
+- **CinemachineRotationOffsetExtension**: Adds additional rotation offset to Cinemachine virtual cameras
+- **CinemachineImpulseSourceExtensions**: Helper extensions for working with Cinemachine impulse sources
+
+**Usage:**
+Add the `CinemachineRotationOffsetExtension` component to your Cinemachine virtual camera to apply custom rotation offsets programmatically.
 
 ---
 
@@ -625,6 +702,21 @@ Select animator triggers from a dropdown.
 ```csharp
 [SerializeField] private AnimatorTriggerField jumpTrigger;
 animator.SetTrigger(jumpTrigger.TriggerName);
+```
+
+#### Ranged Values
+Min-max value ranges with visual editor.
+
+```csharp
+[SerializeField] private RangedFloat damageRange;
+[SerializeField, MinMaxRange(0, 100)] private RangedInt healthRange;
+
+// Get random value in range
+float damage = damageRange.Random;
+int health = healthRange.Random;
+
+// Lerp between min and max
+float interpolated = damageRange.Lerp(0.5f);
 ```
 
 ---
@@ -803,53 +895,21 @@ numbers.ForEachWithIndex((item, index) =>
 
 ---
 
-### Inline SO (Scriptable Object)
-
-Edit ScriptableObject fields inline in the Inspector without creating separate assets.
-
-```csharp
-[SerializeField, InlineSO]
-private MyScriptableObject inlineData;
-```
-
----
-
 ### Play From Camera
 
 Editor utility to start play mode from the scene view camera position.
 
 ---
 
-### Prefab Selector
+### Save In Play Mode
 
-Browse and select prefabs from specific project folders.
-
-```csharp
-[SerializeField, PrefabSelector("Assets/Prefabs/Characters")]
-private GameObject characterPrefab;
-
-// Lock to specific folder only
-[SerializeField, PrefabSelector("Assets/Prefabs/Weapons", LockToFilter = true)]
-private GameObject weaponPrefab;
-```
+Allows saving changes made in play mode to persist after exiting play mode.
 
 ---
 
-### Ranged Values
+### ScriptableObject Editor
 
-Min-max value ranges with visual editor.
-
-```csharp
-[SerializeField] private RangedFloat damageRange;
-[SerializeField, MinMaxRange(0, 100)] private RangedInt healthRange;
-
-// Get random value in range
-float damage = damageRange.Random;
-int health = healthRange.Random;
-
-// Lerp between min and max
-float interpolated = damageRange.Lerp(0.5f);
-```
+Enhanced editor for ScriptableObjects with improved workflow.
 
 ---
 
@@ -919,42 +979,6 @@ private MonoBehaviour damageableObject;
 
 ---
 
-### Springs
-
-Physics-based spring animation system for smooth, natural motion.
-
-#### Spring Types
-- **FloatSpring**: Animate float values
-- **Vector3Spring**: Animate Vector3 values
-- **QuaternionSpring**: Animate rotations
-- **ColorSpring**: Animate colors
-
-#### Spring Components
-- **TransformSpring**: Spring-based transform animation
-- **SpringyUI**: Spring animations for UI elements
-- **VisualizedSpring**: Debug visualization for springs
-
-#### Usage
-
-```csharp
-// Float spring
-FloatSpring spring = new FloatSpring(frequency: 2f, damping: 0.5f);
-spring.Target = 100f;
-float value = spring.Update(Time.deltaTime);
-
-// Vector3 spring for smooth following
-Vector3Spring positionSpring = new Vector3Spring(3f, 0.8f);
-positionSpring.Target = targetPosition;
-transform.position = positionSpring.Update(Time.deltaTime);
-
-// Quaternion spring for smooth rotation
-QuaternionSpring rotationSpring = new QuaternionSpring(4f, 0.7f);
-rotationSpring.Target = targetRotation;
-transform.rotation = rotationSpring.Update(Time.deltaTime);
-```
-
----
-
 ### Toolbar Extensions
 
 Custom toolbar additions for the Unity editor:
@@ -963,5 +987,3 @@ Custom toolbar additions for the Unity editor:
 - **ToolbarTimescale**: Time scale control in toolbar
 
 ---
-
-
