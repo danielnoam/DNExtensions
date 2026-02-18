@@ -9,6 +9,7 @@ namespace DNExtensions.Systems.ObjectPooling
     /// Create via: Assets > Create > DNExtensions > Object Pooling Settings
     /// Must be placed in Resources folder for runtime access.
     /// </summary>
+    [UniqueSO]
     public class ObjectPoolingSettings : ScriptableObject
     {
         private static ObjectPoolingSettings _instance;
@@ -17,17 +18,15 @@ namespace DNExtensions.Systems.ObjectPooling
         {
             get
             {
+                if (_instance) return _instance;
+                _instance = Resources.Load<ObjectPoolingSettings>("ObjectPoolingSettings");
+                    
+#if UNITY_EDITOR
                 if (!_instance)
                 {
-                    _instance = Resources.Load<ObjectPoolingSettings>("ObjectPoolingSettings");
-                    
-                    #if UNITY_EDITOR
-                    if (!_instance)
-                    {
-                        Debug.LogWarning("ObjectPoolingSettings not found in Resources folder. Create one via Tools > DNExtensions > Object Pooling Settings");
-                    }
-                    #endif
+                    Debug.LogWarning("ObjectPoolingSettings not found in Resources folder. Create one via Tools > DNExtensions > Object Pooling Settings");
                 }
+#endif
                 return _instance;
             }
         }

@@ -15,11 +15,17 @@ namespace DNExtensions.Systems.ObjectPooling
             
             ObjectPoolingSettings settings = ObjectPoolingSettings.Instance;
             
-            if (!settings || !settings.enabled)
+            if (!settings)
             {
                 // Debug.LogError("ObjectPoolingSettings not found in Resources folder! Create one via: Tools > DNExtensions > Object Pooling Settings");
                 return;
             }
+            
+            if (!settings.enabled)
+            {
+                return;
+            }
+
             
             GameObject poolerObject = new GameObject("ObjectPooler");
             ObjectPooler pooler = poolerObject.AddComponent<ObjectPooler>();
