@@ -29,12 +29,7 @@ namespace DNExtensions.Utilities
             if (member is MethodInfo methodInfo)
                 return (bool)methodInfo.Invoke(targetObject, null);
 
-            string siblingKey = $"{property.propertyPath}.{variableName}";
-            if (!SiblingCache.TryGetValue(siblingKey, out var sibling) || sibling == null)
-            {
-                sibling = FindSiblingProperty(property, variableName);
-                SiblingCache[siblingKey] = sibling;
-            }
+            var sibling = FindSiblingProperty(property, variableName);
 
             if (sibling != null)
             {

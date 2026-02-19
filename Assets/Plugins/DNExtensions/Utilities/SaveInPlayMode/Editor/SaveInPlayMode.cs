@@ -129,13 +129,6 @@ namespace DNExtensions.Utilities {
             SavedData.Clear();
         }
 
-        private static string GetComponentKey(Component comp) {
-            string sceneName = comp.gameObject.scene.name;
-            string path = GetGameObjectPath(comp.gameObject);
-            string typeName = comp.GetType().FullName;
-            return $"{sceneName}_{path}_{typeName}";
-        }
-
         private static string GetGameObjectPath(GameObject go) {
             string path = go.name;
             Transform parent = go.transform.parent;
@@ -148,22 +141,24 @@ namespace DNExtensions.Utilities {
             return path;
         }
 
+        private static string GetComponentKey(Component comp) {
+            string sceneName = comp.gameObject.scene.name;
+            string path = GetGameObjectPath(comp.gameObject);
+            string typeName = comp.GetType().FullName;
+            return $"{sceneName}::{path}::{typeName}";
+        }
+
         private static Component GetComponentFromKey(string key) {
-            int lastUnderscoreIndex = key.LastIndexOf('_');
-            if (lastUnderscoreIndex == -1) return null;
-            
-            string typeName = key.Substring(lastUnderscoreIndex + 1);
-            string remainder = key.Substring(0, lastUnderscoreIndex);
-            
-            int secondLastUnderscoreIndex = remainder.LastIndexOf('_');
-            if (secondLastUnderscoreIndex == -1) return null;
-            
-            string sceneName = remainder.Substring(0, secondLastUnderscoreIndex);
-            string path = remainder.Substring(secondLastUnderscoreIndex + 1);
-            
+            string[] parts = key.Split(new[] { "::" }, 3, StringSplitOptions.None);
+            if (parts.Length != 3) return null;
+
+            string sceneName = parts[0];
+            string path = parts[1];
+            string typeName = parts[2];
+
             GameObject go = GameObject.Find(path);
             if (go == null || go.scene.name != sceneName) return null;
-            
+
             Type type = Type.GetType(typeName);
             if (type == null) {
                 foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
@@ -171,9 +166,9 @@ namespace DNExtensions.Utilities {
                     if (type != null) break;
                 }
             }
-            
+
             if (type == null) return null;
-            
+
             return go.GetComponent(type);
         }
 

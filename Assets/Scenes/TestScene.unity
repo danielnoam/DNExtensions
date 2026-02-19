@@ -1825,6 +1825,7 @@ MonoBehaviour:
   conditionalInt: 17
   prefabSelector: {fileID: 8842675776293222798, guid: 385e2d0b9f979d14ca7b058fc6b2988c, type: 3}
   soSelector: {fileID: 11400000, guid: 9eb30a3edc84f4d4b921d3b0f252bda2, type: 2}
+  linkedVector3Field: {x: 0, y: 0, z: 0}
   sceneField:
     sceneAsset: {fileID: 0}
     sceneName: 
@@ -1838,14 +1839,20 @@ MonoBehaviour:
     isSet: 1
     hideValueIfSet: 0
     value: 
+  animatorParameterField:
+    parameterType: 1
+    source: 1
+    componentAnimator: {fileID: 1526888422}
+    assetController: {fileID: 9100000, guid: e121b90c731a0ad408cf278f3785c092, type: 2}
+    parameterName: 
+    parameterHash: 0
   animatorStateField:
     animator: {fileID: 1526888422}
+    assetController: {fileID: 9100000, guid: e121b90c731a0ad408cf278f3785c092, type: 2}
+    source: 0
     stateName: New State
     stateHash: -499022955
     assigned: 1
-  animatorTriggerField:
-    controllerNameOrPath: New Animator Controller
-    triggerName: 
   positionField:
     positionTransform: {fileID: 0}
     positionVector: {x: 0, y: -0.32, z: 0}
@@ -1856,10 +1863,19 @@ MonoBehaviour:
     minValue: -1
     maxValue: 0
   rangedFloat:
-    minValue: -2.6964288
+    minValue: -0.06869149
     maxValue: 1.5178561
   testStrings:
-    internalItems: []
+    internalItems:
+    - item: 
+      chance: 63
+      isLocked: 0
+    - item: 
+      chance: 19
+      isLocked: 0
+    - item: 
+      chance: 18
+      isLocked: 0
   testInts:
     internalItems: []
   testEnums:

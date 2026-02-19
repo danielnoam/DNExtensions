@@ -29,14 +29,15 @@ namespace DNExtensions
         [ShowIf("conditionalCheck")] public int conditionalInt;
         [PrefabSelector("Assets/2_Testing")] public GameObject prefabSelector;
         [SOSelector("Assets/2_Testing", LockToFilter = true)] public SOAudioEvent soSelector;
+        [LinkedVector3] public Vector3 linkedVector3Field;
 
         [Separator("Fields")] 
         public SceneField sceneField;
         public SortingLayerField sortingLayerField;
         public TagField tagField;
         public OptionalField<string> optionalField;
-        public AnimatorStateField animatorStateField;
-        public AnimatorTriggerField animatorTriggerField = new AnimatorTriggerField("New Animator Controller");
+        public AnimatorParameterField animatorParameterField = new AnimatorParameterField(AnimatorParameterType.Bool, AnimatorSource.Component);
+        public AnimatorStateField animatorStateField = new AnimatorStateField();
         public PositionField positionField;
         public NoteField noteField = new("Note Field Example");
         public RangedInt rangedInt;
@@ -80,6 +81,7 @@ namespace DNExtensions
 
         
         [Button(ButtonPlayMode.Both)]
+        [ComponentHeaderButton("Test")]
         public void TestImpulse()
         {
             testImpulseSource.GenerateImpulse(testImpulse);

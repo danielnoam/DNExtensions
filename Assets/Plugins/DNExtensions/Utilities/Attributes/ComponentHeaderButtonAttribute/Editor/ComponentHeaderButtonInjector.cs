@@ -19,12 +19,16 @@ namespace DNExtensions.Utilities {
         private static readonly StyleLength ButtonBarPaddingLeft = 15;
         private static readonly StyleLength ButtonBarPaddingRight = 5;
         private static readonly StyleLength ButtonBarPaddingVertical = 2;
-        private static readonly StyleLength ButtonBarMarginBottom = 2;
+        private static readonly Color ButtonBackgroundColor = new Color(0.18f, 0.18f, 0.18f);
+        private static readonly Color ButtonBackgroundColorWhite = new Color(0.78f, 0.78f, 0.78f);
+        private static readonly Color SeparatorColor = new Color(0.13f, 0.13f, 0.13f);
+        private static readonly Color SeparatorColorWhite = new Color(0.58f, 0.58f, 0.58f);
+        private const int SeparatorSize = 1;
 
         private static readonly StyleLength ButtonMinWidth = 24;
         private static readonly StyleLength ButtonHeight = 18;
         private static readonly StyleLength ButtonFontSize = 11;
-        private static readonly StyleLength ButtonPadding = 0;
+        private static readonly StyleLength ButtonPadding = 2;
         private static readonly StyleLength ButtonMargin = 1;
 
         private static Dictionary<Type, List<ButtonData>> _buttonsByType;
@@ -237,37 +241,50 @@ namespace DNExtensions.Utilities {
 
         private static VisualElement CreateButtonBar(Component component, List<ButtonData> buttons) {
             int componentInstanceID = component.GetInstanceID();
-            
-            var container = new VisualElement {
-                name = ButtonBarName,
+
+            bool isProSkin = EditorGUIUtility.isProSkin;
+            Color barBackground = isProSkin ? ButtonBackgroundColor : ButtonBackgroundColorWhite;
+            Color separatorColor = isProSkin ? SeparatorColor : SeparatorColorWhite;
+
+            var wrapper = new VisualElement { name = ButtonBarName };
+
+            var separator = new VisualElement {
+                style = {
+                    height = SeparatorSize,
+                    backgroundColor = separatorColor
+                }
+            };
+
+            var buttonRow = new VisualElement {
                 style = {
                     flexDirection = FlexDirection.Row,
                     alignItems = Align.Center,
+                    backgroundColor = barBackground,
                     paddingLeft = ButtonBarPaddingLeft,
                     paddingRight = ButtonBarPaddingRight,
                     paddingTop = ButtonBarPaddingVertical,
                     paddingBottom = ButtonBarPaddingVertical,
-                    marginBottom = ButtonBarMarginBottom
                 }
             };
-            
+
             foreach (var buttonData in buttons) {
                 var button = new UnityEngine.UIElements.Button(() => {
-                    var currentComponent = UnityEditor.EditorUtility.EntityIdToObject(componentInstanceID) as Component;
-                    if (currentComponent != null) {
+                    var currentComponent = EditorUtility.EntityIdToObject(componentInstanceID) as Component;
+                    if (currentComponent != null)
                         InvokeMethod(currentComponent, buttonData);
-                    }
                 }) {
                     text = buttonData.Icon,
                     tooltip = buttonData.Tooltip
                 };
-                
+
                 StyleButton(button);
                 buttonData.StyleCallback?.Invoke(button);
-                container.Add(button);
+                buttonRow.Add(button);
             }
             
-            return container;
+            wrapper.Add(buttonRow);
+            wrapper.Add(separator);
+            return wrapper;
         }
 
         private static void StyleButton(UnityEngine.UIElements.Button button) {
