@@ -12,5 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 368263265d7e91347b0a7d35bc741e45, type: 3}
   m_Name: AudioLibrarySettings
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.AudioLibrary.SOAudioLibrary
+  enabled: 1
+  preWarmAmount: 15
   audioCategories:
   - {fileID: 11400000, guid: d51cfd60fd4c65b4f823477679820d99, type: 2}
+  - {fileID: 11400000, guid: d67b581d235d02c44ade7980a5734d45, type: 2}

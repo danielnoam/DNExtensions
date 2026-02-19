@@ -10,10 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b9a53b1ca0a9491e95b1a0d46de56eec, type: 3}
-  m_Name: AudioCategory_Test
+  m_Name: AudioCategory_Test 1
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.AudioLibrary.SOAudioCategory
-  label: Test
+  label: Test 2
   audioMixerGroup: {fileID: 0}
   audioMappings:
+  - id: New_ID
+    audioObject: {fileID: 0}
   - id: New_ID
     audioObject: {fileID: 0}

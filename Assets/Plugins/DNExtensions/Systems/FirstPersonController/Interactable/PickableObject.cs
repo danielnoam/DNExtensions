@@ -1,5 +1,5 @@
 
-using DNExtensions.Systems.ScriptableObjects;
+using DNExtensions.Systems.Scriptables;
 using DNExtensions.Utilities.AutoGet;
 using UnityEngine;
 

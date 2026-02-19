@@ -1,5 +1,5 @@
 ﻿using System;
-using DNExtensions.Systems.ScriptableObjects;
+using DNExtensions.Systems.Scriptables;
 using PrimeTween;
 using UnityEngine;
 

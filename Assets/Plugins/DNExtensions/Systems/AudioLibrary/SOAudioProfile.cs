@@ -29,7 +29,7 @@ namespace DNExtensions.Systems.AudioLibrary
     /// A ScriptableObject that represents an audio profile, which contains settings for how a sound should be played.
     /// It includes a list of audio clips to choose from, as well as various settings for volume, pitch, spatialization, and more.
     /// </summary>
-    [CreateAssetMenu(fileName = "New AudioProfile", menuName = "Scriptable Objects/Audio Profile")]
+    [CreateAssetMenu(fileName = "New AudioProfile", menuName = "Audio Library/Audio Profile")]
     public class SOAudioProfile : ScriptableObject
     {
         [Tooltip("The list of clips to pick from. One will be chosen at random each time the sound plays.")]

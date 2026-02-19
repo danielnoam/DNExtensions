@@ -1,135 +1,74 @@
 using UnityEngine;
 
-#if UNITY_EDITOR
-using System;
-using UnityEditor;
-using System.Reflection;
-#endif
-
 namespace DNExtensions.Utilities
 {
+    /// <summary>
+    /// Base class for conditional inspector attributes.
+    /// Supports bool, int, float, string, enum, and object reference fields, properties, and parameterless methods returning bool.
+    /// For object references, pass null as the value to check if the reference is unassigned.
+    /// </summary>
     public abstract class IfAttribute : PropertyAttribute
     {
-        private readonly string _variableName;
-        private readonly object _variableValue;
+        public readonly string VariableName;
+        public readonly object VariableValue;
 
-#if UNITY_EDITOR
-        public bool Evaluate(SerializedProperty property)
+        /// <param name="boolName">Name of a bool field, property, or parameterless method returning bool.</param>
+        protected IfAttribute(string boolName)
         {
-            var targetObject = property.serializedObject.targetObject;
-            var targetType = targetObject.GetType();
-    
-            var propertyInfo = targetType.GetProperty(_variableName, 
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-    
-            if (propertyInfo != null)
-            {
-                object currentValue = propertyInfo.GetValue(targetObject);
-                return Equals(currentValue, _variableValue);
-            }
-    
-            var methodInfo = targetType.GetMethod(_variableName, 
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                null, Type.EmptyTypes, null);
-    
-            if (methodInfo != null && methodInfo.ReturnType == typeof(bool))
-            {
-                object result = methodInfo.Invoke(targetObject, null);
-                return (bool)result;
-            }
-    
-            var siblingProperty = FindSiblingProperty(property, _variableName);
-            if (siblingProperty != null)
-            {
-                object currentValue = GetSerializedPropertyValue(siblingProperty);
-                
-                if (siblingProperty.propertyType == SerializedPropertyType.Enum && _variableValue is Enum)
-                {
-                    int enumIndex = Convert.ToInt32(_variableValue);
-                    return Equals(currentValue, enumIndex);
-                }
-        
-                return Equals(currentValue, _variableValue);
-            }
-    
-            return false;
+            VariableName = boolName;
+            VariableValue = true;
         }
 
-        private SerializedProperty FindSiblingProperty(SerializedProperty property, string siblingName)
+        /// <param name="variableName">Name of the field, property, or parameterless method to evaluate.</param>
+        /// <param name="variableValue">Value to compare against. For object references, use null to check if unassigned.</param>
+        protected IfAttribute(string variableName, object variableValue)
         {
-            string path = property.propertyPath;
-            
-            while (path.Length > 0)
-            {
-                int lastDot = path.LastIndexOf('.');
-                if (lastDot < 0) break;
-                
-                string parent = path.Substring(0, lastDot);
-                string candidate = parent + "." + siblingName;
-                
-                var found = property.serializedObject.FindProperty(candidate);
-                if (found != null) return found;
-                
-                path = parent;
-            }
-            
-            return property.serializedObject.FindProperty(siblingName);
-        }
-        
-        private object GetSerializedPropertyValue(SerializedProperty property)
-        {
-            switch (property.propertyType)
-            {
-                case SerializedPropertyType.Boolean:
-                    return property.boolValue;
-                case SerializedPropertyType.Integer:
-                    return property.intValue;
-                case SerializedPropertyType.Float:
-                    return property.floatValue;
-                case SerializedPropertyType.String:
-                    return property.stringValue;
-                case SerializedPropertyType.Enum:
-                    return property.enumValueIndex;
-                default:
-                    return null;
-            }
-        }
-#endif
-
-        protected IfAttribute(string boolName) 
-        { 
-            _variableName = boolName; 
-            _variableValue = true; 
-        }
-        
-        protected IfAttribute(string variableName, object variableValue) 
-        { 
-            _variableName = variableName; 
-            _variableValue = variableValue; 
+            VariableName = variableName;
+            VariableValue = variableValue;
         }
     }
 
-    public class HideIfAttribute : IfAttribute
-    {
-        public HideIfAttribute(string boolName) : base(boolName) { }
-        public HideIfAttribute(string variableName, object variableValue) : base(variableName, variableValue) { }
-    }
-
+    /// <summary>Shows the field only when the condition is true.</summary>
     public class ShowIfAttribute : IfAttribute
     {
+        /// <param name="boolName">Name of a bool field, property, or parameterless method returning bool.</param>
         public ShowIfAttribute(string boolName) : base(boolName) { }
+
+        /// <param name="variableName">Name of the field, property, or parameterless method to evaluate.</param>
+        /// <param name="variableValue">Value to compare against.</param>
         public ShowIfAttribute(string variableName, object variableValue) : base(variableName, variableValue) { }
     }
 
+    /// <summary>Hides the field when the condition is true.</summary>
+    public class HideIfAttribute : IfAttribute
+    {
+        /// <param name="boolName">Name of a bool field, property, or parameterless method returning bool.</param>
+        public HideIfAttribute(string boolName) : base(boolName) { }
+
+        /// <param name="variableName">Name of the field, property, or parameterless method to evaluate.</param>
+        /// <param name="variableValue">Value to compare against.</param>
+        public HideIfAttribute(string variableName, object variableValue) : base(variableName, variableValue) { }
+    }
+
+    /// <summary>Enables the field only when the condition is true.</summary>
     public class EnableIfAttribute : IfAttribute
     {
+        /// <param name="boolName">Name of a bool field, property, or parameterless method returning bool.</param>
         public EnableIfAttribute(string boolName) : base(boolName) { }
+
+        /// <param name="variableName">Name of the field, property, or parameterless method to evaluate.</param>
+        /// <param name="variableValue">Value to compare against.</param>
         public EnableIfAttribute(string variableName, object variableValue) : base(variableName, variableValue) { }
     }
 
+    /// <summary>Disables the field when the condition is true.</summary>
     public class DisableIfAttribute : IfAttribute
     {
+        /// <param name="boolName">Name of a bool field, property, or parameterless method returning bool.</param>
         public DisableIfAttribute(string boolName) : base(boolName) { }
+
+        /// <param name="variableName">Name of the field, property, or parameterless method to evaluate.</param>
+        /// <param name="variableValue">Value to compare against.</param>
         public DisableIfAttribute(string variableName, object variableValue) : base(variableName, variableValue) { }
     }
 }

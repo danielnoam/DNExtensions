@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using DNExtensions.Systems.ScriptableObjects;
+using DNExtensions.Systems.Scriptables;
 using DNExtensions.Utilities;
 using DNExtensions.Utilities.SerializableSelector;
 using DNExtensions.Utilities.Button;
@@ -21,18 +21,14 @@ namespace DNExtensions
     {
 
         [Separator("Attributes")] 
-        [InfoBox("This is an info box showing something")] [ReadOnly] public int readOnly;
-        [Inline] public Component inline;
-        [Foldout("Conditional")]
+        [InfoBox("This is an info box showing something")] 
+        [ReadOnly] public int readOnly;
+        [Inline] public Component inline; 
         public bool conditionalCheck;
-        [DisableIf("conditionalCheck"), Foldout("Conditional")]
-        public float conditionalFloat;
-        [ShowIf("conditionalCheck"), Foldout("Conditional")]
-        public int conditionalInt;
-        [Foldout("Asset Selector"), PrefabSelector("Assets/2_Testing")]
-        public GameObject prefabSelector;
-        [Foldout("Asset Selector"), SOSelector("Assets/2_Testing", LockToFilter = true)]
-        public SOAudioEvent soSelector;
+        [DisableIf("conditionalCheck")] public float conditionalFloat;
+        [ShowIf("conditionalCheck")] public int conditionalInt;
+        [PrefabSelector("Assets/2_Testing")] public GameObject prefabSelector;
+        [SOSelector("Assets/2_Testing", LockToFilter = true)] public SOAudioEvent soSelector;
 
         [Separator("Fields")] 
         public SceneField sceneField;

@@ -11,7 +11,7 @@ namespace DNExtensions.Systems.AudioLibrary
     [DisallowMultipleComponent]
     public class AudioLibrary : MonoBehaviour
     {
-        public static AudioLibrary Instance;
+        public static AudioLibrary Instance { get; private set;}
 
         private SOAudioLibrarySettings _librarySettings;
         private int _preWarmAmount = 20;
@@ -167,7 +167,7 @@ namespace DNExtensions.Systems.AudioLibrary
 
         private IEnumerator AutoReturnRoutine(AudioSource source, float duration, string id = null)
         {
-            yield return new WaitForSeconds(duration / Mathf.Abs(source.pitch));
+            yield return new WaitForSeconds(duration);
             
             if (!string.IsNullOrEmpty(id))
             {
@@ -179,7 +179,7 @@ namespace DNExtensions.Systems.AudioLibrary
 
             ReturnSourceToPool(source);
         }
-
+        
 
         #endregion
         
@@ -191,12 +191,12 @@ namespace DNExtensions.Systems.AudioLibrary
         /// The sound will be played at the AudioManager's position and will not be spatialized.
         /// </summary>
         /// <param name="audioID"></param>
-        public void Play(string audioID)
+        public static void Play(string audioID)
         {
-            if (!TryGetAudioData(audioID, out var data)) return;
+            if (!Instance || !Instance.TryGetAudioData(audioID, out var data)) return;
             
-            AudioSource source = GetSourceFromPool();
-            SetupAndPlay(audioID, source, data, transform.position, false);
+            AudioSource source = Instance.GetSourceFromPool();
+            Instance.SetupAndPlay(audioID, source, data, Vector3.zero, false);
         }
         
 
@@ -206,12 +206,12 @@ namespace DNExtensions.Systems.AudioLibrary
         /// </summary>
         /// <param name="audioID"></param>
         /// <param name="position"></param>
-        public void PlayAtPosition(string audioID, Vector3 position)
+        public static void PlayAtPosition(string audioID, Vector3 position)
         {
-            if (!TryGetAudioData(audioID, out var data)) return;
+            if (!Instance || !Instance.TryGetAudioData(audioID, out var data)) return;
             
-            AudioSource source = GetSourceFromPool();
-            SetupAndPlay(audioID, source, data, position, true);
+            AudioSource source = Instance.GetSourceFromPool();
+            Instance.SetupAndPlay(audioID, source, data, position, true);
         }
 
         
@@ -221,13 +221,12 @@ namespace DNExtensions.Systems.AudioLibrary
         /// </summary>
         /// <param name="audioID"></param>
         /// <param name="target"></param>
-        public void PlayAtPosition(string audioID, Transform target)
+        public static void PlayAtPosition(string audioID, Transform target)
         {
-            if (!TryGetAudioData(audioID, out var data)) return;
+            if (!Instance || !Instance.TryGetAudioData(audioID, out var data)) return;
             
-            AudioSource source = GetSourceFromPool();
-            source.transform.localPosition = Vector3.zero;
-            SetupAndPlay(audioID, source, data, target.position, true);
+            AudioSource source = Instance.GetSourceFromPool();
+            Instance.SetupAndPlay(audioID, source, data, target.position, true);
         }
         
         /// <summary>
@@ -235,11 +234,12 @@ namespace DNExtensions.Systems.AudioLibrary
         /// </summary>
         /// <param name="audioID"></param>
         /// <param name="source"></param>
-        public void PlayOnSource(string audioID, AudioSource source)
+        public static void PlayOnSource(string audioID, AudioSource source)
         {
-            if (!TryGetAudioData(audioID, out var data)) return;
+            if (!Instance || !Instance.TryGetAudioData(audioID, out var data)) return;
+            
             if (!source) return;
-            if (!ConfigureSource(source, data, source.transform.position, true)) return;
+            if (!Instance.ConfigureSource(source, data, source.transform.position, true)) return;
             source.Play();
         }
         
@@ -248,12 +248,29 @@ namespace DNExtensions.Systems.AudioLibrary
         /// If the ID is currently playing a looping sound, it will be stopped and the AudioSource will be returned to the pool.
         /// </summary>
         /// <param name="id"></param>
-        public void StopLoop(string id)
+        public static void StopLoop(string id)
         {
-            if (_activeLoopSources.Remove(id, out AudioSource source))
+            if (!Instance) return;
+            
+            if (Instance._activeLoopSources.Remove(id, out AudioSource source))
             {
-                ReturnSourceToPool(source);
+                Instance.ReturnSourceToPool(source);
             }
+        }
+        
+        /// <summary>
+        /// Stops all currently playing looping sounds.
+        /// All looping AudioSources will be stopped and returned to the pool.
+        /// </summary>
+        public static void StopAllLoops()
+        {
+            if (!Instance) return;
+            
+            foreach (var source in Instance._activeLoopSources.Values)
+            {
+                Instance.ReturnSourceToPool(source);
+            }
+            Instance._activeLoopSources.Clear();
         }
 
         #endregion

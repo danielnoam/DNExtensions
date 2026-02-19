@@ -19,7 +19,7 @@ namespace DNExtensions.Systems.AudioLibrary
     /// A ScriptableObject that represents a category of audio, such as "Music", "SFX", "Voice", etc.
     /// It contains a reference to an AudioMixerGroup and a list of AudioMappings that map string IDs to audio objects.
     /// </summary>
-    [CreateAssetMenu(fileName = "AudioCategory", menuName = "Scriptable Objects/Audio Category")]
+    [CreateAssetMenu(fileName = "AudioCategory", menuName = "Audio Library/Audio Category")]
     public class SOAudioCategory : ScriptableObject
     {
         

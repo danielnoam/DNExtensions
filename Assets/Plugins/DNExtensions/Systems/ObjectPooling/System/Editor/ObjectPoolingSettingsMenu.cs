@@ -1,10 +1,12 @@
-﻿#if UNITY_EDITOR
+﻿
 using System.IO;
 using UnityEditor;
 using UnityEngine;
 
 namespace DNExtensions.Systems.ObjectPooling
 {
+    
+    
     /// <summary>
     /// Editor utilities for ObjectPoolingSettings.
     /// Provides menu items for quick access and asset creation.
@@ -52,12 +54,10 @@ namespace DNExtensions.Systems.ObjectPooling
         private static void CreateSettingsAsset()
         {
             var settings = ScriptableObject.CreateInstance<ObjectPoolingSettings>();
-            
-            // Ensure directory exists
+
             string directory = Path.GetDirectoryName(SettingsPath);
             if (!AssetDatabase.IsValidFolder(directory))
             {
-                // Create nested folders
                 if (directory != null)
                 {
                     string[] folders = directory.Split('/');
@@ -87,4 +87,3 @@ namespace DNExtensions.Systems.ObjectPooling
         }
     }
 }
-#endif

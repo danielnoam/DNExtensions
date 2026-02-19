@@ -1,8 +1,6 @@
 using System;
 using DNExtensions.Utilities;
 using UnityEngine;
-using UnityEngine.Audio;
-using Object = UnityEngine.Object;
 
 namespace DNExtensions.Systems.AudioLibrary
 {
@@ -10,7 +8,6 @@ namespace DNExtensions.Systems.AudioLibrary
     /// A ScriptableObject that represents a library of audio categories. Each category contains a list of audio mappings that map string IDs to audio objects.
     /// </summary>
     [UniqueSO]
-    [CreateAssetMenu(fileName = "AudioLibrarySettings", menuName = "Scriptable Objects/Audio Library")]
     public class SOAudioLibrarySettings : ScriptableObject
     {
         private static SOAudioLibrarySettings _instance;

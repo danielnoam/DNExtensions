@@ -30,9 +30,19 @@ namespace DNExtensions.Systems.ObjectPooling
         /// </summary>
         public void Initialize(ObjectPoolingSettings settings)
         {
+            if (Instance && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            
             if (!settings)
             {
                 Debug.LogError("[ObjectPooler] Cannot initialize without settings!");
+                enabled = false;
                 return;
             }
 
@@ -41,15 +51,8 @@ namespace DNExtensions.Systems.ObjectPooling
             _showDebugMessages = settings.showDebugMessages;
             _hidePoolHolders = settings.hidePoolHolders;
             _pools = settings.GetPoolsCopy();
+            
 
-            if (Instance && Instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
 
             _isFirstScene = true;
             SceneManager.activeSceneChanged += OnActiveSceneChanged;
@@ -93,10 +96,7 @@ namespace DNExtensions.Systems.ObjectPooling
         }
         #endif
 
-        /// <summary>
-        /// Handles pool cleanup and reinitialization when scenes change.
-        /// Pools marked as dontDestroyOnLoad persist across scenes.
-        /// </summary>
+
         private static void OnActiveSceneChanged(Scene previousActiveScene, Scene newActiveScene)
         {
             if (!Instance) return;
@@ -145,9 +145,7 @@ namespace DNExtensions.Systems.ObjectPooling
             }
         }
 
-        /// <summary>
-        /// Initializes all pools with their holder GameObjects and parent hierarchy.
-        /// </summary>
+
         private void SetUpPools()
         {
             if (!_destroyOnLoadParent)
@@ -214,8 +212,25 @@ namespace DNExtensions.Systems.ObjectPooling
                 }
             }
 
-
             return Instantiate(obj, positon, rotation);
+        }
+        
+        /// <summary>
+        /// Gets an object from the appropriate pool or instantiates as fallback.
+        /// Searches pools by matching prefab reference.
+        /// </summary>
+        /// <param name="prefab">Prefab to get from pool</param>
+        /// <param name="position">World position for the object</param>
+        /// <param name="rotation">World rotation for the object</param>
+        /// <returns>Prefab from pool or new instance if no pool found</returns>
+        public static T GetObjectFromPool<T>(T prefab, Vector3 position = default, Quaternion rotation = default) where T : Component
+        {
+            GameObject obj = GetObjectFromPool(prefab.gameObject, position, rotation);
+            if (obj && obj.TryGetComponent(out T component))
+            {
+                return component;
+            }
+            return null;
         }
 
         /// <summary>
@@ -245,27 +260,10 @@ namespace DNExtensions.Systems.ObjectPooling
                     return;
                 }
             }
-    
+            
             Destroy(obj);
         }
         
-        /// <summary>
-        /// Gets an object from the appropriate pool or instantiates as fallback.
-        /// Searches pools by matching prefab reference.
-        /// </summary>
-        /// <param name="prefab">Prefab to get from pool</param>
-        /// <param name="position">World position for the object</param>
-        /// <param name="rotation">World rotation for the object</param>
-        /// <returns>Prefab from pool or new instance if no pool found</returns>
-        public static T GetObjectFromPool<T>(T prefab, Vector3 position = default, Quaternion rotation = default) where T : Component
-        {
-            GameObject obj = GetObjectFromPool(prefab.gameObject, position, rotation);
-            if (obj && obj.TryGetComponent(out T component))
-            {
-                return component;
-            }
-            return null;
-        }
 
         /// <summary>
         /// Returns an object to its appropriate pool or destroys as fallback.
