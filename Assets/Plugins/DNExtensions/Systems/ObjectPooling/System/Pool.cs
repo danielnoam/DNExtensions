@@ -34,10 +34,8 @@ namespace DNExtensions.Systems.ObjectPooling
         [Tooltip("Pre populate the pool")]
         public bool preWarmPool;
         [Tooltip("If pre warm pool, how many objects to pre warm")]
-        [EnableIf("preWarmPool")] 
         public int preWarmPoolSize = 5;
         [Tooltip("If there are scenes, only pre warm pool if its in the selected scenes")]
-        [EnableIf("preWarmPool")] 
         public SceneField[] scenesToPreWarm = Array.Empty<SceneField>();
         
         private readonly List<GameObject> _activePool = new List<GameObject>();
