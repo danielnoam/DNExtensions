@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67c1309717754b2daef12506f1d7746e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Utilities.PlayFromCamera.PlayFromCameraSettings
-  alsoSetRotation: 0
+  alsoSetRotation: 1
   playerSelectionMode: 0
   playerTag: Player
   playerObjectPath: 

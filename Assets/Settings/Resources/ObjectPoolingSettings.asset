@@ -30,3 +30,15 @@ MonoBehaviour:
     - sceneAsset: {fileID: 102900000, guid: 5db86f2bb95500b438ebfbf95acd3568, type: 3}
       sceneName: TestScene
       scenePath: Assets/2_Testing/TestScene.unity
+  - poolName: Cubes
+    maxPoolSize: 100
+    prefab: {fileID: 108853269857652447, guid: 21e745c46c771434d909d5f19b389203, type: 3}
+    dontDestroyOnLoad: 0
+    usePoolHolder: 1
+    recycleActiveObjects: 1
+    preWarmPool: 1
+    preWarmPoolSize: 25
+    scenesToPreWarm:
+    - sceneAsset: {fileID: 102900000, guid: 5db86f2bb95500b438ebfbf95acd3568, type: 3}
+      sceneName: TestScene
+      scenePath: Assets/Scenes/TestScene.unity

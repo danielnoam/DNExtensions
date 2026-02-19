@@ -71,6 +71,7 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _Scanline_Offset: 0.12
+    - _Scanlines_Offset: 0
     m_Colors:
     - _Edge_Color: {r: 1, g: 1, b: 1, a: 0}
     - _Fresnel_Color: {r: 5.07101, g: 5.3403134, b: 0, a: 1}
