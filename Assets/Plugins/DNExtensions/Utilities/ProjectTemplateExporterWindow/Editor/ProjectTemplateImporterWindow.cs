@@ -3,20 +3,18 @@ using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace DNExtensions.Utilities
 {
     internal class ProjectTemplateImporterWindow : EditorWindow
     {
-        enum Tab { Assets, ProjectSettings }
+        enum Tab { Assets, Packages, ProjectSettings }
         enum State { PickFile, Ready }
 
         State _state = State.PickFile;
         Tab _activeTab;
 
         // Loaded template info
-        string _tgzPath;
         string _tempDir;
         string _packageRoot;
         string _templateName;
@@ -26,6 +24,9 @@ namespace DNExtensions.Utilities
         TreeViewState<int> _treeState;
         AssetTreeView _treeView;
         SearchField _searchField;
+
+        // Packages tab
+        PackagesView _packagesView;
 
         // Project Settings tab
         readonly Dictionary<string, bool> _settingsToggles = new();
@@ -82,8 +83,6 @@ namespace DNExtensions.Utilities
             string path = EditorUtility.OpenFilePanel("Select Template", "", "tgz");
             if (string.IsNullOrEmpty(path)) return;
 
-            _tgzPath = path;
-
             EditorUtility.DisplayProgressBar("Importing Template", "Extracting...", 0.3f);
             var (success, packageRoot, tempDir) = await TemplateImporter.Extract(path);
             EditorUtility.ClearProgressBar();
@@ -109,6 +108,9 @@ namespace DNExtensions.Utilities
                 _searchField.downOrUpArrowKeyPressed += _treeView.SetFocusAndEnsureSelectedItem;
             }
 
+            _packagesView = new PackagesView();
+            _packagesView.Load(Path.Combine(packageRoot, "Packages"));
+
             _settingsToggles.Clear();
             string settingsPath = Path.Combine(packageRoot, "ProjectSettings");
             foreach (var (file, _) in TemplateExporterData.ToggleableSettings)
@@ -120,7 +122,6 @@ namespace DNExtensions.Utilities
 
         void DrawImporter()
         {
-            // Header
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
                 if (GUILayout.Button("◀ Back", EditorStyles.toolbarButton, GUILayout.Width(60)))
@@ -145,10 +146,10 @@ namespace DNExtensions.Utilities
                 }
             }
 
-            // Tab bar
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
                 DrawTabButton(Tab.Assets, "Assets");
+                DrawTabButton(Tab.Packages, "Packages");
                 DrawTabButton(Tab.ProjectSettings, "Project Settings");
                 GUILayout.FlexibleSpace();
             }
@@ -156,6 +157,7 @@ namespace DNExtensions.Utilities
             switch (_activeTab)
             {
                 case Tab.Assets:          DrawAssetsTab(); break;
+                case Tab.Packages:        DrawPackagesTab(); break;
                 case Tab.ProjectSettings: DrawProjectSettingsTab(); break;
             }
 
@@ -172,6 +174,11 @@ namespace DNExtensions.Utilities
                     GUILayout.Label($"{count} file{(count != 1 ? "s" : "")} selected", EditorStyles.miniLabel);
                     GUILayout.Space(8);
                 }
+                else if (_activeTab == Tab.Packages && _packagesView != null)
+                {
+                    GUILayout.Label($"{_packagesView.SelectedCount}/{_packagesView.TotalCount} packages selected", EditorStyles.miniLabel);
+                    GUILayout.Space(8);
+                }
 
                 if (GUILayout.Button("Import", GUILayout.Width(80), GUILayout.Height(24)))
                     RunImport();
@@ -185,7 +192,7 @@ namespace DNExtensions.Utilities
         {
             var prev = GUI.backgroundColor;
             if (_activeTab == tab) GUI.backgroundColor = new Color(0.6f, 0.8f, 1f);
-            if (GUILayout.Toggle(_activeTab == tab, label, EditorStyles.toolbarButton, GUILayout.Width(120)) && _activeTab != tab)
+            if (GUILayout.Toggle(_activeTab == tab, label, EditorStyles.toolbarButton, GUILayout.Width(110)) && _activeTab != tab)
                 _activeTab = tab;
             GUI.backgroundColor = prev;
         }
@@ -210,6 +217,16 @@ namespace DNExtensions.Utilities
 
             var treeRect = GUILayoutUtility.GetRect(0, 100000, 0, 100000);
             _treeView.OnGUI(treeRect);
+        }
+
+        void DrawPackagesTab()
+        {
+            if (_packagesView == null)
+            {
+                EditorGUILayout.HelpBox("This template contains no packages.", MessageType.Info);
+                return;
+            }
+            _packagesView.Draw();
         }
 
         void DrawProjectSettingsTab()
@@ -242,8 +259,8 @@ namespace DNExtensions.Utilities
 
             EditorGUILayout.Space(8);
             EditorGUILayout.HelpBox(
-                "Packages from this template will be merged into your manifest.json.\n" +
-                "Existing packages will not be overwritten.",
+                "Registry packages are merged into manifest.json — existing versions are not overwritten.\n" +
+                "Embedded packages are copied into your Packages folder.",
                 MessageType.None);
         }
 
@@ -269,12 +286,14 @@ namespace DNExtensions.Utilities
         {
             var selectedFiles = _treeView != null
                 ? _treeView.GetCheckedFilePaths()
-                : new System.Collections.Generic.List<string>();
+                : new List<string>();
 
             bool success = await TemplateImporter.Import(
                 _packageRoot,
                 selectedFiles,
-                BuildSettingsImportSet());
+                BuildSettingsImportSet(),
+                _packagesView?.GetSelectedRegistry() ?? new Dictionary<string, string>(),
+                _packagesView?.GetSelectedEmbeddedPaths() ?? new List<string>());
 
             if (success)
             {

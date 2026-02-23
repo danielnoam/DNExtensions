@@ -3,13 +3,12 @@ using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace DNExtensions.Utilities
 {
     internal class ProjectTemplateExporterWindow : EditorWindow
     {
-        enum Tab { Info, Assets, ProjectSettings }
+        enum Tab { Info, Assets, Packages, ProjectSettings }
 
         Tab _activeTab;
 
@@ -17,6 +16,9 @@ namespace DNExtensions.Utilities
         TreeViewState<int> _treeState;
         AssetTreeView _treeView;
         SearchField _searchField;
+
+        // Packages tab
+        PackagesView _packagesView;
 
         // Project Settings tab
         readonly Dictionary<string, bool> _settingsToggles = new();
@@ -42,6 +44,9 @@ namespace DNExtensions.Utilities
             _searchField = new SearchField();
             _searchField.downOrUpArrowKeyPressed += _treeView.SetFocusAndEnsureSelectedItem;
 
+            _packagesView = new PackagesView();
+            _packagesView.Load(Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Packages"));
+
             _settingsToggles.Clear();
             foreach (var (file, _) in TemplateExporterData.ToggleableSettings)
                 _settingsToggles[file] = true;
@@ -58,6 +63,7 @@ namespace DNExtensions.Utilities
             {
                 DrawTabButton(Tab.Info, "Info");
                 DrawTabButton(Tab.Assets, "Assets");
+                DrawTabButton(Tab.Packages, "Packages");
                 DrawTabButton(Tab.ProjectSettings, "Project Settings");
                 GUILayout.FlexibleSpace();
             }
@@ -66,6 +72,7 @@ namespace DNExtensions.Utilities
             {
                 case Tab.Info:            DrawInfoTab(); break;
                 case Tab.Assets:          DrawAssetsTab(); break;
+                case Tab.Packages:        DrawPackagesTab(); break;
                 case Tab.ProjectSettings: DrawProjectSettingsTab(); break;
             }
 
@@ -80,6 +87,11 @@ namespace DNExtensions.Utilities
                 {
                     int count = _treeView.GetCheckedFilePaths().Count;
                     GUILayout.Label($"{count} file{(count != 1 ? "s" : "")} selected", EditorStyles.miniLabel);
+                    GUILayout.Space(8);
+                }
+                else if (_activeTab == Tab.Packages)
+                {
+                    GUILayout.Label($"{_packagesView.SelectedCount}/{_packagesView.TotalCount} packages selected", EditorStyles.miniLabel);
                     GUILayout.Space(8);
                 }
 
@@ -98,7 +110,7 @@ namespace DNExtensions.Utilities
         {
             var prev = GUI.backgroundColor;
             if (_activeTab == tab) GUI.backgroundColor = new Color(0.6f, 0.8f, 1f);
-            if (GUILayout.Toggle(_activeTab == tab, label, EditorStyles.toolbarButton, GUILayout.Width(110)) && _activeTab != tab)
+            if (GUILayout.Toggle(_activeTab == tab, label, EditorStyles.toolbarButton, GUILayout.Width(100)) && _activeTab != tab)
                 _activeTab = tab;
             GUI.backgroundColor = prev;
         }
@@ -145,6 +157,11 @@ namespace DNExtensions.Utilities
             _treeView.OnGUI(treeRect);
         }
 
+        void DrawPackagesTab()
+        {
+            _packagesView.Draw();
+        }
+
         void DrawProjectSettingsTab()
         {
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
@@ -171,7 +188,6 @@ namespace DNExtensions.Utilities
 
             EditorGUILayout.Space(8);
             EditorGUILayout.HelpBox(
-                "Packages (manifest.json) and embedded packages are always included.\n" +
                 "ProjectVersion.txt and machine-specific settings are always excluded.",
                 MessageType.None);
         }
@@ -206,7 +222,9 @@ namespace DNExtensions.Utilities
                 _templateDescription,
                 savePath,
                 _treeView.GetCheckedFilePaths(),
-                BuildSettingsExcludeSet());
+                BuildSettingsExcludeSet(),
+                _packagesView.GetSelectedRegistry(),
+                _packagesView.GetSelectedEmbeddedPaths());
 
             if (success)
                 EditorUtility.DisplayDialog("Done", $"Template saved to:\n{savePath}", "OK");

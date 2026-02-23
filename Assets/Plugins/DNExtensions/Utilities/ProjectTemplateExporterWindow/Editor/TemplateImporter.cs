@@ -68,8 +68,10 @@ namespace DNExtensions.Utilities
 
         internal static async Task<bool> Import(
             string packageRoot,
-            List<string> selectedFiles,
-            HashSet<string> settingsToImport)
+            List<string> selectedAssetFiles,
+            HashSet<string> settingsToImport,
+            Dictionary<string, string> selectedRegistryPackages,
+            List<string> selectedEmbeddedPackagePaths)
         {
             try
             {
@@ -78,7 +80,7 @@ namespace DNExtensions.Utilities
                 string projectRoot = Directory.GetParent(Application.dataPath).FullName;
                 string templateAssetsRoot = Path.Combine(packageRoot, "Assets");
 
-                foreach (string srcPath in selectedFiles)
+                foreach (string srcPath in selectedAssetFiles)
                 {
                     string relative = srcPath.Substring(templateAssetsRoot.Length).TrimStart(Path.DirectorySeparatorChar, '/');
                     string dest = Path.Combine(Application.dataPath, relative);
@@ -105,7 +107,13 @@ namespace DNExtensions.Utilities
                 }
 
                 EditorUtility.DisplayProgressBar("Importing Template", "Merging packages...", 0.6f);
-                MergeManifest(packageRoot, projectRoot);
+                MergeManifest(projectRoot, selectedRegistryPackages);
+
+                foreach (string embeddedPath in selectedEmbeddedPackagePaths)
+                {
+                    string folderName = Path.GetFileName(embeddedPath);
+                    CopyDirectory(embeddedPath, Path.Combine(projectRoot, "Packages", folderName));
+                }
 
                 EditorUtility.DisplayProgressBar("Importing Template", "Applying settings...", 0.8f);
                 CopySelectedSettings(packageRoot, projectRoot, settingsToImport);
@@ -120,22 +128,27 @@ namespace DNExtensions.Utilities
             }
         }
 
-        static void MergeManifest(string packageRoot, string projectRoot)
+        static void MergeManifest(string projectRoot, Dictionary<string, string> selectedPackages)
         {
-            string srcManifest = Path.Combine(packageRoot, "Packages", "manifest.json");
             string dstManifest = Path.Combine(projectRoot, "Packages", "manifest.json");
-            if (!File.Exists(srcManifest)) return;
-
-            var srcDeps = ParseDependencies(File.ReadAllText(srcManifest));
             var dstDeps = File.Exists(dstManifest)
                 ? ParseDependencies(File.ReadAllText(dstManifest))
                 : new Dictionary<string, string>();
 
-            foreach (var kvp in srcDeps)
+            foreach (var kvp in selectedPackages)
                 if (!dstDeps.ContainsKey(kvp.Key))
                     dstDeps[kvp.Key] = kvp.Value;
 
-            File.WriteAllText(dstManifest, BuildManifest(dstDeps));
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("{");
+            sb.AppendLine("  \"dependencies\": {");
+            var entries = new System.Collections.Generic.List<string>();
+            foreach (var kvp in dstDeps)
+                entries.Add($"    \"{kvp.Key}\": \"{kvp.Value}\"");
+            sb.AppendLine(string.Join(",\n", entries));
+            sb.AppendLine("  }");
+            sb.Append("}");
+            File.WriteAllText(dstManifest, sb.ToString());
         }
 
         static void CopySelectedSettings(string packageRoot, string projectRoot, HashSet<string> settingsToImport)
@@ -149,6 +162,20 @@ namespace DNExtensions.Utilities
                 string filename = Path.GetFileName(file);
                 if (!settingsToImport.Contains(filename)) continue;
                 File.Copy(file, Path.Combine(dstSettings, filename), true);
+            }
+        }
+
+        static void CopyDirectory(string source, string destination)
+        {
+            source = Path.GetFullPath(source);
+            if (!Directory.Exists(source)) return;
+            Directory.CreateDirectory(destination);
+            foreach (string file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+            {
+                string relative = file.Substring(source.Length + 1);
+                string dest = Path.Combine(destination, relative);
+                Directory.CreateDirectory(Path.GetDirectoryName(dest));
+                File.Copy(file, dest, true);
             }
         }
 
@@ -183,20 +210,6 @@ namespace DNExtensions.Utilities
                     deps[key] = val;
             }
             return deps;
-        }
-
-        static string BuildManifest(Dictionary<string, string> deps)
-        {
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine("{");
-            sb.AppendLine("  \"dependencies\": {");
-            var entries = new List<string>();
-            foreach (var kvp in deps)
-                entries.Add($"    \"{kvp.Key}\": \"{kvp.Value}\"");
-            sb.AppendLine(string.Join(",\n", entries));
-            sb.AppendLine("  }");
-            sb.Append("}");
-            return sb.ToString();
         }
 
         static string ParseJsonString(string json, string key)

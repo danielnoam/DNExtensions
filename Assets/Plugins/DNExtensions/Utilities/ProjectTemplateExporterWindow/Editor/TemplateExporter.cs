@@ -14,7 +14,9 @@ namespace DNExtensions.Utilities
             string templateDescription,
             string savePath,
             List<string> selectedAssetFiles,
-            HashSet<string> settingsExclude)
+            HashSet<string> settingsExclude,
+            Dictionary<string, string> selectedRegistryPackages,
+            List<string> selectedEmbeddedPackagePaths)
         {
             string tempDir = Path.Combine(Path.GetTempPath(), "unity_template_" + System.Guid.NewGuid().ToString("N"));
             string packageRoot = Path.Combine(tempDir, "package");
@@ -37,7 +39,6 @@ namespace DNExtensions.Utilities
                     if (File.Exists(metaSrc))
                         File.Copy(metaSrc, dest + ".meta", true);
 
-                    // Copy .meta for each parent folder up to Assets/
                     string dir = Path.GetDirectoryName(absPath);
                     while (!string.IsNullOrEmpty(dir) && dir.Length > Application.dataPath.Length)
                     {
@@ -53,7 +54,15 @@ namespace DNExtensions.Utilities
                     }
                 }
 
-                CopyDirectory(Path.Combine(projectRoot, "Packages"), Path.Combine(packageRoot, "Packages"));
+                EditorUtility.DisplayProgressBar("Exporting Template", "Writing packages...", 0.4f);
+                WriteManifest(packageRoot, selectedRegistryPackages);
+
+                foreach (string embeddedPath in selectedEmbeddedPackagePaths)
+                {
+                    string folderName = Path.GetFileName(embeddedPath);
+                    CopyDirectory(embeddedPath, Path.Combine(packageRoot, "Packages", folderName));
+                }
+
                 CopyDirectory(Path.Combine(projectRoot, "ProjectSettings"), Path.Combine(packageRoot, "ProjectSettings"), settingsExclude);
 
                 WritePackageJson(packageRoot, templateName, templateDescription);
@@ -68,6 +77,23 @@ namespace DNExtensions.Utilities
                 if (Directory.Exists(tempDir))
                     Directory.Delete(tempDir, true);
             }
+        }
+
+        static void WriteManifest(string packageRoot, Dictionary<string, string> deps)
+        {
+            string packagesDir = Path.Combine(packageRoot, "Packages");
+            Directory.CreateDirectory(packagesDir);
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("{");
+            sb.AppendLine("  \"dependencies\": {");
+            var entries = new List<string>();
+            foreach (var kvp in deps)
+                entries.Add($"    \"{kvp.Key}\": \"{kvp.Value}\"");
+            sb.AppendLine(string.Join(",\n", entries));
+            sb.AppendLine("  }");
+            sb.Append("}");
+            File.WriteAllText(Path.Combine(packagesDir, "manifest.json"), sb.ToString());
         }
 
         static void WritePackageJson(string packageRoot, string templateName, string description)
