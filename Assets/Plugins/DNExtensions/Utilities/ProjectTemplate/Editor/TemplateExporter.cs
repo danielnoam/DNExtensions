@@ -11,6 +11,7 @@ namespace DNExtensions.Utilities
     {
         internal static async Task<bool> Export(
             string templateName,
+            string templateId,
             string templateDescription,
             string savePath,
             List<string> selectedAssetFiles,
@@ -19,19 +20,21 @@ namespace DNExtensions.Utilities
             List<string> selectedEmbeddedPackagePaths)
         {
             string tempDir = Path.Combine(Path.GetTempPath(), "unity_template_" + System.Guid.NewGuid().ToString("N"));
+            string safeName = templateName.ToLower().Replace(" ", "-");
             string packageRoot = Path.Combine(tempDir, "package");
+            string projectData = Path.Combine(packageRoot, "ProjectData~");
 
             try
             {
                 EditorUtility.DisplayProgressBar("Exporting Template", "Copying files...", 0.1f);
-                Directory.CreateDirectory(packageRoot);
+                Directory.CreateDirectory(projectData);
 
                 string projectRoot = Directory.GetParent(Application.dataPath).FullName;
 
                 foreach (string absPath in selectedAssetFiles)
                 {
                     string relative = absPath.Substring(projectRoot.Length).TrimStart(Path.DirectorySeparatorChar, '/');
-                    string dest = Path.Combine(packageRoot, relative);
+                    string dest = Path.Combine(projectData, relative);
                     Directory.CreateDirectory(Path.GetDirectoryName(dest));
                     File.Copy(absPath, dest, true);
 
@@ -45,27 +48,30 @@ namespace DNExtensions.Utilities
                         string folderMeta = dir + ".meta";
                         if (File.Exists(folderMeta))
                         {
-                            string relMeta = folderMeta.Substring(projectRoot.Length).TrimStart(Path.DirectorySeparatorChar, '/');
-                            string destMeta = Path.Combine(packageRoot, relMeta);
+                            string relMeta = dir.Substring(projectRoot.Length).TrimStart(Path.DirectorySeparatorChar, '/') + ".meta";
+                            string destMeta = Path.Combine(projectData, relMeta);
                             if (!File.Exists(destMeta))
+                            {
+                                Directory.CreateDirectory(Path.GetDirectoryName(destMeta));
                                 File.Copy(folderMeta, destMeta, true);
+                            }
                         }
                         dir = Path.GetDirectoryName(dir);
                     }
                 }
 
                 EditorUtility.DisplayProgressBar("Exporting Template", "Writing packages...", 0.4f);
-                WriteManifest(packageRoot, selectedRegistryPackages);
+                WriteManifest(projectData, selectedRegistryPackages);
 
                 foreach (string embeddedPath in selectedEmbeddedPackagePaths)
                 {
                     string folderName = Path.GetFileName(embeddedPath);
-                    CopyDirectory(embeddedPath, Path.Combine(packageRoot, "Packages", folderName));
+                    CopyDirectory(embeddedPath, Path.Combine(projectData, "Packages", folderName));
                 }
 
-                CopyDirectory(Path.Combine(projectRoot, "ProjectSettings"), Path.Combine(packageRoot, "ProjectSettings"), settingsExclude);
+                CopyDirectory(Path.Combine(projectRoot, "ProjectSettings"), Path.Combine(projectData, "ProjectSettings"), settingsExclude);
 
-                WritePackageJson(packageRoot, templateName, templateDescription);
+                WritePackageJson(packageRoot, templateName, templateId, templateDescription);
 
                 EditorUtility.DisplayProgressBar("Exporting Template", "Compressing...", 0.7f);
                 bool success = await Task.Run(() => CompressToTgz(packageRoot, savePath));
@@ -96,25 +102,27 @@ namespace DNExtensions.Utilities
             File.WriteAllText(Path.Combine(packagesDir, "manifest.json"), sb.ToString());
         }
 
-        static void WritePackageJson(string packageRoot, string templateName, string description)
+        static void WritePackageJson(string packageRoot, string templateName, string templateId, string description)
         {
             string unityVersion = Application.unityVersion;
             int lastDot = unityVersion.LastIndexOf('.');
             string shortVersion = lastDot > 0 ? unityVersion.Substring(0, lastDot) : unityVersion;
-            string safeName = templateName.ToLower().Replace(" ", "-");
             string desc = string.IsNullOrWhiteSpace(description) ? templateName : description;
 
             string json = $@"{{
-  ""name"": ""{safeName}"",
-  ""displayName"": ""{templateName}"",
+  ""name"": ""{templateId}"",
+  ""displayName"": ""{EscapeJson(templateName)}"",
   ""version"": ""1.0.0"",
   ""type"": ""template"",
   ""host"": ""hub"",
   ""unity"": ""{shortVersion}"",
-  ""description"": ""{desc}""
+  ""description"": ""{EscapeJson(desc)}""
 }}";
             File.WriteAllText(Path.Combine(packageRoot, "package.json"), json);
         }
+
+        static string EscapeJson(string s) =>
+            s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "");
 
         static bool CompressToTgz(string sourceDir, string outputPath)
         {

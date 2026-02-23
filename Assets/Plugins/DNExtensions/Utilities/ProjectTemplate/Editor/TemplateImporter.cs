@@ -78,7 +78,8 @@ namespace DNExtensions.Utilities
                 EditorUtility.DisplayProgressBar("Importing Template", "Copying assets...", 0.1f);
 
                 string projectRoot = Directory.GetParent(Application.dataPath).FullName;
-                string templateAssetsRoot = Path.Combine(packageRoot, "Assets");
+                string projectData = Path.Combine(packageRoot, "ProjectData~");
+                string templateAssetsRoot = Path.Combine(projectData, "Assets");
 
                 foreach (string srcPath in selectedAssetFiles)
                 {
@@ -116,7 +117,7 @@ namespace DNExtensions.Utilities
                 }
 
                 EditorUtility.DisplayProgressBar("Importing Template", "Applying settings...", 0.8f);
-                CopySelectedSettings(packageRoot, projectRoot, settingsToImport);
+                CopySelectedSettings(projectData, projectRoot, settingsToImport);
 
                 await Task.Yield();
                 AssetDatabase.Refresh();

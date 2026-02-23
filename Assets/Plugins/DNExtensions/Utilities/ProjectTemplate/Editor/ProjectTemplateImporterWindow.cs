@@ -17,6 +17,7 @@ namespace DNExtensions.Utilities
         // Loaded template info
         string _tempDir;
         string _packageRoot;
+        string _projectData;
         string _templateName;
         string _templateDescription;
 
@@ -95,10 +96,12 @@ namespace DNExtensions.Utilities
 
             _packageRoot = packageRoot;
             _tempDir = tempDir;
+            _projectData = Path.Combine(packageRoot, "ProjectData~");
 
             (_templateName, _templateDescription) = TemplateImporter.ReadPackageJson(packageRoot);
 
-            string assetsPath = Path.Combine(packageRoot, "Assets");
+            string projectData = Path.Combine(packageRoot, "ProjectData~");
+            string assetsPath = Path.Combine(projectData, "Assets");
             if (Directory.Exists(assetsPath))
             {
                 _treeState = new TreeViewState<int>();
@@ -109,10 +112,10 @@ namespace DNExtensions.Utilities
             }
 
             _packagesView = new PackagesView();
-            _packagesView.Load(Path.Combine(packageRoot, "Packages"));
+            _packagesView.Load(Path.Combine(projectData, "Packages"));
 
             _settingsToggles.Clear();
-            string settingsPath = Path.Combine(packageRoot, "ProjectSettings");
+            string settingsPath = Path.Combine(projectData, "ProjectSettings");
             foreach (var (file, _) in TemplateExporterData.ToggleableSettings)
                 _settingsToggles[file] = File.Exists(Path.Combine(settingsPath, file));
 
@@ -246,7 +249,7 @@ namespace DNExtensions.Utilities
             EditorGUILayout.Space(4);
             foreach (var (file, label) in TemplateExporterData.ToggleableSettings)
             {
-                bool available = File.Exists(Path.Combine(_packageRoot, "ProjectSettings", file));
+                bool available = File.Exists(Path.Combine(_projectData, "ProjectSettings", file));
                 using (new EditorGUI.DisabledScope(!available))
                 using (new EditorGUILayout.HorizontalScope())
                 {
@@ -268,7 +271,7 @@ namespace DNExtensions.Utilities
         {
             foreach (var (file, _) in TemplateExporterData.ToggleableSettings)
             {
-                bool available = File.Exists(Path.Combine(_packageRoot, "ProjectSettings", file));
+                bool available = File.Exists(Path.Combine(_projectData, "ProjectSettings", file));
                 if (available) _settingsToggles[file] = value;
             }
         }

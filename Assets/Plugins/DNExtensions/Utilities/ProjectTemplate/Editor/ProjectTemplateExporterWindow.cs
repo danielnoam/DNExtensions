@@ -26,6 +26,7 @@ namespace DNExtensions.Utilities
 
         // Info tab
         string _templateName;
+        string _templateId;
         string _templateDescription;
 
         [MenuItem("Tools/DNExtensions/Templates/Export Project as Template")]
@@ -52,6 +53,7 @@ namespace DNExtensions.Utilities
                 _settingsToggles[file] = true;
 
             _templateName = Path.GetFileName(Directory.GetParent(Application.dataPath).FullName);
+            _templateId = "com.yourcompany.template." + _templateName.ToLower().Replace(" ", "-");
             _templateDescription = "";
         }
 
@@ -95,7 +97,7 @@ namespace DNExtensions.Utilities
                     GUILayout.Space(8);
                 }
 
-                using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(_templateName)))
+                using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(_templateName) || string.IsNullOrWhiteSpace(_templateId)))
                 {
                     if (GUILayout.Button("Export", GUILayout.Width(80), GUILayout.Height(24)))
                         RunExport();
@@ -123,19 +125,25 @@ namespace DNExtensions.Utilities
                 GUILayout.Space(12);
                 using (new EditorGUILayout.VerticalScope())
                 {
-                    EditorGUILayout.LabelField("Template Name", EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField("Display Name", EditorStyles.boldLabel);
                     _templateName = EditorGUILayout.TextField(_templateName);
 
-                    EditorGUILayout.Space(12);
+                    EditorGUILayout.Space(8);
+
+                    EditorGUILayout.LabelField("Package ID", EditorStyles.boldLabel);
+                    _templateId = EditorGUILayout.TextField(_templateId);
+                    EditorGUILayout.LabelField("e.g. com.yourcompany.template.my-starter", EditorStyles.miniLabel);
+
+                    EditorGUILayout.Space(8);
 
                     EditorGUILayout.LabelField("Description", EditorStyles.boldLabel);
                     _templateDescription = EditorGUILayout.TextArea(_templateDescription,
-                        GUILayout.Height(120), GUILayout.ExpandWidth(true));
+                        GUILayout.Height(100), GUILayout.ExpandWidth(true));
 
                     EditorGUILayout.Space(8);
                     EditorGUILayout.HelpBox(
-                        "Name and description appear in Unity Hub when selecting a template.",
-                        MessageType.None);
+                        "Package ID must follow reverse-domain format (e.g. com.yourcompany.template.name) for Unity Hub to recognize the template.",
+                        MessageType.Info);
                 }
                 GUILayout.Space(12);
             }
@@ -219,6 +227,7 @@ namespace DNExtensions.Utilities
 
             bool success = await TemplateExporter.Export(
                 _templateName,
+                _templateId,
                 _templateDescription,
                 savePath,
                 _treeView.GetCheckedFilePaths(),
