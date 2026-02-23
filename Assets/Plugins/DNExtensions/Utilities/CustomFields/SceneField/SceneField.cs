@@ -35,7 +35,7 @@ namespace DNExtensions.Utilities.CustomFields
                 // Validate scene exists and is in build settings
                 if (!IsSceneValid())
                 {
-                    Debug.LogWarning($"Scene '{sceneName}' is not valid or not in build settings!");
+                    // Debug.LogWarning($"Scene '{sceneName}' is not valid or not in build settings!");
                 }
 
                 return sceneName;

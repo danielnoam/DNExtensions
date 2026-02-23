@@ -1,0 +1,216 @@
+using UnityEditor;
+using UnityEngine;
+using System.IO;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading.Tasks;
+
+namespace DNExtensions.Utilities
+{
+    internal static class TemplateImporter
+    {
+        internal static async Task<(bool success, string packageRoot, string tempDir)> Extract(string tgzPath)
+        {
+            string tempDir = Path.Combine(Path.GetTempPath(), "unity_template_import_" + System.Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+
+            bool ok = await Task.Run(() =>
+            {
+                bool isWindows = System.Environment.OSVersion.Platform == System.PlatformID.Win32NT;
+                string shell = isWindows ? "cmd.exe" : "/bin/bash";
+                string args = isWindows
+                    ? $"/c tar -xzf \"{tgzPath}\" -C \"{tempDir}\""
+                    : $"-c \"tar -xzf '{tgzPath}' -C '{tempDir}'\"";
+
+                var psi = new ProcessStartInfo(shell, args)
+                {
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using var process = Process.Start(psi);
+                process.WaitForExit();
+
+                if (process.ExitCode != 0)
+                {
+                    UnityEngine.Debug.LogError($"[TemplateImporter] {process.StandardError.ReadToEnd()}");
+                    return false;
+                }
+                return true;
+            });
+
+            if (!ok)
+            {
+                Directory.Delete(tempDir, true);
+                return (false, null, null);
+            }
+
+            string packageRoot = FindPackageRoot(tempDir);
+            if (packageRoot == null)
+            {
+                Directory.Delete(tempDir, true);
+                return (false, null, null);
+            }
+
+            return (true, packageRoot, tempDir);
+        }
+
+        internal static (string name, string description) ReadPackageJson(string packageRoot)
+        {
+            string jsonPath = Path.Combine(packageRoot, "package.json");
+            if (!File.Exists(jsonPath)) return ("Unknown", "");
+            string json = File.ReadAllText(jsonPath);
+            string name = ParseJsonString(json, "displayName") ?? ParseJsonString(json, "name") ?? "Unknown";
+            string desc = ParseJsonString(json, "description") ?? "";
+            return (name, desc);
+        }
+
+        internal static async Task<bool> Import(
+            string packageRoot,
+            List<string> selectedFiles,
+            HashSet<string> settingsToImport)
+        {
+            try
+            {
+                EditorUtility.DisplayProgressBar("Importing Template", "Copying assets...", 0.1f);
+
+                string projectRoot = Directory.GetParent(Application.dataPath).FullName;
+                string templateAssetsRoot = Path.Combine(packageRoot, "Assets");
+
+                foreach (string srcPath in selectedFiles)
+                {
+                    string relative = srcPath.Substring(templateAssetsRoot.Length).TrimStart(Path.DirectorySeparatorChar, '/');
+                    string dest = Path.Combine(Application.dataPath, relative);
+                    Directory.CreateDirectory(Path.GetDirectoryName(dest));
+                    File.Copy(srcPath, dest, true);
+
+                    string metaSrc = srcPath + ".meta";
+                    if (File.Exists(metaSrc))
+                        File.Copy(metaSrc, dest + ".meta", true);
+
+                    string dir = Path.GetDirectoryName(srcPath);
+                    while (!string.IsNullOrEmpty(dir) && dir.Length > templateAssetsRoot.Length)
+                    {
+                        string folderMeta = dir + ".meta";
+                        if (File.Exists(folderMeta))
+                        {
+                            string rel = folderMeta.Substring(packageRoot.Length).TrimStart(Path.DirectorySeparatorChar, '/');
+                            string destMeta = Path.Combine(projectRoot, rel);
+                            if (!File.Exists(destMeta))
+                                File.Copy(folderMeta, destMeta, true);
+                        }
+                        dir = Path.GetDirectoryName(dir);
+                    }
+                }
+
+                EditorUtility.DisplayProgressBar("Importing Template", "Merging packages...", 0.6f);
+                MergeManifest(packageRoot, projectRoot);
+
+                EditorUtility.DisplayProgressBar("Importing Template", "Applying settings...", 0.8f);
+                CopySelectedSettings(packageRoot, projectRoot, settingsToImport);
+
+                await Task.Yield();
+                AssetDatabase.Refresh();
+                return true;
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
+        }
+
+        static void MergeManifest(string packageRoot, string projectRoot)
+        {
+            string srcManifest = Path.Combine(packageRoot, "Packages", "manifest.json");
+            string dstManifest = Path.Combine(projectRoot, "Packages", "manifest.json");
+            if (!File.Exists(srcManifest)) return;
+
+            var srcDeps = ParseDependencies(File.ReadAllText(srcManifest));
+            var dstDeps = File.Exists(dstManifest)
+                ? ParseDependencies(File.ReadAllText(dstManifest))
+                : new Dictionary<string, string>();
+
+            foreach (var kvp in srcDeps)
+                if (!dstDeps.ContainsKey(kvp.Key))
+                    dstDeps[kvp.Key] = kvp.Value;
+
+            File.WriteAllText(dstManifest, BuildManifest(dstDeps));
+        }
+
+        static void CopySelectedSettings(string packageRoot, string projectRoot, HashSet<string> settingsToImport)
+        {
+            string srcSettings = Path.Combine(packageRoot, "ProjectSettings");
+            string dstSettings = Path.Combine(projectRoot, "ProjectSettings");
+            if (!Directory.Exists(srcSettings)) return;
+
+            foreach (string file in Directory.GetFiles(srcSettings))
+            {
+                string filename = Path.GetFileName(file);
+                if (!settingsToImport.Contains(filename)) continue;
+                File.Copy(file, Path.Combine(dstSettings, filename), true);
+            }
+        }
+
+        static string FindPackageRoot(string tempDir)
+        {
+            if (File.Exists(Path.Combine(tempDir, "package.json")))
+                return tempDir;
+            foreach (string dir in Directory.GetDirectories(tempDir))
+                if (File.Exists(Path.Combine(dir, "package.json")))
+                    return dir;
+            return null;
+        }
+
+        static Dictionary<string, string> ParseDependencies(string json)
+        {
+            var deps = new Dictionary<string, string>();
+            int start = json.IndexOf("\"dependencies\"");
+            if (start < 0) return deps;
+            int brace = json.IndexOf('{', start);
+            int end = json.IndexOf('}', brace);
+            if (brace < 0 || end < 0) return deps;
+
+            string block = json.Substring(brace + 1, end - brace - 1);
+            foreach (string line in block.Split(','))
+            {
+                string trimmed = line.Trim();
+                int colon = trimmed.IndexOf("\":");
+                if (colon < 0) continue;
+                string key = trimmed.Substring(0, colon).Trim().Trim('"');
+                string val = trimmed.Substring(colon + 2).Trim().Trim('"');
+                if (!string.IsNullOrEmpty(key))
+                    deps[key] = val;
+            }
+            return deps;
+        }
+
+        static string BuildManifest(Dictionary<string, string> deps)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("{");
+            sb.AppendLine("  \"dependencies\": {");
+            var entries = new List<string>();
+            foreach (var kvp in deps)
+                entries.Add($"    \"{kvp.Key}\": \"{kvp.Value}\"");
+            sb.AppendLine(string.Join(",\n", entries));
+            sb.AppendLine("  }");
+            sb.Append("}");
+            return sb.ToString();
+        }
+
+        static string ParseJsonString(string json, string key)
+        {
+            string search = $"\"{key}\"";
+            int idx = json.IndexOf(search);
+            if (idx < 0) return null;
+            int colon = json.IndexOf(':', idx);
+            if (colon < 0) return null;
+            int q1 = json.IndexOf('"', colon + 1);
+            if (q1 < 0) return null;
+            int q2 = json.IndexOf('"', q1 + 1);
+            if (q2 < 0) return null;
+            return json.Substring(q1 + 1, q2 - q1 - 1);
+        }
+    }
+}
