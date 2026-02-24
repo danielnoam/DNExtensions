@@ -9,6 +9,7 @@ namespace DNExtensions.Systems.AudioLibrary
     /// A centralized audio manager that handles playing audio clips and profiles based on string IDs.
     /// </summary>
     [DisallowMultipleComponent]
+    [AddComponentMenu("")]
     public class AudioLibrary : MonoBehaviour
     {
         public static AudioLibrary Instance { get; private set;}

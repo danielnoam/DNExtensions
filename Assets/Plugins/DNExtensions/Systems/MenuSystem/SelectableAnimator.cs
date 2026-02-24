@@ -40,10 +40,9 @@ namespace DNExtensions.Systems.MenuSystem
         [SerializeField] private float selectedAlpha = 1f;
         [SerializeField] private float alphaDuration = 0.5f;
         [SerializeField] private AnimationCurve alphaCurve = AnimationCurve.Linear(0, 0, 1, 1);
-
-        [Space(10)] 
-        [SerializeField, ReadOnly, AutoGetSelf] private Selectable selectable;
-        [SerializeField, ReadOnly, AutoGetSelf] private RectTransform rectTransform;
+        
+        [SerializeField, HideInInspector, AutoGetSelf] private Selectable selectable;
+        [SerializeField, HideInInspector, AutoGetSelf] private RectTransform rectTransform;
 
         private Vector3 _originalPosition;
         private Vector3 _originalScale;

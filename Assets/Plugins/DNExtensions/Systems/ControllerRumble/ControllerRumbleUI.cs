@@ -42,56 +42,47 @@ namespace  DNExtensions.Systems.ControllerRumble
 
         private void Update()
         {
-            if (!listener)
-            {
-                return;
-            }
-
-            // Get the combined rumble intensity from the listener
+            if (!listener) return;
+            
             float combinedIntensity = Mathf.Max(listener.CurrentCombinedLow, listener.CurrentCombinedHigh);
-
-            // Update info text if assigned
+            
             if (infoText)
             {
                 infoText.text =
-                    $"Low: {listener.CurrentCombinedLow:F2}\nHigh: {listener.CurrentCombinedHigh:F2}\nIntensity: {combinedIntensity:F2}\n Effects: {listener.ActiveEffects}";
+                    $"Low: {listener.CurrentCombinedLow:F2}" +
+                    $"\nHigh: {listener.CurrentCombinedHigh:F2}" +
+                    $"\nIntensity: {combinedIntensity:F2}" +
+                    $"\nEffects: {listener.ActiveEffects}";
             }
 
-            // Check if we should be rumbling
+
             bool shouldRumble = combinedIntensity > intensityThreshold;
 
             if (shouldRumble)
             {
                 _isRumbling = true;
-
-                // Update noise timer for random offset generation
                 _noiseTimer += Time.deltaTime * shakeSpeed;
-
-                // Generate random offset based on Perlin noise for smoother movement
+                
                 float offsetX = (Mathf.PerlinNoise(_noiseTimer, 0f) - 0.5f) * 2f;
                 float offsetY = (Mathf.PerlinNoise(0f, _noiseTimer) - 0.5f) * 2f;
-
-                // Scale offset by intensity and max distance
+                
                 Vector3 targetOffset = new Vector3(
                     offsetX * combinedIntensity * maxMovementDistance,
                     offsetY * combinedIntensity * maxMovementDistance,
                     0f
                 );
-
-                // Apply directly for immediate shake response
+                
                 uiRectTransform.localPosition = _originalLocalPosition + targetOffset;
             }
             else if (_isRumbling)
             {
-                // We were rumbling but now stopped - smoothly return to original position
                 uiRectTransform.localPosition = Vector3.SmoothDamp(
                     uiRectTransform.localPosition,
                     _originalLocalPosition,
                     ref _currentVelocity,
                     1f / shakeSpeed
                 );
-
-                // Check if we've reached the original position (within a small threshold)
+                
                 if (Vector3.Distance(uiRectTransform.localPosition, _originalLocalPosition) < 0.1f)
                 {
                     uiRectTransform.localPosition = _originalLocalPosition;
@@ -101,7 +92,6 @@ namespace  DNExtensions.Systems.ControllerRumble
             }
             else
             {
-                // Not rumbling and already at rest - ensure we're at the exact original position
                 uiRectTransform.localPosition = _originalLocalPosition;
             }
         }

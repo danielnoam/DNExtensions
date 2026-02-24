@@ -18,6 +18,7 @@ namespace DNExtensions.Utilities.AutoGet
         {
             Selection.selectionChanged += OnSelectionChanged;
             EditorSceneManager.sceneSaving += OnSceneSaving;
+            ObjectChangeEvents.changesPublished += OnChangesPublished;
         }
         
         private static void OnSelectionChanged()
@@ -58,5 +59,34 @@ namespace DNExtensions.Utilities.AutoGet
                 }
             }
         }
+        
+        private static void OnChangesPublished(ref ObjectChangeEventStream stream)
+        {
+            var settings = AutoGetSettings.Instance;
+            if (!settings.ValidateOnComponentAdded)
+                return;
+
+            for (int i = 0; i < stream.length; i++)
+            {
+                if (stream.GetEventType(i) != ObjectChangeKind.ChangeGameObjectStructure)
+                    continue;
+
+                stream.GetChangeGameObjectStructureEvent(i, out var data);
+                var gameObject = EditorUtility.EntityIdToObject(data.instanceId) as GameObject;
+
+                if (gameObject == null)
+                    continue;
+
+                var behaviours = gameObject.GetComponents<MonoBehaviour>();
+                foreach (var behaviour in behaviours)
+                {
+                    if (behaviour != null && AutoGetSystem.HasAutoGetFields(behaviour))
+                    {
+                        AutoGetSystem.Process(behaviour);
+                    }
+                }
+            }
+        }
+        
     }
 }

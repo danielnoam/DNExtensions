@@ -9,6 +9,8 @@ namespace DNExtensions.Systems.ObjectPooling
     /// Singleton manager for multiple object pools with automatic scene management.
     /// Provides static API for getting and returning objects from pools with fallback support.
     /// </summary>
+    [DisallowMultipleComponent]
+    [AddComponentMenu("")]
     public class ObjectPooler : MonoBehaviour
     {
         public static ObjectPooler Instance { get; private set; }

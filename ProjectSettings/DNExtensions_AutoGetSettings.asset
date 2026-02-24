@@ -16,5 +16,6 @@ MonoBehaviour:
   autoPopulateInPrefabs: 1
   validateOnSelection: 1
   validateOnSceneSave: 1
+  validateOnComponentAdded: 1
   showPopulateButton: 0
   cacheReflectionData: 0

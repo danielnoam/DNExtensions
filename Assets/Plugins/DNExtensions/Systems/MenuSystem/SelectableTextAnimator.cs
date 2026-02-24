@@ -43,10 +43,9 @@ namespace DNExtensions.Systems.MenuSystem
         [SerializeField] private Color selectedColor = Color.white;
         [SerializeField] private float colorDuration = 0.15f;
         [SerializeField] private Ease colorEase = Ease.InOutQuad;
-
-        [Space(10)] 
-        [SerializeField, ReadOnly, AutoGetSelf] private TextMeshProUGUI textMeshPro;
-        [SerializeField, ReadOnly, AutoGetSelf] private RectTransform rectTransform;
+        
+        [SerializeField, HideInInspector, AutoGetSelf] private TextMeshProUGUI textMeshPro;
+        [SerializeField, HideInInspector, AutoGetSelf] private RectTransform rectTransform;
 
         private Vector3 _originalPosition;
         private Vector3 _originalScale;

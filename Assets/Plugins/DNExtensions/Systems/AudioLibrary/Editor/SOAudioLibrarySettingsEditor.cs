@@ -9,7 +9,7 @@ namespace DNExtensions.Systems.AudioLibrary
     [CustomEditor(typeof(SOAudioLibrarySettings))]
     public class SOAudioLibrarySettingsEditor : Editor
     {
-        private const string SettingsPath = "Assets/Settings/Resources/AudioLibrarySettings.asset";
+        private const string SettingsPath = "Assets/Resources/AudioLibrarySettings.asset";
         
         private readonly Dictionary<string, bool> _foldouts = new();
         private readonly Dictionary<string, SerializedObject> _serializedCategories = new();
@@ -190,34 +190,19 @@ namespace DNExtensions.Systems.AudioLibrary
             var settings = CreateInstance<SOAudioLibrarySettings>();
 
             string directory = Path.GetDirectoryName(SettingsPath);
-            if (!AssetDatabase.IsValidFolder(directory))
+            if (!string.IsNullOrEmpty(directory))
             {
-                if (directory != null)
-                {
-                    string[] folders = directory.Split('/');
-                    string currentPath = folders[0];
-                
-                    for (int i = 1; i < folders.Length; i++)
-                    {
-                        string parentPath = currentPath;
-                        currentPath = $"{currentPath}/{folders[i]}";
-                    
-                        if (!AssetDatabase.IsValidFolder(currentPath))
-                        {
-                            AssetDatabase.CreateFolder(parentPath, folders[i]);
-                        }
-                    }
-                }
+                Directory.CreateDirectory(directory);
+                AssetDatabase.Refresh();
             }
-            
+
             AssetDatabase.CreateAsset(settings, SettingsPath);
             AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            
+
             Selection.activeObject = settings;
             EditorGUIUtility.PingObject(settings);
             
-            Debug.Log($"Created AudioLibrarySettings at: {SettingsPath}");
+            Debug.Log("Created Audio Library Settings at " + SettingsPath);
         }
     }
 }

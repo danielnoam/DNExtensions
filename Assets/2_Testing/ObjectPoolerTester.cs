@@ -32,6 +32,7 @@ public class ObjectPoolerTester : MonoBehaviour
     private void SpawnBullet()
     {
         var bulletGo = ObjectPooler.GetObjectFromPool(bulletPrefab);
+        bulletGo.transform.position = transform.position;
         StartCoroutine(BulletLifetimeRoutine(bulletGo));
     }
 

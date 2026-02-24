@@ -1,5 +1,4 @@
 
-using DNExtensions.Utilities;
 using DNExtensions.Utilities.AutoGet;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -8,6 +7,9 @@ namespace DNExtensions.Utilities
 {
     
 
+    /// <summary>
+    /// Free camera controller with movement, rotation and zoom.
+    /// </summary>
     [RequireComponent(typeof(Camera))]
     [AddComponentMenu("DNExtensions/Free Form Camera Controller")]
     public class FreeFormCameraController : MonoBehaviour
@@ -22,18 +24,21 @@ namespace DNExtensions.Utilities
         InfoBoxType.Info)]
         [Space(20)]
         
-        [Header("Movement Settings")]
+        [Header("Settings")]
+        [SerializeField] private bool lockCursor = true;
+        
+        [Header("Movement")]
         [SerializeField, Min(1f)] private float moveSpeed = 10;
         [SerializeField, Range(1, 10)] private float sprintMultiplier = 2f;
 
-        [Header("Rotation Settings")] 
+        [Header("Rotation")] 
         [SerializeField] private CameraRotationMode rotationMode = CameraRotationMode.Always;
         [SerializeField, Min(1f)] private float rotationSpeed = 100f;
         [SerializeField, Min(0.1f)] private float rotationSmoothing = 1f;
         [SerializeField] private bool invertY;
         [SerializeField] private bool invertX;
 
-        [Header("Zoom Settings")] 
+        [Header("Zoom")] 
         [SerializeField, Min(1f)] private float zoomSpeed = 10f;
         [SerializeField, MinMaxRange(0, 50)] private RangedFloat zoomLimits = new RangedFloat(5f, 50f);
 
@@ -41,7 +46,15 @@ namespace DNExtensions.Utilities
         [SerializeField, AutoGetSelf, HideInInspector] private Camera cam;
 
         private enum CameraRotationMode { RightMouseButton, Always }
-        
+
+        private void Awake()
+        {
+            if (lockCursor)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
 
         private void Update()
         {

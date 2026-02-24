@@ -22,9 +22,10 @@ namespace DNExtensions.Utilities.AutoGet
                     EditorGUI.BeginChangeCheck();
                     
                     EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
-                    DrawAutoPopulationSection(settings);
                     DrawInspectorUISection(settings);
                     DrawPerformanceSection(settings);
+                    DrawAutoPopulationSection(settings);
+
                     
                     if (EditorGUI.EndChangeCheck())
                     {
@@ -71,14 +72,13 @@ namespace DNExtensions.Utilities.AutoGet
             if (autoPopulateMode.enumValueIndex != (int)AutoPopulateMode.Never)
             {
                 EditorGUI.indentLevel++;
-                
-                EditorGUILayout.LabelField("Triggers", EditorStyles.miniBoldLabel);
-                
                 var validateOnSelection = settings.FindProperty("validateOnSelection");
                 var validateOnSceneSave = settings.FindProperty("validateOnSceneSave");
+                var validateOnComponentAdded = settings.FindProperty("validateOnComponentAdded");
                 
                 EditorGUILayout.PropertyField(validateOnSelection, new GUIContent("On Selection", "Auto-populate when selecting objects"));
                 EditorGUILayout.PropertyField(validateOnSceneSave, new GUIContent("On Scene Save", "Auto-populate when saving scenes"));
+                EditorGUILayout.PropertyField(validateOnComponentAdded, new GUIContent("On Component Added", "Auto-populate when a component is added to a selected object"));
                 
                 if (!validateOnSelection.boolValue && !validateOnSceneSave.boolValue)
                 {
@@ -97,9 +97,6 @@ namespace DNExtensions.Utilities.AutoGet
             }
             
             EditorGUILayout.Space(5);
-            
-            var autoPopulateInPrefabs = settings.FindProperty("autoPopulateInPrefabs");
-            EditorGUILayout.PropertyField(autoPopulateInPrefabs, new GUIContent("Allow in Prefabs", "Enable AutoGet when editing prefabs (affects both auto and manual)"));
         }
 
         private static void DrawInspectorUISection(SerializedObject settings)
@@ -114,6 +111,9 @@ namespace DNExtensions.Utilities.AutoGet
                 AutoGetSettings.Instance.Save();
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
             }
+            
+            var autoPopulateInPrefabs = settings.FindProperty("autoPopulateInPrefabs");
+            EditorGUILayout.PropertyField(autoPopulateInPrefabs, new GUIContent("Allow in Prefabs", "Enable AutoGet when editing prefabs (affects both auto and manual)"));
         }
 
         private static void DrawPerformanceSection(SerializedObject settings)

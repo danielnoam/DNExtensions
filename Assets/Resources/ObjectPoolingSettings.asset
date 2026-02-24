@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fdca1178cff54263ba82b954a66b51ce, type: 3}
   m_Name: ObjectPoolingSettings
-  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.ObjectPooling.ObjectPoolingSettings
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.ObjectPooling.ObjectPoolingSettings
   enabled: 1
   instantiateAsFallback: 1
   destroyAsFallback: 1
@@ -19,25 +19,13 @@ MonoBehaviour:
   showDebugMessages: 0
   pools:
   - poolName: Bullet
-    maxPoolSize: 55
+    maxPoolSize: 50
     prefab: {fileID: 8842675776293222798, guid: 385e2d0b9f979d14ca7b058fc6b2988c, type: 3}
     dontDestroyOnLoad: 0
-    usePoolHolder: 1
-    recycleActiveObjects: 1
+    usePoolHolder: 0
+    recycleActiveObjects: 0
     preWarmPool: 1
-    preWarmPoolSize: 1
-    scenesToPreWarm:
-    - sceneAsset: {fileID: 102900000, guid: 5db86f2bb95500b438ebfbf95acd3568, type: 3}
-      sceneName: TestScene
-      scenePath: Assets/2_Testing/TestScene.unity
-  - poolName: Cubes
-    maxPoolSize: 100
-    prefab: {fileID: 108853269857652447, guid: 21e745c46c771434d909d5f19b389203, type: 3}
-    dontDestroyOnLoad: 0
-    usePoolHolder: 1
-    recycleActiveObjects: 1
-    preWarmPool: 1
-    preWarmPoolSize: 25
+    preWarmPoolSize: 5
     scenesToPreWarm:
     - sceneAsset: {fileID: 102900000, guid: 5db86f2bb95500b438ebfbf95acd3568, type: 3}
       sceneName: TestScene

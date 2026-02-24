@@ -3,6 +3,7 @@
 
 using System;
 using DNExtensions.Systems.Springs;
+using DNExtensions.Utilities.Button;
 using DNExtensions.Utilities.SerializableSelector;
 using PrimeTween;
 using UnityEngine;
@@ -152,7 +153,7 @@ namespace DNExtensions.Systems.MenuSystem
         public SpringAnimationMode animationMode = SpringAnimationMode.AnimateFromOffset;
         public RectSpring[] springyUIElements = Array.Empty<RectSpring>();
 
-
+        [Button(ButtonPlayMode.OnlyWhenNotPlaying)]
         public void FindAllSpringyUIElementsInChildren(Screen screen)
         {
             springyUIElements = screen.GetComponentsInChildren<RectSpring>(includeInactive: true);
