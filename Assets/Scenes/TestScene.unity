@@ -2043,6 +2043,7 @@ GameObject:
   - component: {fileID: 1537407275}
   - component: {fileID: 1537407279}
   - component: {fileID: 1537407278}
+  - component: {fileID: 1537407280}
   m_Layer: 0
   m_Name: AudioPlayer
   m_TagString: Untagged
@@ -2134,7 +2135,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4c264d7b1774212893408b8fb0bc9d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.AudioLibrary.AudioPlayer
-  audioID: test3
+  audioID: 
   playOnStart: 0
   audioSource: {fileID: 1537407279}
 --- !u!82 &1537407279
@@ -2234,6 +2235,25 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1537407280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1537407274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f3bb5ed52a0416bb8404f4a3b4d2c2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.AudioLibrary.SelectableAudioPlayer
+  onHover: 0
+  hoverAudioID: 
+  onUnhover: 0
+  unhoverAudioID: 
+  onSelect: 0
+  selectAudioID: 
+  selectable: {fileID: 0}
 --- !u!224 &1540825174 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1149309876145945581, guid: 9bc61873b59f292449bdb68f0df7d8a1, type: 3}

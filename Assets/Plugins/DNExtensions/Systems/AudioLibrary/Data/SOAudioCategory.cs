@@ -23,12 +23,11 @@ namespace DNExtensions.Systems.AudioLibrary
     public class SOAudioCategory : ScriptableObject
     {
         
-        [SerializeField] private string label = "New Category";
+        public string label = "New Category";
         [SerializeField] private AudioMixerGroup audioMixerGroup;
         [SerializeField] private AudioMapping[] audioMappings = Array.Empty<AudioMapping>();
         
         
-        public string Label => label;
         public AudioMixerGroup AudioMixerGroup => audioMixerGroup;
         public AudioMapping[] AudioMappings => audioMappings;
     }

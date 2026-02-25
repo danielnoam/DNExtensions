@@ -13,13 +13,13 @@ namespace DNExtensions.Systems.AudioLibrary
     public class SelectableAudioPlayer : MonoBehaviour
     {
         [SerializeField] private bool onHover;
-        [SerializeField, AudioID, EnableIf("onHover")] private string hoverAudioID = string.Empty;
+        [SerializeField, AudioID] private string hoverAudioID = string.Empty;
 
         [SerializeField] private bool onUnhover;
-        [SerializeField, AudioID, EnableIf("onUnhover")] private string unhoverAudioID = string.Empty;
+        [SerializeField, AudioID] private string unhoverAudioID = string.Empty;
 
         [SerializeField] private bool onSelect;
-        [SerializeField, AudioID, EnableIf("onSelect")] private string selectAudioID = string.Empty;
+        [SerializeField, AudioID] private string selectAudioID = string.Empty;
 
         [SerializeField, HideInInspector, AutoGetSelf] private Selectable selectable;
 

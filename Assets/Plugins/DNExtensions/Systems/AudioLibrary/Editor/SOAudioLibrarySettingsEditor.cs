@@ -19,63 +19,66 @@ namespace DNExtensions.Systems.AudioLibrary
             base.OnInspectorGUI();
             var audioLibrary = (SOAudioLibrarySettings)target;
 
-            if (audioLibrary.AudioCategories == null || audioLibrary.AudioCategories.Length == 0) return;
-
-            EditorGUILayout.Space(10);
-
-            foreach (var category in audioLibrary.AudioCategories)
+            if (audioLibrary.AudioCategories != null && audioLibrary.AudioCategories.Length != 0)
             {
-                if (!category) continue;
-    
-                _foldouts.TryAdd(category.name, true);
-    
-                if (!_serializedCategories.TryGetValue(category.name, out var serializedCategory))
-                {
-                    serializedCategory = new SerializedObject(category);
-                    _serializedCategories[category.name] = serializedCategory;
-                }
-    
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                serializedCategory.Update();
-                GUILayout.Space(5);
+                EditorGUILayout.Space(10);
 
-                
-                // Header
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.Space(10);
-                _foldouts[category.name] = EditorGUILayout.Foldout(_foldouts[category.name], category.Label, true, EditorStyles.foldoutHeader);
-                GUILayout.FlexibleSpace();
-                SerializedProperty resMixer = serializedCategory.FindProperty("audioMixerGroup");
-                if (resMixer != null)
+                foreach (var category in audioLibrary.AudioCategories)
                 {
-                    EditorGUILayout.PropertyField(resMixer, GUIContent.none);
+                    if (!category) continue;
+
+                    _foldouts.TryAdd(category.name, true);
+
+                    if (!_serializedCategories.TryGetValue(category.name, out var serializedCategory))
+                    {
+                        serializedCategory = new SerializedObject(category);
+                        _serializedCategories[category.name] = serializedCategory;
+                    }
+
+                    EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                    serializedCategory.Update();
                     GUILayout.Space(5);
-                }
 
-                if (GUILayout.Button("+", EditorStyles.miniButtonRight, GUILayout.Width(20)))
-                {
-                    AddNewResourceToCategory(category);
-                    _foldouts[category.name] = true; 
+
+                    // Header
+                    EditorGUILayout.BeginHorizontal();
+                    GUILayout.Space(10);
+                    _foldouts[category.name] = EditorGUILayout.Foldout(_foldouts[category.name], category.label, true,
+                        EditorStyles.foldoutHeader);
+                    GUILayout.FlexibleSpace();
+                    SerializedProperty resMixer = serializedCategory.FindProperty("audioMixerGroup");
+                    if (resMixer != null)
+                    {
+                        EditorGUILayout.PropertyField(resMixer, GUIContent.none);
+                        GUILayout.Space(5);
+                    }
+
+                    if (GUILayout.Button("+", EditorStyles.miniButtonRight, GUILayout.Width(20)))
+                    {
+                        AddNewResourceToCategory(category);
+                        _foldouts[category.name] = true;
+                    }
+
+                    EditorGUILayout.EndHorizontal();
+                    GUILayout.Space(3);
+
+                    // Content
+                    if (_foldouts[category.name])
+                    {
+                        Rect lineRect = EditorGUILayout.GetControlRect(false, 3);
+                        EditorGUI.DrawRect(lineRect, new Color(0.5f, 0.5f, 0.5f, 0.5f));
+
+                        EditorGUILayout.Space(2);
+                        DrawMappingList(serializedCategory);
+                        EditorGUILayout.Space(2);
+                        serializedCategory.ApplyModifiedProperties();
+                    }
+
+                    EditorGUILayout.EndVertical();
                 }
-                EditorGUILayout.EndHorizontal();
-                GUILayout.Space(3);
-                
-                // Content
-                if (_foldouts[category.name])
-                {
-                    Rect lineRect = EditorGUILayout.GetControlRect(false, 3);
-                    EditorGUI.DrawRect(lineRect, new Color(0.5f, 0.5f, 0.5f, 0.5f));
-                    
-                    EditorGUILayout.Space(2);
-                    DrawMappingList(serializedCategory);
-                    EditorGUILayout.Space(2);
-                    serializedCategory.ApplyModifiedProperties();
-                }
-                
-                EditorGUILayout.EndVertical();
-                EditorGUILayout.Space(5);
             }
             
+            EditorGUILayout.Space(5);
             if (GUILayout.Button("+ New Category"))
             {
                 AddNewCategory(audioLibrary);
@@ -138,6 +141,7 @@ namespace DNExtensions.Systems.AudioLibrary
 
             var newCategory = CreateInstance<SOAudioCategory>();
             AssetDatabase.CreateAsset(newCategory, path);
+            newCategory.label = Path.GetFileNameWithoutExtension(path);
             AssetDatabase.SaveAssets();
 
             var so = new SerializedObject(audioLibrary);

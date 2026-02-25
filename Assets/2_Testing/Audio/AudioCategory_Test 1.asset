@@ -15,7 +15,9 @@ MonoBehaviour:
   label: Test 2
   audioMixerGroup: {fileID: 0}
   audioMappings:
-  - id: test3
+  - id: New_ID
     audioObject: {fileID: 0}
-  - id: test562
+  - id: New_ID2
+    audioObject: {fileID: 0}
+  - id: New_ID
     audioObject: {fileID: 0}
