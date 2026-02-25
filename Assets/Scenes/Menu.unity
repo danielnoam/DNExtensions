@@ -3081,7 +3081,7 @@ MonoBehaviour:
       type: {class: FadeAnimation, ns: DNExtensions.Systems.MenuSystem, asm: Assembly-CSharp-firstpass}
       data:
         duration: 0.25
-        startFromCurrentAlpha: 1
+        startFromCurrentAlpha: 0
         startAlpha: 0
         endAlpha: 0
         ease: 9

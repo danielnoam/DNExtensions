@@ -295,6 +295,12 @@ namespace DNExtensions.Utilities
             return this;
         }
 
+        public RichTextBuilder Size(string size)
+        {
+            _text = $"<size={size}>{_text}</size>";
+            return this;
+        }
+
         public RichTextBuilder Bold()
         {
             _text = $"<b>{_text}</b>";
