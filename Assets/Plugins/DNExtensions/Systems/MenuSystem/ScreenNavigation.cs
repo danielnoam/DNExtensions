@@ -11,6 +11,7 @@ namespace DNExtensions.Systems.MenuSystem
 {
     
     [DisallowMultipleComponent]
+    [AddComponentMenu("DNExtensions/Menu System/Screen Navigator")]
     public class ScreenNavigation : MonoBehaviour
     {
         [Header("Settings")]

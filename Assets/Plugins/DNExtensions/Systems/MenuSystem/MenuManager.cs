@@ -8,6 +8,7 @@ namespace DNExtensions.Systems.MenuSystem
 {
 
     [DisallowMultipleComponent]
+    [AddComponentMenu("DNExtensions/Menu System/Menu Manager")]
     public class MenuManager : MonoBehaviour
     {
         [Header("Menu Settings")] 

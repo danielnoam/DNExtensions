@@ -9,7 +9,7 @@ namespace DNExtensions.Systems.AudioLibrary
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(AudioSource))]
-    [AddComponentMenu("DNExtensions/Audio Player")]
+    [AddComponentMenu("DNExtensions/Audio Library/Audio Player")]
     public class AudioPlayer : MonoBehaviour
     {
         

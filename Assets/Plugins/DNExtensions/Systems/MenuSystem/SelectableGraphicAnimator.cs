@@ -1,7 +1,6 @@
 ﻿using DNExtensions.Utilities;
 using DNExtensions.Utilities.AutoGet;
 using UnityEngine;
-using TMPro;
 using PrimeTween;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -9,14 +8,16 @@ using UnityEngine.UI;
 namespace DNExtensions.Systems.MenuSystem
 {
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(TextMeshProUGUI))]
-    public class SelectableTextAnimator : MonoBehaviour
+    [RequireComponent(typeof(Graphic))]
+    [RequireComponent(typeof(RectTransform))]
+    [AddComponentMenu("DNExtensions/Menu System/Selectable Graphic Animator")]
+    public class SelectableGraphicAnimator : MonoBehaviour
     {
-        [Header("References")]
         [SerializeField] private Selectable selectable;
-        
-        [Header("Position")] 
-        [SerializeField] private PositionEffectType positionEffectType = PositionEffectType.Shake;
+        [SerializeField] private bool resetOnDisable = true;
+
+        [Header("Position")]
+        [SerializeField] private PositionEffectType positionEffectType = PositionEffectType.None;
         [ShowIf("IsOffsetMode"), SerializeField] private Vector3 positionOffset = new Vector3(0, 10, 0);
         [ShowIf("IsOffsetMode"), SerializeField] private float positionDuration = 0.15f;
         [ShowIf("IsOffsetMode"), SerializeField] private Ease positionEase = Ease.InOutBounce;
@@ -26,13 +27,13 @@ namespace DNExtensions.Systems.MenuSystem
         [ShowIf("IsShakeMode"), SerializeField] private float shakeDuration = 0.5f;
         [ShowIf("IsShakeMode"), SerializeField] private Ease shakeEase = Ease.Default;
 
-        [Header("Rotate")] 
+        [Header("Rotate")]
         [SerializeField] private bool animateRotation;
         [SerializeField] private Vector3 rotationOffset = new Vector3(0, 0, 15);
         [SerializeField] private float rotationDuration = 0.15f;
         [SerializeField] private Ease rotationEase = Ease.InOutBounce;
 
-        [Header("Scale")] 
+        [Header("Scale")]
         [SerializeField] private bool animateScale;
         [SerializeField] private float scaleMultiplier = 1.1f;
         [SerializeField] private float scaleDuration = 0.15f;
@@ -43,15 +44,15 @@ namespace DNExtensions.Systems.MenuSystem
         [SerializeField] private Color selectedColor = Color.white;
         [SerializeField] private float colorDuration = 0.15f;
         [SerializeField] private Ease colorEase = Ease.InOutQuad;
-        
-        [SerializeField, HideInInspector, AutoGetSelf] private TextMeshProUGUI textMeshPro;
+
+        [SerializeField, HideInInspector, AutoGetSelf] private Graphic graphic;
         [SerializeField, HideInInspector, AutoGetSelf] private RectTransform rectTransform;
 
         private Vector3 _originalPosition;
         private Vector3 _originalScale;
         private Vector3 _originalRotation;
         private Color _originalColor;
-        
+
         private bool IsOffsetMode => positionEffectType == PositionEffectType.Offset;
         private bool IsShakeMode => positionEffectType == PositionEffectType.Shake;
 
@@ -59,13 +60,10 @@ namespace DNExtensions.Systems.MenuSystem
 
         private void Awake()
         {
-            if (!textMeshPro) textMeshPro = GetComponent<TextMeshProUGUI>();
-            if (!rectTransform) rectTransform = GetComponent<RectTransform>();
-            
             _originalScale = transform.localScale;
             _originalRotation = transform.localRotation.eulerAngles;
             _originalPosition = rectTransform.anchoredPosition3D;
-            _originalColor = textMeshPro.color;
+            _originalColor = graphic.color;
 
             if (selectable)
             {
@@ -76,34 +74,25 @@ namespace DNExtensions.Systems.MenuSystem
 
         private void OnDisable()
         {
-            if (positionEffectType == PositionEffectType.Offset) rectTransform.anchoredPosition3D = _originalPosition;
+            if (!resetOnDisable) return;
+
+            if (positionEffectType == PositionEffectType.Offset)
+                rectTransform.anchoredPosition3D = _originalPosition;
             if (animateScale) transform.localScale = _originalScale;
             if (animateRotation) transform.localRotation = Quaternion.Euler(_originalRotation);
-            if (animateColor) textMeshPro.color = _originalColor;
+            if (animateColor) graphic.color = _originalColor;
         }
 
-        private void OnSelect(BaseEventData eventData)
-        {
-            PlaySelectAnimations();
-        }
-
-        private void OnDeselect(BaseEventData eventData)
-        {
-            PlayDeselectAnimations();
-        }
+        private void OnSelect(BaseEventData eventData) => PlaySelectAnimations();
+        private void OnDeselect(BaseEventData eventData) => PlayDeselectAnimations();
 
         private void PlaySelectAnimations()
         {
             switch (positionEffectType)
             {
-                case PositionEffectType.Offset:
-                    PlayPositionAnimation(true);
-                    break;
-                case PositionEffectType.Shake:
-                    PlayShakeAnimation();
-                    break;
+                case PositionEffectType.Offset: PlayPositionAnimation(true); break;
+                case PositionEffectType.Shake: PlayShakeAnimation(); break;
             }
-
             if (animateScale) PlayScaleAnimation(true);
             if (animateRotation) PlayRotateAnimation(true);
             if (animateColor) PlayColorAnimation(true);
@@ -113,14 +102,9 @@ namespace DNExtensions.Systems.MenuSystem
         {
             switch (positionEffectType)
             {
-                case PositionEffectType.Offset:
-                    PlayPositionAnimation(false);
-                    break;
-                case PositionEffectType.Shake when shakeOnDeselect:
-                    PlayShakeAnimation();
-                    break;
+                case PositionEffectType.Offset: PlayPositionAnimation(false); break;
+                case PositionEffectType.Shake when shakeOnDeselect: PlayShakeAnimation(); break;
             }
-
             if (animateScale) PlayScaleAnimation(false);
             if (animateRotation) PlayRotateAnimation(false);
             if (animateColor) PlayColorAnimation(false);
@@ -128,8 +112,6 @@ namespace DNExtensions.Systems.MenuSystem
 
         private void PlayPositionAnimation(bool selected)
         {
-            if (!rectTransform) return;
-
             Vector3 endPosition = selected ? _originalPosition + positionOffset : _originalPosition;
             Tween.UIAnchoredPosition3D(rectTransform, endPosition, positionDuration, positionEase, useUnscaledTime: true);
         }
@@ -148,14 +130,13 @@ namespace DNExtensions.Systems.MenuSystem
 
         private void PlayShakeAnimation()
         {
-            Tween.ShakeLocalPosition(transform, shakeStrength, shakeDuration, shakeFrequency,
-                easeBetweenShakes: shakeEase, useUnscaledTime: true);
+            Tween.ShakeLocalPosition(transform, shakeStrength, shakeDuration, shakeFrequency, easeBetweenShakes: shakeEase, useUnscaledTime: true);
         }
 
         private void PlayColorAnimation(bool selected)
         {
-            var endColor = selected ? selectedColor : _originalColor;
-            Tween.Color(textMeshPro, endColor, colorDuration, colorEase, useUnscaledTime: true);
+            Color endColor = selected ? selectedColor : _originalColor;
+            Tween.Color(graphic, endColor, colorDuration, colorEase, useUnscaledTime: true);
         }
     }
 }

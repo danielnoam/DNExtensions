@@ -13,6 +13,7 @@ namespace DNExtensions.Systems.MenuSystem
 
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CanvasGroup))]
+    [AddComponentMenu("DNExtensions/Menu System/Screen")]
     public class Screen : MonoBehaviour
     {
         [Header("Animations")]
