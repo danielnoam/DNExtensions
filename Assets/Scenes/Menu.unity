@@ -470,6 +470,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22c641a4da1748fa866e29dd0aa259af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.MenuSystem.SelectableAnimator
+  resetOnDisable: 1
   positionEffectType: 2
   positionOffset: {x: 0, y: 10, z: 0}
   positionDuration: 0.15
@@ -1077,6 +1078,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22c641a4da1748fa866e29dd0aa259af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.MenuSystem.SelectableAnimator
+  resetOnDisable: 1
   positionEffectType: 2
   positionOffset: {x: 0, y: 10, z: 0}
   positionDuration: 0.15
@@ -2178,6 +2180,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22c641a4da1748fa866e29dd0aa259af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.MenuSystem.SelectableAnimator
+  resetOnDisable: 1
   positionEffectType: 2
   positionOffset: {x: 0, y: 10, z: 0}
   positionDuration: 0.15
@@ -2807,6 +2810,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22c641a4da1748fa866e29dd0aa259af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.MenuSystem.SelectableAnimator
+  resetOnDisable: 1
   positionEffectType: 2
   positionOffset: {x: 0, y: 10, z: 0}
   positionDuration: 0.15
@@ -3058,11 +3062,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Screen
   disableInteractionsDuringAnimation: 0
-  showAnimations: []
-  hideAnimations: []
+  showAnimations:
+  - rid: 5778562004119716097
+  hideAnimations:
+  - rid: 5778562004119716098
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 5778562004119716097
+      type: {class: FadeAnimation, ns: DNExtensions.Systems.MenuSystem, asm: Assembly-CSharp-firstpass}
+      data:
+        duration: 0.25
+        startFromCurrentAlpha: 0
+        startAlpha: 0
+        endAlpha: 1
+        ease: 9
+    - rid: 5778562004119716098
+      type: {class: FadeAnimation, ns: DNExtensions.Systems.MenuSystem, asm: Assembly-CSharp-firstpass}
+      data:
+        duration: 0.25
+        startFromCurrentAlpha: 1
+        startAlpha: 0
+        endAlpha: 0
+        ease: 9
 --- !u!225 &1283884210
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -3380,7 +3402,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1244931439}
   m_HandleRect: {fileID: 1244931438}
   m_Direction: 0
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -5239,6 +5261,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22c641a4da1748fa866e29dd0aa259af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.MenuSystem.SelectableAnimator
+  resetOnDisable: 1
   positionEffectType: 2
   positionOffset: {x: 0, y: 10, z: 0}
   positionDuration: 0.15

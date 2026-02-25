@@ -35,7 +35,7 @@ namespace DNExtensions.Systems.AudioLibrary
             }
             
             
-            if (GUILayout.Button("+ Add New Mapping"))
+            if (GUILayout.Button("+ Add Mapping"))
             {
                 list.InsertArrayElementAtIndex(list.arraySize);
             }

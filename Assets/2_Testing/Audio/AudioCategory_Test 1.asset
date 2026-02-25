@@ -17,7 +17,3 @@ MonoBehaviour:
   audioMappings:
   - id: New_ID
     audioObject: {fileID: 0}
-  - id: New_ID2
-    audioObject: {fileID: 0}
-  - id: New_ID
-    audioObject: {fileID: 0}

@@ -43,8 +43,7 @@ namespace DNExtensions.Systems.AudioLibrary
                     // Header
                     EditorGUILayout.BeginHorizontal();
                     GUILayout.Space(10);
-                    _foldouts[category.name] = EditorGUILayout.Foldout(_foldouts[category.name], category.label, true,
-                        EditorStyles.foldoutHeader);
+                    _foldouts[category.name] = EditorGUILayout.Foldout(_foldouts[category.name], category.label, true, EditorStyles.foldoutHeader);
                     GUILayout.FlexibleSpace();
                     SerializedProperty resMixer = serializedCategory.FindProperty("audioMixerGroup");
                     if (resMixer != null)
@@ -53,11 +52,7 @@ namespace DNExtensions.Systems.AudioLibrary
                         GUILayout.Space(5);
                     }
 
-                    if (GUILayout.Button("+", EditorStyles.miniButtonRight, GUILayout.Width(20)))
-                    {
-                        AddNewResourceToCategory(category);
-                        _foldouts[category.name] = true;
-                    }
+
 
                     EditorGUILayout.EndHorizontal();
                     GUILayout.Space(3);
@@ -68,18 +63,25 @@ namespace DNExtensions.Systems.AudioLibrary
                         Rect lineRect = EditorGUILayout.GetControlRect(false, 3);
                         EditorGUI.DrawRect(lineRect, new Color(0.5f, 0.5f, 0.5f, 0.5f));
 
-                        EditorGUILayout.Space(2);
+                        EditorGUILayout.Space(5);
                         DrawMappingList(serializedCategory);
+                        
+                        if (GUILayout.Button("+ New Mapping"))
+                        {
+                            AddNewMappingToCategory(category);
+                        }
                         EditorGUILayout.Space(2);
                         serializedCategory.ApplyModifiedProperties();
                     }
-
                     EditorGUILayout.EndVertical();
+                    
+                    // Space between categories
+                    EditorGUILayout.Space(5);
                 }
             }
             
-            EditorGUILayout.Space(5);
-            if (GUILayout.Button("+ New Category"))
+            // Space before button
+            if (GUILayout.Button("+ New Category", GUILayout.Height(30)))
             {
                 AddNewCategory(audioLibrary);
             }
@@ -112,7 +114,7 @@ namespace DNExtensions.Systems.AudioLibrary
             }
         }
 
-        private void AddNewResourceToCategory(SOAudioCategory category)
+        private void AddNewMappingToCategory(SOAudioCategory category)
         {
             if (!_serializedCategories.TryGetValue(category.name, out var so)) return;
     

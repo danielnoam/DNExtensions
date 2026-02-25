@@ -3,6 +3,9 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.AudioLibrary
 {
+    /// <summary>
+    /// Adds context menu for creating AudioProfiles from AudioClip assets.
+    /// </summary>
     public static class AudioClipContextMenu
     {
         [MenuItem("Assets/Create/Audio Profile from Clip", true)]
@@ -16,10 +19,10 @@ namespace DNExtensions.Systems.AudioLibrary
         {
             AudioClip clip = (AudioClip)Selection.activeObject;
             string path = AssetDatabase.GetAssetPath(clip);
-            path = System.IO.Path.ChangeExtension(path, null) + "_Profile.asset";
+            path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(path) ?? string.Empty, $"Profile_{clip.name}.asset");
 
             SOAudioProfile profile = ScriptableObject.CreateInstance<SOAudioProfile>();
-            profile.clips = new AudioClip[] { clip };
+            profile.clips = new [] { clip };
 
             AssetDatabase.CreateAsset(profile, path);
             AssetDatabase.SaveAssets();

@@ -3,6 +3,7 @@
 
 using System;
 using DNExtensions.Systems.Springs;
+using DNExtensions.Utilities;
 using DNExtensions.Utilities.Button;
 using DNExtensions.Utilities.SerializableSelector;
 using PrimeTween;
@@ -23,7 +24,7 @@ namespace DNExtensions.Systems.MenuSystem
     public class FadeAnimation : ScreenAnimation
     {
         public bool startFromCurrentAlpha;
-        [Range(0f, 1f)] public float startAlpha;
+        [Range(0f, 1f), HideIf("startFromCurrentAlpha")] public float startAlpha;
         [Range(0f, 1f)] public float endAlpha = 1f;
         public Ease ease = Ease.OutCubic;
 

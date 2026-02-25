@@ -14,4 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.AudioLibrary.SOAudioCategory
   label: Test
   audioMixerGroup: {fileID: 0}
-  audioMappings: []
+  audioMappings:
+  - id: New_ID
+    audioObject: {fileID: 11400000, guid: e25cc4e57a37c4f46872e16994c589cc, type: 2}
