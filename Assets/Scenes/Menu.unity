@@ -1915,8 +1915,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1363994941}
   m_HandleRect: {fileID: 1363994940}
   m_Direction: 2
-  m_Value: 1
-  m_Size: 1
+  m_Value: 1.0000001
+  m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -3064,8 +3064,7 @@ MonoBehaviour:
   disableInteractionsDuringAnimation: 0
   showAnimations:
   - rid: 5778562004119716097
-  hideAnimations:
-  - rid: 5778562004119716098
+  hideAnimations: []
   references:
     version: 2
     RefIds:
@@ -3073,17 +3072,9 @@ MonoBehaviour:
       type: {class: FadeAnimation, ns: DNExtensions.Systems.MenuSystem, asm: Assembly-CSharp-firstpass}
       data:
         duration: 0.25
-        startFromCurrentAlpha: 0
+        startFromCurrentAlpha: 1
         startAlpha: 0
         endAlpha: 1
-        ease: 9
-    - rid: 5778562004119716098
-      type: {class: FadeAnimation, ns: DNExtensions.Systems.MenuSystem, asm: Assembly-CSharp-firstpass}
-      data:
-        duration: 0.25
-        startFromCurrentAlpha: 0
-        startAlpha: 0
-        endAlpha: 0
         ease: 9
 --- !u!225 &1283884210
 CanvasGroup:
@@ -5531,5 +5522,5 @@ SceneRoots:
   - {fileID: 34847363}
   - {fileID: 1552613229}
   - {fileID: 554429282}
-  - {fileID: 3912734174500537627}
   - {fileID: 1091749626}
+  - {fileID: 3912734174500537627}

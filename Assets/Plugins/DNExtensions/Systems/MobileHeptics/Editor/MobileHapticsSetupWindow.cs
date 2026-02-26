@@ -1,301 +1,77 @@
-
-
-using System.IO;
-using System.Xml;
-using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
+using UnityEditor;
+using System.IO;
 
-namespace DNExtensions.Systems.MobileHeptics
+namespace DNExtensions.Systems.MobileHaptics
 {
-    public class MobileHapticsSetupWindow : EditorWindow
+    /// <summary>
+    /// Project-wide settings for MobileHaptics. Configured via Project Settings.
+    /// </summary>
+    public class MobileHapticsSettings : ScriptableObject
     {
-        private const string ManifestPath = "Assets/Plugins/Android/AndroidManifest.xml";
-        private const string VibratePermission = "android.permission.VIBRATE";
+        private const string SettingsPath = "ProjectSettings/MobileHapticsSettings.asset";
         
-        private Vector2 _scrollPosition;
-        private string _statusMessage = "";
-        private MessageType _statusType = MessageType.Info;
+        public bool addVibratePermission = true;
 
-        [MenuItem("Tools/DNExtensions/Mobile Haptics Setup")]
-        public static void ShowWindow()
-        {
-            var window = GetWindow<MobileHapticsSetupWindow>("Haptics Setup");
-            window.minSize = new Vector2(400, 300);
-        }
+        private static MobileHapticsSettings _instance;
 
-        private void OnEnable()
+        public static MobileHapticsSettings Instance
         {
-            CheckManifestStatus();
-        }
-
-        private void OnGUI()
-        {
-            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
-            
-            DrawHeader();
-            EditorGUILayout.Space(10);
-            
-            DrawManifestStatus();
-            EditorGUILayout.Space(10);
-            
-            DrawActions();
-            EditorGUILayout.Space(10);
-            
-            EditorGUILayout.EndScrollView();
-        }
-
-        private void DrawHeader()
-        {
-            EditorGUILayout.LabelField("Mobile Haptics Setup & Validation", EditorStyles.largeLabel);
-            EditorGUILayout.LabelField("Android vibration requires VIBRATE permission", EditorStyles.miniLabel);
-        }
-
-        private void DrawManifestStatus()
-        {
-            EditorGUILayout.LabelField("Manifest Status", EditorStyles.boldLabel);
-            
-            if (!string.IsNullOrEmpty(_statusMessage))
+            get
             {
-                EditorGUILayout.HelpBox(_statusMessage, _statusType);
-            }
+                if (_instance) return _instance;
 
-            EditorGUILayout.Space(5);
-            
-            // Show manifest path
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Location:", GUILayout.Width(70));
-            EditorGUILayout.SelectableLabel(ManifestPath, EditorStyles.textField, GUILayout.Height(18));
-            EditorGUILayout.EndHorizontal();
-
-            // File exists indicator
-            bool manifestExists = File.Exists(ManifestPath);
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("File Exists:", GUILayout.Width(70));
-            EditorGUILayout.LabelField(manifestExists ? "✓ Yes" : "✕ No", 
-                manifestExists ? EditorStyles.boldLabel : EditorStyles.label);
-            EditorGUILayout.EndHorizontal();
-
-            // Permission status
-            if (manifestExists)
-            {
-                bool hasPermission = CheckForPermission();
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Permission:", GUILayout.Width(70));
-                EditorGUILayout.LabelField(hasPermission ? "✓ Configured" : "⚠ Missing", 
-                    hasPermission ? EditorStyles.boldLabel : EditorStyles.label);
-                EditorGUILayout.EndHorizontal();
-            }
-        }
-
-        private void DrawActions()
-        {
-            EditorGUILayout.LabelField("Actions", EditorStyles.boldLabel);
-            
-            EditorGUILayout.BeginHorizontal();
-            
-            if (GUILayout.Button("Refresh Status", GUILayout.Height(30)))
-            {
-                CheckManifestStatus();
-            }
-            
-            if (GUILayout.Button("Setup Manifest", GUILayout.Height(30)))
-            {
-                SetupManifest();
-            }
-            
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.Space(5);
-
-            if (File.Exists(ManifestPath))
-            {
-                EditorGUILayout.BeginHorizontal();
-                
-                if (GUILayout.Button("Open Manifest"))
+                if (File.Exists(SettingsPath))
                 {
-                    UnityEditorInternal.InternalEditorUtility.OpenFileAtLineExternal(
-                        Path.GetFullPath(ManifestPath), 1);
+                    var objects = InternalEditorUtility.LoadSerializedFileAndForget(SettingsPath);
+                    if (objects.Length > 0)
+                        _instance = objects[0] as MobileHapticsSettings;
                 }
-                
-                if (GUILayout.Button("Ping in Project"))
+
+                if (!_instance)
                 {
-                    var manifest = AssetDatabase.LoadAssetAtPath<Object>(ManifestPath);
-                    EditorGUIUtility.PingObject(manifest);
-                    Selection.activeObject = manifest;
+                    _instance = CreateInstance<MobileHapticsSettings>();
+                    Save();
                 }
-                
-                EditorGUILayout.EndHorizontal();
+
+                return _instance;
             }
+        }
+
+        private static void Save()
+        {
+            InternalEditorUtility.SaveToSerializedFileAndForget(
+                new Object[] { _instance }, SettingsPath, true);
         }
         
-        private void CheckManifestStatus()
+        [MenuItem("Tools/DNExtensions/Mobile Haptics Settings")]
+        public static void OpenSettings()
         {
-            if (!File.Exists(ManifestPath))
-            {
-                _statusMessage = "✕ AndroidManifest.xml not found. Click 'Setup Manifest' to create it.";
-                _statusType = MessageType.Warning;
-                return;
-            }
-
-            if (!IsValidXml(ManifestPath))
-            {
-                _statusMessage = "✕ AndroidManifest.xml exists but is not valid XML. Please fix or recreate it.";
-                _statusType = MessageType.Error;
-                return;
-            }
-
-            bool hasPermission = CheckForPermission();
-            
-            if (hasPermission)
-            {
-                _statusMessage = "✓ AndroidManifest.xml is properly configured with VIBRATE permission.";
-                _statusType = MessageType.Info;
-            }
-            else
-            {
-                _statusMessage = "⚠ AndroidManifest.xml exists but is missing VIBRATE permission. Click 'Setup Manifest' to add it.";
-                _statusType = MessageType.Warning;
-            }
+            SettingsService.OpenProjectSettings("Project/DNExtensions/Mobile Haptics");
         }
 
-        private void SetupManifest()
+        [SettingsProvider]
+        public static SettingsProvider CreateSettingsProvider()
         {
-            try
+            return new SettingsProvider("Project/DNExtensions/Mobile Haptics", SettingsScope.Project)
             {
-                // Ensure directory exists
-                string directory = Path.GetDirectoryName(ManifestPath);
-                if (!Directory.Exists(directory))
+                label = "Mobile Haptics",
+                guiHandler = _ =>
                 {
-                    Directory.CreateDirectory(directory);
+                    var settings = Instance;
+                    EditorGUI.BeginChangeCheck();
+
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.LabelField("Android", EditorStyles.boldLabel);
+                    settings.addVibratePermission = EditorGUILayout.Toggle(new GUIContent("Add VIBRATE Permission"), settings.addVibratePermission);
+
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.HelpBox("The VIBRATE permission is injected at build time via IPostGenerateGradleAndroidProject. ", MessageType.Info);
+
+                    if (EditorGUI.EndChangeCheck()) Save();
                 }
-
-                if (!File.Exists(ManifestPath))
-                {
-                    // Create new manifest
-                    CreateNewManifest();
-                    _statusMessage = "✓ Created new AndroidManifest.xml with VIBRATE permission.";
-                    _statusType = MessageType.Info;
-                }
-                else
-                {
-                    // Add permission to existing manifest
-                    if (CheckForPermission())
-                    {
-                        _statusMessage = "✓ VIBRATE permission already exists in manifest.";
-                        _statusType = MessageType.Info;
-                    }
-                    else
-                    {
-                        InjectPermission();
-                        _statusMessage = "✓ Added VIBRATE permission to existing AndroidManifest.xml.";
-                        _statusType = MessageType.Info;
-                    }
-                }
-
-                AssetDatabase.Refresh();
-                Repaint();
-            }
-            catch (System.Exception e)
-            {
-                _statusMessage = $"✕ Failed to setup manifest: {e.Message}";
-                _statusType = MessageType.Error;
-                Debug.LogError($"[MobileHaptics] Setup failed: {e}");
-            }
-        }
-
-        private void CreateNewManifest()
-        {
-            string manifestContent = 
-@"<?xml version=""1.0"" encoding=""utf-8""?>
-<manifest xmlns:android=""http://schemas.android.com/apk/res/android"">
-    <!-- Required for haptic feedback on Android -->
-    <uses-permission android:name=""android.permission.VIBRATE"" />
-</manifest>";
-
-            File.WriteAllText(ManifestPath, manifestContent);
-        }
-
-        private void InjectPermission()
-        {
-            XmlDocument doc = new XmlDocument();
-            doc.Load(ManifestPath);
-
-            // Setup namespace manager for Android namespace
-            XmlNamespaceManager nsmgr = new XmlNamespaceManager(doc.NameTable);
-            nsmgr.AddNamespace("android", "http://schemas.android.com/apk/res/android");
-
-            XmlNode manifest = doc.SelectSingleNode("/manifest");
-            if (manifest == null)
-            {
-                throw new System.Exception("Invalid AndroidManifest.xml - no <manifest> root element found");
-            }
-
-            // Check if permission already exists using namespace manager
-            XmlNode existingPermission = doc.SelectSingleNode($"//uses-permission[@android:name='{VibratePermission}']", nsmgr);
-            if (existingPermission != null)
-            {
-                return; // Already exists
-            }
-
-            // Create permission element
-            XmlElement permission = doc.CreateElement("uses-permission");
-            XmlAttribute nameAttr = doc.CreateAttribute("android", "name", "http://schemas.android.com/apk/res/android");
-            nameAttr.Value = VibratePermission;
-            permission.Attributes.Append(nameAttr);
-
-            // Add comment
-            XmlComment comment = doc.CreateComment(" Required for haptic feedback on Android ");
-            
-            // Insert at the beginning of manifest
-            if (manifest.FirstChild != null)
-            {
-                manifest.InsertBefore(comment, manifest.FirstChild);
-                manifest.InsertBefore(permission, manifest.FirstChild);
-            }
-            else
-            {
-                manifest.AppendChild(comment);
-                manifest.AppendChild(permission);
-            }
-
-            doc.Save(ManifestPath);
-        }
-
-        private bool CheckForPermission()
-        {
-            if (!File.Exists(ManifestPath)) return false;
-
-            try
-            {
-                XmlDocument doc = new XmlDocument();
-                doc.Load(ManifestPath);
-                
-                // Setup namespace manager for Android namespace
-                XmlNamespaceManager nsmgr = new XmlNamespaceManager(doc.NameTable);
-                nsmgr.AddNamespace("android", "http://schemas.android.com/apk/res/android");
-                
-                XmlNode permission = doc.SelectSingleNode($"//uses-permission[@android:name='{VibratePermission}']", nsmgr);
-                return permission != null;
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogWarning($"[MobileHaptics] Failed to parse manifest: {e.Message}");
-                return false;
-            }
-        }
-
-        private bool IsValidXml(string path)
-        {
-            try
-            {
-                XmlDocument doc = new XmlDocument();
-                doc.Load(path);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            };
         }
     }
 }

@@ -55,22 +55,11 @@ namespace DNExtensions.Systems.MenuSystem
 
         public override Sequence CreateSequence(Screen screen)
         {
-            Vector3 from = startFromCurrentScale
-                ? screen.RectTransform.localScale
-                : startScale;
-
-            Vector3 to = endInOriginalScale
-                ? screen.TransformOriginalScale
-                : endScale;
+            Vector3 from = startFromCurrentScale ? screen.RectTransform.localScale : startScale;
+            Vector3 to = endInOriginalScale ? screen.TransformOriginalScale : endScale;
 
             return Sequence.Create()
-                .Group(Tween.Scale(
-                    screen.RectTransform,
-                    from,
-                    to,
-                    duration,
-                    ease
-                ));
+                .Group(Tween.Scale(screen.RectTransform, from, to, duration, ease));
         }
     }
 
@@ -109,12 +98,7 @@ namespace DNExtensions.Systems.MenuSystem
             screen.RectTransform.anchoredPosition3D = startPos;
 
             return Sequence.Create()
-                .Group(Tween.Position(
-                    screen.RectTransform,
-                    endPos,
-                    duration,
-                    ease
-                ));
+                .Group(Tween.Position(screen.RectTransform, endPos, duration, ease));
         }
     }
 
@@ -136,12 +120,7 @@ namespace DNExtensions.Systems.MenuSystem
             screen.RectTransform.localEulerAngles = startRotation;
 
             return Sequence.Create()
-                .Group(Tween.Rotation(
-                    screen.RectTransform,
-                    to,
-                    duration,
-                    ease
-                ));
+                .Group(Tween.Rotation(screen.RectTransform, to, duration, ease));
         }
         
     }

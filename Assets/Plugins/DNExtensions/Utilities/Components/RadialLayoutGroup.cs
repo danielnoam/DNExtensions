@@ -8,7 +8,7 @@ using UnityEditor;
 
 namespace DNExtensions.Utilities
 {
-    [AddComponentMenu("DNExtensions/Radial Layout Group")]
+    [AddComponentMenu("DNExtensions/Radial Layout Group", 1000)]
     public class RadialLayoutGroup : LayoutGroup
     {
         [Header("Radial Settings")]

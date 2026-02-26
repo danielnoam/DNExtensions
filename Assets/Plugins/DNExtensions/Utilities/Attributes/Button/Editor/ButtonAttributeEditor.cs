@@ -66,6 +66,9 @@ namespace DNExtensions.Utilities.Button
 
             foreach (var field in fields)
             {
+                // Skip non-serialized fields — same visibility rules as Unity's Inspector
+                if (!IsSerializedField(field)) continue;
+        
                 var value = field.GetValue(target);
                 if (value == null) continue;
 
@@ -89,6 +92,15 @@ namespace DNExtensions.Utilities.Button
                     DrawButtonsForNestedInstance(value, field.Name, 0, 1);
                 }
             }
+        }
+        
+        private bool IsSerializedField(FieldInfo field)
+        {
+            if (field.IsPublic && field.GetCustomAttribute<NonSerializedAttribute>() == null)
+                return true;
+            if (!field.IsPublic && field.GetCustomAttribute<SerializeField>() != null)
+                return true;
+            return false;
         }
 
         /// <summary>

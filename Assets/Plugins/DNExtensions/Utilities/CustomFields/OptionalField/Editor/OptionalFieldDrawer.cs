@@ -1,7 +1,8 @@
-﻿using UnityEditor;
+﻿using System.Reflection;
+using UnityEditor;
 using UnityEngine;
 
-namespace DNExtensions.Utilities.CustomFields.Editor
+namespace DNExtensions.Utilities.CustomFields
 {
     [CustomPropertyDrawer(typeof(OptionalField<>))]
     public class OptionalFieldDrawer : PropertyDrawer
@@ -20,7 +21,7 @@ namespace DNExtensions.Utilities.CustomFields.Editor
                 EditorGUI.LabelField(position, label.text, "OptionalField property not found");
                 return;
             }
-            
+
             HandleContextMenu(position, property, hideValueProp);
 
             EditorGUI.BeginProperty(position, label, property);
@@ -28,27 +29,50 @@ namespace DNExtensions.Utilities.CustomFields.Editor
             var labelRect = EditorGUI.PrefixLabel(position, label);
             var toggleRect = new Rect(labelRect.x, labelRect.y, ToggleWidth, labelRect.height);
             var valueRect = new Rect(labelRect.x + ToggleWidth + Spacing, labelRect.y, labelRect.width - ToggleWidth - Spacing, labelRect.height);
-            
+
             EditorGUI.BeginChangeCheck();
             bool newIsSet = EditorGUI.Toggle(toggleRect, isSetProp.boolValue);
             if (EditorGUI.EndChangeCheck())
-            {
                 isSetProp.boolValue = newIsSet;
-            }
-            
-            var shouldHide = hideValueProp.boolValue && !isSetProp.boolValue;
-            
+
+            bool shouldHide = hideValueProp.boolValue && !isSetProp.boolValue;
+
             if (!shouldHide)
             {
                 var wasEnabled = GUI.enabled;
                 GUI.enabled = isSetProp.boolValue;
-                EditorGUI.PropertyField(valueRect, valueProp, GUIContent.none);
+                DrawValue(valueRect, valueProp, property);
                 GUI.enabled = wasEnabled;
             }
 
             EditorGUI.EndProperty();
         }
-        
+
+        private void DrawValue(Rect rect, SerializedProperty valueProp, SerializedProperty property)
+        {
+            var resolvedField = ConditionalAttributeEvaluator.GetFieldInfo(property);
+            var range = resolvedField?.GetCustomAttribute<RangeAttribute>();
+
+            if (range != null)
+            {
+                var valueField = ConditionalAttributeEvaluator.GetFieldInfo(valueProp);
+                var type = valueField?.FieldType ?? resolvedField?.FieldType?.GenericTypeArguments?[0];
+
+                if (type == typeof(float))
+                {
+                    valueProp.floatValue = EditorGUI.Slider(rect, valueProp.floatValue, range.min, range.max);
+                    return;
+                }
+                if (type == typeof(int))
+                {
+                    valueProp.intValue = EditorGUI.IntSlider(rect, valueProp.intValue, (int)range.min, (int)range.max);
+                    return;
+                }
+            }
+
+            EditorGUI.PropertyField(rect, valueProp, GUIContent.none);
+        }
+
         private void HandleContextMenu(Rect position, SerializedProperty property, SerializedProperty hideValueProp)
         {
             Event current = Event.current;

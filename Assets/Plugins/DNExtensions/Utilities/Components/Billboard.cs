@@ -6,7 +6,7 @@ namespace DNExtensions.Utilities
     /// <summary>
     /// Makes the GameObject always face the camera and optionally scales it based on distance to camera
     /// </summary>
-    [AddComponentMenu("DNExtensions/Billboard")]
+    [AddComponentMenu("DNExtensions/Billboard", -1000)]
     public class Billboard : MonoBehaviour
     {
         [Header("Rotation Settings")]

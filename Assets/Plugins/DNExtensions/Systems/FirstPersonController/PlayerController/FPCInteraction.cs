@@ -1,4 +1,4 @@
-using System;
+
 using DNExtensions.Systems.FirstPersonController.Interactable;
 using DNExtensions.Utilities;
 using DNExtensions.Utilities.AutoGet;
@@ -10,19 +10,20 @@ namespace DNExtensions.Systems.FirstPersonController
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(FpcManager))]
+    [AddComponentMenu("")]
     public class FPCInteraction : MonoBehaviour
     {
-        [Header("Interaction Settings")]
+        [Header("Interaction")]
         [SerializeField] private float interactionRadius = 3f;
         [SerializeField] private LayerMask interactionLayer = 0;
         
-        [Header("Held Object Settings")]
+        [Header("Held Object")]
         [SerializeField] private float autoDropYOffset = 1f;
         [SerializeField, MinMaxRange(0,30)] private RangedFloat throwForceRange = new RangedFloat(5f, 15f);
         [SerializeField, MinMaxRange(1f,4f)] private RangedFloat throwHeldRange = new RangedFloat(1f, 4f);
         
         [Header("References")]
-        [SerializeField, AutoGetSelf] private FpcManager manager;
+        [SerializeField, AutoGetSelf, HideInInspector] private FpcManager manager;
         [SerializeField] private Transform holdPosition;
         [SerializeField] private Transform interactionPosition;
         

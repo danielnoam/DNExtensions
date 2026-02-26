@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5200880495717942815}
   - component: {fileID: 5011551182391108008}
   - component: {fileID: 2448414345375932289}
+  - component: {fileID: 7817275442804487995}
   m_Layer: 0
   m_Name: InputManager
   m_TagString: Untagged
@@ -79,3 +80,24 @@ MonoBehaviour:
   hideCursor: 1
   keyboardMouseSpriteAsset: {fileID: 0}
   gamepadSpriteAsset: {fileID: 0}
+--- !u!114 &7817275442804487995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8740322271248105233}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dffa83163bd4a041ab121b85dd1ac55, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.ControllerRumble.ControllerRumbleListener
+  playerInput: {fileID: 5011551182391108008}
+  lowFrequencyRange:
+    minValue: 0
+    maxValue: 1
+  highFrequencyRange:
+    minValue: 0
+    maxValue: 1
+  fakeGamepad: 0
+  drawInformation: 0

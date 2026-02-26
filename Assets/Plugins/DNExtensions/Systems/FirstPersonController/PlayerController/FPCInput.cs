@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 namespace DNExtensions.Systems.FirstPersonController
 {
     [DisallowMultipleComponent]
+    [AddComponentMenu("")]
     public class FPCInput : InputReaderBase
     {
         private InputActionMap _playerActionMap;
@@ -28,6 +29,9 @@ namespace DNExtensions.Systems.FirstPersonController
         public event Action<InputAction.CallbackContext> OnDropAction;
         public event Action<InputAction.CallbackContext> OnToggleMenuAction;
 
+        
+        public Vector2 MoveInput { get; private set; }
+        public bool RunInput { get; private set; }
 
         private void Awake()
         {
@@ -93,41 +97,35 @@ namespace DNExtensions.Systems.FirstPersonController
 
         private void OnMove(InputAction.CallbackContext context)
         {
+            MoveInput = context.ReadValue<Vector2>();
             OnMoveAction?.Invoke(context);
         }
         
         private void OnLook(InputAction.CallbackContext context)
         {
-           
-
             OnLookAction?.Invoke(context);
         }
         
         private void OnJump(InputAction.CallbackContext context)
         {
-           
-
+            
             OnJumpAction?.Invoke(context);
         }
         
         private void OnRun(InputAction.CallbackContext context)
         {
-           
-
+            RunInput = context.ReadValueAsButton();
             OnRunAction?.Invoke(context);
         }
         
         
         private void OnInteract(InputAction.CallbackContext context)
         {
-           
-
             OnInteractAction?.Invoke(context);
         }
         
         private void OnThrow(InputAction.CallbackContext context)
         {
-
             OnThrowAction?.Invoke(context);
         }
         

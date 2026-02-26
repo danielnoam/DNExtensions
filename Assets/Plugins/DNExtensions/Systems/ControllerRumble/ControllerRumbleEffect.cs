@@ -54,7 +54,7 @@ namespace DNExtensions.Systems.ControllerRumble
 
         public void Update(float deltaTime)
         {
-            ElapsedTime += deltaTime;
+            if (!IsContinuous) ElapsedTime += deltaTime;
         }
     }
     

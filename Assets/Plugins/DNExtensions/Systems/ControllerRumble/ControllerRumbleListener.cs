@@ -12,13 +12,14 @@ namespace DNExtensions.Systems.ControllerRumble
     /// <summary>
     /// Listens for rumble effects from connected ControllerRumbleSources and processes them to control gamepad haptics.
     /// </summary>
+    [AddComponentMenu("DNExtensions/Controller Rumble/Controller Rumble Listener")]
     public class ControllerRumbleListener : MonoBehaviour, IDualShockHaptics
     {
         [Header("Settings")]
         [SerializeField, AutoGetScene] private PlayerInput playerInput;
         [SerializeField, MinMaxRange(0f,1f)] private RangedFloat lowFrequencyRange = new RangedFloat(0, 1f);
         [SerializeField, MinMaxRange(0f,1f)] private RangedFloat highFrequencyRange = new RangedFloat(0, 1f);
-
+        
         [Header("Debug")]
         [SerializeField] private bool fakeGamepad;
         [SerializeField] private bool drawInformation;
@@ -35,17 +36,16 @@ namespace DNExtensions.Systems.ControllerRumble
 
         public int ActiveEffects => _activeRumbleEffects.Count;
 
-        private void OnValidate()
+
+        private void Awake()
         {
             if (!playerInput)
             {
-                if (TryGetComponent(out PlayerInput inputComponent))
-                {
-                    playerInput = inputComponent;
-                }
-            };
+                playerInput = FindFirstObjectByType<PlayerInput>();
+                if (!playerInput) enabled = false;
+            }
         }
-        
+
 
         private void OnEnable()
         {
@@ -89,6 +89,8 @@ namespace DNExtensions.Systems.ControllerRumble
             }
             else
             {
+                ResetHaptics();
+                SetLightBarColor(Color.clear);
                 _gamepad = null;
                 _dualShockGamepad = null;
             }
@@ -157,8 +159,8 @@ namespace DNExtensions.Systems.ControllerRumble
                     _motorsActive = true;
                 }
                 
-                CurrentCombinedLow = Mathf.Clamp01(combinedLow);;
-                CurrentCombinedHigh =  Mathf.Clamp01(combinedHigh);
+                CurrentCombinedLow = lowFrequencyRange.Clamp(combinedLow);
+                CurrentCombinedHigh =  highFrequencyRange.Clamp(combinedHigh);
 
                 SetMotorSpeeds(CurrentCombinedLow, CurrentCombinedHigh);
             }
@@ -307,41 +309,30 @@ namespace DNExtensions.Systems.ControllerRumble
 
         
         
+#if UNITY_EDITOR
+        private GUIStyle _gizmoHeaderStyle;
+        private GUIStyle _gizmoNormalStyle;
+        
         private void OnDrawGizmos()
         {
             if (!drawInformation) return;
-            #if UNITY_EDITOR
             
-            
-            
-            
-            var headerStyle = new GUIStyle
+            _gizmoHeaderStyle ??= new GUIStyle
             {
                 fontSize = 12,
-                normal =
-                {
-                    textColor = Color.white
-                }
-                ,
-                alignment = TextAnchor.MiddleCenter
-                ,
-                fontStyle = FontStyle.Bold
-                
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = Color.white }
             };
-            var normalStyle = new GUIStyle
+    
+            _gizmoNormalStyle ??= new GUIStyle
             {
                 fontSize = 12,
-                normal =
-                {
-                    textColor = Color.white
-                }
-                ,
-                alignment = TextAnchor.MiddleCenter
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = Color.white }
             };
             
-            
-            
-            Handles.Label(transform.position + Vector3.up * 1f, $"Rumble Listener",headerStyle);
+            Handles.Label(transform.position + Vector3.up * 1f, $"Rumble Listener", _gizmoHeaderStyle);
 
 
             foreach (var rumbleSource in _rumbleSources)
@@ -352,23 +343,22 @@ namespace DNExtensions.Systems.ControllerRumble
                 if (rumbleSource.Is3DSource)
                 {
                     Gizmos.color = Color.green;
-                    Handles.Label(rumbleSource.transform.position + Vector3.up * rumbleSource.MinDistance * 1.3f, $"Rumble Source 3D",headerStyle);
+                    Handles.Label(rumbleSource.transform.position + Vector3.up * rumbleSource.MinDistance * 1.3f, $"Rumble Source 3D", _gizmoHeaderStyle);
                     Gizmos.DrawWireSphere(rumbleSource.transform.position, rumbleSource.MaxDistance);
-                    Handles.Label(rumbleSource.transform.position + Vector3.up * rumbleSource.MaxDistance, $"Full distance {rumbleSource.MaxDistance}",normalStyle);
+                    Handles.Label(rumbleSource.transform.position + Vector3.up * rumbleSource.MaxDistance, $"Full distance {rumbleSource.MaxDistance}",_gizmoNormalStyle);
                     Gizmos.color = Color.red;
                     Gizmos.DrawWireSphere(rumbleSource.transform.position, rumbleSource.MinDistance);
-                    Handles.Label(rumbleSource.transform.position + Vector3.up * rumbleSource.MinDistance, $"Min distance {rumbleSource.MinDistance}", normalStyle);
+                    Handles.Label(rumbleSource.transform.position + Vector3.up * rumbleSource.MinDistance, $"Min distance {rumbleSource.MinDistance}", _gizmoNormalStyle);
                 }
                 else
                 {
-                    Handles.Label(rumbleSource.transform.position + Vector3.up * 1f, $"Rumble Source",headerStyle);
+                    Handles.Label(rumbleSource.transform.position + Vector3.up * 1f, $"Rumble Source",_gizmoHeaderStyle);
                 }
             }
-            
-            
-            #endif
-
         }
+        
+                    
+#endif
         
     }
 }

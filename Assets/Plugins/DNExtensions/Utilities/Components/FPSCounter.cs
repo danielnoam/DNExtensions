@@ -6,7 +6,7 @@ namespace DNExtensions.Utilities
     /// Displays FPS counter in screen overlay without requiring UI setup
     /// </summary>
     ///
-    [AddComponentMenu("DNExtensions/FPS Counter")]
+    [AddComponentMenu("DNExtensions/FPS Counter", -1000)]
     public class FPSCounter : MonoBehaviour
     {
         [SerializeField] private bool editorOnly;

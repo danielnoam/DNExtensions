@@ -12,7 +12,7 @@ namespace DNExtensions.Utilities
 
     [ExecuteInEditMode]
     [DisallowMultipleComponent]
-    [AddComponentMenu("DNExtensions/TubeRenderer")]
+    [AddComponentMenu("DNExtensions/TubeRenderer", -1000)]
     public class TubeRenderer : MonoBehaviour
     {
         [SerializeField] private int sides = 8;

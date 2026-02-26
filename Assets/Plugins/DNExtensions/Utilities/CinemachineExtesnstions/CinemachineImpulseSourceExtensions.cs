@@ -16,9 +16,8 @@ namespace DNExtensions.Utilities.CinemachineExtensions
         /// <param name="settings">The impulse settings to use</param>
         public static void GenerateImpulse(this CinemachineImpulseSource source, ImpulseSettings settings)
         {
-            if (source == null || settings == null) return;
-
-            // Create a temporary impulse definition with the settings
+            if (!source || settings == null) return;
+            
             var impulseDefinition = new CinemachineImpulseDefinition
             {
                 ImpulseChannel = settings.impulseChannel,
@@ -30,14 +29,9 @@ namespace DNExtensions.Utilities.CinemachineExtensions
                 PropagationSpeed = settings.propagationSpeed
             };
 
-       
-            // Apply velocity
+            
             Vector3 velocity = settings.velocity;
-
-            // Apply intensity multiplier
             velocity *= settings.intensity;
-
-            // Create the impulse event
             impulseDefinition.CreateEvent(source.transform.position, velocity);
         }
     }
@@ -67,11 +61,8 @@ namespace DNExtensions.Utilities.CinemachineExtensions
         {
         }
 
-        public ImpulseSettings(
-            CinemachineImpulseDefinition.ImpulseShapes shape,
-            float duration,
-            float intensity,
-            Vector3 velocity) {
+        public ImpulseSettings(CinemachineImpulseDefinition.ImpulseShapes shape, float duration, float intensity, Vector3 velocity) 
+        {
             this.impulseShape = shape;
             this.duration = duration;
             this.intensity = intensity;

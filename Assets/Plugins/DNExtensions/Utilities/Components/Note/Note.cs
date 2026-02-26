@@ -13,7 +13,7 @@ namespace DNExtensions.Utilities
     /// Notes are displayed in the inspector and optionally in the scene view via gizmos.
     /// </summary>
     [ExecuteInEditMode]
-    [AddComponentMenu("DNExtensions/Note")]
+    [AddComponentMenu("DNExtensions/Note", -1000)]
     [DisallowMultipleComponent]
     public class Note : MonoBehaviour
     {

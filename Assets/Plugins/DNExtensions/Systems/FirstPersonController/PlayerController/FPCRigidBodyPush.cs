@@ -4,6 +4,7 @@ using UnityEngine;
 namespace DNExtensions.Systems.FirstPersonController
 {
     [DisallowMultipleComponent]
+    [AddComponentMenu("")]
     public class FPCRigidBodyPush : MonoBehaviour
     {
         [Header("Settings")]
