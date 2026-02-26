@@ -13,6 +13,7 @@ namespace DNExtensions.Systems.FirstPersonController
         private InputAction _moveAction;
         private InputAction _lookAction;
         private InputAction _jumpAction;
+        private InputAction _crouchAction;
         private InputAction _runAction;
         private InputAction _interactAction;
         private InputAction _throwAction;
@@ -24,14 +25,18 @@ namespace DNExtensions.Systems.FirstPersonController
         public event Action<InputAction.CallbackContext> OnLookAction;
         public event Action<InputAction.CallbackContext> OnJumpAction;
         public event Action<InputAction.CallbackContext> OnRunAction;
+        public event Action<InputAction.CallbackContext> OnCrouchAction;
         public event Action<InputAction.CallbackContext> OnInteractAction;
         public event Action<InputAction.CallbackContext> OnThrowAction;
         public event Action<InputAction.CallbackContext> OnDropAction;
         public event Action<InputAction.CallbackContext> OnToggleMenuAction;
 
+        [SerializeField] private bool toggleRun;
+        [SerializeField] private bool toggleCrouch = true;
         
         public Vector2 MoveInput { get; private set; }
         public bool RunInput { get; private set; }
+        public bool ToggleCrouch => toggleCrouch;
 
         private void Awake()
         {
@@ -48,6 +53,7 @@ namespace DNExtensions.Systems.FirstPersonController
             _lookAction = _playerActionMap.FindAction("Look");
             _jumpAction = _playerActionMap.FindAction("Jump");
             _runAction = _playerActionMap.FindAction("Run");
+            _crouchAction = _playerActionMap.FindAction("Crouch");
             _interactAction = _playerActionMap.FindAction("Interact");
             _throwAction = _playerActionMap.FindAction("Throw");
             _dropAction = _playerActionMap.FindAction("Drop");
@@ -57,6 +63,7 @@ namespace DNExtensions.Systems.FirstPersonController
             if (_lookAction == null) Debug.LogError("Look action not found in Player Action Map.");
             if (_jumpAction == null) Debug.LogError("Jump action not found in Player Action Map.");
             if (_runAction == null) Debug.LogError("Run action not found in Player Action Map.");
+            if (_crouchAction == null) Debug.LogError("Crouch action not found in Player Action Map.");
             if (_interactAction == null) Debug.LogError("Interact action not found in Player Action Map.");
             if (_throwAction == null) Debug.LogError("Throw action not found in Player Action Map.");
             if (_dropAction == null) Debug.LogError("Drop action not found in Player Action Map.");
@@ -72,6 +79,7 @@ namespace DNExtensions.Systems.FirstPersonController
             SubscribeToAction(_moveAction, OnMove);
             SubscribeToAction(_lookAction, OnLook);
             SubscribeToAction(_jumpAction, OnJump);
+            SubscribeToAction(_crouchAction, OnCrouch);
             SubscribeToAction(_runAction, OnRun);
             SubscribeToAction(_interactAction, OnInteract);
             SubscribeToAction(_throwAction, OnThrow);
@@ -86,13 +94,13 @@ namespace DNExtensions.Systems.FirstPersonController
             UnsubscribeFromAction(_moveAction, OnMove);
             UnsubscribeFromAction(_lookAction, OnLook);
             UnsubscribeFromAction(_jumpAction, OnJump);
+            UnsubscribeFromAction(_crouchAction, OnCrouch);
             UnsubscribeFromAction(_runAction, OnRun);
             UnsubscribeFromAction(_interactAction, OnInteract);
             UnsubscribeFromAction(_throwAction, OnThrow);
             UnsubscribeFromAction(_dropAction, OnDrop);
             UnsubscribeFromAction(_toggleMenu, OnToggleMenu);
         }
-
         
 
         private void OnMove(InputAction.CallbackContext context)
@@ -112,9 +120,23 @@ namespace DNExtensions.Systems.FirstPersonController
             OnJumpAction?.Invoke(context);
         }
         
+        private void OnCrouch(InputAction.CallbackContext context)
+        {
+            if (toggleCrouch)
+            {
+                if (context.phase == InputActionPhase.Started)
+                {
+                    OnCrouchAction?.Invoke(context);
+                }
+            }
+            else
+            {
+                OnCrouchAction?.Invoke(context);
+            }
+        }
         private void OnRun(InputAction.CallbackContext context)
         {
-            RunInput = context.ReadValueAsButton();
+            RunInput = toggleRun ? (context.phase == InputActionPhase.Started ? !RunInput : RunInput) : context.ReadValueAsButton();
             OnRunAction?.Invoke(context);
         }
         

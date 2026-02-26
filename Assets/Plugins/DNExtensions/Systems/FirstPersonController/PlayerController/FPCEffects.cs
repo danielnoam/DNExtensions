@@ -1,8 +1,6 @@
 ﻿using DNExtensions.Systems.ControllerRumble;
-using DNExtensions.Systems.MenuSystem;
 using DNExtensions.Utilities;
 using DNExtensions.Utilities.AutoGet;
-using DNExtensions.Utilities.CinemachineExtensions;
 using UnityEngine;
 
 namespace DNExtensions.Systems.FirstPersonController
@@ -45,10 +43,6 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField] private bool enableLandingRumble = true;
         [SerializeField] private ControllerRumbleEffectSettings landingRumble = new ControllerRumbleEffectSettings(0.5f, 0.7f, 0.2f);
         
-        [Header("Land Shake")]
-        [Tooltip("Enables camera shake on landing")]
-        [SerializeField] private bool enableLandShake = true;
-        [SerializeField] private ImpulseSettings landImpulse = new ImpulseSettings();
         [SerializeField, AutoGetSelf, HideInInspector] private FpcManager manager;
 
         private float _baseFov;
@@ -82,12 +76,12 @@ namespace DNExtensions.Systems.FirstPersonController
 
         private void OnEnable()
         {
-            manager.FpcMovement.OnLanded += OnLanded;
+            manager.FpcLocomotion.OnLanded += OnLanded;
         }
 
         private void OnDisable()
         {
-            manager.FpcMovement.OnLanded -= OnLanded;
+            manager.FpcLocomotion.OnLanded -= OnLanded;
         }
 
         private void OnLanded(float landVelocity)
@@ -104,8 +98,6 @@ namespace DNExtensions.Systems.FirstPersonController
 
                 KickCamera(impact, impact, Vector3.down, Vector3.right, fallKickDuration);
             }
-            
-            // if (enableLandShake) manager.ImpactReceiver?.GenerateImpact(landImpulse);
         }
 
         private void Update()
@@ -130,7 +122,7 @@ namespace DNExtensions.Systems.FirstPersonController
         {
             if (!enableFov) return;
 
-            float targetFov = _baseFov * (manager.FpcMovement.IsRunning ? runFovMultiplier : 1f);
+            float targetFov = _baseFov * (manager.FpcLocomotion.IsRunning ? runFovMultiplier : 1f);
 
             manager.FpcCamera.Cam.Lens.FieldOfView = Mathf.Lerp(
                 manager.FpcCamera.Cam.Lens.FieldOfView,
@@ -143,15 +135,15 @@ namespace DNExtensions.Systems.FirstPersonController
         {
             if (!enableHeadbob) return;
 
-            bool isMoving = manager.FpcMovement.IsGrounded && manager.FpcInput.MoveInput.sqrMagnitude > 0.01f;
+            bool isMoving = manager.FpcLocomotion.IsGrounded && manager.FpcInput.MoveInput.sqrMagnitude > 0.01f;
 
             float targetAmplitude = 0f;
             float frequency = bobFrequency;
 
             if (isMoving)
             {
-                targetAmplitude = manager.FpcMovement.IsRunning ? bobAmplitudeRun : bobAmplitudeWalk;
-                frequency = bobFrequency * (manager.FpcMovement.IsRunning ? 1.5f : 1f);
+                targetAmplitude = manager.FpcLocomotion.IsRunning ? bobAmplitudeRun : bobAmplitudeWalk;
+                frequency = bobFrequency * (manager.FpcLocomotion.IsRunning ? 1.5f : 1f);
             }
 
             _bobAmplitude = Mathf.SmoothDamp(_bobAmplitude, targetAmplitude, ref _bobAmplitudeVelocity, 1f / bobSmoothing);
@@ -172,7 +164,7 @@ namespace DNExtensions.Systems.FirstPersonController
                 return;
             }
 
-            Vector3 velocity = manager.FpcMovement.Velocity;
+            Vector3 velocity = manager.FpcLocomotion.Velocity;
 
             float targetRoll = Vector3.Dot(velocity, transform.right) * -rollTilt;
             float targetPitch = Vector3.Dot(velocity, transform.forward) * pitchTilt;

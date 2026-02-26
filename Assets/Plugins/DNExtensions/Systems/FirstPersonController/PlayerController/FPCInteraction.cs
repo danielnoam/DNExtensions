@@ -27,12 +27,9 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField] private Transform holdPosition;
         [SerializeField] private Transform interactionPosition;
         
-        [Header("Debug")]
-        [SerializeField] private bool drawInformation;
-        [SerializeField, ReadOnly] private PickableObject heldObject;
-        
-        private IInteractable _closestInteractable;
 
+        private PickableObject _heldObject;
+        private IInteractable _closestInteractable;
         private bool _throwInputHeld;
         private float _throwInputHoldTime;
         
@@ -40,18 +37,18 @@ namespace DNExtensions.Systems.FirstPersonController
 
         public PickableObject HeldObject
         {
-            get => heldObject;
+            get => _heldObject;
             set
             {
-                if (heldObject == value) return;
+                if (_heldObject == value) return;
 
-                if (heldObject)
+                if (_heldObject)
                 {
-                    heldObject.Drop();
-                    heldObject = null;
+                    _heldObject.Drop();
+                    _heldObject = null;
                 }
                 
-                heldObject = value;
+                _heldObject = value;
             }
         }
 
@@ -122,24 +119,24 @@ namespace DNExtensions.Systems.FirstPersonController
 
         private void ThrowHeldObject()
         {
-            if (!heldObject) return;
+            if (!_heldObject) return;
             
             var force = throwForceRange.Lerp(_throwInputHoldTime / throwHeldRange.maxValue);
-            heldObject.Throw(manager.FpcCamera.GetAimDirection(), force);
-            heldObject = null;
+            _heldObject.Throw(manager.FpcCamera.GetAimDirection(), force);
+            _heldObject = null;
         }
 
         private void DropHeldObject()
         {
-            heldObject?.Drop();
-            heldObject = null;
+            _heldObject?.Drop();
+            _heldObject = null;
         }
 
         private void CheckHeldObjectHeight()
         {
-            if (!heldObject) return;
+            if (!_heldObject) return;
             
-            if (heldObject.transform.position.y < (transform.position.y - autoDropYOffset))
+            if (_heldObject.transform.position.y < (transform.position.y - autoDropYOffset))
             {
                 DropHeldObject();
             }
@@ -147,7 +144,7 @@ namespace DNExtensions.Systems.FirstPersonController
 
         private void UpdateHeldInputTime()
         {
-            if (!heldObject) return;
+            if (!_heldObject) return;
             
             if (_throwInputHeld && _throwInputHoldTime < throwHeldRange.maxValue)
             {
@@ -187,13 +184,9 @@ namespace DNExtensions.Systems.FirstPersonController
         }
         
 
-
-        private void OnDrawGizmos()
-        {
-            if (!drawInformation) return;
-            
 #if UNITY_EDITOR
-
+        private void OnDrawGizmosSelected()
+        {
             if (interactionPosition)
             {
                 Gizmos.color = Color.yellow;
@@ -210,9 +203,8 @@ namespace DNExtensions.Systems.FirstPersonController
             Gizmos.DrawWireSphere(transform.position.RemoveY(autoDropYOffset), 0.1f);
             Handles.Label(transform.position.RemoveY(autoDropYOffset), "Auto drop distance");
             
-#endif
+
         }
-
-
+#endif
     }
 }

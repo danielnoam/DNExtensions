@@ -10,13 +10,23 @@ namespace DNExtensions.Systems.FirstPersonController
     [DisallowMultipleComponent]
     [RequireComponent(typeof(FpcManager))]
     [AddComponentMenu("")]
-    public class FPCMovement : MonoBehaviour
+    public class FPCLocomotion : MonoBehaviour
     {
         [Header("Movement")]
         [SerializeField] private float walkSpeed = 8f;
-        [SerializeField] private bool canRun = true;
-        [SerializeField, ShowIf("canRun")] private float runSpeed = 12f;
         [SerializeField] private float gravity = -15f;
+        [SerializeField] private LayerMask collisionLayers = 0;
+        
+        [Header("Run")]
+        [SerializeField] private bool canRun = true;
+        [SerializeField] private bool allowCrouchRun = true;
+        [SerializeField, ShowIf("canRun")] private float runSpeed = 12f;
+        
+        [Header("Crouch")]
+        [SerializeField] private bool canCrouch = true;
+        [SerializeField] private float crouchSpeedMultiplier = 0.5f;
+        [SerializeField] private float crouchHeight = 0.5f;
+        [SerializeField] private Vector3 crouchColliderCenter = new Vector3(0, 0.25f, 0);
         
         [Header("Jump")]
         [SerializeField] private float jumpForce = 1.5f;
@@ -24,33 +34,44 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField] private float coyoteTime = 0.1f;
         [SerializeField, AutoGetSelf, HideInInspector] private FpcManager manager;
 
+        private const float StandingHeightPadding = 0.05f;
         
+        private float _standingHeight;
+        private float _standingHeadY;
+        private Vector3 _standingColliderCenter;
         private Vector3 _velocity;
-        private Vector3 _dashDirection;
-        private float _dashTimeRemaining;
-        private float _dashCooldownRemaining;
         private float _jumpBufferCounter;
         private float _coyoteTimeCounter;
         private bool _wasGrounded;
         
 
         public bool IsGrounded { get; private set; }
-        public bool IsJumping { get; private set; }
+        public bool IsCrouching { get; private set; }
         public bool IsFalling { get; private set; }
         
-        public bool IsRunning => manager.FpcInput.RunInput && canRun;
+        public bool IsRunning => manager.FpcInput.RunInput && canRun && (!IsCrouching || allowCrouchRun);
         public Vector3 Velocity => _velocity;
-        
+
+        public event Action OnJump;
         public event Action<float> OnLanded;
+
+        private void Awake()
+        {
+            _standingColliderCenter = manager.CharacterController.center;
+            _standingHeight = manager.CharacterController.height;
+            _standingHeadY = _standingColliderCenter.y + _standingHeight / 2f;
+        }
 
         private void OnEnable()
         {
-            manager.FpcInput.OnJumpAction += GetJumpInput;
+            manager.FpcInput.OnJumpAction += OnJumpInput;
+            manager.FpcInput.OnCrouchAction += OnCrouchInput;
         }
 
         private void OnDisable()
         {
-            manager.FpcInput.OnJumpAction -= GetJumpInput;
+            manager.FpcInput.OnJumpAction -= OnJumpInput;
+            manager.FpcInput.OnCrouchAction -= OnCrouchInput;
         }
         
         private void Update()
@@ -65,7 +86,7 @@ namespace DNExtensions.Systems.FirstPersonController
         }
         
             
-        private void GetJumpInput(InputAction.CallbackContext context)
+        private void OnJumpInput(InputAction.CallbackContext context)
         {
             if (context.phase == InputActionPhase.Started)
             {
@@ -73,6 +94,44 @@ namespace DNExtensions.Systems.FirstPersonController
             }
         }
         
+        private void OnCrouchInput(InputAction.CallbackContext context)
+        {
+            if (!canCrouch) return;
+
+            if (context.phase == InputActionPhase.Started)
+            {
+                if (IsCrouching) TryStand();
+                else Crouch();
+            }
+            else if (context.phase == InputActionPhase.Canceled && !manager.FpcInput.ToggleCrouch)
+            {
+                TryStand();
+            }
+        }
+        
+        private void Crouch()
+        {
+            manager.CharacterController.height = crouchHeight;
+            manager.CharacterController.center = crouchColliderCenter;
+            IsCrouching = true;
+        }
+
+        private bool TryStand()
+        {
+            float crouchHeadY = manager.CharacterController.center.y + manager.CharacterController.height / 2f;
+            float rayLength = _standingHeadY - crouchHeadY + StandingHeightPadding;
+            Vector3 rayOrigin = transform.position + Vector3.up * crouchHeadY;
+
+            if (Physics.Raycast(rayOrigin, Vector3.up, rayLength, collisionLayers))
+            {
+                return false;
+            }
+
+            manager.CharacterController.height = _standingHeight;
+            manager.CharacterController.center = _standingColliderCenter;
+            IsCrouching = false;
+            return true;
+        }
 
         private void HandleMovement()
         {
@@ -83,6 +142,12 @@ namespace DNExtensions.Systems.FirstPersonController
             Vector3 moveDir = (cameraForward * manager.FpcInput.MoveInput.y + cameraRight * manager.FpcInput.MoveInput.x).normalized;
             
             float targetMoveSpeed = IsRunning ? runSpeed : walkSpeed;
+            
+            if (IsCrouching)
+            {
+                targetMoveSpeed *= crouchSpeedMultiplier;
+            }
+            
             if (manager.FpcInteraction.HeldObject)
             {
                 targetMoveSpeed /= manager.FpcInteraction.HeldObject.ObjectWeight;
@@ -106,6 +171,7 @@ namespace DNExtensions.Systems.FirstPersonController
                 _velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
                 _jumpBufferCounter = 0f;
                 _coyoteTimeCounter = 0f;
+                OnJump?.Invoke();
             }
 
             _velocity.y += gravity * Time.deltaTime;
@@ -140,6 +206,18 @@ namespace DNExtensions.Systems.FirstPersonController
                 _coyoteTimeCounter -= Time.deltaTime;
             }
 
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (canCrouch && IsCrouching)
+            {
+                float crouchHeadY = crouchColliderCenter.y + crouchHeight / 2f;
+                float rayLength = _standingHeadY - crouchHeadY + StandingHeightPadding;
+
+                Gizmos.color = Color.red;
+                Gizmos.DrawRay(transform.position + Vector3.up * crouchHeadY, Vector3.up * rayLength);
+            }
         }
     }
     

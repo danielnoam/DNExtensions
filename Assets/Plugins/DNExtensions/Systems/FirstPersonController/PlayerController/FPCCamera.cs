@@ -17,10 +17,17 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField] private Vector2 verticalAxisRange = new(-90, 90);
         [SerializeField] private bool invertHorizontal;
         [SerializeField] private bool invertVertical;
+        
+        [Header("Crouch")]
+        [SerializeField] private float crouchHeadHeight = 0.2f;
+        [SerializeField] private float crouchHeadTransitionSpeed = 10f;
+        
+        [Header("References")]
         [SerializeField] private Transform head;
         [SerializeField, AutoGetChildren] private CinemachineCamera cam;
         [SerializeField, AutoGetSelf, HideInInspector] private FpcManager manager;
 
+        private float _standingHeadHeight;
         private float _currentPanAngle;
         private float _currentTiltAngle;
         private float _targetPanAngle;
@@ -35,6 +42,7 @@ namespace DNExtensions.Systems.FirstPersonController
 
         private void Awake()
         {
+            _standingHeadHeight = head.localPosition.y;
             _currentPanAngle = transform.eulerAngles.y;
             _currentTiltAngle = head.localEulerAngles.x;
             _targetPanAngle = _currentPanAngle;
@@ -55,6 +63,7 @@ namespace DNExtensions.Systems.FirstPersonController
         {
             HandleLookInput();
             UpdateHeadRotation();
+            UpdateHeadHeight();
         }
 
         private void OnLook(InputAction.CallbackContext context)
@@ -89,6 +98,14 @@ namespace DNExtensions.Systems.FirstPersonController
                 _currentPanAngle = _targetPanAngle;
                 _currentTiltAngle = _targetTiltAngle;
             }
+        }
+        
+        private void UpdateHeadHeight()
+        {
+            float targetY = manager.FpcLocomotion.IsCrouching ? crouchHeadHeight : _standingHeadHeight;
+            Vector3 pos = head.localPosition;
+            pos.y = Mathf.Lerp(pos.y, targetY, Time.deltaTime * crouchHeadTransitionSpeed);
+            head.localPosition = pos;
         }
 
         private void UpdateHeadRotation()
