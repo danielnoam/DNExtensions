@@ -13,7 +13,7 @@ namespace DNExtensions.Systems.AudioLibrary
     public class AudioPlayer : MonoBehaviour
     {
         
-        [SerializeField, AudioID] private string audioID = string.Empty;
+        [SerializeField, AudioLibraryID] private string audioID = string.Empty;
         [SerializeField] private bool playOnStart;
         
         

@@ -33,7 +33,7 @@ namespace DNExtensions.Systems.ObjectPooling
         
             
         [Space(10)]
-        [Tooltip("Enable or disable the object pooling system")]
+        [Tooltip("Enables the system")]
         public bool enabled = true;
         [Tooltip("If no pool exists for an object, instantiate it instead of returning null")]
         [EnableIf("enabled")]

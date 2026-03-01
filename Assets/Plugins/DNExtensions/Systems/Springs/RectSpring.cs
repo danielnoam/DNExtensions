@@ -19,8 +19,6 @@ namespace DNExtensions.Systems.Springs
 
         [Header("Animation Triggers")]
         [SerializeField] private OnEnableBehavior onEnableBehavior = OnEnableBehavior.AnimateFromOffset;
-        [Tooltip("If true, the animation will only play the first time the object is enabled.")]
-        [SerializeField] private bool animateOnce;
         [Tooltip("If true, the UI will snap back to its original state when disabled.")]
         [SerializeField] private bool resetStateOnDisable = true;
 
@@ -51,7 +49,6 @@ namespace DNExtensions.Systems.Springs
         private Quaternion _baseRotation;
         private Color _baseColor;
         private bool _isInitialized;
-        private bool _hasAnimated;
 
         private void Awake()
         {
@@ -73,8 +70,7 @@ namespace DNExtensions.Systems.Springs
 
             if (color)
             {
-                _targetGraphic = GetComponent<Graphic>();
-                if (_targetGraphic)
+                if (TryGetComponent(out _targetGraphic))
                 {
                     _baseColor = _targetGraphic.color;
                     colorSpring.target = _baseColor;
@@ -86,23 +82,18 @@ namespace DNExtensions.Systems.Springs
 
         private void OnEnable()
         {
-            Initialize();
-            if (animateOnce && _hasAnimated) return;
 
             switch (onEnableBehavior)
             {
                 case OnEnableBehavior.Nothing: break;
                 case OnEnableBehavior.StartAtOffset:
                     SnapToOffset();
-                    _hasAnimated = true;
                     break;
                 case OnEnableBehavior.AnimateFromOffset:
                     AnimateFromOffset();
-                    _hasAnimated = true;
                     break;
                 case OnEnableBehavior.AnimateToOffset:
                     AnimateToOffset();
-                    _hasAnimated = true;
                     break;
             }
         }
@@ -113,26 +104,7 @@ namespace DNExtensions.Systems.Springs
 
             if (resetStateOnDisable)
             {
-                if (position)
-                {
-                    positionSpring.Reset(_baseAnchoredPosition);
-                    _rectTransform.anchoredPosition3D = _baseAnchoredPosition;
-                }
-                if (scale)
-                {
-                    scaleSpring.Reset(_baseScale);
-                    _rectTransform.localScale = _baseScale;
-                }
-                if (rotation)
-                {
-                    rotationSpring.Reset(_baseRotation);
-                    _rectTransform.localRotation = _baseRotation;
-                }
-                if (color && _targetGraphic)
-                {
-                    colorSpring.Reset(_baseColor);
-                    _targetGraphic.color = _baseColor;
-                }
+                SnapToBase();
             }
         }
 
@@ -162,6 +134,31 @@ namespace DNExtensions.Systems.Springs
             }
         }
 
+        [Button]
+        public void SnapToBase()
+        {
+            if (position)
+            {
+                positionSpring.Reset(_baseAnchoredPosition);
+                _rectTransform.anchoredPosition3D = _baseAnchoredPosition;
+            }
+            if (scale)
+            {
+                scaleSpring.Reset(_baseScale);
+                _rectTransform.localScale = _baseScale;
+            }
+            if (rotation)
+            {
+                rotationSpring.Reset(_baseRotation);
+                _rectTransform.localRotation = _baseRotation;
+            }
+            if (color && _targetGraphic)
+            {
+                colorSpring.Reset(_baseColor);
+                _targetGraphic.color = _baseColor;
+            }
+        }
+        
         [Button]
         public void SnapToOffset()
         {
@@ -225,7 +222,5 @@ namespace DNExtensions.Systems.Springs
             if (rotation) rotationSpring.Target = Quaternion.Euler(rotationOffset) * _baseRotation;
             if (color && _targetGraphic) colorSpring.target = _baseColor + colorOffset;
         }
-
-        public void ResetHasAnimated() => _hasAnimated = false;
     }
 }

@@ -6,7 +6,7 @@ namespace DNExtensions.Systems.ObjectPooling
     /// Automatically initializes the object pooling system at runtime.
     /// Runs before scene load to ensure pools are ready.
     /// </summary>
-    public static class ObjectPoolingRuntime
+    internal static class ObjectPoolingRuntime
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Initialize()
@@ -15,16 +15,7 @@ namespace DNExtensions.Systems.ObjectPooling
             
             ObjectPoolingSettings settings = ObjectPoolingSettings.Instance;
             
-            if (!settings)
-            {
-                // Debug.LogError("ObjectPoolingSettings not found in Resources folder! Create one via: Tools > DNExtensions > Object Pooling Settings");
-                return;
-            }
-            
-            if (!settings.enabled)
-            {
-                return;
-            }
+            if (!settings || !settings.enabled) return;
 
             
             GameObject poolerObject = new GameObject("ObjectPooler");

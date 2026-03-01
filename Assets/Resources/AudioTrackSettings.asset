@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9804051113044b24a140b6251bc18896, type: 3}
+  m_Name: AudioTrackSettings
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.AudioTrack.SOAudioTrackSettings
+  enabled: 1
+  tracks:
+  - id: highDown
+    clip: {fileID: 8300000, guid: 7dd8bb565ddd4ce4880b0282ad3ca592, type: 3}
+    mixerGroup: {fileID: -2275059836342526547, guid: 01c289713e2dcb84394f3377bb29e428, type: 2}
+    volume: 1
+  - id: nothing
+    clip: {fileID: 0}
+    mixerGroup: {fileID: -2275059836342526547, guid: 01c289713e2dcb84394f3377bb29e428, type: 2}
+    volume: 1
+  - id: New_ID
+    clip: {fileID: 0}
+    mixerGroup: {fileID: -2275059836342526547, guid: 01c289713e2dcb84394f3377bb29e428, type: 2}
+    volume: 1

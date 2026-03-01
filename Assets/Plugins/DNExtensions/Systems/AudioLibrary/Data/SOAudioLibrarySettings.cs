@@ -30,7 +30,7 @@ namespace DNExtensions.Systems.AudioLibrary
         }
 
         
-        
+        [Tooltip("Enables the system")]
         [SerializeField] private bool enabled = true;
         [SerializeField] private int preWarmAmount = 15;
         [SerializeField] private SOAudioCategory[] audioCategories = Array.Empty<SOAudioCategory>();
