@@ -1,9 +1,13 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
 namespace DNExtensions.Systems.AudioTrack
 {
+    /// <summary>
+    /// Custom property drawer for AudioTrackIDAttribute that displays a dropdown of available track IDs
+    /// and shows status icons for missing or invalid IDs.
+    /// </summary>
     [CustomPropertyDrawer(typeof(AudioTrackIDAttribute))]
     internal class AudioTrackIDDrawer : PropertyDrawer
     {

@@ -32,8 +32,9 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField] private float jumpForce = 1.5f;
         [SerializeField] private float jumpBufferTime = 0.1f;
         [SerializeField] private float coyoteTime = 0.1f;
+        
+        
         [SerializeField, AutoGetSelf, HideInInspector] private FpcManager manager;
-
         private const float StandingHeightPadding = 0.05f;
         
         private float _standingHeight;

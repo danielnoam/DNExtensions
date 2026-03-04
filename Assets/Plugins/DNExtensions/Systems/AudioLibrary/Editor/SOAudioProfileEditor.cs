@@ -3,13 +3,16 @@ using UnityEditor;
 
 namespace DNExtensions.Systems.AudioLibrary
 {
+    /// <summary>
+    /// Custom editor for SOAudioProfile that conditionally displays 3D audio settings
+    /// and provides preview playback functionality.
+    /// </summary>
     [CustomEditor(typeof(SOAudioProfile))]
     public class SOAudioProfileEditor : Editor
     {
         private AudioSource _previewer;
         private bool _isPlaying;
-        
-        // Settings are grouped by the Editor, not the script
+
         private void OnEnable()
         {
             _previewer = EditorUtility
@@ -34,10 +37,8 @@ namespace DNExtensions.Systems.AudioLibrary
             EditorGUILayout.PropertyField(serializedObject.FindProperty("m_Script"));
             GUI.enabled = true;
 
-            // Draw everything except m_Script and the 3D details
             DrawPropertiesExcluding(serializedObject, "m_Script", "dopplerLevel", "spread", "rolloffMode", "minDistance", "maxDistance");
-            
-            // Conditional 3D Draw
+
             if (serializedObject.FindProperty("set3DSettings").boolValue)
             {
                 EditorGUI.indentLevel++;
@@ -87,7 +88,6 @@ namespace DNExtensions.Systems.AudioLibrary
             source.panStereo = settings.stereoPan;
             source.spatialBlend = settings.spatialBlend;
             source.loop = settings.loop;
-            // Apply 3D settings if enabled
             if (settings.set3DSettings)
             {
                 source.minDistance = settings.minDistance;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DNExtensions.Utilities;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -42,7 +42,6 @@ namespace DNExtensions.Systems.AudioTrack
                 return _instance;
             }
         }
-        [Tooltip("Enables the system")]
         [SerializeField] private bool enabled;
         [SerializeField] private TrackDefinition[] tracks = Array.Empty<TrackDefinition>();
 

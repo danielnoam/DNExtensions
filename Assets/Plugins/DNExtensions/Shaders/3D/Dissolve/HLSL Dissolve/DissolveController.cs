@@ -1,9 +1,11 @@
-using System.Collections;
 using System.Collections.Generic;
 using DNExtensions.Utilities;
 using UnityEngine;
 
-
+/// <summary>
+/// Controls dissolve effects on materials using sphere or box-shaped interactors.also
+/// Supports multiple interactors, animation, and target following.
+/// </summary>
 public class DissolveController : MonoBehaviour
 {
 
@@ -20,21 +22,21 @@ public class DissolveController : MonoBehaviour
     [Tooltip("Rotation of the box in degrees")]
     [ShowIf("shape", InteractorShape.Box)] public Vector3 boxRotation = Vector3.zero;
 
-    
+
     [Header("Animation")]
     [Tooltip("Animation speed")]
     public float animationSpeed = 1.0f;
-    
-    [ShowIf("shape", InteractorShape.Sphere)] 
+
+    [ShowIf("shape", InteractorShape.Sphere)]
     [Tooltip("Animate the radius over time")]
     public bool animateRadius;
-    [ShowIf("shape", InteractorShape.Sphere)] 
+    [ShowIf("shape", InteractorShape.Sphere)]
     [Tooltip("Minimum radius value")]
     public float minRadius;
-    [ShowIf("shape", InteractorShape.Sphere)] 
+    [ShowIf("shape", InteractorShape.Sphere)]
     [Tooltip("Maximum radius value")]
     public float maxRadius = 10.0f;
-    
+
     [ShowIf("shape", InteractorShape.Box)]
     [Tooltip("Animate the box size over time")]
     public bool animateBoxSize;
@@ -53,11 +55,10 @@ public class DissolveController : MonoBehaviour
     [ShowIf("shape", InteractorShape.Box)]
     [Tooltip("Maximum box rotation in degrees")]
     public Vector3 maxBoxRotation = new Vector3(0, 360, 0);
-    
 
 
-    
-    
+
+
     [Header("Target Options")]
     [Tooltip("Follow another transform")]
     public bool followTarget;
@@ -71,13 +72,11 @@ public class DissolveController : MonoBehaviour
     [Header("Affected Renderers")]
     [Tooltip("List of renderers to affect. Only these renderers will be affected.")]
     public List<Renderer> targetRenderers = new List<Renderer>();
-    
-    
-    
 
 
-    
-    
+
+
+
     public enum InteractorShape { Sphere, Box }
     private const int MaxInteractors = 20;
     private static readonly List<DissolveController> ActiveInteractors = new List<DissolveController>();
@@ -97,45 +96,38 @@ public class DissolveController : MonoBehaviour
 
     private void OnEnable()
     {
-        // Register this interactor
         if (!ActiveInteractors.Contains(this))
         {
             ActiveInteractors.Add(this);
         }
-        
-        // Update shader with new interactor
+
         UpdateShaders();
         _needsRefresh = true;
     }
 
     private void OnDisable()
     {
-        // Unregister this interactor
         if (ActiveInteractors.Contains(this))
         {
             ActiveInteractors.Remove(this);
         }
-        
-        // Update shader without this interactor
+
         UpdateShaders();
     }
 
     private void Update()
     {
-        // Follow target if enabled
         if (followTarget && targetTransform)
         {
             transform.position = targetTransform.position + followOffset;
         }
 
-        // Animate radius if enabled
         if (animateRadius && shape == InteractorShape.Sphere)
         {
             float t = (Mathf.Sin(Time.time * animationSpeed) + 1.0f) * 0.5f;
             radius = Mathf.Lerp(minRadius, maxRadius, t);
         }
-        
-        // Animate box size if enabled
+
         if (animateBoxSize && shape == InteractorShape.Box)
         {
             float t = (Mathf.Sin(Time.time * animationSpeed) + 1.0f) * 0.5f;
@@ -143,8 +135,7 @@ public class DissolveController : MonoBehaviour
             boxSize.y = Mathf.Lerp(minBoxSize.y, maxBoxSize.y, t);
             boxSize.z = Mathf.Lerp(minBoxSize.z, maxBoxSize.z, t);
         }
-        
-        // Animate box rotation if enabled
+
         if (animateBoxRotation && shape == InteractorShape.Box)
         {
             float t = (Mathf.Sin(Time.time * animationSpeed) + 1.0f) * 0.5f;
@@ -153,7 +144,6 @@ public class DissolveController : MonoBehaviour
             boxRotation.z = Mathf.Lerp(minBoxRotation.z, maxBoxRotation.z, t);
         }
 
-        // Update single interactor mode for specified renderers
         if (targetRenderers.Count > 0)
         {
             foreach (Renderer rend in targetRenderers)
@@ -168,10 +158,8 @@ public class DissolveController : MonoBehaviour
             }
         }
 
-        // Update all shaders for multi-interactor mode
         UpdateShaders();
-        
-        // Refresh affected renderers list occasionally
+
         if (_needsRefresh)
         {
             RefreshAffectedRenderers();
@@ -179,55 +167,51 @@ public class DissolveController : MonoBehaviour
         }
     }
 
-    // Update a single material with this interaction's properties
     private void UpdateSingleInteractorMaterial(Material material)
     {
         if (material.shader.name.Contains("Custom/UnifiedDissolve"))
         {
             material.SetVector(PositionID, transform.position);
-            
+
             // Set shape type (0 for sphere, 1 for box)
             material.SetFloat(ShapeTypeID, (float)(shape == InteractorShape.Sphere ? 0 : 1));
-            
+
             if (shape == InteractorShape.Sphere)
             {
                 material.SetFloat(RadiusID, radius);
             }
-            else // Box shape
+            else
             {
-                // Set box size and rotation
                 material.SetVector(BoxSizeID, boxSize);
                 material.SetVector(BoxRotationID, boxRotation);
             }
         }
     }
 
-    // Update all affected materials with all active interactors
     private static void UpdateShaders()
     {
         if (ActiveInteractors.Count == 0)
             return;
 
-        // Create arrays to hold all interactor data
         Vector4[] positions = new Vector4[MaxInteractors];
         float[] radiuses = new float[MaxInteractors];
         Vector4[] boxBounds = new Vector4[MaxInteractors];
         Vector4[] rotations = new Vector4[MaxInteractors];
 
-        // Get data from all active interactors
         int count = Mathf.Min(ActiveInteractors.Count, MaxInteractors);
-        
+
         for (int i = 0; i < count; i++)
         {
             DissolveController interactor = ActiveInteractors[i];
-            
+
             positions[i] = interactor.transform.position;
             radiuses[i] = interactor.radius;
+            // Use w component to store shape type
             boxBounds[i] = new Vector4(
                 interactor.boxSize.x,
                 interactor.boxSize.y,
                 interactor.boxSize.z,
-                interactor.shape == InteractorShape.Box ? 1.0f : 0.0f // Use w component to store shape type
+                interactor.shape == InteractorShape.Box ? 1.0f : 0.0f
             );
             rotations[i] = new Vector4(
                 interactor.boxRotation.x,
@@ -239,10 +223,9 @@ public class DissolveController : MonoBehaviour
 
         // Only update materials from targetRenderers list
         Material[] materials = GetAllDissolveShaderMaterials();
-        
+
         foreach (Material mat in materials)
         {
-            // Set arrays with all interactors data
             mat.SetVectorArray(InteractorPositionsID, positions);
             mat.SetFloatArray(InteractorRadiusesID, radiuses);
             mat.SetVectorArray(InteractorBoxBoundsID, boxBounds);
@@ -250,13 +233,11 @@ public class DissolveController : MonoBehaviour
             mat.SetInt(InteractorCountID, count);
         }
     }
-
-    // Find all materials using our dissolve shader, only from targetRenderers
+    
     private static Material[] GetAllDissolveShaderMaterials()
     {
         List<Material> materials = new List<Material>();
-        
-        // Collect materials only from targetRenderers of all active interactors
+
         foreach (DissolveController controller in ActiveInteractors)
         {
             if (controller.targetRenderers.Count > 0)
@@ -276,29 +257,30 @@ public class DissolveController : MonoBehaviour
                 }
             }
         }
-        
+
         return materials.ToArray();
     }
 
-    // Reset all effects
+    /// <summary>
+    /// Clears all active interactors and resets shader properties.
+    /// </summary>
     public static void ClearAllInteractors()
     {
         ActiveInteractors.Clear();
         UpdateShaders();
     }
-    
-    // Find all renderers affected by this controller (only from targetRenderers)
+
+    // Only from targetRenderers
     private void RefreshAffectedRenderers()
     {
         _affectedRenderers.Clear();
-        
-        // Only use renderers from the targetRenderers list
+
         foreach (Renderer rend in targetRenderers)
         {
             if (rend)
             {
                 bool hasDissolveShader = false;
-                
+
                 foreach (Material mat in rend.sharedMaterials)
                 {
                     if (mat.shader.name.Contains("Custom/UnifiedDissolve"))
@@ -307,7 +289,7 @@ public class DissolveController : MonoBehaviour
                         break;
                     }
                 }
-                
+
                 if (hasDissolveShader)
                 {
                     _affectedRenderers.Add(rend);
@@ -315,54 +297,48 @@ public class DissolveController : MonoBehaviour
             }
         }
     }
-    
-    
+
+
 #if UNITY_EDITOR
-    
+
     #region Gizmos
-    
+
     private void OnDrawGizmosSelected()
     {
         DrawShapeGizmo();
         DrawConnectionGizmos();
     }
-    
+
     private void DrawShapeGizmo()
     {
-        // Draw the shape based on the current shape type
         if (shape == InteractorShape.Sphere)
         {
             DrawSphereGizmo();
         }
-        else // Box shape
+        else
         {
             DrawBoxGizmo();
         }
-        
-        // If animating sphere, also show the max range
+
         if (animateRadius && shape == InteractorShape.Sphere)
         {
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(transform.position, maxRadius);
         }
-        
-        // If animating box, also show the max range
+
         if ((animateBoxSize || animateBoxRotation) && shape == InteractorShape.Box)
         {
             Gizmos.color = Color.yellow;
-            
+
             Matrix4x4 oldMatrix = Gizmos.matrix;
-            
-            // Draw max size box with max rotation
+
             if (animateBoxSize && animateBoxRotation)
             {
-                // Create rotation matrix with max rotation
                 Quaternion maxRotation = Quaternion.Euler(maxBoxRotation);
                 Matrix4x4 rotationMatrix = Matrix4x4.TRS(transform.position, maxRotation, Vector3.one);
                 Gizmos.matrix = rotationMatrix;
                 Gizmos.DrawWireCube(Vector3.zero, maxBoxSize * 2);
             }
-            // Draw max size box with current rotation
             else if (animateBoxSize)
             {
                 Quaternion rotation = Quaternion.Euler(boxRotation);
@@ -370,7 +346,6 @@ public class DissolveController : MonoBehaviour
                 Gizmos.matrix = rotationMatrix;
                 Gizmos.DrawWireCube(Vector3.zero, maxBoxSize * 2);
             }
-            // Draw current size box with max rotation
             else if (animateBoxRotation)
             {
                 Quaternion maxRotation = Quaternion.Euler(maxBoxRotation);
@@ -378,75 +353,60 @@ public class DissolveController : MonoBehaviour
                 Gizmos.matrix = rotationMatrix;
                 Gizmos.DrawWireCube(Vector3.zero, boxSize * 2);
             }
-            
-            // Restore original matrix
+
             Gizmos.matrix = oldMatrix;
         }
     }
-    
+
     private void DrawSphereGizmo()
     {
-        
-        // Draw wireframe for better visibility
         Gizmos.color = new Color(Color.cyan.r, Color.cyan.g, Color.cyan.b, 0.1f);
         Gizmos.DrawWireSphere(transform.position, radius);
     }
-    
+
     private void DrawBoxGizmo()
     {
         Matrix4x4 oldMatrix = Gizmos.matrix;
-        
-        // Create rotation matrix
+
         Quaternion rotation = Quaternion.Euler(boxRotation);
         Matrix4x4 rotationMatrix = Matrix4x4.TRS(transform.position, rotation, Vector3.one);
         Gizmos.matrix = rotationMatrix;
-        
-        
-        // Draw wireframe for better visibility
+
         Gizmos.color = new Color(Color.cyan.r, Color.cyan.g, Color.cyan.b, 0.1f);
         Gizmos.DrawWireCube(Vector3.zero, boxSize * 2);
-        
-        // Restore original matrix
+
         Gizmos.matrix = oldMatrix;
     }
-    
+
     private void DrawConnectionGizmos()
     {
-        // Refresh renderers list if empty
         if (_affectedRenderers.Count == 0)
         {
             RefreshAffectedRenderers();
         }
-        
-        // Draw connections to affected renderers
+
         Gizmos.color = Color.green;
-        
+
         foreach (Renderer rend in _affectedRenderers)
         {
             if (rend)
             {
-                // Get renderer center position
                 Vector3 rendererCenter = rend.bounds.center;
-                
-                // Draw connection line
+
                 Gizmos.DrawLine(transform.position, rendererCenter);
-                
-                // Draw small sphere at renderer position
+
                 Gizmos.DrawSphere(rendererCenter, 0.1f);
-                
-                // Draw distance label
+
                 float distance = Vector3.Distance(transform.position, rendererCenter);
-                    
-                // Only draw labels in scene view, not in game view
 
                 UnityEditor.Handles.Label(
-                    Vector3.Lerp(transform.position, rendererCenter, 0.5f), 
+                    Vector3.Lerp(transform.position, rendererCenter, 0.5f),
                     distance.ToString("F1") + "m");
 
             }
         }
     }
-    
+
     #endregion
 #endif
 }

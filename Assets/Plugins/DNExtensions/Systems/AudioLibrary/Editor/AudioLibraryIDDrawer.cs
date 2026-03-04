@@ -4,6 +4,10 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.AudioLibrary
 {
+    /// <summary>
+    /// Custom property drawer for AudioLibraryIDAttribute that displays a dropdown of available audio IDs
+    /// and shows status icons for missing or invalid IDs.
+    /// </summary>
     [CustomPropertyDrawer(typeof(AudioLibraryIDAttribute))]
     public class AudioLibraryIDDrawer : PropertyDrawer
     {

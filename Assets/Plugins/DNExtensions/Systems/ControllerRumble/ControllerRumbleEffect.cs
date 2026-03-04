@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace DNExtensions.Systems.ControllerRumble
 {
-    
+
     /// <summary>
     /// Represents a single rumble effect for a controller, with support for both timed effects (with duration and animation curves) and continuous effects (without duration or curves).
     /// </summary>
@@ -35,7 +35,7 @@ namespace DNExtensions.Systems.ControllerRumble
             SourceReference = sourceReference;
             IsContinuous = false;
         }
-        
+
         /// <summary>
         /// Constructor for continuous rumble effects (no duration, no curves)
         /// </summary>
@@ -57,22 +57,30 @@ namespace DNExtensions.Systems.ControllerRumble
             if (!IsContinuous) ElapsedTime += deltaTime;
         }
     }
-    
-    
+
+
+    /// <summary>
+    /// Serializable settings for configuring a controller rumble effect.
+    /// </summary>
     [Serializable]
     public class ControllerRumbleEffectSettings
     {
         [Range(0f,1f)] public float lowFrequency = 0.3f;
         [Range(0f,1f)] public float highFrequency = 0.3f;
         [Min(0)] public float duration = 0.3f;
+        [Tooltip("Curve that modulates the low frequency intensity over the duration")]
         public AnimationCurve lowFrequencyCurve = AnimationCurve.Linear(0, 1, 1, 1);
+        [Tooltip("Curve that modulates the high frequency intensity over the duration")]
         public AnimationCurve highFrequencyCurve = AnimationCurve.Linear(0, 1, 1, 1);
-        
-        
+
+
         public ControllerRumbleEffectSettings()
         {
         }
-        
+
+        /// <summary>
+        /// Creates rumble effect settings with specified parameters.
+        /// </summary>
         public ControllerRumbleEffectSettings(float lowFrequency, float highFrequency, float duration, AnimationCurve lowFrequencyCurve = null, AnimationCurve highFrequencyCurve = null)
         {
             this.lowFrequency = Mathf.Clamp01(lowFrequency);

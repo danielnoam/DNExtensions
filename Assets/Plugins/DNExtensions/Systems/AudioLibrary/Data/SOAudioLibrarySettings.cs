@@ -11,14 +11,14 @@ namespace DNExtensions.Systems.AudioLibrary
     public class SOAudioLibrarySettings : ScriptableObject
     {
         private static SOAudioLibrarySettings _instance;
-        
+
         public static SOAudioLibrarySettings Instance
         {
             get
             {
                 if (_instance) return _instance;
                 _instance = Resources.Load<SOAudioLibrarySettings>("AudioLibrarySettings");
-                    
+
 #if UNITY_EDITOR
                 if (!_instance)
                 {
@@ -29,22 +29,15 @@ namespace DNExtensions.Systems.AudioLibrary
             }
         }
 
-        
-        [Tooltip("Enables the system")]
+
         [SerializeField] private bool enabled = true;
+        [Tooltip("Number of audio sources to create in the pool at startup")]
         [SerializeField] private int preWarmAmount = 15;
         [SerializeField] private SOAudioCategory[] audioCategories = Array.Empty<SOAudioCategory>();
-        
+
         public SOAudioCategory[] AudioCategories => audioCategories;
         public bool Enabled => enabled;
-        public  int PreWarmAmount => preWarmAmount;
-        
+        public int PreWarmAmount => preWarmAmount;
+
     }
-
-
-
-    
-
-    
-    
 }

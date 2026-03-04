@@ -6,11 +6,15 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.AudioLibrary
 {
+    /// <summary>
+    /// Custom editor for SOAudioLibrarySettings that provides a unified interface for managing
+    /// audio categories and their mappings with foldout sections and creation tools.
+    /// </summary>
     [CustomEditor(typeof(SOAudioLibrarySettings))]
     public class SOAudioLibrarySettingsEditor : Editor
     {
         private const string SettingsPath = "Assets/Resources/AudioLibrarySettings.asset";
-        
+
         private readonly Dictionary<string, bool> _foldouts = new();
         private readonly Dictionary<string, SerializedObject> _serializedCategories = new();
 
@@ -65,7 +69,7 @@ namespace DNExtensions.Systems.AudioLibrary
 
                         EditorGUILayout.Space(5);
                         DrawMappingList(serializedCategory);
-                        
+
                         if (GUILayout.Button("+ New Mapping"))
                         {
                             AddNewMappingToCategory(category);
@@ -75,12 +79,10 @@ namespace DNExtensions.Systems.AudioLibrary
                     }
                     EditorGUILayout.EndVertical();
                     
-                    // Space between categories
                     EditorGUILayout.Space(5);
                 }
             }
             
-            // Space before button
             if (GUILayout.Button("+ New Category", GUILayout.Height(30)))
             {
                 AddNewCategory(audioLibrary);
@@ -100,16 +102,16 @@ namespace DNExtensions.Systems.AudioLibrary
             for (int i = 0; i < resourcesProp.arraySize; i++)
             {
                 SerializedProperty mapping = resourcesProp.GetArrayElementAtIndex(i);
-        
+
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.PropertyField(mapping, GUIContent.none); 
-        
+                EditorGUILayout.PropertyField(mapping, GUIContent.none);
+
                 if (GUILayout.Button("X", EditorStyles.miniButton, GUILayout.Width(20)))
                 {
                     resourcesProp.DeleteArrayElementAtIndex(i);
                 }
                 EditorGUILayout.EndHorizontal();
-                
+
                 GUILayout.Space(5);
             }
         }
@@ -117,18 +119,18 @@ namespace DNExtensions.Systems.AudioLibrary
         private void AddNewMappingToCategory(SOAudioCategory category)
         {
             if (!_serializedCategories.TryGetValue(category.name, out var so)) return;
-    
+
             SerializedProperty prop = so.FindProperty("audioMappings");
             prop.InsertArrayElementAtIndex(prop.arraySize);
-    
+
             SerializedProperty newElem = prop.GetArrayElementAtIndex(prop.arraySize - 1);
             newElem.FindPropertyRelative("id").stringValue = "New_ID";
             newElem.FindPropertyRelative("audioObject").objectReferenceValue = null;
 
             so.ApplyModifiedProperties();
         }
-        
-        
+
+
         private void AddNewCategory(SOAudioLibrarySettings audioLibrary)
         {
             string path = EditorUtility.SaveFilePanelInProject(
@@ -147,20 +149,20 @@ namespace DNExtensions.Systems.AudioLibrary
             AssetDatabase.SaveAssets();
 
             var so = new SerializedObject(audioLibrary);
-            SerializedProperty categoriesProp = so.FindProperty("audioCategories"); // match your field name
+            SerializedProperty categoriesProp = so.FindProperty("audioCategories");
             categoriesProp.arraySize++;
             categoriesProp.GetArrayElementAtIndex(categoriesProp.arraySize - 1).objectReferenceValue = newCategory;
             so.ApplyModifiedProperties();
 
             AssetDatabase.Refresh();
         }
-        
-        
+
+
         [MenuItem("Tools/DNExtensions/Audio Library Settings")]
         private static void OpenSettings()
         {
             var settings = SOAudioLibrarySettings.Instance;
-            
+
             if (!settings)
             {
                 string[] guids = AssetDatabase.FindAssets("t:AudioLibrarySettings");
@@ -170,7 +172,7 @@ namespace DNExtensions.Systems.AudioLibrary
                     settings = AssetDatabase.LoadAssetAtPath<SOAudioLibrarySettings>(path);
                 }
             }
-            
+
             if (settings)
             {
                 Selection.activeObject = settings;
@@ -178,7 +180,6 @@ namespace DNExtensions.Systems.AudioLibrary
             }
             else
             {
-                // Offer to create it
                 if (EditorUtility.DisplayDialog(
                     "Create Audio Library Settings?",
                     "No Audio Library Settings found. Create one now?\n\n" +
@@ -190,7 +191,7 @@ namespace DNExtensions.Systems.AudioLibrary
                 }
             }
         }
-        
+
         private static void CreateSettingsAsset()
         {
             var settings = CreateInstance<SOAudioLibrarySettings>();
@@ -207,7 +208,7 @@ namespace DNExtensions.Systems.AudioLibrary
 
             Selection.activeObject = settings;
             EditorGUIUtility.PingObject(settings);
-            
+
             Debug.Log("Created Audio Library Settings at " + SettingsPath);
         }
     }

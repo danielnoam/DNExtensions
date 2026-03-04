@@ -1,24 +1,30 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Rendering;
 
+/// <summary>
+/// Enables shadow casting and receiving for 2D sprites by managing SpriteRenderer shadow settings
+/// and synchronizing shader properties.
+/// </summary>
 [ExecuteAlways]
 [RequireComponent(typeof(SpriteRenderer))]
 public class ShadowCastingSprite : MonoBehaviour
 {
     [Header("Shadow Settings")]
+    [Tooltip("Whether this sprite should receive shadows from other objects")]
     [SerializeField] private bool receiveShadows = true;
+    [Tooltip("The shadow casting mode for this sprite")]
     [SerializeField] private ShadowCastingMode castShadows = ShadowCastingMode.On;
 
     private SpriteRenderer _renderer;
     private MaterialPropertyBlock _propBlock;
-    
+
     private Color _lastColor;
     private bool _lastFlipX;
     private bool _lastFlipY;
     private SpriteDrawMode _lastDrawMode;
     private SpriteMaskInteraction _lastMaskInteraction;
     private SpriteSortPoint _lastSortPoint;
-    
+
     private bool _lastReceiveShadows;
     private ShadowCastingMode _lastCastShadows;
 
@@ -36,8 +42,8 @@ public class ShadowCastingSprite : MonoBehaviour
         _renderer = GetComponent<SpriteRenderer>();
         _propBlock = new MaterialPropertyBlock();
         _renderer.RegisterSpriteChangeCallback(OnSpriteChanged);
-        
-        ApplyShadowSettings(); 
+
+        ApplyShadowSettings();
         _isDirty = true;
     }
 
@@ -75,7 +81,7 @@ public class ShadowCastingSprite : MonoBehaviour
         if (_isDirty || rendererChanged || shadowsChanged)
         {
             if (shadowsChanged) ApplyShadowSettings();
-            
+
             UpdateShader();
             UpdateCache();
         }
@@ -110,10 +116,10 @@ public class ShadowCastingSprite : MonoBehaviour
         _lastDrawMode = _renderer.drawMode;
         _lastMaskInteraction = _renderer.maskInteraction;
         _lastSortPoint = _renderer.spriteSortPoint;
-        
+
         _lastReceiveShadows = receiveShadows;
         _lastCastShadows = castShadows;
-        
+
         _isDirty = false;
     }
 }

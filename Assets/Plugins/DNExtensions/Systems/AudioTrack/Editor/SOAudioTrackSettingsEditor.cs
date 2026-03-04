@@ -1,9 +1,13 @@
-﻿using System.IO;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
 namespace DNExtensions.Systems.AudioTrack
 {
+    /// <summary>
+    /// Custom editor for SOAudioTrackSettings that displays tracks in a table layout
+    /// with columns for ID, clip, mixer group, and volume.
+    /// </summary>
     [CustomEditor(typeof(SOAudioTrackSettings))]
     internal class SOAudioTrackSettingsEditor : Editor
     {
@@ -31,7 +35,6 @@ namespace DNExtensions.Systems.AudioTrack
             float clipWidth = available * 0.5f;
             float mixerWidth = available * 0.5f;
 
-            // Column headers
             EditorGUILayout.BeginHorizontal();
             GUILayout.Space(6);
             EditorGUILayout.LabelField("ID", EditorStyles.boldLabel, GUILayout.Width(idWidth));

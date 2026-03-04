@@ -30,18 +30,22 @@ namespace DNExtensions.Systems.AudioLibrary
 
         private void Awake()
         {
-            if (Instance) 
-            { 
-                Destroy(gameObject); 
-                return; 
+            if (Instance)
+            {
+                Destroy(gameObject);
+                return;
             }
             Instance = this;
             DontDestroyOnLoad(gameObject);
         }
-        
-        
+
+
         #region Audio Handling Logic
 
+        /// <summary>
+        /// Initializes the audio library with the provided settings and pre-warms the audio source pool.
+        /// </summary>
+        /// <param name="settings">Audio library settings containing categories and mappings.</param>
         public void Initialize(SOAudioLibrarySettings settings)
         {
             _librarySettings = settings;
@@ -49,7 +53,7 @@ namespace DNExtensions.Systems.AudioLibrary
             InitializeCache();
             CreatePool();
         }
-        
+
         private void InitializeCache()
         {
             if (!_librarySettings) return;
@@ -59,7 +63,7 @@ namespace DNExtensions.Systems.AudioLibrary
                 foreach (var mapping in category.AudioMappings)
                 {
                     if (string.IsNullOrEmpty(mapping.id) || !mapping.audioObject) continue;
-                    
+
                     _audioCache[mapping.id] = new AudioData
                     {
                         AudioObject = mapping.audioObject,
@@ -76,7 +80,7 @@ namespace DNExtensions.Systems.AudioLibrary
             return false;
         }
 
-        
+
         private bool ConfigureSource(AudioSource source, AudioData data, Vector3 pos, bool usePos)
         {
             source.outputAudioMixerGroup = data.Group;
@@ -134,7 +138,7 @@ namespace DNExtensions.Systems.AudioLibrary
 
         #endregion
 
-        
+
         #region Pooling Logic
 
         private void CreatePool()
@@ -153,7 +157,7 @@ namespace DNExtensions.Systems.AudioLibrary
             go.SetActive(false);
             return source;
         }
-        
+
         private AudioSource GetSourceFromPool()
         {
             return _pool.Count > 0 ? _pool.Dequeue() : CreateAudioSource();
@@ -169,7 +173,7 @@ namespace DNExtensions.Systems.AudioLibrary
         private IEnumerator AutoReturnRoutine(AudioSource source, float duration, string id = null)
         {
             yield return new WaitForSeconds(duration);
-            
+
             if (!string.IsNullOrEmpty(id))
             {
                 if (_activeLoopSources.TryGetValue(id, out var current) && current == source)
@@ -180,11 +184,11 @@ namespace DNExtensions.Systems.AudioLibrary
 
             ReturnSourceToPool(source);
         }
-        
+
 
         #endregion
-        
-        
+
+
         #region Public API
 
         /// <summary>
@@ -195,11 +199,11 @@ namespace DNExtensions.Systems.AudioLibrary
         public static void Play(string audioID)
         {
             if (!Instance || !Instance.TryGetAudioData(audioID, out var data)) return;
-            
+
             AudioSource source = Instance.GetSourceFromPool();
             Instance.SetupAndPlay(audioID, source, data, Vector3.zero, false);
         }
-        
+
 
         /// <summary>
         /// Plays an audio clip or profile based on the provided ID at a specific world position.
@@ -210,12 +214,12 @@ namespace DNExtensions.Systems.AudioLibrary
         public static void PlayAtPosition(string audioID, Vector3 position)
         {
             if (!Instance || !Instance.TryGetAudioData(audioID, out var data)) return;
-            
+
             AudioSource source = Instance.GetSourceFromPool();
             Instance.SetupAndPlay(audioID, source, data, position, true);
         }
 
-        
+
         /// <summary>
         /// Plays an audio clip or profile based on the provided ID at the position of a target Transform.
         /// The sound will be spatialized based on the AudioSource settings.
@@ -225,11 +229,11 @@ namespace DNExtensions.Systems.AudioLibrary
         public static void PlayAtPosition(string audioID, Transform target)
         {
             if (!Instance || !Instance.TryGetAudioData(audioID, out var data)) return;
-            
+
             AudioSource source = Instance.GetSourceFromPool();
             Instance.SetupAndPlay(audioID, source, data, target.position, true);
         }
-        
+
         /// <summary>
         /// Plays an audio clip or profile based on the provided ID using a specific AudioSource.
         /// </summary>
@@ -238,12 +242,12 @@ namespace DNExtensions.Systems.AudioLibrary
         public static void PlayOnSource(string audioID, AudioSource source)
         {
             if (!Instance || !Instance.TryGetAudioData(audioID, out var data)) return;
-            
+
             if (!source) return;
             if (!Instance.ConfigureSource(source, data, source.transform.position, true)) return;
             source.Play();
         }
-        
+
         /// <summary>
         /// Stops a looping sound associated with the given ID.
         /// If the ID is currently playing a looping sound, it will be stopped and the AudioSource will be returned to the pool.
@@ -252,13 +256,13 @@ namespace DNExtensions.Systems.AudioLibrary
         public static void StopLoop(string id)
         {
             if (!Instance) return;
-            
+
             if (Instance._activeLoopSources.Remove(id, out AudioSource source))
             {
                 Instance.ReturnSourceToPool(source);
             }
         }
-        
+
         /// <summary>
         /// Stops all currently playing looping sounds.
         /// All looping AudioSources will be stopped and returned to the pool.
@@ -266,7 +270,7 @@ namespace DNExtensions.Systems.AudioLibrary
         public static void StopAllLoops()
         {
             if (!Instance) return;
-            
+
             foreach (var source in Instance._activeLoopSources.Values)
             {
                 Instance.ReturnSourceToPool(source);
@@ -275,7 +279,7 @@ namespace DNExtensions.Systems.AudioLibrary
         }
 
         #endregion
-        
+
 
     }
 }

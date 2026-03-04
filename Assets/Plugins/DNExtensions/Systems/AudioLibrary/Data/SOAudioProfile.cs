@@ -3,6 +3,9 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.AudioLibrary
 {
+    /// <summary>
+    /// Contains all settings for playing an audio clip including volume, pitch, spatialization, and 3D settings.
+    /// </summary>
     [System.Serializable]
     public struct AudioSettings
     {
@@ -24,7 +27,7 @@ namespace DNExtensions.Systems.AudioLibrary
         public float maxDistance;
     }
 
-    
+
     /// <summary>
     /// A ScriptableObject that represents an audio profile, which contains settings for how a sound should be played.
     /// It includes a list of audio clips to choose from, as well as various settings for volume, pitch, spatialization, and more.
@@ -80,6 +83,9 @@ namespace DNExtensions.Systems.AudioLibrary
         [Tooltip("The rolloff curve type.")]
         public AudioRolloffMode rolloffMode = AudioRolloffMode.Logarithmic;
 
+        /// <summary>
+        /// Returns an AudioSettings instance with a randomly selected clip and randomized volume/pitch values.
+        /// </summary>
         public AudioSettings GetSettings()
         {
             return new AudioSettings

@@ -1,5 +1,7 @@
 ﻿using DNExtensions.Systems.ControllerRumble;
+using DNExtensions.Utilities;
 using DNExtensions.Utilities.AutoGet;
+using DNExtensions.Utilities.Button;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -12,14 +14,6 @@ namespace DNExtensions.Systems.FirstPersonController
     /// </summary>
     [SelectionBase]
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(FPCLocomotion))]
-    [RequireComponent(typeof(FPCInteraction))]
-    [RequireComponent(typeof(FPCInput))]
-    [RequireComponent(typeof(FPCCamera))]
-    [RequireComponent(typeof(FPCRigidBodyPush))]
-    [RequireComponent(typeof(CharacterController))]
-    [RequireComponent(typeof(ControllerRumbleSource))]
-    [RequireComponent(typeof(CinemachineImpulseSource))]
     public class FpcManager : MonoBehaviour
     {
         [Header("References")]
@@ -43,5 +37,21 @@ namespace DNExtensions.Systems.FirstPersonController
         public CharacterController CharacterController => characterController;
         public ControllerRumbleSource ControllerRumbleSource => controllerRumbleSource;
         public CinemachineImpulseSource CinemachineImpulseSource => cinemachineImpulseSource;
+
+
+        [Button]
+        private void ValidateMissingComponents()
+        {
+            if (!fpcInput) fpcInput = this.GetOrAddComponent<FPCInput>();
+            if (!fpcLocomotion) fpcLocomotion = this.GetOrAddComponent<FPCLocomotion>();
+            if (!fpcInteraction) fpcInteraction = this.GetOrAddComponent<FPCInteraction>();
+            if (!fpcCamera) fpcCamera = this.GetOrAddComponent<FPCCamera>();
+            if (!fpcEffects) fpcEffects = this.GetOrAddComponent<FPCEffects>();
+            if (!fpcRigidBodyPush) fpcRigidBodyPush = this.GetOrAddComponent<FPCRigidBodyPush>();
+            if (!characterController) characterController = this.GetOrAddComponent<CharacterController>();
+            if (!controllerRumbleSource) controllerRumbleSource = this.GetOrAddComponent<ControllerRumbleSource>();
+            if (!cinemachineImpulseSource) cinemachineImpulseSource = this.GetOrAddComponent<CinemachineImpulseSource>();
+
+        }
     }
 }

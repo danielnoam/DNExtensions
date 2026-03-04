@@ -17,20 +17,24 @@ namespace DNExtensions.Systems.ControllerRumble
     {
         [Header("Settings")]
         [SerializeField, AutoGetScene] private PlayerInput playerInput;
+        [Tooltip("Clamps the combined low frequency motor output to this range")]
         [SerializeField, MinMaxRange(0f,1f)] private RangedFloat lowFrequencyRange = new RangedFloat(0, 1f);
+        [Tooltip("Clamps the combined high frequency motor output to this range")]
         [SerializeField, MinMaxRange(0f,1f)] private RangedFloat highFrequencyRange = new RangedFloat(0, 1f);
-        
+
         [Header("Debug")]
+        [Tooltip("Process rumble effects even without a connected gamepad")]
         [SerializeField] private bool fakeGamepad;
+        [Tooltip("Draw gizmos showing rumble sources and their effective ranges")]
         [SerializeField] private bool drawInformation;
-        
+
         private readonly List<ControllerRumbleSource> _rumbleSources = new List<ControllerRumbleSource>();
         private readonly HashSet<ControllerRumbleEffect> _activeRumbleEffects = new HashSet<ControllerRumbleEffect>();
         private Gamepad _gamepad;
         private DualShockGamepad _dualShockGamepad;
         private bool _motorsActive;
 
-        
+
         public float CurrentCombinedLow { get; private set; }
         public float CurrentCombinedHigh { get; private set; }
 
@@ -50,7 +54,7 @@ namespace DNExtensions.Systems.ControllerRumble
         private void OnEnable()
         {
             if (!playerInput) return;
-            
+
             playerInput.onControlsChanged += OnControlsChanged;
             if (playerInput.currentControlScheme == "Gamepad")
             {
@@ -67,13 +71,13 @@ namespace DNExtensions.Systems.ControllerRumble
         private void OnDisable()
         {
             if (!playerInput) return;
-            
+
             playerInput.onControlsChanged -= OnControlsChanged;
             ResetHaptics();
 
         }
-        
-        
+
+
         private void OnControlsChanged(PlayerInput input)
         {
             if (input.currentControlScheme == "Gamepad")
@@ -104,7 +108,7 @@ namespace DNExtensions.Systems.ControllerRumble
             _activeRumbleEffects.RemoveWhere(effect =>
             {
                 effect.Update(Time.deltaTime);
-        
+
                 bool shouldRemove = effect.IsExpired;
                 if (effect.SourceReference && effect.SourceReference.Is3DSource)
                 {
@@ -121,7 +125,7 @@ namespace DNExtensions.Systems.ControllerRumble
                     SetMotorSpeeds(0f, 0f);
                     _motorsActive = false;
                 }
-                
+
                 CurrentCombinedLow = 0f;
                 CurrentCombinedHigh = 0f;
             }
@@ -134,7 +138,7 @@ namespace DNExtensions.Systems.ControllerRumble
                 {
                     float lowIntensity;
                     float highIntensity;
-                    
+
                     if (effect.IsContinuous)
                     {
                         lowIntensity = effect.LowFrequency;
@@ -146,7 +150,7 @@ namespace DNExtensions.Systems.ControllerRumble
                         lowIntensity = effect.LowFrequency * effect.LowFrequencyCurve.Evaluate(normalizedTime);
                         highIntensity = effect.HighFrequency * effect.HighFrequencyCurve.Evaluate(normalizedTime);
                     }
-            
+
                     if (effect.SourceReference && effect.SourceReference.Is3DSource)
                     {
                         float distanceMultiplier = CalculateDistanceFalloff(effect.SourceReference);
@@ -158,7 +162,7 @@ namespace DNExtensions.Systems.ControllerRumble
                     combinedHigh += highIntensity;
                     _motorsActive = true;
                 }
-                
+
                 CurrentCombinedLow = lowFrequencyRange.Clamp(combinedLow);
                 CurrentCombinedHigh =  highFrequencyRange.Clamp(combinedHigh);
 
@@ -168,9 +172,8 @@ namespace DNExtensions.Systems.ControllerRumble
 
 
 
-        
 
-        #region Rumble Effects ------------------------------------------------------------------------------
+        #region Rumble Effects
 
         /// <summary>
         /// Adds a rumble effect to the active effects queue for processing
@@ -189,7 +192,7 @@ namespace DNExtensions.Systems.ControllerRumble
             _activeRumbleEffects.Clear();
             ResetHaptics();
         }
-        
+
         /// <summary>
         /// Removes all continuous rumble effects originating from a specific source
         /// </summary>
@@ -197,17 +200,17 @@ namespace DNExtensions.Systems.ControllerRumble
         public void RemoveContinuousEffectsFromSource(ControllerRumbleSource source)
         {
             if (!source) return;
-            
+
             _activeRumbleEffects.RemoveWhere(effect => effect.IsContinuous && effect.SourceReference == source);
         }
-        
-        
-
-        #endregion Rumble Effects ------------------------------------------------------------------------------
 
 
 
-        #region Rumble Sources ----------------------------------------------------------------------------------
+        #endregion
+
+
+
+        #region Rumble Sources
 
 
         /// <summary>
@@ -229,10 +232,10 @@ namespace DNExtensions.Systems.ControllerRumble
         {
             if (!source || !_rumbleSources.Contains(source)) return;
 
-            
+
             _rumbleSources.Remove(source);
         }
-        
+
         /// <summary>
         /// Calculates the distance falloff multiplier for a 3D rumble source
         /// </summary>
@@ -241,23 +244,23 @@ namespace DNExtensions.Systems.ControllerRumble
         private float CalculateDistanceFalloff(ControllerRumbleSource source)
         {
             if (!source || !source.gameObject.activeInHierarchy) return 0f;
-            
+
             float distance = Vector3.Distance(transform.position, source.transform.position);
-            
+
             if (distance <= source.MinDistance) return 1f;
             if (distance >= source.MaxDistance) return 0f;
-            
+
 
             float normalizedDistance = (distance - source.MinDistance) / (source.MaxDistance - source.MinDistance);
-            
+
             return source.DistanceFalloffCurve.Evaluate(normalizedDistance);
         }
 
-        #endregion Rumble Sources ----------------------------------------------------------------------------------
+        #endregion
 
 
 
-        #region Motor Interface --------------------------------------------------------------------------------------
+        #region Motor Interface
 
 
         /// <summary>
@@ -304,19 +307,18 @@ namespace DNExtensions.Systems.ControllerRumble
         }
 
 
-        #endregion Motor Interface --------------------------------------------------------------------------------------
+        #endregion
 
 
-        
-        
+
 #if UNITY_EDITOR
         private GUIStyle _gizmoHeaderStyle;
         private GUIStyle _gizmoNormalStyle;
-        
+
         private void OnDrawGizmos()
         {
             if (!drawInformation) return;
-            
+
             _gizmoHeaderStyle ??= new GUIStyle
             {
                 fontSize = 12,
@@ -324,22 +326,22 @@ namespace DNExtensions.Systems.ControllerRumble
                 alignment = TextAnchor.MiddleCenter,
                 normal = { textColor = Color.white }
             };
-    
+
             _gizmoNormalStyle ??= new GUIStyle
             {
                 fontSize = 12,
                 alignment = TextAnchor.MiddleCenter,
                 normal = { textColor = Color.white }
             };
-            
+
             Handles.Label(transform.position + Vector3.up * 1f, $"Rumble Listener", _gizmoHeaderStyle);
 
 
             foreach (var rumbleSource in _rumbleSources)
             {
                 if (!rumbleSource || !rumbleSource.isActiveAndEnabled) continue;
-                
-                
+
+
                 if (rumbleSource.Is3DSource)
                 {
                     Gizmos.color = Color.green;
@@ -356,10 +358,9 @@ namespace DNExtensions.Systems.ControllerRumble
                 }
             }
         }
-        
-                    
+
+
 #endif
-        
+
     }
 }
-

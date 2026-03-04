@@ -4,14 +4,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DNExtenstions.Utilities.ComponentDragger
+namespace DNExtensions.Utilities.ComponentDragger
 {
     [InitializeOnLoad]
     public static class ComponentDragger
     {
-        private static Component[] draggedComponents;
-        private static bool isCopyMode;
-        private static bool handledThisFrame;
+        private static Component[] _draggedComponents;
+        private static bool _isCopyMode;
+        private static bool _handledThisFrame;
         
         static ComponentDragger()
         {
@@ -27,11 +27,11 @@ namespace DNExtenstions.Utilities.ComponentDragger
             // Reset drag state when no longer dragging
             if (DragAndDrop.objectReferences == null || DragAndDrop.objectReferences.Length == 0)
             {
-                draggedComponents = null;
+                _draggedComponents = null;
             }
             
             // Reset frame handler
-            handledThisFrame = false;
+            _handledThisFrame = false;
         }
 
         private static void OnHierarchyWindowItemGUI(int instanceID, Rect selectionRect)
@@ -45,7 +45,7 @@ namespace DNExtenstions.Utilities.ComponentDragger
             if (evt.type == EventType.DragUpdated || evt.type == EventType.DragPerform)
             {
                 // If we already handled this frame, skip
-                if (handledThisFrame)
+                if (_handledThisFrame)
                     return;
 
                 // Get the dragged objects first
@@ -76,7 +76,7 @@ namespace DNExtenstions.Utilities.ComponentDragger
                 }
 
                 // We're over THIS item - mark as handled
-                handledThisFrame = true;
+                _handledThisFrame = true;
 
                 // Check if we're dragging over a valid GameObject in the hierarchy
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -91,17 +91,17 @@ namespace DNExtenstions.Utilities.ComponentDragger
                 
                 if (evt.type == EventType.DragUpdated)
                 {
-                    draggedComponents = components;
-                    isCopyMode = evt.alt;
+                    _draggedComponents = components;
+                    _isCopyMode = evt.alt;
                     
                     // Set visual mode based on whether it's valid
-                    if (isDroppingOnSameObject && !isCopyMode)
+                    if (isDroppingOnSameObject && !_isCopyMode)
                     {
                         DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
                     }
                     else
                     {
-                        DragAndDrop.visualMode = isCopyMode ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Move;
+                        DragAndDrop.visualMode = _isCopyMode ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Move;
                     }
                     
                     evt.Use();
@@ -109,7 +109,7 @@ namespace DNExtenstions.Utilities.ComponentDragger
                 else if (evt.type == EventType.DragPerform)
                 {
                     // Don't allow moving to the same object
-                    if (isDroppingOnSameObject && !isCopyMode)
+                    if (isDroppingOnSameObject && !_isCopyMode)
                     {
                         DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
                         evt.Use();
@@ -119,9 +119,9 @@ namespace DNExtenstions.Utilities.ComponentDragger
                     DragAndDrop.AcceptDrag();
                     
                     // Perform the component transfer
-                    TransferComponents(components, targetObject, isCopyMode);
+                    TransferComponents(components, targetObject, _isCopyMode);
                     
-                    draggedComponents = null;
+                    _draggedComponents = null;
                     evt.Use();
                 }
             }
@@ -280,13 +280,11 @@ namespace DNExtenstions.Utilities.ComponentDragger
             // Animator dependencies
             if (dependency is Animator)
             {
-                //TODO: Add any components that commonly depend on Animator
             }
 
             // Camera dependencies
             if (dependency is Camera)
             {
-                //TODO:  Add any components that commonly depend on Camera
             }
 
             return false;

@@ -3,13 +3,17 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.AudioLibrary
 {
+    /// <summary>
+    /// Custom editor for SOAudioCategory that provides an interface for managing audio ID mappings
+    /// with add/remove buttons.
+    /// </summary>
     [CustomEditor(typeof(SOAudioCategory))]
     public class SOAudioCategoryEditor : Editor
     {
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            
+
             EditorGUILayout.PropertyField(serializedObject.FindProperty("label"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("audioMixerGroup"));
 
@@ -22,7 +26,7 @@ namespace DNExtensions.Systems.AudioLibrary
                 SerializedProperty element = list.GetArrayElementAtIndex(i);
 
                 EditorGUILayout.BeginHorizontal();
-                
+
                 EditorGUILayout.PropertyField(element, GUIContent.none);
 
                 if (GUILayout.Button("X", EditorStyles.miniButton, GUILayout.Width(20)))
@@ -30,11 +34,11 @@ namespace DNExtensions.Systems.AudioLibrary
                     list.DeleteArrayElementAtIndex(i);
                 }
                 EditorGUILayout.EndHorizontal();
-                
+
                 GUILayout.Space(5);
             }
-            
-            
+
+
             if (GUILayout.Button("+ Add Mapping"))
             {
                 list.InsertArrayElementAtIndex(list.arraySize);
