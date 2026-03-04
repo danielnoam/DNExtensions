@@ -1,4 +1,3 @@
-
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,6 +6,9 @@ using DNExtensions.Utilities.AutoGet;
 
 namespace DNExtensions.Systems.FirstPersonController
 {
+    /// <summary>
+    /// Handles first-person character locomotion including walking, running, crouching, jumping, and ground detection.
+    /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(FpcManager))]
     [AddComponentMenu("")]
@@ -32,8 +34,7 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField] private float jumpForce = 1.5f;
         [SerializeField] private float jumpBufferTime = 0.1f;
         [SerializeField] private float coyoteTime = 0.1f;
-        
-        
+
         [SerializeField, AutoGetSelf, HideInInspector] private FpcManager manager;
         private const float StandingHeightPadding = 0.05f;
         
@@ -44,7 +45,6 @@ namespace DNExtensions.Systems.FirstPersonController
         private float _jumpBufferCounter;
         private float _coyoteTimeCounter;
         private bool _wasGrounded;
-        
 
         public bool IsGrounded { get; private set; }
         public bool IsCrouching { get; private set; }
@@ -85,8 +85,7 @@ namespace DNExtensions.Systems.FirstPersonController
             
             manager.CharacterController.Move(_velocity * Time.deltaTime);
         }
-        
-            
+
         private void OnJumpInput(InputAction.CallbackContext context)
         {
             if (context.phase == InputActionPhase.Started)
@@ -180,23 +179,23 @@ namespace DNExtensions.Systems.FirstPersonController
 
         private void CheckGrounded()
         {
-            _wasGrounded  = IsGrounded; 
-            
+            _wasGrounded = IsGrounded;
+
             IsGrounded = manager.CharacterController.isGrounded;
             IsFalling = _velocity.y < 0;
             
             if (IsGrounded && !_wasGrounded)
             {
-               OnLanded?.Invoke(Mathf.Abs(_velocity.y));
+                OnLanded?.Invoke(Mathf.Abs(_velocity.y));
             }
-            
+
             if (IsGrounded)
             {
                 if (_velocity.y < 0)
                 {
                     _velocity.y = -2f;
                 }
-                _coyoteTimeCounter = coyoteTime; 
+                _coyoteTimeCounter = coyoteTime;
             }
             else if (_wasGrounded)
             {
@@ -206,7 +205,6 @@ namespace DNExtensions.Systems.FirstPersonController
             {
                 _coyoteTimeCounter -= Time.deltaTime;
             }
-
         }
 
         private void OnDrawGizmosSelected()
@@ -221,5 +219,4 @@ namespace DNExtensions.Systems.FirstPersonController
             }
         }
     }
-    
 }

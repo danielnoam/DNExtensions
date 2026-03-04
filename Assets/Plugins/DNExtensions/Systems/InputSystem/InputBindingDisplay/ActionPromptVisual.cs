@@ -5,6 +5,9 @@ using TMPro;
 
 namespace DNExtensions.Systems.InputSystem
 {
+    /// <summary>
+    /// Provides visual feedback for input action prompts by changing color and scale when actions are pressed.
+    /// </summary>
     [RequireComponent(typeof(ActionBindingDisplay))]
     public class ActionPromptVisual : MonoBehaviour
     {
@@ -28,7 +31,6 @@ namespace DNExtensions.Systems.InputSystem
             _originalScale = _textComponent.transform.localScale;
             _watchedActions = GetWatchedActions();
         }
-        
 
         private void OnEnable()
         {

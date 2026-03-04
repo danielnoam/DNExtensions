@@ -5,6 +5,9 @@ using UnityEngine.InputSystem;
 
 namespace DNExtensions.Systems.InputSystem
 {
+    /// <summary>
+    /// Base class for displaying input binding information as text, with automatic updates on device changes.
+    /// </summary>
     public abstract class InputBindingDisplay : MonoBehaviour
     {
         [Header("References")]
@@ -20,7 +23,6 @@ namespace DNExtensions.Systems.InputSystem
                 textComponent = GetComponent<TextMeshProUGUI>();
             }
         }
-        
 
         protected virtual void Start()
         {
@@ -34,7 +36,7 @@ namespace DNExtensions.Systems.InputSystem
 
         protected virtual void OnDisable()
         {
-            InputManager.OnControlsChanged  -= OnDeviceChanged;
+            InputManager.OnControlsChanged -= OnDeviceChanged;
         }
 
         private void OnDeviceChanged(PlayerInput input)
@@ -53,7 +55,6 @@ namespace DNExtensions.Systems.InputSystem
                 Debug.LogError("TextMeshProUGUI component not assigned!", this);
                 return;
             }
-            
 
             string result = GetDisplayText();
 

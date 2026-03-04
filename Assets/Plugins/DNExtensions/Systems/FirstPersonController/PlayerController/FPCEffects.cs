@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.FirstPersonController
 {
+    /// <summary>
+    /// Handles first-person camera effects including FOV changes, headbob, tilt, fall kick, and landing rumble.
+    /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(FpcManager))]
     [AddComponentMenu("DNExtensions/First Person Controller/FPC Effects")]
@@ -172,7 +175,10 @@ namespace DNExtensions.Systems.FirstPersonController
             _tiltOffset.x = Mathf.LerpAngle(_tiltOffset.x, targetPitch, Time.deltaTime * tiltSmoothing);
             _tiltOffset.z = Mathf.LerpAngle(_tiltOffset.z, targetRoll, Time.deltaTime * tiltSmoothing);
         }
-        
+
+        /// <summary>
+        /// Applies a camera kick effect with position and rotation offsets.
+        /// </summary>
         public void KickCamera(float positionStrength, float rotationStrength, Vector3 positionDirection, Vector3 rotationDirection, float kickTime)
         {
             _kickPositionOffset += positionDirection * positionStrength;

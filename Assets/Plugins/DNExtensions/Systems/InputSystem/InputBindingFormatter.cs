@@ -2,9 +2,11 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine.InputSystem;
 
-
 namespace DNExtensions.Systems.InputSystem
 {
+    /// <summary>
+    /// Provides utilities for formatting input binding display strings with text or sprite representations.
+    /// </summary>
     public static class InputBindingFormatter
     {
         private static readonly Dictionary<string, string> TextOverrides = new()
@@ -12,54 +14,11 @@ namespace DNExtensions.Systems.InputSystem
             { "Left Button", "Left Click" },
             { "Right Button", "Right Click" },
             { "Middle Button", "Middle Click" },
-            { "D-Pad/Up", "Up"},
-            { "D-Pad/Down", "Down"},
-            { "D-Pad/Left", "Left"},
-            { "D-Pad/Right", "Right"},
-            
+            { "D-Pad/Up", "Up" },
+            { "D-Pad/Down", "Down" },
+            { "D-Pad/Left", "Left" },
+            { "D-Pad/Right", "Right" }
         };
-
-        #region Public API
-
-        /// <summary>
-        /// Get binding display for a specific InputAction
-        /// </summary>
-        public static string GetActionBinding(InputAction action, bool useSprites, PlayerInput playerInput,
-            TMP_SpriteAsset spriteAsset = null, string compositePartFilter = "")
-        {
-            if (!playerInput || action == null)
-            {
-                return action?.name ?? "Unknown";
-            }
-
-            // Get relevant bindings for the current control scheme
-            List<InputBinding> bindings = GetDisplayBindingsForAction(action, playerInput.currentControlScheme, compositePartFilter);
-
-            if (bindings.Count == 0)
-            {
-                return null;
-            }
-
-            // Format bindings as text or sprites
-            List<string> formattedBindings = new List<string>();
-
-            foreach (var binding in bindings)
-            {
-                string formatted = useSprites
-                    ? FormatBindingAsSprite(binding, spriteAsset)
-                    : FormatBindingAsText(binding);
-
-                formattedBindings.Add(formatted);
-            }
-
-            // Join with appropriate separator
-            string separator = useSprites ? " " : ", ";
-            return string.Join(separator, formattedBindings);
-        }
-
-        #endregion
-
-        #region Binding Extraction
 
         /// <summary>
         /// Extract the bindings to display for an action based on the current control scheme
@@ -113,10 +72,6 @@ namespace DNExtensions.Systems.InputSystem
             return string.IsNullOrEmpty(binding.groups) || binding.groups.Contains(scheme);
         }
 
-        #endregion
-
-        #region Text Formatting
-
         /// <summary>
         /// Format a binding as human-readable text using Unity's ToDisplayString with custom overrides
         /// </summary>
@@ -133,10 +88,6 @@ namespace DNExtensions.Systems.InputSystem
 
             return displayName;
         }
-
-        #endregion
-
-        #region Sprite Formatting
 
         /// <summary>
         /// Format a binding as a sprite tag with fallback to placeholder if sprite is missing
@@ -191,6 +142,40 @@ namespace DNExtensions.Systems.InputSystem
             return false;
         }
 
-        #endregion
+        /// <summary>
+        /// Get binding display for a specific InputAction
+        /// </summary>
+        public static string GetActionBinding(InputAction action, bool useSprites, PlayerInput playerInput,
+            TMP_SpriteAsset spriteAsset = null, string compositePartFilter = "")
+        {
+            if (!playerInput || action == null)
+            {
+                return action?.name ?? "Unknown";
+            }
+
+            // Get relevant bindings for the current control scheme
+            List<InputBinding> bindings = GetDisplayBindingsForAction(action, playerInput.currentControlScheme, compositePartFilter);
+
+            if (bindings.Count == 0)
+            {
+                return null;
+            }
+
+            // Format bindings as text or sprites
+            List<string> formattedBindings = new List<string>();
+
+            foreach (var binding in bindings)
+            {
+                string formatted = useSprites
+                    ? FormatBindingAsSprite(binding, spriteAsset)
+                    : FormatBindingAsText(binding);
+
+                formattedBindings.Add(formatted);
+            }
+
+            // Join with appropriate separator
+            string separator = useSprites ? " " : ", ";
+            return string.Join(separator, formattedBindings);
+        }
     }
 }

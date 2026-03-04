@@ -1,19 +1,20 @@
-
 using DNExtensions.Systems.Scriptables;
 using DNExtensions.Utilities.AutoGet;
 using UnityEngine;
 
 namespace DNExtensions.Systems.FirstPersonController.Interactable
 {
-        [SelectionBase]
-        [DisallowMultipleComponent]
-        [RequireComponent(typeof(Collider))]
-        [RequireComponent(typeof(Rigidbody))]
-        [RequireComponent(typeof(InteractableBase))]
-        [RequireComponent(typeof(AudioSource))]
-        public class PickableObject : InteractableBase
-        {
-
+    /// <summary>
+    /// Represents an object that can be picked up, held, dropped, and thrown by the player.
+    /// </summary>
+    [SelectionBase]
+    [DisallowMultipleComponent]
+    [RequireComponent(typeof(Collider))]
+    [RequireComponent(typeof(Rigidbody))]
+    [RequireComponent(typeof(InteractableBase))]
+    [RequireComponent(typeof(AudioSource))]
+    public class PickableObject : InteractableBase
+    {
         [Header("Pickable Object Settings")]
         [Tooltip( "Affects the players movement speed when this object is held, 1 has no effect.")]
         [SerializeField, Min(1)] private float objectWeight = 1f;
@@ -26,8 +27,7 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
         private bool _isBeingHeld;
         private Transform _holdPosition;
         public float ObjectWeight => objectWeight;
-        
-        
+
         private void OnCollisionEnter(Collision collision)
         {
             if (collision.relativeVelocity.magnitude > 0.3f)
@@ -35,7 +35,6 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
                 collisionSfx?.Play(audioSource);
             }
         }
-        
 
         private void FixedUpdate()
         {
@@ -46,17 +45,12 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
         {
             if (!CanInteract() || _isBeingHeld) return;
 
-            if (!_isBeingHeld)
-            {
-                PickUp(interactorData);
-            }
-
+            PickUp(interactorData);
         }
 
         private void FollowHoldPosition()
         {
             if (!_isBeingHeld || !_holdPosition) return;
-
 
             var direction = _holdPosition.position - rigidBody.position;
             rigidBody.linearVelocity = direction * (heldFollowForce * Time.fixedDeltaTime);
@@ -77,8 +71,7 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
                 rigidBody.angularVelocity = Vector3.Lerp(rigidBody.angularVelocity, Vector3.zero, 1f * Time.fixedDeltaTime);
             }
         }
-        
-        
+
         private void PickUp(InteractorData interactorData)
         {
             if (!rigidBody || _isBeingHeld) return;
@@ -90,6 +83,9 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
             interactorData.FpcInteraction.HeldObject = this;
         }
 
+        /// <summary>
+        /// Drops the held object, allowing it to be picked up again.
+        /// </summary>
         public void Drop()
         {
             if (!rigidBody || !_isBeingHeld) return;
@@ -100,6 +96,9 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
             _holdPosition = null;
         }
 
+        /// <summary>
+        /// Throws the held object in the specified direction with the given force.
+        /// </summary>
         public void Throw(Vector3 direction, float force)
         {
             if (!rigidBody) return;
@@ -110,6 +109,5 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
             _holdPosition = null;
             rigidBody.AddForce(direction * force, ForceMode.Impulse);
         }
-        
     }
 }

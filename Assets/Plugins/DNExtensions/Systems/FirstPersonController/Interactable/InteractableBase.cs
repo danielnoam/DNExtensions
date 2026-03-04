@@ -8,10 +8,9 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
         [Header("Settings")]
         [SerializeField] protected bool canInteract = true;
         [SerializeField] protected bool onlyOneInteraction;
-        
+
         protected bool IsHighlighted;
         protected bool WasInteracted;
-        
 
         public virtual void Interact(InteractorData interactorData)
         {

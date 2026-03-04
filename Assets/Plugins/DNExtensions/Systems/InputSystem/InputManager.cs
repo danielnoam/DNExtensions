@@ -6,11 +6,13 @@ using UnityEngine.InputSystem;
 
 namespace DNExtensions.Systems.InputSystem
 {
+    /// <summary>
+    /// Manages input system state, device detection, and provides utilities for binding display.
+    /// </summary>
     public class InputManager : MonoBehaviour
     {
         public static InputManager Instance { get; private set; }
-        
-        
+
         [Header("Input")]
         [SerializeField] private PlayerInput playerInput;
         [SerializeField] private bool hideCursor = true;
@@ -20,7 +22,6 @@ namespace DNExtensions.Systems.InputSystem
         [SerializeField] private TMP_SpriteAsset keyboardMouseSpriteAsset;
         [Tooltip("Sprite assets has to be in /Resources/Sprite Assets/")]
         [SerializeField] private TMP_SpriteAsset gamepadSpriteAsset;
-
 
         public static InputDeviceType CurrentDevice { get; private set; }
         public static bool IsMobile { get; private set; }
@@ -32,11 +33,7 @@ namespace DNExtensions.Systems.InputSystem
         public static event Action<PlayerInput> OnDeviceLost;
         public static event Action<PlayerInput> OnControlsChanged;
 
-        
         public PlayerInput PlayerInput => playerInput;
-
-
-
 
         private void OnValidate()
         {
@@ -144,7 +141,7 @@ namespace DNExtensions.Systems.InputSystem
         /// Sets the cursor visibility and lock state.
         /// </summary>
         /// <param name="state">True to show the cursor, false to hide it.</param>
-        public void SetCursorVisibility(bool state)
+        public static void SetCursorVisibility(bool state)
         {
             if (state)
             {
@@ -155,24 +152,6 @@ namespace DNExtensions.Systems.InputSystem
             {
                 Cursor.lockState = CursorLockMode.Confined;
                 Cursor.visible = false;
-            }
-        }
-
-        /// <summary>
-        /// Toggles cursor visibility between visible and hidden states.
-        /// </summary>
-        [Button(ButtonPlayMode.OnlyWhenPlaying)]
-        public void ToggleCursorVisibility()
-        {
-            if (Cursor.visible)
-            {
-                Cursor.lockState = CursorLockMode.Confined;
-                Cursor.visible = false;
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
             }
         }
 

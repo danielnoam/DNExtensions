@@ -5,6 +5,9 @@ using UnityEngine.InputSystem;
 
 namespace DNExtensions.Systems.InputSystem
 {
+    /// <summary>
+    /// Displays input bindings for multiple specified input actions with optional composite part filtering.
+    /// </summary>
     public class ActionBindingDisplay : InputBindingDisplay
     {
         [SerializeField] private string[] actionNames;
@@ -52,7 +55,9 @@ namespace DNExtensions.Systems.InputSystem
             return InputManager.GetActionBindings(validActions.ToArray(), separator, useSprites, compositePartFilter);
         }
 
-
+        /// <summary>
+        /// Gets all valid InputActions referenced by this display.
+        /// </summary>
         public InputAction[] GetAllActions()
         {
             if (actionNames == null || actionNames.Length == 0)

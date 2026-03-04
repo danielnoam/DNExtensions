@@ -7,12 +7,14 @@ using UnityEngine.UI;
 
 namespace DNExtensions.Systems.MenuSystem
 {
+    /// <summary>
+    /// Provides visual feedback animations for UI Selectable elements including position, rotation, scale, and alpha effects.
+    /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Selectable))]
     [AddComponentMenu("DNExtensions/Menu System/Selectable Animator")]
     public class SelectableAnimator : MonoBehaviour
     {
-        
         [SerializeField] private bool resetOnDisable = true;
 
         [Header("Position")] 
@@ -82,7 +84,6 @@ namespace DNExtensions.Systems.MenuSystem
                 selectable.targetGraphic.color = color;
             }
         }
-        
 
         private void OnSelect(BaseEventData eventData)
         {
@@ -93,8 +94,10 @@ namespace DNExtensions.Systems.MenuSystem
         {
             PlayDeselectAnimations();
         }
-        
-        
+
+        /// <summary>
+        /// Plays all configured selection animations.
+        /// </summary>
         public void PlaySelectAnimations()
         {
             switch (positionEffectType)
@@ -110,9 +113,11 @@ namespace DNExtensions.Systems.MenuSystem
             if (animateScale) PlayScaleAnimation(true);
             if (animateRotation) PlayRotateAnimation(true);
             if (animateAlpha) PlayAlphaAnimation(true);
-            
         }
 
+        /// <summary>
+        /// Plays all configured deselection animations.
+        /// </summary>
         public void PlayDeselectAnimations()
         {
             switch (positionEffectType)

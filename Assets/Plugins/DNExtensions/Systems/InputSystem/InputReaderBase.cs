@@ -4,7 +4,6 @@ using UnityEngine.InputSystem;
 
 namespace DNExtensions.Systems.InputSystem
 {
-    
     /// <summary>
     /// Base class for handling Unity Input System interactions with cursor management capabilities.
     /// Provides foundation for input handling classes with built-in cursor visibility controls.
@@ -13,22 +12,17 @@ namespace DNExtensions.Systems.InputSystem
     {
         [SerializeField] protected InputManager inputManager;
 
-
         public bool IsGamepad => InputManager.IsGamepad;
         public bool IsKeyboardMouse => InputManager.IsKeyboardMouse;
         public bool IsTouch => InputManager.IsTouch;
         public bool IsMobile => InputManager.IsMobile;
         public InputDeviceType CurrentDevice => InputManager.CurrentDevice;
         protected PlayerInput PlayerInput => inputManager?.PlayerInput ?? InputManager.Instance?.PlayerInput;
-        
 
-        
-        protected virtual  void OnValidate()
+        protected virtual void OnValidate()
         {
             if (!inputManager) inputManager = FindFirstObjectByType<InputManager>();
-            
         }
-        
 
         /// <summary>
         /// Subscribes a callback method to all phases of an InputAction (started, performed, canceled).
@@ -65,6 +59,5 @@ namespace DNExtensions.Systems.InputSystem
             action.started -= callback;
             action.canceled -= callback;
         }
-        
     }
 }

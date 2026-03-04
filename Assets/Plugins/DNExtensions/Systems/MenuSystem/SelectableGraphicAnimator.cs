@@ -7,6 +7,9 @@ using UnityEngine.UI;
 
 namespace DNExtensions.Systems.MenuSystem
 {
+    /// <summary>
+    /// Provides visual feedback animations for UI Graphics when their associated Selectable is selected/deselected.
+    /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Graphic))]
     [RequireComponent(typeof(RectTransform))]

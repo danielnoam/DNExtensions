@@ -1,4 +1,3 @@
-
 using DNExtensions.Systems.FirstPersonController.Interactable;
 using DNExtensions.Utilities;
 using DNExtensions.Utilities.AutoGet;
@@ -8,6 +7,9 @@ using UnityEngine.InputSystem;
 
 namespace DNExtensions.Systems.FirstPersonController
 {
+    /// <summary>
+    /// Handles player interactions with interactable objects, including picking up, holding, throwing, and dropping objects.
+    /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(FpcManager))]
     [AddComponentMenu("")]
@@ -26,7 +28,6 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField, AutoGetSelf, HideInInspector] private FpcManager manager;
         [SerializeField] private Transform holdPosition;
         [SerializeField] private Transform interactionPosition;
-        
 
         private PickableObject _heldObject;
         private IInteractable _closestInteractable;
@@ -35,6 +36,9 @@ namespace DNExtensions.Systems.FirstPersonController
         
         public Transform HoldPosition => holdPosition;
 
+        /// <summary>
+        /// Gets or sets the currently held pickable object. Setting to null or a different object will drop the current object.
+        /// </summary>
         public PickableObject HeldObject
         {
             get => _heldObject;
@@ -57,7 +61,6 @@ namespace DNExtensions.Systems.FirstPersonController
             if (!manager) manager = GetComponent<FpcManager>();
             if (!interactionPosition) interactionPosition = transform;
         }
-
 
         private void OnEnable()
         {
@@ -93,7 +96,6 @@ namespace DNExtensions.Systems.FirstPersonController
                 _throwInputHeld = false;
                 ThrowHeldObject();
             }
-
 
             _throwInputHoldTime = 0f;
         }
@@ -152,7 +154,6 @@ namespace DNExtensions.Systems.FirstPersonController
             }
         }
 
-        
         private void CheckForInteractable()
         {
             var colliders = Physics.OverlapSphere(interactionPosition.position, interactionRadius, interactionLayer);
@@ -182,7 +183,6 @@ namespace DNExtensions.Systems.FirstPersonController
                 _closestInteractable = closestInteractable;
             }
         }
-        
 
 #if UNITY_EDITOR
         private void OnDrawGizmosSelected()
@@ -202,8 +202,6 @@ namespace DNExtensions.Systems.FirstPersonController
             Gizmos.color = Color.green;
             Gizmos.DrawWireSphere(transform.position.RemoveY(autoDropYOffset), 0.1f);
             Handles.Label(transform.position.RemoveY(autoDropYOffset), "Auto drop distance");
-            
-
         }
 #endif
     }

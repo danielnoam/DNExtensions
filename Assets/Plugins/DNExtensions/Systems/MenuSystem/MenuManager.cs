@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using DNExtensions.Utilities;
@@ -6,7 +5,9 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.MenuSystem
 {
-
+    /// <summary>
+    /// Manages screen navigation and transitions within a menu system.
+    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("DNExtensions/Menu System/Menu Manager")]
     public class MenuManager : MonoBehaviour
@@ -16,7 +17,6 @@ namespace DNExtensions.Systems.MenuSystem
         [SerializeField, EnableIf("autoShowFirstScreen")]
         private bool animateFirstScreen = true;
         [SerializeField] private bool crossAnimateScreens;
-
 
         private readonly List<Screen> _screens = new List<Screen>();
         private Screen _currentScreen;
@@ -41,7 +41,11 @@ namespace DNExtensions.Systems.MenuSystem
 
             _currentScreen = null;
         }
+        
 
+        /// <summary>
+        /// Shows the specified screen with optional animation and completion callback.
+        /// </summary>
         public void ShowScreen(Screen screen, bool animated = true, Action onComplete = null)
         {
             if (!screen)
@@ -49,7 +53,6 @@ namespace DNExtensions.Systems.MenuSystem
                 Debug.LogWarning($"Screen {screen.name} is invalid.");
                 return;
             }
-
 
             if (crossAnimateScreens)
             {
@@ -60,7 +63,6 @@ namespace DNExtensions.Systems.MenuSystem
 
                 screen.Show(animated, onComplete);
                 _currentScreen = screen;
-
             }
             else
             {
@@ -78,11 +80,11 @@ namespace DNExtensions.Systems.MenuSystem
                     _currentScreen = screen;
                 }
             }
-
-
         }
 
-
+        /// <summary>
+        /// Shows the next screen in the sequence with optional animation and completion callback.
+        /// </summary>
         public void ShowNextScreen(bool animated = true, Action onComplete = null)
         {
             if (!_currentScreen)
@@ -96,6 +98,9 @@ namespace DNExtensions.Systems.MenuSystem
             ShowScreen(nextIndex >= _screens.Count ? _screens[0] : _screens[nextIndex], animated, onComplete);
         }
 
+        /// <summary>
+        /// Shows the previous screen in the sequence with optional animation and completion callback.
+        /// </summary>
         public void ShowPreviousScreen(bool animated = true, Action onComplete = null)
         {
             if (!_currentScreen)
@@ -109,7 +114,6 @@ namespace DNExtensions.Systems.MenuSystem
             ShowScreen(previousIndex < 0 ? _screens[^1] : _screens[previousIndex], animated, onComplete);
         }
 
-
         public void ShowScreenAnimated(Screen screen) => ShowScreen(screen, true, null);
         public void ShowScreenInstant(Screen screen) => ShowScreen(screen, false, null);
 
@@ -118,12 +122,8 @@ namespace DNExtensions.Systems.MenuSystem
 
         public void ShowPreviousScreenAnimated() => ShowPreviousScreen(true, null);
         public void ShowPreviousScreenInstant() => ShowPreviousScreen(false, null);
-        
+
         public void HideCurrentScreen(bool animated = true) => _currentScreen?.Hide(animated);
-        
-
-
-
-
+        public void HideCurrentScreen(bool animated, Action onComplete) => _currentScreen?.Hide(animated, onComplete);
     }
 }

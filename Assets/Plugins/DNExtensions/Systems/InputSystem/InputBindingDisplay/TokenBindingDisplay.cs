@@ -4,6 +4,9 @@ using UnityEngine.InputSystem;
 
 namespace DNExtensions.Systems.InputSystem
 {
+    /// <summary>
+    /// Represents a mapping between a text token and an input action name.
+    /// </summary>
     [Serializable]
     public struct TokenActionPair
     {
@@ -14,6 +17,9 @@ namespace DNExtensions.Systems.InputSystem
         public string actionName;
     }
 
+    /// <summary>
+    /// Displays input bindings by replacing tokens in template text with actual binding representations.
+    /// </summary>
     public class TokenBindingDisplay : InputBindingDisplay
     {
         [SerializeField] private TokenActionPair[] tokenBindings = Array.Empty<TokenActionPair>();
@@ -22,13 +28,11 @@ namespace DNExtensions.Systems.InputSystem
         
         private void Awake()
         {
-            
             if (textComponent)
             {
                 templateText = textComponent.text;
             }
         }
-        
 
         protected override string GetDisplayText()
         {

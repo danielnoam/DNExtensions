@@ -5,6 +5,9 @@ using UnityEngine.InputSystem;
 
 namespace DNExtensions.Systems.FirstPersonController
 {
+    /// <summary>
+    /// Handles input actions for the first-person controller including movement, look, jump, crouch, run, and interactions.
+    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("")]
     public class FPCInput : InputReaderBase
@@ -19,8 +22,7 @@ namespace DNExtensions.Systems.FirstPersonController
         private InputAction _throwAction;
         private InputAction _dropAction;
         private InputAction _toggleMenu;
-        
-        
+
         public event Action<InputAction.CallbackContext> OnMoveAction;
         public event Action<InputAction.CallbackContext> OnLookAction;
         public event Action<InputAction.CallbackContext> OnJumpAction;
@@ -40,7 +42,6 @@ namespace DNExtensions.Systems.FirstPersonController
 
         private void Awake()
         {
-
             _playerActionMap = PlayerInput.actions.FindActionMap("Player");
 
             if (_playerActionMap == null)
@@ -70,9 +71,7 @@ namespace DNExtensions.Systems.FirstPersonController
             if (_toggleMenu == null) Debug.LogError("ToggleMenu action not found in Player Action Map.");
             
             _playerActionMap.Enable();
-
         }
-
 
         private void OnEnable()
         {
@@ -85,8 +84,6 @@ namespace DNExtensions.Systems.FirstPersonController
             SubscribeToAction(_throwAction, OnThrow);
             SubscribeToAction(_dropAction, OnDrop);
             SubscribeToAction(_toggleMenu, OnToggleMenu);
-
-
         }
 
         private void OnDisable()
@@ -101,7 +98,6 @@ namespace DNExtensions.Systems.FirstPersonController
             UnsubscribeFromAction(_dropAction, OnDrop);
             UnsubscribeFromAction(_toggleMenu, OnToggleMenu);
         }
-        
 
         private void OnMove(InputAction.CallbackContext context)
         {
@@ -116,7 +112,6 @@ namespace DNExtensions.Systems.FirstPersonController
         
         private void OnJump(InputAction.CallbackContext context)
         {
-            
             OnJumpAction?.Invoke(context);
         }
         
@@ -134,13 +129,13 @@ namespace DNExtensions.Systems.FirstPersonController
                 OnCrouchAction?.Invoke(context);
             }
         }
+
         private void OnRun(InputAction.CallbackContext context)
         {
             RunInput = toggleRun ? (context.phase == InputActionPhase.Started ? !RunInput : RunInput) : context.ReadValueAsButton();
             OnRunAction?.Invoke(context);
         }
-        
-        
+
         private void OnInteract(InputAction.CallbackContext context)
         {
             OnInteractAction?.Invoke(context);
@@ -155,12 +150,10 @@ namespace DNExtensions.Systems.FirstPersonController
         {
             OnDropAction?.Invoke(context);
         }
-        
-        
+
         private void OnToggleMenu(InputAction.CallbackContext context)
         {
             OnToggleMenuAction?.Invoke(context);
         }
-        
     }
 }

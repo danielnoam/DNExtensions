@@ -1,10 +1,11 @@
 using UnityEngine;
 using UnityEditor;
 
-#if UNITY_EDITOR
-
 namespace DNExtensions.Systems.Grid
 {
+    /// <summary>
+    /// Custom property drawer for Grid that provides a visual editor interface for grid manipulation.
+    /// </summary>
     [CustomPropertyDrawer(typeof(Grid))]
     public class GridDrawer : PropertyDrawer
     {
@@ -46,15 +47,15 @@ namespace DNExtensions.Systems.Grid
             float cellSpacingHeight = EditorGUI.GetPropertyHeight(cellSpacingProp);
             float originHeight = EditorGUI.GetPropertyHeight(originProp);
             
-            float totalHeight = EditorGUIUtility.singleLineHeight + Spacing + 
-                               EditorGUIUtility.singleLineHeight + Spacing + 
+            float totalHeight = EditorGUIUtility.singleLineHeight + Spacing +
+                               EditorGUIUtility.singleLineHeight + Spacing +
                                EditorGUIUtility.singleLineHeight + Spacing +
                                originHeight + Spacing +
                                cellSizeHeight + Spacing +
-                               cellSpacingHeight + Spacing + 
-                               EditorGUIUtility.singleLineHeight + Spacing + 
+                               cellSpacingHeight + Spacing +
                                EditorGUIUtility.singleLineHeight + Spacing +
-                               gridHeight + Spacing + 
+                               EditorGUIUtility.singleLineHeight + Spacing +
+                               gridHeight + Spacing +
                                ButtonHeight + Spacing +
                                ButtonHeight;  
 
@@ -401,5 +402,3 @@ namespace DNExtensions.Systems.Grid
         }
     }
 }
-
-#endif

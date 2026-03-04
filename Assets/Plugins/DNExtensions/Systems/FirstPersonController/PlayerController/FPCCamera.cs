@@ -5,6 +5,9 @@ using UnityEngine.InputSystem;
 
 namespace DNExtensions.Systems.FirstPersonController
 {
+    /// <summary>
+    /// Handles first-person camera rotation, head positioning, and look input for the player controller.
+    /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(FpcManager))]
     [AddComponentMenu("")]
@@ -122,11 +125,17 @@ namespace DNExtensions.Systems.FirstPersonController
             head.localRotation = Quaternion.Euler(_currentTiltAngle, 0, 0);
         }
 
+        /// <summary>
+        /// Gets the horizontal movement direction based on the current camera pan angle.
+        /// </summary>
         public Vector3 GetMovementDirection()
         {
             return (Quaternion.Euler(0, _currentPanAngle, 0) * Vector3.forward).normalized;
         }
 
+        /// <summary>
+        /// Gets the aim direction based on both pan and tilt angles.
+        /// </summary>
         public Vector3 GetAimDirection()
         {
             return Quaternion.Euler(_currentTiltAngle, _currentPanAngle, 0) * Vector3.forward;

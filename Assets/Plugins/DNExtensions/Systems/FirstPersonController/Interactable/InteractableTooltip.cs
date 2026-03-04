@@ -6,6 +6,9 @@ using UnityEngine.UI;
 
 namespace DNExtensions.Systems.FirstPersonController.Interactable
 {
+	/// <summary>
+	/// Manages tooltip display for an interactable object, showing action and description prompts with animated transitions.
+	/// </summary>
 	[DisallowMultipleComponent]
 	public class InteractableTooltip : MonoBehaviour
 	{
@@ -51,15 +54,13 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
 		{
 			interactable.OnHighlight += InteractableOnOnHighlight;
 			interactable.OnUnHighlight += InteractableOnOnUnHighlight;
-			interactable.OnInteract += InteractableOnOnInteract;
-		}
+			}
 
 		private void OnDisable()
 		{
 			interactable.OnHighlight -= InteractableOnOnHighlight;
 			interactable.OnUnHighlight -= InteractableOnOnUnHighlight;
-			interactable.OnInteract -= InteractableOnOnInteract;
-		}
+			}
 
 		private void Update()
 		{
@@ -76,11 +77,6 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
 					transform.rotation = Quaternion.Euler(eulerAngles);
 				}
 			}
-		}
-
-		private void InteractableOnOnInteract(FPCInteraction interactor)
-		{
-
 		}
 
 		private void InteractableOnOnUnHighlight()
@@ -112,13 +108,19 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
 			}
 		}
 
-		public void SetText(string action, string description)
+	/// <summary>
+	/// Updates the tooltip action and description text.
+	/// </summary>
+	public void SetText(string action, string description)
 		{
 			actionText.text = action;
-			descriptionText.text = $"{description}";
+			descriptionText.text = description;
 		}
 
-		public void Punch(Color punchColor = default)
+		/// <summary>
+	/// Triggers a punch scale animation on the tooltip with an optional color flash.
+	/// </summary>
+	public void Punch(Color punchColor = default)
 		{
 			if (_punchSequence.isAlive) _punchSequence.Stop();
 

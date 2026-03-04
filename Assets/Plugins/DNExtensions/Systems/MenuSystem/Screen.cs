@@ -1,5 +1,3 @@
-
-
 using System;
 using System.Collections.Generic;
 using DNExtensions.Utilities;
@@ -7,10 +5,11 @@ using DNExtensions.Utilities.SerializableSelector;
 using PrimeTween;
 using UnityEngine;
 
-
 namespace DNExtensions.Systems.MenuSystem
 {
-
+    /// <summary>
+    /// Represents a UI screen with show/hide animations and transition management.
+    /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CanvasGroup))]
     [AddComponentMenu("DNExtensions/Menu System/Screen")]
@@ -29,8 +28,6 @@ namespace DNExtensions.Systems.MenuSystem
         public CanvasGroup CanvasGroup => _canvasGroup ? _canvasGroup : _canvasGroup = GetComponent<CanvasGroup>();
         public RectTransform RectTransform => _rectTransform ? _rectTransform : _rectTransform = GetComponent<RectTransform>();
 
-
-
         private void Awake()
         {
             _canvasGroup = this.GetOrAddComponent<CanvasGroup>();
@@ -40,6 +37,9 @@ namespace DNExtensions.Systems.MenuSystem
             TransformOriginalAnchoredPosition = RectTransform.anchoredPosition3D;
         }
 
+        /// <summary>
+        /// Shows the screen with optional animation and completion callback.
+        /// </summary>
         public void Show(bool animated = true, Action onComplete = null)
         {
             gameObject.SetActive(true);
@@ -77,6 +77,9 @@ namespace DNExtensions.Systems.MenuSystem
             });
         }
 
+        /// <summary>
+        /// Hides the screen with optional animation and completion callback.
+        /// </summary>
         public void Hide(bool animated = true, Action onComplete = null)
         {
             CanvasGroup.interactable = false;
@@ -125,6 +128,4 @@ namespace DNExtensions.Systems.MenuSystem
             gameObject.SetActive(false);
         }
     }
-
-
 }

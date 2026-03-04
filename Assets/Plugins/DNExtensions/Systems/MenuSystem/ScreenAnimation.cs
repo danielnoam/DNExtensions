@@ -1,6 +1,3 @@
-
-
-
 using System;
 using DNExtensions.Systems.Springs;
 using DNExtensions.Utilities;
@@ -11,6 +8,9 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.MenuSystem
 {
+    /// <summary>
+    /// Base class for screen transition animations.
+    /// </summary>
     [Serializable]
     public abstract class ScreenAnimation
     {
@@ -19,6 +19,9 @@ namespace DNExtensions.Systems.MenuSystem
         public abstract Sequence CreateSequence(Screen screen);
     }
 
+    /// <summary>
+    /// Animates screen opacity with configurable start and end alpha values.
+    /// </summary>
     [Serializable]
     [SerializableSelectorAllowOnce]
     public class FadeAnimation : ScreenAnimation
@@ -43,6 +46,9 @@ namespace DNExtensions.Systems.MenuSystem
         }
     }
 
+    /// <summary>
+    /// Animates screen scale with configurable start and end values.
+    /// </summary>
     [Serializable]
     [SerializableSelectorAllowOnce]
     public class ScaleAnimation : ScreenAnimation
@@ -63,6 +69,9 @@ namespace DNExtensions.Systems.MenuSystem
         }
     }
 
+    /// <summary>
+    /// Animates screen position by sliding from a direction with configurable distance.
+    /// </summary>
     [Serializable]
     [SerializableSelectorAllowOnce]
     public class SlideAnimation : ScreenAnimation
@@ -102,6 +111,9 @@ namespace DNExtensions.Systems.MenuSystem
         }
     }
 
+    /// <summary>
+    /// Animates screen rotation from start to end angles.
+    /// </summary>
     [Serializable]
     [SerializableSelectorAllowOnce]
     public class RotateAnimation : ScreenAnimation
@@ -122,9 +134,11 @@ namespace DNExtensions.Systems.MenuSystem
             return Sequence.Create()
                 .Group(Tween.Rotation(screen.RectTransform, to, duration, ease));
         }
-        
     }
 
+    /// <summary>
+    /// Animates multiple springy UI elements sequentially with configurable delay between elements.
+    /// </summary>
     [Serializable]
     [SerializableSelectorAllowOnce]
     public class SpringyUIAnimation : ScreenAnimation
@@ -142,8 +156,7 @@ namespace DNExtensions.Systems.MenuSystem
         public enum SpringAnimationMode
         {
             AnimateFromOffset,
-            AnimateToOffset,
-
+            AnimateToOffset
         }
 
         public override Sequence CreateSequence(Screen screen)

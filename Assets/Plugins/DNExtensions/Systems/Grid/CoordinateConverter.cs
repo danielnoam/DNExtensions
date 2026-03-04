@@ -42,9 +42,12 @@ namespace DNExtensions.Systems.Grid
         /// <summary>
         /// The forward direction for this coordinate system (used for 3D orientation).
         /// </summary>
-        public abstract Vector3 Forward { get;}
+        public abstract Vector3 Forward { get; }
     }
 
+    /// <summary>
+    /// Coordinate converter for vertical (XY plane) grids.
+    /// </summary>
     public class VerticalConvertor : CoordinateConverter
     {
         public override Vector3 GridToWorld(Vector2Int cellPosition, Vector2Int gridSize, Vector3 cellSize, Vector3 cellSpacing, Vector3 origin)
@@ -114,6 +117,9 @@ namespace DNExtensions.Systems.Grid
         public override Vector3 Forward => Vector3.forward;
     }
 
+    /// <summary>
+    /// Coordinate converter for horizontal (XZ plane) grids.
+    /// </summary>
     public class HorizontalConvertor : CoordinateConverter
     {
         public override Vector3 GridToWorld(Vector2Int cellPosition, Vector2Int gridSize, Vector3 cellSize, Vector3 cellSpacing, Vector3 origin)

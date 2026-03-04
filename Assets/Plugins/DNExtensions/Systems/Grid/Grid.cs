@@ -7,12 +7,18 @@ using UnityEditor;
 
 namespace DNExtensions.Systems.Grid
 {
+    /// <summary>
+    /// Defines the orientation of a grid in 3D space.
+    /// </summary>
     public enum GridOrientation
     {
         Vertical,
         Horizontal
     }
 
+    /// <summary>
+    /// Represents a 2D grid with customizable size, position, and orientation that can be used for tile-based systems.
+    /// </summary>
     [Serializable]
     public class Grid
     {
@@ -30,10 +36,10 @@ namespace DNExtensions.Systems.Grid
         {
             get
             {
-                int count = 0;
-                for (int i = 0; i < cells.Length; i++)
+                var count = 0;
+                foreach (var cell in cells)
                 {
-                    if (cells[i]) count++;
+                    if (cell) count++;
                 }
                 return count;
             }
@@ -54,7 +60,7 @@ namespace DNExtensions.Systems.Grid
         public Grid(int width = 8, int height = 8)
         {
             size = new Vector2Int(width, height);
-            origin =  Vector3.zero;
+            origin = Vector3.zero;
             cellSize = new Vector3(1f, 1f, 0);
             cellSpacing = new Vector3(0.1f, 0.1f, 0);
             orientation = GridOrientation.Vertical;
@@ -331,7 +337,7 @@ namespace DNExtensions.Systems.Grid
             // Diagonals
             if (cell.x == Width - 1 && cell.y == Height - 1)
             {
-                directions.Add(new Vector2Int(1,1));
+                directions.Add(new Vector2Int(1, 1));
             }
             if (cell.x == Width - 1 && cell.y == 0)
             {

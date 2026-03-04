@@ -5,8 +5,6 @@ using DNExtensions.Utilities.Button;
 using Unity.Cinemachine;
 using UnityEngine;
 
-
-
 namespace DNExtensions.Systems.FirstPersonController
 {
     /// <summary>
@@ -26,8 +24,7 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField, AutoGetSelf] private CharacterController characterController;
         [SerializeField, AutoGetSelf] private ControllerRumbleSource controllerRumbleSource;
         [SerializeField, AutoGetSelf] private CinemachineImpulseSource cinemachineImpulseSource;
-        
-        
+
         public FPCInput FpcInput => fpcInput;
         public FPCLocomotion FpcLocomotion => fpcLocomotion;
         public FPCEffects FpcEffects => fpcEffects;
@@ -37,7 +34,6 @@ namespace DNExtensions.Systems.FirstPersonController
         public CharacterController CharacterController => characterController;
         public ControllerRumbleSource ControllerRumbleSource => controllerRumbleSource;
         public CinemachineImpulseSource CinemachineImpulseSource => cinemachineImpulseSource;
-
 
         [Button]
         private void ValidateMissingComponents()
@@ -51,7 +47,6 @@ namespace DNExtensions.Systems.FirstPersonController
             if (!characterController) characterController = this.GetOrAddComponent<CharacterController>();
             if (!controllerRumbleSource) controllerRumbleSource = this.GetOrAddComponent<ControllerRumbleSource>();
             if (!cinemachineImpulseSource) cinemachineImpulseSource = this.GetOrAddComponent<CinemachineImpulseSource>();
-
         }
     }
 }
