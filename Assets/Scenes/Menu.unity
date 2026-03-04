@@ -842,7 +842,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::SpringyUI
   onEnableBehavior: 2
-  animateOnce: 0
   resetStateOnDisable: 1
   position: 1
   positionOffset: {x: 0, y: 900, z: 0}
@@ -1629,7 +1628,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpringyUI
   onEnableBehavior: 2
-  animateOnce: 0
   resetStateOnDisable: 1
   position: 1
   positionOffset: {x: 0, y: 500, z: 0}
@@ -2487,7 +2485,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpringyUI
   onEnableBehavior: 2
-  animateOnce: 0
   resetStateOnDisable: 1
   position: 1
   positionOffset: {x: 1200, y: 0, z: 0}
@@ -3064,7 +3061,8 @@ MonoBehaviour:
   disableInteractionsDuringAnimation: 0
   showAnimations:
   - rid: 5778562004119716097
-  hideAnimations: []
+  hideAnimations:
+  - rid: 6000860789890875471
   references:
     version: 2
     RefIds:
@@ -3076,6 +3074,13 @@ MonoBehaviour:
         startAlpha: 0
         endAlpha: 1
         ease: 9
+    - rid: 6000860789890875471
+      type: {class: SpringyUIAnimation, ns: DNExtensions.Systems.MenuSystem, asm: Assembly-CSharp-firstpass}
+      data:
+        duration: 0.25
+        delayBetweenElements: 0.1
+        animationMode: 0
+        springyUIElements: []
 --- !u!225 &1283884210
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -3530,7 +3535,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::SpringyUI
   onEnableBehavior: 2
-  animateOnce: 0
   resetStateOnDisable: 1
   position: 0
   positionOffset: {x: 0, y: 500, z: 0}
@@ -3698,7 +3702,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::SpringyUI
   onEnableBehavior: 2
-  animateOnce: 0
   resetStateOnDisable: 1
   position: 0
   positionOffset: {x: 0, y: 500, z: 0}
@@ -3865,7 +3868,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::SpringyUI
   onEnableBehavior: 2
-  animateOnce: 0
   resetStateOnDisable: 1
   position: 1
   positionOffset: {x: 0, y: 900, z: 0}

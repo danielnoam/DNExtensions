@@ -8,21 +8,20 @@ namespace DNExtensions.Utilities.Button
     public class ButtonSettings : ScriptableObject
     {
         private const string SettingsPath = "ProjectSettings/DNExtensions_ButtonSettings.asset";
-
-        [Header("Appearance")]
+        
+        [SerializeField] private bool drawSeparator;
+        [SerializeField] private bool drawNestedButtons = true;
         [Range(20, 60)] [SerializeField] private int buttonHeight = 30;
         [Range(0, 20)] [SerializeField] private int buttonSpace = 3;
         [SerializeField] private Color buttonColor = Color.white;
-
-        [Header("Behavior")]
         [SerializeField] private ButtonPlayMode buttonPlayMode = ButtonPlayMode.OnlyWhenPlaying;
-        [SerializeField] private string buttonGroup = "";
 
         public int ButtonHeight => buttonHeight;
         public int ButtonSpace => buttonSpace;
         public Color ButtonColor => buttonColor;
         public ButtonPlayMode ButtonPlayMode => buttonPlayMode;
-        public string ButtonGroup => buttonGroup;
+        public bool DrawNestedButtons => drawNestedButtons;
+        public bool DrawSeparator => drawSeparator;
 
         private static ButtonSettings _instance;
 
@@ -41,12 +40,12 @@ namespace DNExtensions.Utilities.Button
         private static ButtonSettings LoadOrCreate()
         {
             var settings = CreateInstance<ButtonSettings>();
-            
+
             if (File.Exists(SettingsPath))
             {
                 InternalEditorUtility.LoadSerializedFileAndForget(SettingsPath);
             }
-            
+
             return settings;
         }
 
@@ -57,11 +56,12 @@ namespace DNExtensions.Utilities.Button
 
         public void ResetToDefaults()
         {
+            drawSeparator = false;
+            drawNestedButtons = true;
             buttonHeight = 30;
             buttonSpace = 3;
             buttonColor = Color.white;
             buttonPlayMode = ButtonPlayMode.OnlyWhenPlaying;
-            buttonGroup = "";
             Save();
         }
     }
@@ -87,39 +87,40 @@ namespace DNExtensions.Utilities.Button
                 {
                     var settings = new SerializedObject(ButtonSettings.Instance);
                     
-                    EditorGUILayout.Space(10);
-                    EditorGUILayout.HelpBox(
-                        "These settings apply to all buttons that don't explicitly override these values.",
-                        MessageType.Info
-                    );
-                    
-                    EditorGUILayout.Space(5);
-                    
+
                     EditorGUI.BeginChangeCheck();
                     
-                    EditorGUILayout.PropertyField(settings.FindProperty("buttonHeight"), 
-                        new GUIContent("Height", "Default button height in pixels"));
+                    EditorGUILayout.Space(10);
+
+                    EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
+                    EditorGUILayout.PropertyField(settings.FindProperty("drawSeparator"),
+                        new GUIContent("Draw Separator", "Draw a separator line above the button section"));
+                    EditorGUILayout.PropertyField(settings.FindProperty("drawNestedButtons"),
+                        new GUIContent("Draw Nested Buttons", "Draw buttons for serializable classes nested inside the component"));
+
+                    EditorGUILayout.Space(10);
                     
+                    EditorGUILayout.LabelField("Default", EditorStyles.boldLabel);
+                    EditorGUILayout.PropertyField(settings.FindProperty("buttonHeight"),
+                        new GUIContent("Height", "Default button height in pixels"));
                     EditorGUILayout.PropertyField(settings.FindProperty("buttonSpace"),
                         new GUIContent("Space Before", "Space above button in pixels"));
-                    
                     EditorGUILayout.PropertyField(settings.FindProperty("buttonColor"),
                         new GUIContent("Color", "Default button background color"));
-                    
                     EditorGUILayout.PropertyField(settings.FindProperty("buttonPlayMode"),
                         new GUIContent("Play Mode", "When buttons can be clicked"));
-                    
-                    EditorGUILayout.PropertyField(settings.FindProperty("buttonGroup"),
-                        new GUIContent("Group", "Default group name (usually leave empty)"));
-                    
+                    EditorGUILayout.HelpBox(
+                        "These settings apply to all buttons that don't explicitly override these values.",
+                        MessageType.Info);
+
                     if (EditorGUI.EndChangeCheck())
                     {
                         settings.ApplyModifiedProperties();
                         ButtonSettings.Instance.Save();
                     }
-                    
+
                     EditorGUILayout.Space(10);
-                    
+
                     if (GUILayout.Button("Reset to Defaults", GUILayout.Height(30)))
                     {
                         if (EditorUtility.DisplayDialog(
@@ -132,7 +133,7 @@ namespace DNExtensions.Utilities.Button
                         }
                     }
                 },
-                
+
                 keywords = new[] { "Button", "DNExtensions", "Inspector" }
             };
 

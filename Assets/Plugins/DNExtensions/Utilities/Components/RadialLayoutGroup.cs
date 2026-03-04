@@ -16,13 +16,16 @@ namespace DNExtensions.Utilities
         [SerializeField] private Vector2 offset = Vector2.zero;
         [SerializeField, Range(0f, 360f)] private float startAngle;
         [SerializeField, Range(0f, 360f)] private float endAngle = 360f;
+        [Tooltip("If true, only visible children are arranged, otherwise all children are arranged")]
         [SerializeField] private bool onlyLayoutVisible = true;
         
         [Header("Child Settings")]
-        [SerializeField] private bool controlChildSize = false;
-        [SerializeField] private Vector2 childSize = new Vector2(50f, 50f);
-        [SerializeField] private bool rotateChildren = false;
-        [SerializeField] private float childRotationOffset = -90f;
+        [Tooltip("If true, child size is taken from the child's layout element component, otherwise child size is controlled by childSize")]
+        [SerializeField] private bool controlChildSize;
+        [SerializeField, EnableIf("controlChildSize")] private Vector2 childSize = new Vector2(50f, 50f);
+        [Tooltip("If true, children are rotated to face away from the center of the radial group")]
+        [SerializeField] private bool rotateChildren;
+        [SerializeField, EnableIf("rotateChildren")] private float childRotationOffset = -90f;
         
         
         public float Radius
@@ -122,8 +125,7 @@ namespace DNExtensions.Utilities
         
         private int GetActiveChildCount()
         {
-            if (!onlyLayoutVisible)
-                return rectChildren.Count;
+            if (!onlyLayoutVisible) return rectChildren.Count;
             
             int count = 0;
             for (int i = 0; i < rectChildren.Count; i++)

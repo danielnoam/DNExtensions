@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d221a3a221048cc81e8fa5065f53a44, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-Editor-firstpass::DNExtensions.Utilities.Button.ButtonSettings
+  drawSeparator: 0
+  drawNestedButtons: 1
   buttonHeight: 30
   buttonSpace: 3
   buttonColor: {r: 1, g: 1, b: 1, a: 1}
   buttonPlayMode: 1
-  buttonGroup: 

@@ -7,19 +7,16 @@ namespace DNExtensions.Utilities
     /// Applies a position, rotation, and scale effect to this transform.
     /// Each effect slot is independently selectable via the inspector dropdown.
     /// </summary>
-    [AddComponentMenu("DNExtensions/TransformEffector", -1000)]
+    [AddComponentMenu("DNExtensions/Transform Effector", -1000)]
     [DisallowMultipleComponent]
     public class TransformEffector : MonoBehaviour
     {
         [Space(10)]
-        [SerializeReference, SerializableSelector]
-        private PositionEffect positionEffect;
+        [SerializeReference, SerializableSelector] private PositionEffect positionEffect;
         [Separator]
-        [SerializeReference, SerializableSelector]
-        private RotationEffect rotationEffect;
+        [SerializeReference, SerializableSelector] private RotationEffect rotationEffect;
         [Separator]
-        [SerializeReference, SerializableSelector]
-        private ScaleEffect scaleEffect;
+        [SerializeReference, SerializableSelector] private ScaleEffect scaleEffect;
 
         private void Awake()
         {
