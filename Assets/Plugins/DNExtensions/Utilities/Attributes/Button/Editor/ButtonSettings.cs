@@ -11,8 +11,8 @@ namespace DNExtensions.Utilities.Button
         
         [SerializeField] private bool drawSeparator;
         [SerializeField] private bool drawNestedButtons = true;
-        [Range(20, 60)] [SerializeField] private int buttonHeight = 30;
-        [Range(0, 20)] [SerializeField] private int buttonSpace = 3;
+        [SerializeField, Range(20, 60)] private int buttonHeight = 30; 
+        [SerializeField, Range(0, 20)] private int buttonSpace = 3;
         [SerializeField] private Color buttonColor = Color.white;
         [SerializeField] private ButtonPlayMode buttonPlayMode = ButtonPlayMode.OnlyWhenPlaying;
 
