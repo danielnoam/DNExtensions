@@ -17,5 +17,6 @@ MonoBehaviour:
   validateOnSelection: 1
   validateOnSceneSave: 1
   validateOnComponentAdded: 1
+  validateOnReload: 0
   showPopulateButton: 0
   cacheReflectionData: 0

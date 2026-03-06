@@ -1,5 +1,6 @@
 
 using UnityEditor;
+using UnityEditor.Callbacks;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -86,6 +87,13 @@ namespace DNExtensions.Utilities.AutoGet
                     }
                 }
             }
+        }
+        
+        [DidReloadScripts]
+        private static void OnScriptsReloaded()
+        {
+            if (!AutoGetSettings.Instance.ValidateOnReload) return;
+            AutoGetMenu.PopulateCurrentScene();
         }
         
     }

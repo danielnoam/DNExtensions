@@ -21,6 +21,8 @@ namespace DNExtensions.Utilities.AutoGet
         [SerializeField] private bool validateOnSceneSave = true;
         [Tooltip("Validate AutoGet fields when a component is added to a selected object")]
         [SerializeField] private bool validateOnComponentAdded = true;
+        [Tooltip("Validate AutoGet fields when script reloads")]
+        [SerializeField] private bool validateOnReload;
         [Tooltip("Show populate button (🔄) next to AutoGet fields")]
         [SerializeField] private bool showPopulateButton;
         [Tooltip("Cache reflection data for better performance. Disable if using Hot Reload plugins.")]
@@ -30,6 +32,7 @@ namespace DNExtensions.Utilities.AutoGet
         public bool AutoPopulateInPrefabs => autoPopulateInPrefabs;
         public bool ValidateOnSelection => validateOnSelection;
         public bool ValidateOnSceneSave => validateOnSceneSave;
+        public bool ValidateOnReload => validateOnReload;
         public bool ValidateOnComponentAdded => validateOnComponentAdded;
         public bool ShowPopulateButton => showPopulateButton;
         public bool CacheReflectionData => cacheReflectionData;
@@ -77,6 +80,7 @@ namespace DNExtensions.Utilities.AutoGet
             validateOnSelection = true;
             validateOnSceneSave = true;
             validateOnComponentAdded = true;
+            validateOnReload = false;
             showPopulateButton = false;
             cacheReflectionData = false;
             Save();

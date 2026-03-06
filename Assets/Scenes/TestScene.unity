@@ -2071,10 +2071,6 @@ MonoBehaviour:
   interactableObject: {fileID: 0}
   serializableSelector:
     rid: 5778561754236715089
-  serializableSelectorList:
-  - rid: 4437625887323586819
-  - rid: 4437625887323586820
-  - rid: 4437625887323586822
   testImpulseSource: {fileID: 1526888421}
   testImpulse:
     impulseChannel: 1
@@ -2104,21 +2100,6 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
-    - rid: 4437625887323586819
-      type: {class: Behavior1, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
-      data:
-        varFloat: 0
-        varString: 
-    - rid: 4437625887323586820
-      type: {class: Behavior4, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
-      data:
-        varFloat: 0
-        varBool: 0
-    - rid: 4437625887323586822
-      type: {class: Behavior5, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
-      data:
-        varFloat: 0
-        varBool: 0
     - rid: 5778561754236715089
       type: {class: Behavior1, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
       data:
@@ -3250,7 +3231,7 @@ GameObject:
   - component: {fileID: 7793576838022702166}
   - component: {fileID: 7793576838022702171}
   - component: {fileID: 7793576838022702164}
-  - component: {fileID: 3395161608787476849}
+  - component: {fileID: 7793576838022702172}
   - component: {fileID: 7353486125745782107}
   - component: {fileID: 7793576838022702168}
   - component: {fileID: 6825158376563177225}
@@ -3349,21 +3330,6 @@ AudioListener:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2306503693013514609}
   m_Enabled: 1
---- !u!114 &3395161608787476849
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1439365873206089730}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c5efca416a74996b599a779bdd9446a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FPCPlayerInput
-  inputManager: {fileID: 192839491}
-  toggleRun: 0
-  toggleCrouch: 1
 --- !u!4 &3437621762452827388
 Transform:
   m_ObjectHideFlags: 0
@@ -3669,7 +3635,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f490b6222c1499794679074402a2220, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FPCManager
-  fpcInput: {fileID: 3395161608787476849}
+  fpcInput: {fileID: 7793576838022702172}
   fpcLocomotion: {fileID: 7353486125745782107}
   fpcInteraction: {fileID: 6825158376563177225}
   fpcCamera: {fileID: 7793576838022702168}
@@ -3900,6 +3866,21 @@ MonoBehaviour:
     DissipationDistance: 100
     PropagationSpeed: 343
   DefaultVelocity: {x: 0, y: -1, z: 0}
+--- !u!114 &7793576838022702172
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1439365873206089730}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c5efca416a74996b599a779bdd9446a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.FirstPersonController.FPCInput
+  inputManager: {fileID: 192839491}
+  toggleRun: 0
+  toggleCrouch: 1
 --- !u!1 &8670642967180193791
 GameObject:
   m_ObjectHideFlags: 0

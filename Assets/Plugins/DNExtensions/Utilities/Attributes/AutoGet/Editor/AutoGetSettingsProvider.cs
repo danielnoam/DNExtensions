@@ -75,10 +75,12 @@ namespace DNExtensions.Utilities.AutoGet
                 var validateOnSelection = settings.FindProperty("validateOnSelection");
                 var validateOnSceneSave = settings.FindProperty("validateOnSceneSave");
                 var validateOnComponentAdded = settings.FindProperty("validateOnComponentAdded");
+                var validateOnReload = settings.FindProperty("validateOnReload");
                 
                 EditorGUILayout.PropertyField(validateOnSelection, new GUIContent("On Selection", "Auto-populate when selecting objects"));
                 EditorGUILayout.PropertyField(validateOnSceneSave, new GUIContent("On Scene Save", "Auto-populate when saving scenes"));
                 EditorGUILayout.PropertyField(validateOnComponentAdded, new GUIContent("On Component Added", "Auto-populate when a component is added to a selected object"));
+                EditorGUILayout.PropertyField(validateOnReload, new GUIContent("On Script Reload", "Auto-populate when scripts are reloaded"));
                 
                 if (!validateOnSelection.boolValue && !validateOnSceneSave.boolValue)
                 {
@@ -124,7 +126,7 @@ namespace DNExtensions.Utilities.AutoGet
             if (cacheReflectionData.boolValue)
             {
                 EditorGUILayout.HelpBox(
-                    "⚠ Warning: Caching works best without Hot Reload plugins. " +
+                    "Warning: Caching works best without Hot Reload plugins. " +
                     "If using Hot Reload, manually clear cache after adding new AutoGet fields.",
                     MessageType.Warning
                 );
@@ -208,7 +210,7 @@ namespace DNExtensions.Utilities.AutoGet
                 (int)AutoPopulateMode.WhenEmpty => 
                     "Fields will be populated automatically when null or empty. Existing values are preserved.",
                 (int)AutoPopulateMode.Always => 
-                    "⚠ Fields will always be repopulated, replacing any manually assigned values.",
+                    "Fields will always be repopulated, replacing any manually assigned values.",
                 _ => ""
             };
         }

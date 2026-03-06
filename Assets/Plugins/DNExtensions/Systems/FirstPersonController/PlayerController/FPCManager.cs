@@ -35,7 +35,7 @@ namespace DNExtensions.Systems.FirstPersonController
         public ControllerRumbleSource ControllerRumbleSource => controllerRumbleSource;
         public CinemachineImpulseSource CinemachineImpulseSource => cinemachineImpulseSource;
 
-        [Button]
+        [Button(ButtonPlayMode.OnlyWhenNotPlaying)]
         private void ValidateMissingComponents()
         {
             if (!fpcInput) fpcInput = this.GetOrAddComponent<FPCInput>();
