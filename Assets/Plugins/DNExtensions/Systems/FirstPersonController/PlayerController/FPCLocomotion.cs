@@ -20,20 +20,21 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField] private LayerMask collisionLayers = 0;
         
         [Header("Run")]
-        [SerializeField] private bool canRun = true;
-        [SerializeField] private bool allowCrouchRun = true;
-        [SerializeField, ShowIf("canRun")] private float runSpeed = 12f;
+        [SerializeField] private bool allowRun = true;
+        [SerializeField, ShowIf(nameof(allowRun))] private bool allowCrouchRun = true;
+        [SerializeField, ShowIf(nameof(allowRun))] private float runSpeed = 12f;
         
         [Header("Crouch")]
-        [SerializeField] private bool canCrouch = true;
-        [SerializeField] private float crouchSpeedMultiplier = 0.5f;
-        [SerializeField] private float crouchHeight = 0.5f;
-        [SerializeField] private Vector3 crouchColliderCenter = new Vector3(0, 0.25f, 0);
+        [SerializeField] private bool allowCrouch = true;
+        [SerializeField, ShowIf(nameof(allowCrouch))] private float crouchSpeedMultiplier = 0.5f;
+        [SerializeField, ShowIf(nameof(allowCrouch))] private float crouchHeight = 1.5f;
+        [SerializeField, ShowIf(nameof(allowCrouch))] private Vector3 crouchColliderCenter = new Vector3(0, 0.25f, 0);
         
         [Header("Jump")]
-        [SerializeField] private float jumpForce = 1.5f;
-        [SerializeField] private float jumpBufferTime = 0.1f;
-        [SerializeField] private float coyoteTime = 0.1f;
+        [SerializeField] private bool allowJump = true;
+        [SerializeField, ShowIf(nameof(allowJump))] private float jumpForce = 1.5f;
+        [SerializeField, ShowIf(nameof(allowJump))] private float jumpBufferTime = 0.1f;
+        [SerializeField, ShowIf(nameof(allowJump))] private float coyoteTime = 0.1f;
 
         [SerializeField, AutoGetSelf, HideInInspector] private FpcManager manager;
         private const float StandingHeightPadding = 0.05f;
@@ -50,7 +51,7 @@ namespace DNExtensions.Systems.FirstPersonController
         public bool IsCrouching { get; private set; }
         public bool IsFalling { get; private set; }
         
-        public bool IsRunning => manager.FpcInput.RunInput && canRun && (!IsCrouching || allowCrouchRun);
+        public bool IsRunning => manager.FpcInput.RunInput && allowRun && (!IsCrouching || allowCrouchRun);
         public Vector3 Velocity => _velocity;
 
         public event Action OnJump;
@@ -81,10 +82,12 @@ namespace DNExtensions.Systems.FirstPersonController
             
             HandleMovement();
             HandleJump();
+            HandleGravity();
             CheckGrounded();
             
             manager.CharacterController.Move(_velocity * Time.deltaTime);
         }
+        
 
         private void OnJumpInput(InputAction.CallbackContext context)
         {
@@ -96,7 +99,7 @@ namespace DNExtensions.Systems.FirstPersonController
         
         private void OnCrouchInput(InputAction.CallbackContext context)
         {
-            if (!canCrouch) return;
+            if (!allowCrouch) return;
 
             if (context.phase == InputActionPhase.Started)
             {
@@ -159,7 +162,7 @@ namespace DNExtensions.Systems.FirstPersonController
 
         private void HandleJump()
         {
-            if (!manager.CharacterController.enabled) return;
+            if (!manager.CharacterController.enabled || !allowJump) return;
 
             if (_jumpBufferCounter > 0f)
             {
@@ -173,7 +176,10 @@ namespace DNExtensions.Systems.FirstPersonController
                 _coyoteTimeCounter = 0f;
                 OnJump?.Invoke();
             }
-
+        }
+        
+        private void HandleGravity()
+        {
             _velocity.y += gravity * Time.deltaTime;
         }
 
@@ -209,7 +215,7 @@ namespace DNExtensions.Systems.FirstPersonController
 
         private void OnDrawGizmosSelected()
         {
-            if (canCrouch && IsCrouching)
+            if (allowCrouch && IsCrouching)
             {
                 float crouchHeadY = crouchColliderCenter.y + crouchHeight / 2f;
                 float rayLength = _standingHeadY - crouchHeadY + StandingHeightPadding;
