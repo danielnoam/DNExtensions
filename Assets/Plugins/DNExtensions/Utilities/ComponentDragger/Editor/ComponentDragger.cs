@@ -7,7 +7,7 @@ using System.Linq;
 namespace DNExtensions.Utilities.ComponentDragger
 {
     [InitializeOnLoad]
-    public static class ComponentDragger
+    internal static class ComponentDragger
     {
         private static Component[] _draggedComponents;
         private static bool _isCopyMode;
@@ -275,16 +275,6 @@ namespace DNExtensions.Utilities.ComponentDragger
                 {
                     return true;
                 }
-            }
-
-            // Animator dependencies
-            if (dependency is Animator)
-            {
-            }
-
-            // Camera dependencies
-            if (dependency is Camera)
-            {
             }
 
             return false;

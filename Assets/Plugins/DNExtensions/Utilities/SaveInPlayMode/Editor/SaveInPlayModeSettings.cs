@@ -12,7 +12,7 @@ namespace DNExtensions.Utilities {
     /// Settings for SaveInPlayMode functionality.
     /// Controls whether the feature is enabled and manages component type blacklist.
     /// </summary>
-    public class SaveInPlayModeSettings : ScriptableObject {
+    internal class SaveInPlayModeSettings : ScriptableObject {
         private const string SettingsPath = "ProjectSettings/DNExtensions_SaveInPlayModeSettings.asset";
 
         [SerializeField] private bool enabled = true;

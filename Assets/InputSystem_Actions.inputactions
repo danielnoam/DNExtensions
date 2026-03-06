@@ -39,16 +39,7 @@
                     "id": "852140f2-7766-474d-8707-702459ba45f3",
                     "expectedControlType": "",
                     "processors": "",
-                    "interactions": "Hold",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Drop",
-                    "type": "Button",
-                    "id": "1d1e5daa-ddb7-4f55-a131-4a67ec2bc201",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "Hold",
+                    "interactions": "",
                     "initialStateCheck": false
                 },
                 {
@@ -520,28 +511,6 @@
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "Interact",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "2faf98a8-c153-4ecf-8a20-bb62d85ae807",
-                    "path": "<Mouse>/rightButton",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard&Mouse",
-                    "action": "Drop",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "eda0dfde-5925-40c8-ad6d-525d44725020",
-                    "path": "<Gamepad>/leftTrigger",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Gamepad",
-                    "action": "Drop",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

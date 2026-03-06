@@ -9,7 +9,7 @@ namespace DNExtensions.Utilities.CustomFields
     /// Shows scene reference field with build status information and consistent icon styling.
     /// </summary>
     [CustomPropertyDrawer(typeof(SceneField))]
-    public class SceneFieldPropertyDrawer : PropertyDrawer
+    internal class SceneFieldPropertyDrawer : PropertyDrawer
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {

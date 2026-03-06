@@ -1,3 +1,4 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 using System.IO;
@@ -128,7 +129,7 @@ namespace DNExtensions.Utilities
         static Dictionary<string, string> ParseDependencies(string json)
         {
             var deps = new Dictionary<string, string>();
-            int start = json.IndexOf("\"dependencies\"");
+            int start = json.IndexOf("\"dependencies\"", StringComparison.Ordinal);
             if (start < 0) return deps;
             int brace = json.IndexOf('{', start);
             int end = json.IndexOf('}', brace);
@@ -138,7 +139,7 @@ namespace DNExtensions.Utilities
             foreach (string line in block.Split(','))
             {
                 string trimmed = line.Trim();
-                int colon = trimmed.IndexOf("\":");
+                int colon = trimmed.IndexOf("\":", StringComparison.Ordinal);
                 if (colon < 0) continue;
                 string key = trimmed.Substring(0, colon).Trim().Trim('"');
                 string val = trimmed.Substring(colon + 2).Trim().Trim('"');
@@ -151,7 +152,7 @@ namespace DNExtensions.Utilities
         static string ParseJsonString(string json, string key)
         {
             string search = $"\"{key}\"";
-            int idx = json.IndexOf(search);
+            int idx = json.IndexOf(search, StringComparison.Ordinal);
             if (idx < 0) return null;
             int colon = json.IndexOf(':', idx);
             if (colon < 0) return null;

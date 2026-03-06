@@ -1,9 +1,3 @@
-
-#if UNITY_EDITOR
-
-
-
-
 using System;
 using System.Collections.Generic;
 using UnityEditor;
@@ -17,10 +11,10 @@ namespace DNExtensions.Utilities.SerializedInterface
     /// Provides visual feedback and validation in the Unity Inspector.
     /// </summary>
     [CustomPropertyDrawer(typeof(RequireInterfaceAttribute))]
-    public class RequireInterfaceDrawer : PropertyDrawer
+    internal class RequireInterfaceDrawer : PropertyDrawer
     {
         private static readonly Dictionary<string, ValidationState> ValidationCache = new Dictionary<string, ValidationState>();
-        private const float ValidationCacheDuration = 0.5f; // seconds
+        private const float ValidationCacheDuration = 0.5f;
 
         private struct ValidationState
         {
@@ -91,10 +85,7 @@ namespace DNExtensions.Utilities.SerializedInterface
 
             return height;
         }
-
-        /// <summary>
-        /// Draws a single object field with interface validation.
-        /// </summary>
+        
         private void DrawInterfaceObjectField(Rect position, SerializedProperty property, GUIContent label, Type interfaceType)
         {
             var fieldRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
@@ -129,10 +120,7 @@ namespace DNExtensions.Utilities.SerializedInterface
                 EditorGUI.HelpBox(errorRect, validationState.ErrorMessage, MessageType.Error);
             }
         }
-
-        /// <summary>
-        /// Draws the interface type indicator similar to InterfaceReferenceUtil
-        /// </summary>
+        
         private void DrawInterfaceTypeIndicator(Rect position, Type interfaceType)
         {
             if (Event.current.type == EventType.Repaint)
@@ -163,28 +151,21 @@ namespace DNExtensions.Utilities.SerializedInterface
             }
         }
 
-        /// <summary>
-        /// Gets the appropriate base type for the object field.
-        /// </summary>
+
         private Type GetAssignableBaseType(Type fieldType, Type interfaceType)
         {
             // If the field type already implements the interface, use it
-            if (interfaceType.IsAssignableFrom(fieldType))
-                return fieldType;
+            if (interfaceType.IsAssignableFrom(fieldType)) return fieldType;
 
             // Try common Unity types that might implement the interface
             if (typeof(Component).IsAssignableFrom(fieldType))
                 return fieldType;
             if (typeof(ScriptableObject).IsAssignableFrom(fieldType))
                 return fieldType;
-
-            // Default to Object to allow GameObject assignment
+            
             return typeof(Object);
         }
-
-        /// <summary>
-        /// Validates and assigns an object to a property.
-        /// </summary>
+        
         private void ValidateAndAssignObject(SerializedProperty property, Object newReference, Type interfaceType)
         {
             if (newReference == null)
@@ -237,9 +218,6 @@ namespace DNExtensions.Utilities.SerializedInterface
             }
         }
 
-        /// <summary>
-        /// Gets cached validation state for a property.
-        /// </summary>
         private ValidationState GetCachedValidationState(SerializedProperty property)
         {
             var key = GetPropertyKey(property);
@@ -258,10 +236,7 @@ namespace DNExtensions.Utilities.SerializedInterface
             
             return UpdateValidationCache(property, isValid, errorMessage);
         }
-
-        /// <summary>
-        /// Updates the validation cache for a property.
-        /// </summary>
+        
         private ValidationState UpdateValidationCache(SerializedProperty property, bool isValid, string errorMessage)
         {
             var key = GetPropertyKey(property);
@@ -276,18 +251,13 @@ namespace DNExtensions.Utilities.SerializedInterface
             ValidationCache[key] = state;
             return state;
         }
-
-        /// <summary>
-        /// Gets a unique key for a serialized property.
-        /// </summary>
+        
         private string GetPropertyKey(SerializedProperty property)
         {
             return $"{property.serializedObject.targetObject.GetInstanceID()}_{property.propertyPath}";
         }
-
-        /// <summary>
-        /// Clears validation cache when domain reloads.
-        /// </summary>
+        
+        
         [InitializeOnLoadMethod]
         private static void ClearCache()
         {
@@ -296,4 +266,3 @@ namespace DNExtensions.Utilities.SerializedInterface
     }
 }
 
-#endif

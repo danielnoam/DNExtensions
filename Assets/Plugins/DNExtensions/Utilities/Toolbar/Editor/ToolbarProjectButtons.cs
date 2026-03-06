@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace DNExtensions.Utilities
 {
-    public class ToolbarProjectButtons
+    internal class ToolbarProjectButtons
     {
 
         [MainToolbarElement("Project/Project Settings Button", defaultDockPosition = MainToolbarDockPosition.Middle)]

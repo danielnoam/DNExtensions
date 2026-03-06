@@ -1,10 +1,11 @@
+
 namespace DNExtensions.Systems.FirstPersonController.Interactable
 {
     public interface IInteractable
     {
-        void Interact(InteractorData interactorData);
-        bool CanInteract();
-        void ShowInteractionTip();
-        void HideInteractionTip();
+        public void Interact(InteractorData interactorData);
+        public bool CanInteract();
+        public void ShowInteractionTip();
+        public void HideInteractionTip();
     }
 }

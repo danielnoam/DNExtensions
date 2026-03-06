@@ -7,7 +7,7 @@ using UnityEngine;
 namespace DNExtensions.Utilities.CustomFields
 {
     [CustomPropertyDrawer(typeof(AnimatorParameterField))]
-    public class AnimatorParameterFieldDrawer : PropertyDrawer
+    internal class AnimatorParameterFieldDrawer : PropertyDrawer
     {
         private const string NoneOption = "None";
         private const float Spacing = 2f;

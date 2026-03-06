@@ -4,7 +4,7 @@ using UnityEditor;
 namespace DNExtensions.Utilities.CustomFields
 {
     [CustomPropertyDrawer(typeof(PositionField))]
-    public class PositionFieldPropertyDrawer : PropertyDrawer
+    internal class PositionFieldPropertyDrawer : PropertyDrawer
     {
         private const float Spacing = 2f;
 

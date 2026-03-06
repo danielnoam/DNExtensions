@@ -1,14 +1,12 @@
 ﻿using UnityEngine;
 using Unity.Cinemachine;
 
-
 namespace DNExtensions.Utilities.CinemachineExtensions
 {
     [AddComponentMenu("Cinemachine/Extensions/Rotation Offset Extension")]
     [SaveDuringPlay]
     [DisallowMultipleComponent]
-    [CameraPipeline(CinemachineCore.Stage.Aim)] 
-
+    [CameraPipeline(CinemachineCore.Stage.Aim)]
     public class CinemachineRotationOffsetExtension : CinemachineExtension
     {
         [Tooltip("Additional rotation offset to apply (in euler angles)")]

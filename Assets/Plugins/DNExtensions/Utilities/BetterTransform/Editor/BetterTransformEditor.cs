@@ -5,7 +5,7 @@ namespace DNExtensions.Utilities
 {
     [CustomEditor(typeof(Transform))]
     [CanEditMultipleObjects]
-    public class BetterTransformEditor : Editor
+    internal class BetterTransformEditor : Editor
     {
         private static bool _scaleLocked;
         private Vector3 _lastScale;

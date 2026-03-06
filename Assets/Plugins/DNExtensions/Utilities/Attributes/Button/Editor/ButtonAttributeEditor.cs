@@ -588,11 +588,11 @@ namespace DNExtensions.Utilities.Button
     /// Custom editor for MonoBehaviour classes that adds button functionality.
     /// </summary>
     [CustomEditor(typeof(MonoBehaviour), true)]
-    public class ButtonAttributeEditor : BaseButtonAttributeEditor { }
+    internal class ButtonAttributeEditor : BaseButtonAttributeEditor { }
 
     /// <summary>
     /// Custom editor for ScriptableObject classes that adds button functionality.
     /// </summary>
     [CustomEditor(typeof(ScriptableObject), true)]
-    public class ButtonAttributeScriptableObjectEditor : BaseButtonAttributeEditor { }
+    internal class ButtonAttributeScriptableObjectEditor : BaseButtonAttributeEditor { }
 }

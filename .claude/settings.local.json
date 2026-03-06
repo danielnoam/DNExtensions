@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(ls:*)",
+      "Bash(for file in \"Assets/Plugins/DNExtensions/Utilities/CustomFields/NoteFIeld/Editor/NoteFieldEditor.cs\" \"Assets/Plugins/DNExtensions/Utilities/CustomFields/RangedValues/Editor/RangedIntDrawer.cs\" \"Assets/Plugins/DNExtensions/Utilities/CustomFields/RangedValues/Editor/RangedFloatDrawer.cs\" \"Assets/Plugins/DNExtensions/Utilities/CustomFields/ChanceList/Editor/ChanceListPropertyDrawer.cs\" \"Assets/Plugins/DNExtensions/Utilities/CustomFields/LinkedVector3Field/Editor/LinkedVector3Field.cs\" \"Assets/Plugins/DNExtensions/Utilities/CustomFields/LinkedVector3Field/Editor/LinkedVector3Drawer.cs\")",
+      "Bash(do sed -i '1{/^#if UNITY_EDITOR$/d;}; ${/^#endif$/d;}' \"$file\")",
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(for file in Assets/Plugins/DNExtensions/Utilities/SaveInPlayMode/Editor/SaveInPlayModeSettings.cs Assets/Plugins/DNExtensions/Utilities/ScriptableObjectEditor/Editor/ScriptableObjectEditor.cs Assets/Plugins/DNExtensions/Utilities/SerializableSelector/Editor/SerializableSelectorDrawer.cs Assets/Plugins/DNExtensions/Utilities/SerializableSelector/Editor/SerializableSelectorPopup.cs Assets/Plugins/DNExtensions/Utilities/SerializableSelector/Editor/SerializableSelectorUtility.cs Assets/Plugins/DNExtensions/Utilities/SerializedInterface/Editor/InterfaceReferenceDrawer.cs Assets/Plugins/DNExtensions/Utilities/SerializedInterface/Editor/InterfaceReferenceUtil.cs Assets/Plugins/DNExtensions/Utilities/SerializedInterface/Editor/RequireInterfaceDrawer.cs Assets/Plugins/DNExtensions/Utilities/Toolbar/Editor/ToolbarProjectButtons.cs Assets/Plugins/DNExtensions/Utilities/Toolbar/Editor/ToolbarReloadAssambly.cs Assets/Plugins/DNExtensions/Utilities/Toolbar/Editor/ToolbarTimescale.cs)",
+      "Bash(do sed -i 's/public class /internal class /g; s/public static class /internal static class /g' \"$file\")",
+      "Bash(for file in Assets/Plugins/DNExtensions/Utilities/SaveInPlayMode/Editor/SaveInPlayMode.cs Assets/Plugins/DNExtensions/Utilities/ScriptableObjectEditor/Editor/ScriptableObjectEditor.cs Assets/Plugins/DNExtensions/Utilities/SerializableSelector/Editor/SerializableSelectorDrawer.cs Assets/Plugins/DNExtensions/Utilities/SerializableSelector/Editor/SerializableSelectorPopup.cs Assets/Plugins/DNExtensions/Utilities/SerializableSelector/Editor/SerializableSelectorUtility.cs Assets/Plugins/DNExtensions/Utilities/SerializedInterface/Editor/InterfaceReferenceDrawer.cs Assets/Plugins/DNExtensions/Utilities/SerializedInterface/Editor/InterfaceReferenceUtil.cs Assets/Plugins/DNExtensions/Utilities/SerializedInterface/Editor/RequireInterfaceDrawer.cs)"
     ]
   }
 }

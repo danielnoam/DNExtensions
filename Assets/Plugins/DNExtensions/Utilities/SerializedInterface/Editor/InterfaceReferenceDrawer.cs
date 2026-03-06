@@ -1,6 +1,3 @@
-
-#if UNITY_EDITOR
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +14,7 @@ namespace DNExtensions.Utilities.SerializedInterface
     /// </summary>
     [CustomPropertyDrawer(typeof(InterfaceReference<>))]
     [CustomPropertyDrawer(typeof(InterfaceReference<,>))]
-    public class InterfaceReferenceDrawer : PropertyDrawer
+    internal class InterfaceReferenceDrawer : PropertyDrawer
     {
         private const string UnderlyingValueFieldName = "underlyingValue";
         
@@ -427,4 +424,3 @@ namespace DNExtensions.Utilities.SerializedInterface
     }
 }
 
-#endif

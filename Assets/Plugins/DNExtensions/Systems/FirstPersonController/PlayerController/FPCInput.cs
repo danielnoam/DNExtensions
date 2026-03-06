@@ -20,7 +20,6 @@ namespace DNExtensions.Systems.FirstPersonController
         private InputAction _runAction;
         private InputAction _interactAction;
         private InputAction _throwAction;
-        private InputAction _dropAction;
         private InputAction _toggleMenu;
 
         public event Action<InputAction.CallbackContext> OnMoveAction;
@@ -30,7 +29,6 @@ namespace DNExtensions.Systems.FirstPersonController
         public event Action<InputAction.CallbackContext> OnCrouchAction;
         public event Action<InputAction.CallbackContext> OnInteractAction;
         public event Action<InputAction.CallbackContext> OnThrowAction;
-        public event Action<InputAction.CallbackContext> OnDropAction;
         public event Action<InputAction.CallbackContext> OnToggleMenuAction;
 
         [SerializeField] private bool toggleRun;
@@ -50,28 +48,18 @@ namespace DNExtensions.Systems.FirstPersonController
                 return;
             }
 
-            _moveAction = _playerActionMap.FindAction("Move");
-            _lookAction = _playerActionMap.FindAction("Look");
-            _jumpAction = _playerActionMap.FindAction("Jump");
-            _runAction = _playerActionMap.FindAction("Run");
-            _crouchAction = _playerActionMap.FindAction("Crouch");
-            _interactAction = _playerActionMap.FindAction("Interact");
-            _throwAction = _playerActionMap.FindAction("Throw");
-            _dropAction = _playerActionMap.FindAction("Drop");
-            _toggleMenu = _playerActionMap.FindAction("ToggleMenu");
-            
-            if (_moveAction == null) Debug.LogError("Move action not found in Player Action Map.");
-            if (_lookAction == null) Debug.LogError("Look action not found in Player Action Map.");
-            if (_jumpAction == null) Debug.LogError("Jump action not found in Player Action Map.");
-            if (_runAction == null) Debug.LogError("Run action not found in Player Action Map.");
-            if (_crouchAction == null) Debug.LogError("Crouch action not found in Player Action Map.");
-            if (_interactAction == null) Debug.LogError("Interact action not found in Player Action Map.");
-            if (_throwAction == null) Debug.LogError("Throw action not found in Player Action Map.");
-            if (_dropAction == null) Debug.LogError("Drop action not found in Player Action Map.");
-            if (_toggleMenu == null) Debug.LogError("ToggleMenu action not found in Player Action Map.");
+            FindAction(_playerActionMap,"Move", ref _moveAction);
+            FindAction(_playerActionMap, "Look", ref _lookAction);
+            FindAction(_playerActionMap, "Run", ref _runAction);
+            FindAction(_playerActionMap, "Jump", ref _jumpAction);
+            FindAction(_playerActionMap, "Crouch", ref _crouchAction);
+            FindAction(_playerActionMap, "Interact", ref _interactAction);
+            FindAction(_playerActionMap, "Throw", ref _throwAction);
+            FindAction(_playerActionMap, "ToggleMenu", ref _toggleMenu);
             
             _playerActionMap.Enable();
         }
+        
 
         private void OnEnable()
         {
@@ -82,7 +70,6 @@ namespace DNExtensions.Systems.FirstPersonController
             SubscribeToAction(_runAction, OnRun);
             SubscribeToAction(_interactAction, OnInteract);
             SubscribeToAction(_throwAction, OnThrow);
-            SubscribeToAction(_dropAction, OnDrop);
             SubscribeToAction(_toggleMenu, OnToggleMenu);
         }
 
@@ -95,7 +82,6 @@ namespace DNExtensions.Systems.FirstPersonController
             UnsubscribeFromAction(_runAction, OnRun);
             UnsubscribeFromAction(_interactAction, OnInteract);
             UnsubscribeFromAction(_throwAction, OnThrow);
-            UnsubscribeFromAction(_dropAction, OnDrop);
             UnsubscribeFromAction(_toggleMenu, OnToggleMenu);
         }
 
@@ -146,10 +132,6 @@ namespace DNExtensions.Systems.FirstPersonController
             OnThrowAction?.Invoke(context);
         }
         
-        private void OnDrop(InputAction.CallbackContext context)
-        {
-            OnDropAction?.Invoke(context);
-        }
 
         private void OnToggleMenu(InputAction.CallbackContext context)
         {

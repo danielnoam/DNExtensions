@@ -1,4 +1,5 @@
-﻿using DNExtensions.Systems.ControllerRumble;
+﻿using System;
+using DNExtensions.Systems.ControllerRumble;
 using DNExtensions.Utilities;
 using DNExtensions.Utilities.AutoGet;
 using UnityEngine;
@@ -22,7 +23,7 @@ namespace DNExtensions.Systems.FirstPersonController
         [Header("Headbob")]
         [Tooltip("Enables camera headbob when moving")]
         [SerializeField] private bool enableHeadbob = true;
-        [SerializeField] private float bobFrequency = 5f;
+        [SerializeField] private float bobFrequency = 10f;
         [SerializeField] private float bobAmplitudeWalk = 0.1f;
         [SerializeField] private float bobAmplitudeRun = 0.2f;
         [SerializeField] private float bobSmoothing = 10f;
@@ -41,27 +42,33 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField, MinMaxRange(0,10)] private RangedFloat fallKickVelocityRange = new RangedFloat(0, 2);
         [SerializeField, MinMaxRange(0,10)] private RangedFloat fallKickStrengthRange = new RangedFloat(0.1f, 0.3f);
         
-        [Header("Land Rumble")]
+        [Header("Rumble")]
         [Tooltip("Enables controller rumble on landing")]
         [SerializeField] private bool enableLandingRumble = true;
-        [SerializeField] private ControllerRumbleEffectSettings landingRumble = new ControllerRumbleEffectSettings(0.5f, 0.7f, 0.2f);
+        [SerializeField, ShowIf("enableLandingRumble")] private ControllerRumbleEffectSettings landingRumble = new ControllerRumbleEffectSettings(0.3f, 0.5f, 0.2f);
+        [SerializeField] private bool enableFootstepRumble = true;
+        [SerializeField, ShowIf("enableFootstepRumble")] private float footstepRumbleFrequency = 0.5f;
+        [SerializeField, ShowIf("enableFootstepRumble")] private ControllerRumbleEffectSettings footstepRumble = new ControllerRumbleEffectSettings(0.05f, 0f, 0.1f);
         
         [SerializeField, AutoGetSelf, HideInInspector] private FpcManager manager;
 
         private float _baseFov;
         private Vector3 _cameraBasePosition;
         private Vector3 _cameraBaseRotation;
-
         private float _kickTime;
         private Vector3 _kickPositionOffset;
         private Vector3 _kickRotationOffset;
-        
         private float _bobTimer;
         private float _bobAmplitude;
         private float _bobAmplitudeVelocity;
         private Vector3 _bobOffset;
-        
         private Vector3 _tiltOffset;
+        private float _footstepTimer;
+
+        private void OnValidate()
+        {
+            AutoGetSystem.Process(this);
+        }
 
         private void Awake()
         {
@@ -109,6 +116,7 @@ namespace DNExtensions.Systems.FirstPersonController
             UpdateHeadbob();
             UpdateKick();
             UpdateTilt();
+            UpdateFootstepRumble();
 
             manager.FpcCamera.Cam.transform.localPosition = _cameraBasePosition + _bobOffset + _kickPositionOffset;
             manager.FpcCamera.Cam.transform.localEulerAngles = _cameraBaseRotation + _tiltOffset + _kickRotationOffset;
@@ -174,6 +182,23 @@ namespace DNExtensions.Systems.FirstPersonController
 
             _tiltOffset.x = Mathf.LerpAngle(_tiltOffset.x, targetPitch, Time.deltaTime * tiltSmoothing);
             _tiltOffset.z = Mathf.LerpAngle(_tiltOffset.z, targetRoll, Time.deltaTime * tiltSmoothing);
+        }
+        
+        private void UpdateFootstepRumble()
+        {
+            if (!enableFootstepRumble) return;
+            
+            bool isMoving = manager.FpcLocomotion.IsGrounded && manager.FpcInput.MoveInput.sqrMagnitude > 0.01f;
+            
+            float frequency = footstepRumbleFrequency * (manager.FpcLocomotion.IsRunning ? 0.5f : 1f);
+            
+            if (isMoving && _footstepTimer <= 0f)
+            {
+                manager.ControllerRumbleSource?.Rumble(footstepRumble);
+                _footstepTimer = frequency;
+            }
+            
+            _footstepTimer -= Time.deltaTime;
         }
 
         /// <summary>

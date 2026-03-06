@@ -16,8 +16,8 @@ namespace DNExtensions.Utilities
             internal bool Checked = true;
         }
 
-        readonly Dictionary<int, AssetItem> _items = new();
-        readonly string _rootPath;
+        private readonly Dictionary<int, AssetItem> _items = new();
+        private readonly string _rootPath;
 
         internal AssetTreeView(TreeViewState<int> state, string rootPath) : base(state)
         {
@@ -52,7 +52,7 @@ namespace DNExtensions.Utilities
             return root;
         }
 
-        AssetItem BuildTree(string path, ref int idCounter, int depth, string displayName)
+        private AssetItem BuildTree(string path, ref int idCounter, int depth, string displayName)
         {
             var item = new AssetItem
             {
@@ -121,7 +121,7 @@ namespace DNExtensions.Utilities
                 EditorGUI.LabelField(labelRect, item.displayName);
         }
 
-        void SetCheckedRecursive(AssetItem item, bool value)
+        private void SetCheckedRecursive(AssetItem item, bool value)
         {
             item.Checked = value;
             if (item.hasChildren)
@@ -141,7 +141,7 @@ namespace DNExtensions.Utilities
             _items.Values.Where(i => !i.IsFolder && i.Checked).Select(i => i.FullPath).ToList();
 
         // Only works for files under the actual project Assets folder
-        string ToAssetPath(string fullPath)
+        private string ToAssetPath(string fullPath)
         {
             string dataPath = Application.dataPath;
             return fullPath.StartsWith(dataPath)

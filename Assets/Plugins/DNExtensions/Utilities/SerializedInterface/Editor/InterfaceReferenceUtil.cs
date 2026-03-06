@@ -1,14 +1,9 @@
-
-#if UNITY_EDITOR
-
-
-
 using UnityEditor;
 using UnityEngine;
 
 namespace DNExtensions.Utilities.SerializedInterface
 {
-    public class InterfaceReferenceUtil
+    internal class InterfaceReferenceUtil
     {
         private static GUIStyle _labelStyle;
 
@@ -60,6 +55,3 @@ namespace DNExtensions.Utilities.SerializedInterface
         }
     }
 }
-
-
-#endif

@@ -1,11 +1,10 @@
-﻿#if UNITY_EDITOR
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 namespace DNExtensions.Utilities
 {
     [CustomPropertyDrawer(typeof(RangedFloat), true)]
-    public class RangedFloatDrawer : PropertyDrawer
+    internal class RangedFloatDrawer : PropertyDrawer
     {
         private static GUIStyle _labelStyle;
         
@@ -100,4 +99,3 @@ namespace DNExtensions.Utilities
         }
     }
 }
-#endif

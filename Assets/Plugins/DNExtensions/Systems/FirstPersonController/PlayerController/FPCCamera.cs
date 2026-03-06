@@ -43,6 +43,11 @@ namespace DNExtensions.Systems.FirstPersonController
         
         public CinemachineCamera Cam => cam;
 
+        private void OnValidate()
+        {
+            AutoGetSystem.Process(this);
+        }
+
         private void Awake()
         {
             _standingHeadHeight = head.localPosition.y;

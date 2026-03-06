@@ -238,7 +238,7 @@ namespace DNExtensions.Utilities
     
 
     [CustomPropertyDrawer(typeof(ShowIfAttribute))]
-    public class ShowIfDrawer : PropertyDrawer
+    internal class ShowIfDrawer : PropertyDrawer
     {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
@@ -258,7 +258,7 @@ namespace DNExtensions.Utilities
     }
 
     [CustomPropertyDrawer(typeof(HideIfAttribute))]
-    public class HideIfDrawer : PropertyDrawer
+    internal class HideIfDrawer : PropertyDrawer
     {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
@@ -278,7 +278,7 @@ namespace DNExtensions.Utilities
     }
 
     [CustomPropertyDrawer(typeof(EnableIfAttribute))]
-    public class EnableIfDrawer : PropertyDrawer
+    internal class EnableIfDrawer : PropertyDrawer
     {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
@@ -296,7 +296,7 @@ namespace DNExtensions.Utilities
     }
 
     [CustomPropertyDrawer(typeof(DisableIfAttribute))]
-    public class DisableIfDrawer : PropertyDrawer
+    internal class DisableIfDrawer : PropertyDrawer
     {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {

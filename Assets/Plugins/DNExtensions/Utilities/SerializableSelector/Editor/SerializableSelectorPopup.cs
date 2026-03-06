@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +8,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
 {
     using TypeInfo = SerializableSelectorUtility.TypeInfo;
     
-    public class SerializableSelectorPopup : EditorWindow
+    internal class SerializableSelectorPopup : EditorWindow
     {
         private TypeInfo[] _allTypes;
         private TypeInfo[] _filteredTypes;
@@ -526,4 +525,3 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         }
     }
 }
-#endif

@@ -5,12 +5,6 @@ using UnityEditorInternal;
 
 namespace DNExtensions.Utilities.ComponentDragger
 {
-    public class ComponentDraggerWindow : EditorWindow
-    {
-
-    }
-    
-    
     public class ComponentDraggerSettings : ScriptableObject
     {
         private const string SettingsPath = "ProjectSettings/DNExtensions_ComponentDraggerSettings.asset";
@@ -45,7 +39,6 @@ namespace DNExtensions.Utilities.ComponentDragger
                 return _instance;
             }
         }
-        
 
         private static ComponentDraggerSettings LoadOrCreate()
         {
@@ -129,9 +122,7 @@ namespace DNExtensions.Utilities.ComponentDragger
                         settings.ApplyModifiedProperties();
                         ComponentDraggerSettings.Instance.Save();
                     }
-                    
 
-                    
                     EditorGUILayout.Space(5);
                     
                     if (GUILayout.Button("Reset to Defaults", GUILayout.Height(30)))

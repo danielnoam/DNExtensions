@@ -23,6 +23,24 @@ namespace DNExtensions.Systems.InputSystem
         {
             if (!inputManager) inputManager = FindFirstObjectByType<InputManager>();
         }
+        
+        /// <summary>
+        /// Finds a specific InputAction within an InputActionMap and assigns it to a reference.
+        /// </summary>
+        /// <param name="actionMap"></param> The InputActionMap to search within.
+        /// <param name="actionName"></param> The name of the InputAction to find.
+        /// <param name="actionReference"></param> The reference to assign the found InputAction to.
+        protected void FindAction(InputActionMap actionMap, string actionName, ref InputAction actionReference)
+        {
+            if (actionMap == null)
+            {
+                Debug.LogError("Action Map not found.");
+                return;
+            }
+            
+            actionReference = actionMap.FindAction(actionName);
+            if (actionReference == null) Debug.LogError($"{actionName} action not found in Player Action Map.");
+        }
 
         /// <summary>
         /// Subscribes a callback method to all phases of an InputAction (started, performed, canceled).

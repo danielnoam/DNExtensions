@@ -1,11 +1,10 @@
-﻿#if UNITY_EDITOR
-using UnityEditor;
+﻿using UnityEditor;
 
 namespace DNExtensions.Utilities
 {
     [CustomEditor(typeof(Note))]
     [CanEditMultipleObjects]
-    public class NoteEditor : Editor
+    internal class NoteEditor : Editor
     {
         public override void OnInspectorGUI()
         {
@@ -27,4 +26,3 @@ namespace DNExtensions.Utilities
         }
     }
 }
-#endif

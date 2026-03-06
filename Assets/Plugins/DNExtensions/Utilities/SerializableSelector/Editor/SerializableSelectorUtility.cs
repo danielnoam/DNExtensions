@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +5,7 @@ using System.Reflection;
 
 namespace DNExtensions.Utilities.SerializableSelector.Editor
 {
-    public static class SerializableSelectorUtility
+    internal static class SerializableSelectorUtility
     {
         public struct TypeInfo
         {
@@ -187,4 +186,3 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         }
     }
 }
-#endif

@@ -138,11 +138,7 @@ namespace DNExtensions.Utilities.AutoGet
             }
         }
         
-        private static void ValidateFieldInternal(
-            MonoBehaviour behaviour,
-            FieldInfo field,
-            AutoGetAttribute attribute,
-            object currentValue)
+        private static void ValidateFieldInternal(MonoBehaviour behaviour, FieldInfo field, AutoGetAttribute attribute, object currentValue)
         {
             // For now, just silent validation
             // Can add logging based on settings later

@@ -152,7 +152,7 @@ namespace DNExtensions.Utilities
     
 #if UNITY_EDITOR
     [CustomEditor(typeof(RadialLayoutGroup))]
-    public class RadialLayoutGroupEditor : Editor
+    internal class RadialLayoutGroupEditor : Editor
     {
         public override void OnInspectorGUI()
         {

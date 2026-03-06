@@ -57,6 +57,11 @@ namespace DNExtensions.Systems.FirstPersonController
         public event Action OnJump;
         public event Action<float> OnLanded;
 
+        private void OnValidate()
+        {
+            AutoGetSystem.Process(this);
+        }
+
         private void Awake()
         {
             _standingColliderCenter = manager.CharacterController.center;

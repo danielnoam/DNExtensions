@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DNExtensions.Utilities
 {
     [CustomEditor(typeof(TubeRenderer))]
-    public class TubeRendererEditor : UnityEditor.Editor
+    internal class TubeRendererEditor : UnityEditor.Editor
     {
         private SerializedProperty _sides;
         private SerializedProperty _closeStartCap;

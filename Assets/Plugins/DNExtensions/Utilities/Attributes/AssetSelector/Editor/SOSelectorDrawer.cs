@@ -11,7 +11,7 @@ namespace DNExtensions.Utilities
     /// Custom property drawer for SOSelector attribute with dropdown selection and type/interface filtering.
     /// </summary>
     [CustomPropertyDrawer(typeof(SOSelectorAttribute))]
-    public class SOSelectorDrawer : PropertyDrawer
+    internal class SOSelectorDrawer : PropertyDrawer
     {
         private static readonly Dictionary<string, AssetInfo<ScriptableObject>[]> SOCache = new Dictionary<string, AssetInfo<ScriptableObject>[]>();
         

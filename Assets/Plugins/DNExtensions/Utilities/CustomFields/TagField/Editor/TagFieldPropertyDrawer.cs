@@ -10,7 +10,7 @@ namespace DNExtensions.Utilities.CustomFields
     /// Shows tag validation status and includes a convenience button to access tag manager.
     /// </summary>
     [CustomPropertyDrawer(typeof(TagField))]
-    public class TagFieldPropertyDrawer : PropertyDrawer
+    internal class TagFieldPropertyDrawer : PropertyDrawer
     {
         /// <summary>
         /// Renders the custom GUI for the TagField in the Unity Inspector.

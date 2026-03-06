@@ -10,8 +10,6 @@ namespace DNExtensions.Systems.ControllerRumble
     public class ControllerRumbleUI : MonoBehaviour
     {
         [SerializeField] private ControllerRumbleListener listener;
-        [Tooltip("Only show UI when running in the Unity Editor")]
-        [SerializeField] private bool editorOnly;
         [Tooltip("Minimum combined intensity before screen shake is applied")]
         [SerializeField] private float intensityThreshold = 0.01f;
         [Tooltip("Speed multiplier for the screen shake animation")]
@@ -49,12 +47,6 @@ namespace DNExtensions.Systems.ControllerRumble
 
         private void Awake()
         {
-            if (editorOnly && !Application.isEditor)
-            {
-                enabled = false;
-                return;
-            }
-
             if (!listener) listener = FindFirstObjectByType<ControllerRumbleListener>();
         }
 

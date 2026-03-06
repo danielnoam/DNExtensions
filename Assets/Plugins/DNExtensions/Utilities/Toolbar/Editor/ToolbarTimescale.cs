@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 
 namespace DNExtensions.Utilities
 {
-    public class ToolbarTimescale
+    internal class ToolbarTimescale
     {
         const float MinTimeScale = 0f;
         const float MaxTimeScale = 5f;

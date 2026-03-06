@@ -1,11 +1,10 @@
-﻿#if UNITY_EDITOR
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 namespace DNExtensions.Utilities
 {
     [CustomPropertyDrawer(typeof(LinkedVector3Attribute))]
-    public class LinkedVector3Drawer : PropertyDrawer
+    internal class LinkedVector3Drawer : PropertyDrawer
     {
         private bool _locked;
 
@@ -38,4 +37,3 @@ namespace DNExtensions.Utilities
         }
     }
 }
-#endif

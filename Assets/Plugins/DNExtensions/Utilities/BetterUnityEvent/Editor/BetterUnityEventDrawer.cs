@@ -12,7 +12,7 @@ namespace DNExtensions.Utilities
     /// multi-object operations, and copy/paste functionality.
     /// </summary>
     [CustomPropertyDrawer(typeof(UnityEventBase), true)]
-    public class BetterUnityEventDrawer : UnityEventDrawer
+    internal class BetterUnityEventDrawer : UnityEventDrawer
     {
         private static readonly List<SerializedEventData> CopiedEvents = new List<SerializedEventData>();
         

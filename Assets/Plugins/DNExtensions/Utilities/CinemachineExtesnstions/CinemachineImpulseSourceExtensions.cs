@@ -29,7 +29,6 @@ namespace DNExtensions.Utilities.CinemachineExtensions
                 PropagationSpeed = settings.propagationSpeed
             };
 
-            
             Vector3 velocity = settings.velocity;
             velocity *= settings.intensity;
             impulseDefinition.CreateEvent(source.transform.position, velocity);
@@ -54,12 +53,6 @@ namespace DNExtensions.Utilities.CinemachineExtensions
         [Range(0f, 1f)] public float dissipationRate = 0.25f;
         [ShowIf(nameof(impulseType), CinemachineImpulseDefinition.ImpulseTypes.Propagating)]
         [Min(1f)] public float propagationSpeed = 343f;
-
-
-        
-        public ImpulseSettings()
-        {
-        }
 
         public ImpulseSettings(CinemachineImpulseDefinition.ImpulseShapes shape, float duration, float intensity, Vector3 velocity) 
         {

@@ -16,7 +16,7 @@ namespace DNExtensions.Utilities
     /// Resize or offset Content to control the slot size all items share.
     /// Clip with a <see cref="Mask"/> or <see cref="RectMask2D"/> on the viewport.
     /// </remarks>
-    [AddComponentMenu("")]
+    [AddComponentMenu("DNExtensions/UI/Carousel View")]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(RectTransform))]
     public class CarouselView : UIBehaviour, IInitializePotentialDragHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
@@ -76,8 +76,6 @@ namespace DNExtensions.Utilities
         [Tooltip("Color of indicators for non-selected items.")]
         public Color indicatorInactiveColor = new Color(1f, 1f, 1f, 0.4f);
 
-
-
         private RectTransform _rect;
         private int _currentIndex;
         private float _targetOffset;
@@ -88,7 +86,6 @@ namespace DNExtensions.Utilities
         private float _offsetAtDragStart;
         private float _prevOffset;
         private float _dragVelocity;
-        
 
         /// <summary>Invoked whenever the centered item changes.</summary>
         public IndexChangedEvent OnIndexChanged => onIndexChanged;

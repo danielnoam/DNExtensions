@@ -1,11 +1,10 @@
-﻿#if UNITY_EDITOR
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 namespace DNExtensions.Utilities
 {
     [CustomPropertyDrawer(typeof(RangedInt), true)]
-    public class RangedIntDrawer : PropertyDrawer
+    internal class RangedIntDrawer : PropertyDrawer
     {
         private static GUIStyle _labelStyle;
         
@@ -99,4 +98,3 @@ namespace DNExtensions.Utilities
         }
     }
 }
-#endif

@@ -20,6 +20,7 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField] private LayerMask interactionLayer = 0;
         
         [Header("Held Object")]
+        [SerializeField] private float minTimeForThrow = 0.1f;
         [SerializeField] private float autoDropYOffset = 1f;
         [SerializeField, MinMaxRange(0,30)] private RangedFloat throwForceRange = new RangedFloat(5f, 15f);
         [SerializeField, MinMaxRange(1f,4f)] private RangedFloat throwHeldRange = new RangedFloat(1f, 4f);
@@ -58,7 +59,7 @@ namespace DNExtensions.Systems.FirstPersonController
 
         private void OnValidate()
         {
-            if (!manager) manager = GetComponent<FpcManager>();
+            AutoGetSystem.Process(this);
             if (!interactionPosition) interactionPosition = transform;
         }
 
@@ -66,48 +67,14 @@ namespace DNExtensions.Systems.FirstPersonController
         {
             manager.FpcInput.OnInteractAction += OnInteract;
             manager.FpcInput.OnThrowAction += OnThrow;
-            manager.FpcInput.OnDropAction += OnDrop;
         }
 
         private void OnDisable()
         {
             manager.FpcInput.OnInteractAction -= OnInteract;
             manager.FpcInput.OnThrowAction -= OnThrow;
-            manager.FpcInput.OnDropAction -= OnDrop;
         }
         
-        private void OnInteract(InputAction.CallbackContext context)
-        {
-            if (context.performed)
-            {
-                var interactorData = new InteractorData(this);
-                _closestInteractable?.Interact(interactorData);
-            }
-        }
-        
-        private void OnThrow(InputAction.CallbackContext context)
-        {
-            if (context.started)
-            {
-                _throwInputHeld = true;
-            }
-            else if (context.canceled)
-            {
-                _throwInputHeld = false;
-                ThrowHeldObject();
-            }
-
-            _throwInputHoldTime = 0f;
-        }
-        
-        private void OnDrop(InputAction.CallbackContext context)
-        {
-            if (context.performed)
-            {
-                DropHeldObject();
-            }
-        }
-
         private void Update()
         {
             UpdateHeldInputTime();
@@ -118,6 +85,44 @@ namespace DNExtensions.Systems.FirstPersonController
             CheckForInteractable();
             CheckHeldObjectHeight();
         }
+        
+        private void OnInteract(InputAction.CallbackContext context)
+        {
+            if (context.performed)
+            {
+                var interactorData = new InteractorData()
+                {
+                  FpcInteraction = this
+                };
+                _closestInteractable?.Interact(interactorData);
+            }
+        }
+        
+        private void OnThrow(InputAction.CallbackContext context)
+        {
+            if (context.started)
+            {
+                _throwInputHeld = true;
+                _throwInputHoldTime = 0f;
+            }
+            else if (context.canceled)
+            {
+                _throwInputHeld = false;
+                
+                if (_throwInputHoldTime < minTimeForThrow)
+                {
+                    DropHeldObject();
+                }
+                else
+                {
+                    ThrowHeldObject();
+                }
+                
+                _throwInputHoldTime = 0f;
+            }
+        }
+
+
 
         private void ThrowHeldObject()
         {
@@ -179,8 +184,8 @@ namespace DNExtensions.Systems.FirstPersonController
             if (closestInteractable != _closestInteractable)
             {
                 _closestInteractable?.HideInteractionTip();
-                _closestInteractable?.ShowInteractionTip();
                 _closestInteractable = closestInteractable;
+                _closestInteractable?.ShowInteractionTip();
             }
         }
 

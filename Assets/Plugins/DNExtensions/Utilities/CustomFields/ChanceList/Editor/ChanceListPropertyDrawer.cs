@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
@@ -8,7 +7,7 @@ using UnityEngine;
 namespace DNExtensions.Utilities
 {
     [CustomPropertyDrawer(typeof(ChanceList<>), true)]
-    public class ChanceListPropertyDrawer : PropertyDrawer
+    internal class ChanceListPropertyDrawer : PropertyDrawer
     {
         private readonly Dictionary<string, ReorderableList> _lists = new();
         private readonly Dictionary<string, bool> _isDragging = new();
@@ -369,4 +368,3 @@ namespace DNExtensions.Utilities
         }
     }
 }
-#endif

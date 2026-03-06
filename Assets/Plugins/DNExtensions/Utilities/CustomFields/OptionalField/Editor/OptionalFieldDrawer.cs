@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DNExtensions.Utilities.CustomFields
 {
     [CustomPropertyDrawer(typeof(OptionalField<>))]
-    public class OptionalFieldDrawer : PropertyDrawer
+    internal class OptionalFieldDrawer : PropertyDrawer
     {
         private const float ToggleWidth = 16f;
         private const float Spacing = 2f;

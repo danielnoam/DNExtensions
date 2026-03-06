@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UI;
-
-#if UNITY_EDITOR
 
 namespace DNExtensions.Utilities {
     
@@ -22,7 +19,8 @@ namespace DNExtensions.Utilities {
         private static readonly Dictionary<string, string> SavedData = new Dictionary<string, string>();
 
 
-        static SaveInPlayModeHandler() {
+        static SaveInPlayModeHandler()
+        {
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
             EditorApplication.quitting += ClearAllData;
             ComponentHeaderButtonInjector.RegisterDynamicButtonProvider(GetButtonForComponent);
@@ -32,10 +30,7 @@ namespace DNExtensions.Utilities {
         /// Button provider function called by ComponentHeaderButtonInjector.
         /// Returns button data for components that should have save buttons, or null otherwise.
         /// </summary>
-        private static ComponentHeaderButtonInjector.ButtonData GetButtonForComponent(Component component) {
-            if (!ShouldShowSaveButton(component.GetType())) {
-                return null;
-            }
+        private static ComponentHeaderButtonInjector.ButtonData GetButtonForComponent(Component component) { if (!ShouldShowSaveButton(component.GetType())) { return null; }
             
             bool isSaved = IsSaved(component);
             
@@ -179,4 +174,3 @@ namespace DNExtensions.Utilities {
     }
 }
 
-#endif

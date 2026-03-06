@@ -1,4 +1,3 @@
-using DNExtensions.Systems.Scriptables;
 using DNExtensions.Utilities.AutoGet;
 using UnityEngine;
 
@@ -11,29 +10,23 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Collider))]
     [RequireComponent(typeof(Rigidbody))]
-    [RequireComponent(typeof(InteractableBase))]
-    [RequireComponent(typeof(AudioSource))]
-    public class PickableObject : InteractableBase
+    public class PickableObject : MonoBehaviour, IInteractable
     {
         [Header("Pickable Object Settings")]
         [Tooltip( "Affects the players movement speed when this object is held, 1 has no effect.")]
         [SerializeField, Min(1)] private float objectWeight = 1f;
         [SerializeField] private float heldFollowForce = 15f;
-        [SerializeField, AutoGetSelf] private Rigidbody rigidBody;
-        [SerializeField, AutoGetSelf] private InteractableBase interactable;
-        [SerializeField, AutoGetSelf] private AudioSource audioSource;
-        [SerializeField] private SOAudioEvent collisionSfx;
+        [SerializeField, AutoGetSelf, HideInInspector] private Rigidbody rigidBody;
+        [SerializeField, AutoGetSelf, HideInInspector] private InteractableTip tip;
 
         private bool _isBeingHeld;
         private Transform _holdPosition;
+        
         public float ObjectWeight => objectWeight;
 
-        private void OnCollisionEnter(Collision collision)
+        private void OnValidate()
         {
-            if (collision.relativeVelocity.magnitude > 0.3f)
-            {
-                collisionSfx?.Play(audioSource);
-            }
+            AutoGetSystem.Process(this);
         }
 
         private void FixedUpdate()
@@ -41,43 +34,42 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
             FollowHoldPosition();
         }
         
-        public override void Interact(InteractorData interactorData)
+        public void Interact(InteractorData interactorData)
         {
-            if (!CanInteract() || _isBeingHeld) return;
+            if (!CanInteract()) return;
 
             PickUp(interactorData);
+        }
+
+        public bool CanInteract()
+        {
+            return !_isBeingHeld;
+        }
+
+        public void ShowInteractionTip()
+        {
+            tip?.ToggleTooltip(true);
+        }
+
+        public void HideInteractionTip()
+        {
+            tip?.ToggleTooltip(false);
         }
 
         private void FollowHoldPosition()
         {
             if (!_isBeingHeld || !_holdPosition) return;
 
-            var direction = _holdPosition.position - rigidBody.position;
-            rigidBody.linearVelocity = direction * (heldFollowForce * Time.fixedDeltaTime);
-
-            if (rigidBody.rotation != Quaternion.Euler(Vector3.zero))
-            {
-                Quaternion targetRotation = Quaternion.Euler(Vector3.zero);
-                Quaternion rotationDifference = targetRotation * Quaternion.Inverse(rigidBody.rotation);
-                rotationDifference.ToAngleAxis(out float angle, out Vector3 axis);
-                if (angle > 180f) angle -= 360f;
-                float angularSpeed = 5;
-
-                Vector3 desiredAngularVelocity = axis * (angle * Mathf.Deg2Rad * angularSpeed);
-                rigidBody.angularVelocity = desiredAngularVelocity;
-            }
-            else if (rigidBody.angularVelocity != Vector3.zero)
-            {
-                rigidBody.angularVelocity = Vector3.Lerp(rigidBody.angularVelocity, Vector3.zero, 1f * Time.fixedDeltaTime);
-            }
+            var targetPosition = Vector3.Lerp(rigidBody.position, _holdPosition.position, heldFollowForce * Time.fixedDeltaTime);
+            rigidBody.MovePosition(targetPosition);
+            rigidBody.angularVelocity = Vector3.zero;
         }
 
         private void PickUp(InteractorData interactorData)
         {
             if (!rigidBody || _isBeingHeld) return;
-
-            canInteract = false;
-            rigidBody.useGravity = true;
+            
+            rigidBody.useGravity = false;
             _isBeingHeld = true;
             _holdPosition = interactorData.FpcInteraction.HoldPosition;
             interactorData.FpcInteraction.HeldObject = this;
@@ -90,7 +82,6 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
         {
             if (!rigidBody || !_isBeingHeld) return;
             
-            canInteract = true;
             rigidBody.useGravity = true;
             _isBeingHeld = false;
             _holdPosition = null;
@@ -102,8 +93,7 @@ namespace DNExtensions.Systems.FirstPersonController.Interactable
         public void Throw(Vector3 direction, float force)
         {
             if (!rigidBody) return;
-
-            canInteract = true;
+            
             rigidBody.useGravity = true;
             _isBeingHeld = false;
             _holdPosition = null;

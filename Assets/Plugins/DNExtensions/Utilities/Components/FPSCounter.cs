@@ -5,11 +5,9 @@ namespace DNExtensions.Utilities
     /// <summary>
     /// Displays FPS counter in screen overlay without requiring UI setup
     /// </summary>
-    ///
     [AddComponentMenu("DNExtensions/FPS Counter", -1000)]
     public class FPSCounter : MonoBehaviour
     {
-        [SerializeField] private bool editorOnly;
         [SerializeField] private float updateInterval = 0.5f;
         [SerializeField] private int targetFPS = 60;
         [SerializeField] private TextAnchor anchor = TextAnchor.UpperLeft;
@@ -21,12 +19,6 @@ namespace DNExtensions.Utilities
 
         private void Awake()
         {
-            if (editorOnly && !Application.isEditor)
-            {
-                enabled = false;
-                return;
-            }
-            
             _style = new GUIStyle
             {
                 fontSize = 20,

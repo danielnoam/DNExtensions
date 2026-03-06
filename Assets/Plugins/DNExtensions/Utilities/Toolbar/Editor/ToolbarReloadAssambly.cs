@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace DNExtensions.Utilities
 {
-    public class AssemblyReloadLock
+    internal class AssemblyReloadLock
     {
         private static bool _isLocked;
         

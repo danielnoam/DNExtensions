@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -10,7 +9,7 @@ namespace DNExtensions.Utilities.AudioPreview
     /// Double-click any AudioClip in the Project window to preview it.
     /// Double-click again to restart playback.
     /// </summary>
-    public static class AudioPreviewTool
+    internal static class AudioPreviewTool
     {
         private static readonly MethodInfo PlayClipMethod;
         private static readonly MethodInfo StopClipsMethod;
@@ -41,4 +40,3 @@ namespace DNExtensions.Utilities.AudioPreview
         }
     }
 }
-#endif

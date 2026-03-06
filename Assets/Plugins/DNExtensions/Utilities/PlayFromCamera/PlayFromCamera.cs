@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using Object = UnityEngine.Object;
@@ -172,4 +171,3 @@ namespace DNExtensions.Utilities.PlayFromCamera
         }
     }
 }
-#endif

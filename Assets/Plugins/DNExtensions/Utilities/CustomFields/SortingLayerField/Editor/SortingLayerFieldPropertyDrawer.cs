@@ -10,7 +10,7 @@ namespace DNExtensions.Utilities.CustomFields
     /// Shows layer validation status and includes a convenience button to access project settings.
     /// </summary>
     [CustomPropertyDrawer(typeof(SortingLayerField))]
-    public class SortingLayerFieldPropertyDrawer : PropertyDrawer
+    internal class SortingLayerFieldPropertyDrawer : PropertyDrawer
     {
         /// <summary>
         /// Renders the custom GUI for the SortingLayerField in the Unity Inspector.

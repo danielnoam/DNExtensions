@@ -11,7 +11,7 @@ namespace DNExtensions.Utilities.AutoGet
     /// </summary>
     public static class AutoGetCache
     {
-        private static readonly Dictionary<Type, FieldInfo[]> _fieldCache = new();
+        private static readonly Dictionary<Type, FieldInfo[]> FieldCache = new();
         
         /// <summary>
         /// Gets all fields with AutoGetAttribute for the given type.
@@ -24,10 +24,10 @@ namespace DNExtensions.Utilities.AutoGet
                 return ScanTypeForAutoGetFields(type);
             }
             
-            if (!_fieldCache.TryGetValue(type, out var fields))
+            if (!FieldCache.TryGetValue(type, out var fields))
             {
                 fields = ScanTypeForAutoGetFields(type);
-                _fieldCache[type] = fields;
+                FieldCache[type] = fields;
             }
             
             return fields;
@@ -38,13 +38,13 @@ namespace DNExtensions.Utilities.AutoGet
         /// </summary>
         public static void Clear()
         {
-            _fieldCache.Clear();
+            FieldCache.Clear();
         }
         
         /// <summary>
         /// Gets the number of types currently cached.
         /// </summary>
-        public static int CacheSize => _fieldCache.Count;
+        public static int CacheSize => FieldCache.Count;
         
         private static FieldInfo[] ScanTypeForAutoGetFields(Type type)
         {

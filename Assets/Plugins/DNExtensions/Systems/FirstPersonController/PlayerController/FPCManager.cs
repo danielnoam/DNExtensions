@@ -35,6 +35,11 @@ namespace DNExtensions.Systems.FirstPersonController
         public ControllerRumbleSource ControllerRumbleSource => controllerRumbleSource;
         public CinemachineImpulseSource CinemachineImpulseSource => cinemachineImpulseSource;
 
+        private void OnValidate()
+        {
+            AutoGetSystem.Process(this);
+        }
+
         [Button(ButtonPlayMode.OnlyWhenNotPlaying)]
         private void ValidateMissingComponents()
         {

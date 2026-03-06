@@ -1,11 +1,10 @@
-#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 
 namespace DNExtensions.Utilities.CustomFields
 {
     [CustomPropertyDrawer(typeof(NoteField))]
-    public class NoteFieldDrawer : PropertyDrawer
+    internal class NoteFieldDrawer : PropertyDrawer
     {
         private const float LineHeight = 18f;
         private const float Padding = 4f;
@@ -142,4 +141,3 @@ namespace DNExtensions.Utilities.CustomFields
         }
     }
 }
-#endif

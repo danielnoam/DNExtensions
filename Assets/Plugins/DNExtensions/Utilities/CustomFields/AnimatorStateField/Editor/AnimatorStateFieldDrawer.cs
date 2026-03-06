@@ -6,7 +6,7 @@ using UnityEngine;
 namespace DNExtensions.Utilities.CustomFields.Editor
 {
     [CustomPropertyDrawer(typeof(AnimatorStateField))]
-    public class AnimatorStateFieldDrawer : PropertyDrawer
+    internal class AnimatorStateFieldDrawer : PropertyDrawer
     {
         private const string NoneOption = "None";
         private const string NoAnimator = "No Animator";

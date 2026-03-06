@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -10,7 +9,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
     using TypeInfo = SerializableSelectorUtility.TypeInfo;
     
     [CustomPropertyDrawer(typeof(SerializableSelectorAttribute))]
-    public class SerializableSelectorDrawer : PropertyDrawer
+    internal class SerializableSelectorDrawer : PropertyDrawer
     {
         private static readonly Dictionary<string, TypeInfo[]> TypeCache = new Dictionary<string, TypeInfo[]>();
         private static object _clipboard;
@@ -593,4 +592,3 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         }
     }
 }
-#endif
