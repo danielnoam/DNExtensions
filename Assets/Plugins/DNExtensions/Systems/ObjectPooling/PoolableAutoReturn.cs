@@ -34,14 +34,13 @@ namespace DNExtensions.Systems.ObjectPooling
 
         public void OnPoolGet()
         {
-
+            Initialize(lifeTime);
         }
 
         public void OnPoolReturn()
         {
-
         }
-        
+
         public void OnPoolRecycle()
         {
             _isInitialized = false;

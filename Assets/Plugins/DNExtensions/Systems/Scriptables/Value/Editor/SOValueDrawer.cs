@@ -3,6 +3,9 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.Scriptables
 {
+    /// <summary>
+    /// Custom property drawer for SOBase that displays inline value editing in the inspector.
+    /// </summary>
     [CustomPropertyDrawer(typeof(SOBase), true)]
     public class SOValueDrawer : PropertyDrawer
     {

@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.ObjectPooling
 {
-    
     /// <summary>
     /// Automatically returns audio sources to the object pool after a specified lifetime.
     /// </summary>
@@ -14,7 +13,6 @@ namespace DNExtensions.Systems.ObjectPooling
     public class PoolableAudioSource : MonoBehaviour, IPoolable
     {
         public AudioSource audioSource;
-
 
         private void Awake()
         {
@@ -43,7 +41,6 @@ namespace DNExtensions.Systems.ObjectPooling
             float duration = audioSource.clip.length;
             StartCoroutine(ReturnAfter(duration));
         }
-        
 
         private IEnumerator ReturnAfter(float delay)
         {
@@ -53,7 +50,7 @@ namespace DNExtensions.Systems.ObjectPooling
 
         public void OnPoolGet()
         {
-
+            
         }
 
         public void OnPoolReturn()

@@ -7,17 +7,18 @@ using DNExtensions.Utilities.Button;
 
 namespace DNExtensions.Systems.Springs
 {
+    /// <summary>
+    /// Debug component for visualizing spring behavior in the Scene view with Gizmos.
+    /// </summary>
     [AddComponentMenu("DNExtensions/Springs/Visualized Spring")]
     public class VisualizedSpring : MonoBehaviour
     {
         [SerializeField] private Vector3Spring spring = new Vector3Spring();
 
-
         private void Update()
         {
             spring.Update(Time.deltaTime);
         }
-
 
         [Button]
         private void ToggleSpring()
@@ -30,7 +31,6 @@ namespace DNExtensions.Systems.Springs
             {
                 spring.Lock();
             }
-
         }
 
         [Button]
@@ -39,13 +39,11 @@ namespace DNExtensions.Systems.Springs
             spring.SetValue(new Vector3(0, 15, 0));
         }
 
-
         [Button]
         private void AddSpringValue(Vector3 amount)
         {
             spring.SetValue(spring.Value + amount);
         }
-
 
         private void OnDrawGizmos()
         {
@@ -57,15 +55,12 @@ namespace DNExtensions.Systems.Springs
             Gizmos.color = spring.IsLocked ? Color.red : Color.yellow;
             Gizmos.DrawWireCube(transform.position + spring.Value, Vector3.one / 1.5f);
 
-
-
             if (spring.useLimits)
             {
                 Gizmos.color = Color.blue;
                 Gizmos.DrawWireCube(transform.position, spring.max);
                 Gizmos.DrawWireCube(transform.position, spring.min);
             }
-
         }
     }
 }

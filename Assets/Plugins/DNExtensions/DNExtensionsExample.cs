@@ -85,7 +85,7 @@ namespace DNExtensions
             testImpulseSource.GenerateImpulse(testImpulse);
         }
     }
-    
+
     public interface ITest
     {
     }
@@ -119,14 +119,12 @@ namespace DNExtensions
     {
         public bool varBool;
     }
-    
 
     [Serializable]
     public class Behavior4 : TestBehavior
     {
         public bool varBool;
     }
-    
 
     [Serializable]
     [SerializableSelectorTooltip("A tooltip")]

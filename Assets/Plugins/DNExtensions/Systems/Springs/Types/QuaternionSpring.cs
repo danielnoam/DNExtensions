@@ -3,7 +3,9 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.Springs
 {
-    
+    /// <summary>
+    /// Spring physics simulation for Quaternion rotations with Euler angle limits and wrapping.
+    /// </summary>
     [Serializable]
     public class QuaternionSpring
     {

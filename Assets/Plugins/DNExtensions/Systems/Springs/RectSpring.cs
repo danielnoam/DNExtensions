@@ -5,6 +5,9 @@ using DNExtensions.Utilities.Button;
 
 namespace DNExtensions.Systems.Springs
 {
+    /// <summary>
+    /// Spring-based animation component for RectTransform properties with configurable triggers and offsets.
+    /// </summary>
     [AddComponentMenu("DNExtensions/Springs/Rect Spring")]
     [RequireComponent(typeof(RectTransform))]
     public class RectSpring : MonoBehaviour
@@ -82,7 +85,6 @@ namespace DNExtensions.Systems.Springs
 
         private void OnEnable()
         {
-
             switch (onEnableBehavior)
             {
                 case OnEnableBehavior.Nothing: break;

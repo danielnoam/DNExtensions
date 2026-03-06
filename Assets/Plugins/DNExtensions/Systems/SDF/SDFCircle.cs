@@ -1,7 +1,10 @@
+using UnityEngine;
+
 namespace DNExtensions.Systems.Shapes
 {
-    using UnityEngine;
-
+    /// <summary>
+    /// SDF-based circle shape with configurable radius.
+    /// </summary>
     [AddComponentMenu("DNExtensions/SDF Shapes/Circle")]
     public class SDFCircle : SDFShapeBase
     {

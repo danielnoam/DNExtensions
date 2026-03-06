@@ -53,8 +53,6 @@ namespace DNExtensions.Systems.ObjectPooling
             _showDebugMessages = settings.showDebugMessages;
             _hidePoolHolders = settings.hidePoolHolders;
             _pools = settings.GetPoolsCopy();
-            
-
 
             _isFirstScene = true;
             SceneManager.activeSceneChanged += OnActiveSceneChanged;
@@ -97,7 +95,6 @@ namespace DNExtensions.Systems.ObjectPooling
             SceneManager.activeSceneChanged -= OnActiveSceneChanged;
         }
         #endif
-
 
         private static void OnActiveSceneChanged(Scene previousActiveScene, Scene newActiveScene)
         {
@@ -147,7 +144,6 @@ namespace DNExtensions.Systems.ObjectPooling
             }
         }
 
-
         private void SetUpPools()
         {
             if (!_destroyOnLoadParent)
@@ -191,10 +187,10 @@ namespace DNExtensions.Systems.ObjectPooling
         /// Searches pools by matching prefab reference.
         /// </summary>
         /// <param name="obj">Prefab GameObject to get from pool</param>
-        /// <param name="positon">World position for the object</param>
+        /// <param name="position">World position for the object</param>
         /// <param name="rotation">World rotation for the object</param>
         /// <returns>GameObject from pool or new instance if no pool found</returns>
-        public static GameObject GetObjectFromPool(GameObject obj, Vector3 positon = default, Quaternion rotation = default)
+        public static GameObject GetObjectFromPool(GameObject obj, Vector3 position = default, Quaternion rotation = default)
         {
             if (Instance)
             {
@@ -202,19 +198,19 @@ namespace DNExtensions.Systems.ObjectPooling
                 {
                     if (pool.prefab == obj)
                     {
-                        return pool.GetObjectFromPool(positon, rotation);
+                        return pool.GetObjectFromPool(position, rotation);
                     }
                 }
 
                 if (Instance._instantiateAsFallBack)
                 {
                     if (Instance._showDebugMessages) Debug.Log($"No pool found for {obj} was found, instantiating as fall back");
-                    var fallbackObject = Instantiate(obj, positon, rotation);
+                    var fallbackObject = Instantiate(obj, position, rotation);
                     return fallbackObject;
                 }
             }
 
-            return Instantiate(obj, positon, rotation);
+            return Instantiate(obj, position, rotation);
         }
         
         /// <summary>
@@ -262,10 +258,9 @@ namespace DNExtensions.Systems.ObjectPooling
                     return;
                 }
             }
-            
+
             Destroy(obj);
         }
-        
 
         /// <summary>
         /// Returns an object to its appropriate pool or destroys as fallback.

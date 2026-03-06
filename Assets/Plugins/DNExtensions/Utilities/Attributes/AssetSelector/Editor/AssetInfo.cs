@@ -1,4 +1,3 @@
-﻿#if UNITY_EDITOR
 using UnityEngine;
 
 namespace DNExtensions.Utilities
@@ -14,4 +13,3 @@ namespace DNExtensions.Utilities
         public string Path;
     }
 }
-#endif

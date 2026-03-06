@@ -3,6 +3,9 @@ namespace DNExtensions.Systems.Shapes
     using UnityEngine;
     using UnityEngine.UI;
 
+    /// <summary>
+    /// SDF-based heart shape with configurable size.
+    /// </summary>
     [AddComponentMenu("DNExtensions/SDF Shapes/Heart")]
     public class SDFHeart : SDFShapeBase
     {

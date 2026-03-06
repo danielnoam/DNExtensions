@@ -11,53 +11,45 @@ namespace DNExtensions.Systems.Scriptables
     [CreateAssetMenu(fileName = "New Event", menuName = "Scriptables/Event")]
     public class SOEvent : ScriptableObject
     {
-        private Action onEvent;
+        private Action _onEvent;
 
 #if UNITY_EDITOR
         [SerializeField, ReadOnly] private int subscriberCount;
 #endif
 
-        
         /// <summary>
         /// Invokes the event.
         /// </summary>
         [Button(ButtonPlayMode.OnlyWhenPlaying)]
-        public void Invoke() => onEvent?.Invoke();
-        
+        public void Invoke() => _onEvent?.Invoke();
+
         /// <summary>
-        /// Unsubscribes an action from the event. The action will no longer be invoked when the event is invoked.
+        /// Subscribes an action to the event.
         /// </summary>
-        /// <param name="action"></param>
         private void Subscribe(Action action)
         {
-            onEvent += action;
+            _onEvent += action;
             
 #if UNITY_EDITOR
-            subscriberCount = onEvent != null ? onEvent.GetInvocationList().Length : 0;
+            subscriberCount = _onEvent != null ? _onEvent.GetInvocationList().Length : 0;
 #endif
         }
 
-
         /// <summary>
-        /// Unsubscribes an action from the event. The action will no longer be invoked when the event is invoked.
+        /// Unsubscribes an action from the event.
         /// </summary>
-        /// <param name="action"></param>
         private void Unsubscribe(Action action)
         {
-            onEvent -= action;
+            _onEvent -= action;
             
 #if UNITY_EDITOR
-            subscriberCount = onEvent != null ? onEvent.GetInvocationList().Length : 0;
+            subscriberCount = _onEvent != null ? _onEvent.GetInvocationList().Length : 0;
 #endif
         }
 
-
         /// <summary>
-        /// Operator overloads for subscribing.
+        /// Operator overload for subscribing actions to the event.
         /// </summary>
-        /// <param name="e"></param>
-        /// <param name="action"></param>
-        /// <returns></returns>
         public static SOEvent operator +(SOEvent e, Action action)
         {
             e.Subscribe(action);
@@ -65,11 +57,8 @@ namespace DNExtensions.Systems.Scriptables
         }
 
         /// <summary>
-        /// Operator overloads for unsubscribing actions to the event.
+        /// Operator overload for unsubscribing actions from the event.
         /// </summary>
-        /// <param name="e"></param>
-        /// <param name="action"></param>
-        /// <returns></returns>
         public static SOEvent operator -(SOEvent e, Action action)
         {
             e.Unsubscribe(action);

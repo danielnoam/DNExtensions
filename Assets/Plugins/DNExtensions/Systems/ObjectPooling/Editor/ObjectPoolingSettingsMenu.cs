@@ -1,12 +1,9 @@
-﻿
 using System.IO;
 using UnityEditor;
 using UnityEngine;
 
 namespace DNExtensions.Systems.ObjectPooling
 {
-
-
     /// <summary>
     /// Editor utilities for ObjectPoolingSettings.
     /// Provides menu items for quick access and asset creation.

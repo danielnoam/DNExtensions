@@ -233,7 +233,6 @@ namespace DNExtensions.Systems.ObjectPooling
         {
             preWarmPoolSize = !preWarmPool ? 0 : Mathf.Clamp(preWarmPoolSize, 1, maxPoolSize);
         }
-        
 
         /// <summary>
         /// Pre-instantiates objects to avoid runtime allocation spikes.
@@ -252,7 +251,6 @@ namespace DNExtensions.Systems.ObjectPooling
             }
             else
             {
-                
                 var currentScene = SceneManager.GetActiveScene();
                 if (scenesToPreWarm.Any(scene => scene.SceneName == currentScene.name))
                 {
@@ -263,7 +261,6 @@ namespace DNExtensions.Systems.ObjectPooling
                     }
                 }
             }
-            
         }
 
         /// <summary>

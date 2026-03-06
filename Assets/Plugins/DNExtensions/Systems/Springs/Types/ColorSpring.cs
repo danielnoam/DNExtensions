@@ -3,6 +3,9 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.Springs
 {
+    /// <summary>
+    /// Spring physics simulation for Color values with configurable stiffness and damping.
+    /// </summary>
     [Serializable]
     public class ColorSpring
     {

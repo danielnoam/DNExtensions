@@ -3,6 +3,9 @@ using UnityEditor;
 
 namespace DNExtensions.Systems.Scriptables
 {
+    /// <summary>
+    /// Custom editor for SOAudioEvent with audio preview functionality.
+    /// </summary>
     [CustomEditor(typeof(SOAudioEvent))]
     public class AudioEventEditor : Editor
     {

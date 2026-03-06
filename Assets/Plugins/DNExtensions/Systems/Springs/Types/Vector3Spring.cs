@@ -3,7 +3,9 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.Springs
 {
-    
+    /// <summary>
+    /// Spring physics simulation for Vector3 values with per-axis limits and collision detection.
+    /// </summary>
     [Serializable]
     public class Vector3Spring
     {
@@ -152,9 +154,5 @@ namespace DNExtensions.Systems.Springs
             _value = newValue;
             _velocity = Vector3.zero;
         }
-
-
-
-
     }
 }

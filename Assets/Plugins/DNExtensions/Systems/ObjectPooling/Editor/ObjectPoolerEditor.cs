@@ -1,11 +1,8 @@
-﻿
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
 namespace DNExtensions.Systems.ObjectPooling
 {
-    
     /// <summary>
     /// Custom editor for ObjectPooler to display pool information at runtime.
     /// </summary>
@@ -46,5 +43,4 @@ namespace DNExtensions.Systems.ObjectPooling
             Repaint();
         }
     }
-    
 }

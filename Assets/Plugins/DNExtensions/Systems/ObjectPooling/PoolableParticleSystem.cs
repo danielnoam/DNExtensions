@@ -1,13 +1,10 @@
-
 using System.Collections;
 using UnityEngine;
 
 namespace DNExtensions.Systems.ObjectPooling
 {
-    
-
     /// <summary>
-    /// Automatically returns particle system  to the object pool after a specified lifetime.
+    /// Automatically returns particle system to the object pool after a specified lifetime.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(ParticleSystem))]
@@ -50,7 +47,6 @@ namespace DNExtensions.Systems.ObjectPooling
 
         public void OnPoolGet()
         {
-
         }
 
         public void OnPoolReturn()

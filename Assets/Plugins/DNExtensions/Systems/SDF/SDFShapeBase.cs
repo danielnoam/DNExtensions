@@ -1,16 +1,17 @@
 using System.IO;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace DNExtensions.Systems.Shapes
 {
-    using UnityEngine;
-    using UnityEngine.UI;
-
+    /// <summary>
+    /// Base class for SDF (Signed Distance Field) UI shapes with fill, outline, and rotation support.
+    /// </summary>
     [RequireComponent(typeof(CanvasRenderer))]
     public abstract class SDFShapeBase : MaskableGraphic, ISerializationCallbackReceiver, ILayoutElement, ICanvasRaycastFilter
     {
         private static Shader _sdfShader;
-        
-        
+
         protected static readonly int BaseColorID = Shader.PropertyToID("_Base_Color");
         protected static readonly int RotationID = Shader.PropertyToID("_Rotation");
         protected static readonly int OffsetID = Shader.PropertyToID("_Offset");
@@ -45,8 +46,7 @@ namespace DNExtensions.Systems.Shapes
         }
 
         protected virtual void LateUpdate()
-        { 
-            
+        {
             Vector2 currentSize = rectTransform.rect.size; 
             
             if (_lastRectSize != currentSize) 
@@ -304,7 +304,9 @@ namespace DNExtensions.Systems.Shapes
             }
         }
 
-
+        /// <summary>
+        /// Exports the shape to a PNG file at the specified resolution and path.
+        /// </summary>
         public void ExportToPNG(int width, int height, string path)
         {
             int tempLayer = 31; 
@@ -380,7 +382,6 @@ namespace DNExtensions.Systems.Shapes
             target.m_FillOrigin = this.m_FillOrigin;
         }
 
-
         public virtual void OnBeforeSerialize()
         {
         }
@@ -388,7 +389,6 @@ namespace DNExtensions.Systems.Shapes
         public virtual void OnAfterDeserialize()
         {
         }
-
 
         public virtual void CalculateLayoutInputHorizontal()
         {
@@ -433,7 +433,6 @@ namespace DNExtensions.Systems.Shapes
             get { return 0; }
         }
 
-     
         public virtual bool IsRaycastLocationValid(Vector2 screenPoint, Camera eventCamera)
         {
             return raycastTarget;

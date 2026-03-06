@@ -3,7 +3,9 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.Springs
 {
-    
+    /// <summary>
+    /// Spring physics simulation for float values with configurable stiffness, damping, and limit detection.
+    /// </summary>
     [Serializable]
     public class FloatSpring
     {

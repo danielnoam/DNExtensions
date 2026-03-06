@@ -269,13 +269,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5963c4abded2e6840ae3e22c4807f630, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraController
+  lockCursor: 1
+  allowMovement: 1
   moveSpeed: 10
-  sprintMultiplier: 2
+  fastMultiplier: 2
   rotationMode: 1
   rotationSpeed: 100
   rotationSmoothing: 1
   invertY: 0
   invertX: 0
+  allowZoom: 1
   zoomSpeed: 10
   zoomLimits:
     minValue: 5
@@ -513,7 +516,6 @@ GameObject:
   m_Component:
   - component: {fileID: 161276785}
   - component: {fileID: 161276786}
-  - component: {fileID: 161276787}
   m_Layer: 0
   m_Name: Model
   m_TagString: Untagged
@@ -546,45 +548,26 @@ MonoBehaviour:
   m_GameObject: {fileID: 161276784}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 212b246944a941848abeb93605e9c293, type: 3}
+  m_Script: {fileID: 11500000, guid: d323b82d633143bb86158863cf217c76, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HoverEffect
-  enableHover: 1
-  hoverSpeed: 1
-  hoverAmount: 1
-  hoverDirection: {x: 0, y: 1, z: 0}
---- !u!114 &161276787
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 161276784}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5d9374e85f5c9154ea780b84b83cea70, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RotateEffect
-  enableRotation: 1
-  resetRotationOnDisable: 0
-  xRotation:
-    continuousRotation: 0
-    reverseDirection: 0
-    oscillationAmount: 0
-    oscillationSpeed: 0
-    rotationSpeed: 0
-  yRotation:
-    continuousRotation: 0
-    reverseDirection: 0
-    oscillationAmount: 5
-    oscillationSpeed: 2
-    rotationSpeed: 0
-  zRotation:
-    continuousRotation: 0
-    reverseDirection: 0
-    oscillationAmount: 0
-    oscillationSpeed: 0
-    rotationSpeed: 0
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Utilities.TransformEffector
+  positionEffect:
+    rid: 6000860832481935557
+  rotationEffect:
+    rid: -2
+  scaleEffect:
+    rid: -2
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 6000860832481935557
+      type: {class: HoverPositionEffect, ns: DNExtensions.Utilities, asm: Assembly-CSharp-firstpass}
+      data:
+        hoverSpeed: 1
+        hoverAmount: 0.5
+        hoverDirection: {x: 0, y: 1, z: 0}
 --- !u!23 &255455100 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: -3997113503032808077, guid: fa6940bf836567443ab8fe03f367ce8d, type: 3}

@@ -5,12 +5,18 @@ using DNExtensions.Utilities.CustomFields;
 
 namespace DNExtensions.Systems.Springs
 {
+    /// <summary>
+    /// Defines whether a spring operates in local or world space.
+    /// </summary>
     public enum SpaceMode
     {
         Local,
         World
     }
 
+    /// <summary>
+    /// Spring-based animation component for Transform properties with position tracking and offset animations.
+    /// </summary>
     [AddComponentMenu("DNExtensions/Springs/Transform Spring")]
     public class TransformSpring : MonoBehaviour
     {

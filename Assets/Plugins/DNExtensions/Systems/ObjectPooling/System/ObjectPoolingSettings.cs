@@ -30,8 +30,7 @@ namespace DNExtensions.Systems.ObjectPooling
                 return _instance;
             }
         }
-        
-            
+
         [Space(10)]
         [Tooltip("Enables the system")]
         public bool enabled = true;
@@ -47,11 +46,9 @@ namespace DNExtensions.Systems.ObjectPooling
         [Tooltip("Show debug messages in console for pool operations")]
         [EnableIf("enabled")]
         public bool showDebugMessages;
-        
-        
+
         [Space(10)]
         [SerializeField] private List<Pool> pools = new List<Pool>();
-        
 
         private void OnValidate()
         {
@@ -64,7 +61,7 @@ namespace DNExtensions.Systems.ObjectPooling
         }
 
         /// <summary>
-        /// Creates a copy of all pools for runtime use (prevents modifying the asset).
+        /// Creates a copy of all pools for runtime use.
         /// </summary>
         public List<Pool> GetPoolsCopy()
         {

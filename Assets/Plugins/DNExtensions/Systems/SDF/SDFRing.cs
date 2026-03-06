@@ -2,6 +2,9 @@ namespace DNExtensions.Systems.Shapes
 {
     using UnityEngine;
 
+    /// <summary>
+    /// SDF-based ring shape with configurable outer and inner radius.
+    /// </summary>
     [AddComponentMenu("DNExtensions/SDF Shapes/Ring")]
     public class SDFRing : SDFShapeBase
     {

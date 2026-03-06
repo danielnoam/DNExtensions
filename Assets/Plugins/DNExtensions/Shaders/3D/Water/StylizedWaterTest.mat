@@ -12,6 +12,7 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _FOAM_NOISE_GRADIENT_NOISE
   - _MOVEMENT_WAVE
   m_InvalidKeywords:
   - _ALPHAPREMULTIPLY_ON
@@ -54,6 +55,7 @@ Material:
     - _Depth: 10
     - _DstBlend: 10
     - _DstBlendAlpha: 10
+    - _FOAM_NOISE: 0
     - _Foam_Amount: 1
     - _Foam_Cutoff: 4.18
     - _Foam_Scale: 5

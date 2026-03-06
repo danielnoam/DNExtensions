@@ -4,6 +4,9 @@ using UnityEngine.Events;
 
 namespace DNExtensions.Systems.Scriptables
 {
+    /// <summary>
+    /// Base class for ScriptableObject values with change notification and read-only support.
+    /// </summary>
     public abstract class SOValue<T> : SOBase 
     {
         [SerializeField] private T value;

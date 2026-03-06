@@ -3,6 +3,9 @@ namespace DNExtensions.Systems.Shapes
     using UnityEngine;
     using UnityEngine.UI;
 
+    /// <summary>
+    /// SDF-based rectangle shape with configurable width, height, rounding, and per-corner radius control.
+    /// </summary>
     [AddComponentMenu("DNExtensions/SDF Shapes/Rectangle")]
     public class SDFRectangle : SDFShapeBase
     {
@@ -108,6 +111,5 @@ namespace DNExtensions.Systems.Shapes
                 rect.m_Rounding = this.m_Rounding;
             }
         }
-
     }
 }

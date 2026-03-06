@@ -1,8 +1,10 @@
 namespace DNExtensions.Systems.Shapes
 {
     using UnityEngine;
-    using UnityEngine.UI;
 
+    /// <summary>
+    /// SDF-based cross shape with configurable width, height, and thickness.
+    /// </summary>
     [AddComponentMenu("DNExtensions/SDF Shapes/Cross")]
     public class SDFCross : SDFShapeBase
     {

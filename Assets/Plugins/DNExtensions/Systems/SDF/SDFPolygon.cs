@@ -3,6 +3,9 @@ namespace DNExtensions.Systems.Shapes
     using UnityEngine;
     using UnityEngine.UI;
 
+    /// <summary>
+    /// SDF-based polygon shape with configurable size, number of sides, and inner radius for star shapes.
+    /// </summary>
     [AddComponentMenu("DNExtensions/SDF Shapes/Polygon")]
     public class SDFPolygon : SDFShapeBase
     {

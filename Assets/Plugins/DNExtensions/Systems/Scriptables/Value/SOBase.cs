@@ -2,6 +2,9 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.Scriptables
 {
+    /// <summary>
+    /// Base class for ScriptableObject values with custom editor support.
+    /// </summary>
     public abstract class SOBase : ScriptableObject
     {
 #pragma warning disable 0414

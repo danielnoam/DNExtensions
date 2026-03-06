@@ -17,7 +17,6 @@ namespace DNExtensions.Systems.ObjectPooling
             
             if (!settings || !settings.enabled) return;
 
-            
             GameObject poolerObject = new GameObject("ObjectPooler");
             ObjectPooler pooler = poolerObject.AddComponent<ObjectPooler>();
             pooler.Initialize(settings);

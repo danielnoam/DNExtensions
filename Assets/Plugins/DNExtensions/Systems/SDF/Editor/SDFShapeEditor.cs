@@ -4,6 +4,9 @@ namespace DNExtensions.Systems.Shapes
     using UnityEditor.UI;
     using UnityEngine;
 
+    /// <summary>
+    /// Custom editor for SDF shapes with shape-specific property display and PNG export.
+    /// </summary>
     [CustomEditor(typeof(SDFShapeBase), true)]
     [CanEditMultipleObjects]
     public class SDFShapeBaseEditor : GraphicEditor

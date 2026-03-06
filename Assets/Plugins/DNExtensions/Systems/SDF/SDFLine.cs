@@ -3,6 +3,9 @@ namespace DNExtensions.Systems.Shapes
     using UnityEngine;
     using UnityEngine.UI;
 
+    /// <summary>
+    /// SDF-based line shape with configurable start position, end position, and thickness.
+    /// </summary>
     [AddComponentMenu("DNExtensions/SDF Shapes/Line")]
     public class SDFLine : SDFShapeBase
     {
