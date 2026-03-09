@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sequenceDuration: 1
   sequenceIsAdditive: 0
-  resetEffectsOnComplete: 1
+  resetEffectsOnComplete: 0
   effects:
   - rid: 5778561776532062468
   references:
@@ -26,7 +26,9 @@ MonoBehaviour:
         duration:
           minValue: 0
           maxValue: 1
-        type: 0
-        startColor: {r: 0, g: 0, b: 0, a: 0}
+        overrideStartColor:
+          isSet: 1
+          hideValueIfSet: 0
+          value: {r: 0, g: 0, b: 0, a: 0}
         endColor: {r: 0, g: 0, b: 0, a: 1}
         ease: 1

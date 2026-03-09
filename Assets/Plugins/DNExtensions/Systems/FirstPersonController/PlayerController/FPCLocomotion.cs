@@ -21,11 +21,13 @@ namespace DNExtensions.Systems.FirstPersonController
         
         [Header("Run")]
         [SerializeField] private bool allowRun = true;
+        [SerializeField, ShowIf(nameof(allowRun))] private bool allowStartRunInAir;
         [SerializeField, ShowIf(nameof(allowRun))] private bool allowCrouchRun = true;
         [SerializeField, ShowIf(nameof(allowRun))] private float runSpeed = 12f;
         
         [Header("Crouch")]
         [SerializeField] private bool allowCrouch = true;
+        [SerializeField, ShowIf(nameof(allowCrouch))] private bool disableCrouchWhenJumping = true;
         [SerializeField, ShowIf(nameof(allowCrouch))] private float crouchSpeedMultiplier = 0.5f;
         [SerializeField, ShowIf(nameof(allowCrouch))] private float crouchHeight = 1.5f;
         [SerializeField, ShowIf(nameof(allowCrouch))] private Vector3 crouchColliderCenter = new Vector3(0, 0.25f, 0);
@@ -46,12 +48,13 @@ namespace DNExtensions.Systems.FirstPersonController
         private float _jumpBufferCounter;
         private float _coyoteTimeCounter;
         private bool _wasGrounded;
+        private bool _runInitiatedOnGround;
+        private bool _isRunning;
 
         public bool IsGrounded { get; private set; }
         public bool IsCrouching { get; private set; }
         public bool IsFalling { get; private set; }
-        
-        public bool IsRunning => manager.FpcInput.RunInput && allowRun && (!IsCrouching || allowCrouchRun);
+        public bool IsRunning => _isRunning;
         public Vector3 Velocity => _velocity;
 
         public event Action OnJump;
@@ -84,15 +87,15 @@ namespace DNExtensions.Systems.FirstPersonController
         private void Update()
         {
             if (!manager.CharacterController.enabled) return;
-            
+
+            CheckGrounded();
+            CheckRunning();
             HandleMovement();
             HandleJump();
             HandleGravity();
-            CheckGrounded();
             
             manager.CharacterController.Move(_velocity * Time.deltaTime);
         }
-        
 
         private void OnJumpInput(InputAction.CallbackContext context)
         {
@@ -141,15 +144,32 @@ namespace DNExtensions.Systems.FirstPersonController
             return true;
         }
 
+        private void CheckRunning()
+        {
+            if (!manager.FpcInput.RunInput || !allowRun)
+            {
+                _runInitiatedOnGround = false;
+                _isRunning = false;
+                return;
+            }
+
+            if (IsGrounded)
+            {
+                _runInitiatedOnGround = true;
+            }
+
+            bool canRun = !IsCrouching || allowCrouchRun;
+            bool canRunInAir = allowStartRunInAir || _runInitiatedOnGround;
+            _isRunning = canRun && (IsGrounded || canRunInAir);
+        }
+
         private void HandleMovement()
         {
-            if (!manager.CharacterController.enabled) return;
-
             Vector3 cameraForward = manager.FpcCamera.GetMovementDirection();
             Vector3 cameraRight = Quaternion.Euler(0, 90, 0) * cameraForward;
             Vector3 moveDir = (cameraForward * manager.FpcInput.MoveInput.y + cameraRight * manager.FpcInput.MoveInput.x).normalized;
-            
-            float targetMoveSpeed = IsRunning ? runSpeed : walkSpeed;
+
+            float targetMoveSpeed = IsRunning && (allowStartRunInAir || IsGrounded) ? runSpeed : walkSpeed;
             
             if (IsCrouching)
             {
@@ -167,7 +187,7 @@ namespace DNExtensions.Systems.FirstPersonController
 
         private void HandleJump()
         {
-            if (!manager.CharacterController.enabled || !allowJump) return;
+            if (!allowJump) return;
 
             if (_jumpBufferCounter > 0f)
             {
@@ -179,6 +199,7 @@ namespace DNExtensions.Systems.FirstPersonController
                 _velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
                 _jumpBufferCounter = 0f;
                 _coyoteTimeCounter = 0f;
+                if (disableCrouchWhenJumping && IsCrouching) TryStand();
                 OnJump?.Invoke();
             }
         }
