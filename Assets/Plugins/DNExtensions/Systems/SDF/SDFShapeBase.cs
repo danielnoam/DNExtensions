@@ -10,8 +10,6 @@ namespace DNExtensions.Systems.Shapes
     [RequireComponent(typeof(CanvasRenderer))]
     public abstract class SDFShapeBase : MaskableGraphic, ISerializationCallbackReceiver, ILayoutElement, ICanvasRaycastFilter
     {
-        private static Shader _sdfShader;
-
         protected static readonly int BaseColorID = Shader.PropertyToID("_Base_Color");
         protected static readonly int RotationID = Shader.PropertyToID("_Rotation");
         protected static readonly int OffsetID = Shader.PropertyToID("_Offset");
@@ -20,9 +18,9 @@ namespace DNExtensions.Systems.Shapes
         protected static readonly int FillOriginID = Shader.PropertyToID("_Fill_Origin");
         protected static readonly int OutlineThicknessID = Shader.PropertyToID("_Outline_Thickness");
         protected static readonly int OutlineColorID = Shader.PropertyToID("_Outline_Color");
-        protected static readonly int RectSize = Shader.PropertyToID("_Rect_Size");
+        protected static readonly int RectSizeID = Shader.PropertyToID("_Rect_Size");
 
-        private Vector2 _lastRectSize;  
+        private Vector2 _lastRectSize;
 
         [SerializeField] protected Color m_BaseColor = Color.white;
         [SerializeField, Range(0, 360)] protected float m_Rotation;
@@ -34,9 +32,7 @@ namespace DNExtensions.Systems.Shapes
         [SerializeField] protected Color m_OutlineColor = Color.red;
 
         protected Material m_InstanceMaterial;
-        
-        [SerializeField, HideInInspector] private Shader m_SDFShader;
-        
+
         public enum FillType
         {
             None = 0,
@@ -47,18 +43,19 @@ namespace DNExtensions.Systems.Shapes
 
         protected virtual void LateUpdate()
         {
-            Vector2 currentSize = rectTransform.rect.size; 
-            
-            if (_lastRectSize != currentSize) 
-            { 
-                _lastRectSize = currentSize; 
-                if (m_InstanceMaterial) 
-                { 
-                     m_InstanceMaterial.SetVector(RectSize, new Vector4(currentSize.x, currentSize.y, 0, 0)); 
-                    float minDim = Mathf.Min(currentSize.x, currentSize.y);  m_InstanceMaterial.SetFloat(OutlineThicknessID, m_OutlineThickness * minDim);  
+            Vector2 currentSize = rectTransform.rect.size;
+
+            if (_lastRectSize != currentSize)
+            {
+                _lastRectSize = currentSize;
+                if (m_InstanceMaterial)
+                {
+                    m_InstanceMaterial.SetVector(RectSizeID, new Vector4(currentSize.x, currentSize.y, 0, 0));
+                    float minDim = Mathf.Min(currentSize.x, currentSize.y);
+                    m_InstanceMaterial.SetFloat(OutlineThicknessID, m_OutlineThickness * minDim);
                     SetShapeProperties();
                 }
-            } 
+            }
         }
 
         protected SDFShapeBase()
@@ -82,7 +79,7 @@ namespace DNExtensions.Systems.Shapes
 
         protected virtual void CreateInstanceMaterial()
         {
-            Shader shader = m_SDFShader != null ? m_SDFShader : Shader.Find("UI/SDFShape");
+            Shader shader = Shader.Find("UI/SDFShape");
             if (!shader)
             {
                 Debug.LogError("SDFShape shader not found!");
@@ -101,7 +98,7 @@ namespace DNExtensions.Systems.Shapes
 
         protected virtual void UpdateMaterialProperties()
         {
-            if (m_InstanceMaterial == null) return;
+            if (!m_InstanceMaterial) return;
 
             DisableAllShapeKeywords();
             m_InstanceMaterial.EnableKeyword(GetShapeKeyword());
@@ -141,9 +138,6 @@ namespace DNExtensions.Systems.Shapes
 #if UNITY_EDITOR
         protected override void OnValidate()
         {
-            if (m_SDFShader == null)
-                m_SDFShader = Shader.Find("UI/SDFShape");
-    
             base.OnValidate();
 
             if (m_InstanceMaterial)
@@ -156,7 +150,7 @@ namespace DNExtensions.Systems.Shapes
         protected override void OnEnable()
         {
             base.OnEnable();
-            if (m_InstanceMaterial == null)
+            if (!m_InstanceMaterial)
             {
                 CreateInstanceMaterial();
             }
@@ -165,7 +159,7 @@ namespace DNExtensions.Systems.Shapes
         protected override void OnDisable()
         {
             base.OnDisable();
-            if (m_InstanceMaterial != null)
+            if (m_InstanceMaterial)
             {
                 DestroyImmediate(m_InstanceMaterial);
                 m_InstanceMaterial = null;
@@ -185,122 +179,106 @@ namespace DNExtensions.Systems.Shapes
 
             vh.AddTriangle(0, 1, 2);
             vh.AddTriangle(2, 3, 0);
-    
+
             Vector2 actualSize = rectTransform.rect.size;
-            material.SetVector(RectSize, new Vector4(actualSize.x, actualSize.y, 0, 0));
+            material.SetVector(RectSizeID, new Vector4(actualSize.x, actualSize.y, 0, 0));
         }
-        
+
         public Color baseColor
         {
-            get { return m_BaseColor; }
+            get => m_BaseColor;
             set
             {
-                if (m_BaseColor != value)
-                {
-                    m_BaseColor = value;
-                    UpdateMaterialProperties();
-                    SetMaterialDirty();
-                }
+                if (m_BaseColor == value) return;
+                m_BaseColor = value;
+                UpdateMaterialProperties();
+                SetMaterialDirty();
             }
         }
 
         public float rotation
         {
-            get { return m_Rotation; }
+            get => m_Rotation;
             set
             {
-                if (!Mathf.Approximately(m_Rotation, value))
-                {
-                    m_Rotation = value;
-                    UpdateMaterialProperties();
-                    SetMaterialDirty();
-                }
+                if (Mathf.Approximately(m_Rotation, value)) return;
+                m_Rotation = value;
+                UpdateMaterialProperties();
+                SetMaterialDirty();
             }
         }
 
         public Vector2 offset
         {
-            get { return m_Offset; }
+            get => m_Offset;
             set
             {
-                if (m_Offset != value)
-                {
-                    m_Offset = value;
-                    UpdateMaterialProperties();
-                    SetMaterialDirty();
-                }
+                if (m_Offset == value) return;
+                m_Offset = value;
+                UpdateMaterialProperties();
+                SetMaterialDirty();
             }
         }
 
         public float outlineThickness
         {
-            get { return m_OutlineThickness; }
+            get => m_OutlineThickness;
             set
             {
                 value = Mathf.Clamp(value, 0f, 0.5f);
-                if (m_OutlineThickness != value)
-                {
-                    m_OutlineThickness = value;
-                    UpdateMaterialProperties();
-                    SetMaterialDirty();
-                }
+                if (Mathf.Approximately(m_OutlineThickness, value)) return;
+                m_OutlineThickness = value;
+                UpdateMaterialProperties();
+                SetMaterialDirty();
             }
         }
 
         public Color outlineColor
         {
-            get { return m_OutlineColor; }
+            get => m_OutlineColor;
             set
             {
-                if (m_OutlineColor != value)
-                {
-                    m_OutlineColor = value;
-                    UpdateMaterialProperties();
-                    SetMaterialDirty();
-                }
+                if (m_OutlineColor == value) return;
+                m_OutlineColor = value;
+                UpdateMaterialProperties();
+                SetMaterialDirty();
             }
         }
-        
+
         public float fillAmount
         {
-            get { return m_FillAmount; }
+            get => m_FillAmount;
             set
             {
                 value = Mathf.Clamp01(value);
-                if (m_FillAmount != value)
-                {
-                    m_FillAmount = value;
-                    UpdateMaterialProperties();
-                    SetMaterialDirty();
-                }
+                if (Mathf.Approximately(m_FillAmount, value)) return;
+                m_FillAmount = value;
+                UpdateMaterialProperties();
+                SetMaterialDirty();
             }
         }
 
         public FillType fillType
         {
-            get { return m_FillType; }
+            get => m_FillType;
             set
             {
-                if (m_FillType != value)
-                {
-                    m_FillType = value;
-                    UpdateMaterialProperties();
-                    SetMaterialDirty();
-                }
+                if (m_FillType == value) return;
+                m_FillType = value;
+                UpdateMaterialProperties();
+                SetMaterialDirty();
             }
         }
 
         public float fillOrigin
         {
-            get { return m_FillOrigin; }
+            get => m_FillOrigin;
             set
             {
-                if (m_FillOrigin != value)
-                {
-                    m_FillOrigin = value;
-                    UpdateMaterialProperties();
-                    SetMaterialDirty();
-                }
+                if (Mathf.Approximately(m_FillOrigin, value)) return;
+                m_FillOrigin = value;
+                UpdateMaterialProperties();
+                SetMaterialDirty();
             }
         }
 
@@ -309,8 +287,8 @@ namespace DNExtensions.Systems.Shapes
         /// </summary>
         public void ExportToPNG(int width, int height, string path)
         {
-            int tempLayer = 31; 
-            
+            int tempLayer = 31;
+
             RenderTexture renderTexture = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.ARGB32);
             RenderTexture.active = renderTexture;
 
@@ -371,67 +349,29 @@ namespace DNExtensions.Systems.Shapes
 
         protected virtual void CopyPropertiesTo(SDFShapeBase target)
         {
-            target.m_BaseColor = this.m_BaseColor;
-            target.m_Rotation = this.m_Rotation;
-            target.m_Offset = this.m_Offset;
-            target.m_OutlineThickness = this.m_OutlineThickness;
-            target.m_OutlineColor = this.m_OutlineColor;
-            target.color = this.color;
-            target.m_FillAmount = this.m_FillAmount;
-            target.m_FillType = this.m_FillType;
-            target.m_FillOrigin = this.m_FillOrigin;
+            target.m_BaseColor = m_BaseColor;
+            target.m_Rotation = m_Rotation;
+            target.m_Offset = m_Offset;
+            target.m_OutlineThickness = m_OutlineThickness;
+            target.m_OutlineColor = m_OutlineColor;
+            target.color = color;
+            target.m_FillAmount = m_FillAmount;
+            target.m_FillType = m_FillType;
+            target.m_FillOrigin = m_FillOrigin;
         }
 
-        public virtual void OnBeforeSerialize()
-        {
-        }
+        public virtual void OnBeforeSerialize() { }
+        public virtual void OnAfterDeserialize() { }
+        public virtual void CalculateLayoutInputHorizontal() { }
+        public virtual void CalculateLayoutInputVertical() { }
 
-        public virtual void OnAfterDeserialize()
-        {
-        }
-
-        public virtual void CalculateLayoutInputHorizontal()
-        {
-        }
-
-        public virtual void CalculateLayoutInputVertical()
-        {
-        }
-
-        public virtual float minWidth
-        {
-            get { return 0; }
-        }
-
-        public virtual float preferredWidth
-        {
-            get { return 0; }
-        }
-
-        public virtual float flexibleWidth
-        {
-            get { return -1; }
-        }
-
-        public virtual float minHeight
-        {
-            get { return 0; }
-        }
-
-        public virtual float preferredHeight
-        {
-            get { return 0; }
-        }
-
-        public virtual float flexibleHeight
-        {
-            get { return -1; }
-        }
-
-        public virtual int layoutPriority
-        {
-            get { return 0; }
-        }
+        public virtual float minWidth => 0;
+        public virtual float preferredWidth => 0;
+        public virtual float flexibleWidth => -1;
+        public virtual float minHeight => 0;
+        public virtual float preferredHeight => 0;
+        public virtual float flexibleHeight => -1;
+        public virtual int layoutPriority => 0;
 
         public virtual bool IsRaycastLocationValid(Vector2 screenPoint, Camera eventCamera)
         {
