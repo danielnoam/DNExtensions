@@ -5,11 +5,11 @@ using UnityEngine;
 namespace DNExtensions.Systems.ObjectPooling
 {
     /// <summary>
-    /// Automatically returns audio sources to the object pool after a specified lifetime.
+    /// Automatically returns audio sources to the object pool after a completion.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(AudioSource))]
-    [AddComponentMenu("DNExtensions/Poolable/Audio Source")]
+    [AddComponentMenu("DNExtensions/ObjectPooling/Poolable Audio Source")]
     public class PoolableAudioSource : MonoBehaviour, IPoolable
     {
         public AudioSource audioSource;

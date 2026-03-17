@@ -20,13 +20,13 @@ namespace DNExtensions.Utilities
         private Vector3 _initialScale = Vector3.one;
         private float _breatheTime;
 
-        public override void Initialize(Transform target)
+        public override void Initialize(Transform target, bool localSpace)
         {
             _initialScale = target.localScale;
             _breatheTime = Random.value * Mathf.PI * 2f;
         }
 
-        public override void Tick(Transform target)
+        public override void Tick(Transform target, bool localSpace)
         {
             _breatheTime += breatheSpeed * Time.deltaTime;
 

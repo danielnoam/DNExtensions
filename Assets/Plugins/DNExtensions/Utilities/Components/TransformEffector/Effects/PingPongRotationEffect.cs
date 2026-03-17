@@ -19,9 +19,9 @@ namespace DNExtensions.Utilities
         private Quaternion _initialRotation = Quaternion.identity;
         private Vector3 _time;
 
-        public override void Initialize(Transform target)
+        public override void Initialize(Transform target, bool localSpace)
         {
-            _initialRotation = target.rotation;
+            _initialRotation = localSpace ? target.localRotation : target.rotation;
             _time = new Vector3(
                 Random.value * Mathf.PI * 2f,
                 Random.value * Mathf.PI * 2f,
@@ -29,7 +29,7 @@ namespace DNExtensions.Utilities
             );
         }
 
-        public override void Tick(Transform target)
+        public override void Tick(Transform target, bool localSpace)
         {
             _time += oscillationSpeed * Time.deltaTime;
 
@@ -39,7 +39,14 @@ namespace DNExtensions.Utilities
                 Mathf.Sin(_time.z) * oscillationAmount.z
             );
 
-            target.rotation = _initialRotation * Quaternion.Euler(angles);
+            if (localSpace)
+            {
+                target.localRotation = _initialRotation * Quaternion.Euler(angles);
+            }
+            else
+            {
+                target.rotation = _initialRotation * Quaternion.Euler(angles);
+            }
         }
     }
 }

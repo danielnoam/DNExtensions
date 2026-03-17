@@ -11,7 +11,6 @@ using DNExtensions.Utilities.Inline;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Scripting.APIUpdating;
 
 namespace DNExtensions
 {

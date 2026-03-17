@@ -12,24 +12,26 @@ namespace DNExtensions.Utilities
     public class TransformEffector : MonoBehaviour
     {
         [Space(10)]
+        [SerializeField] private bool localPosition = true;
         [SerializeReference, SerializableSelector] private PositionEffect positionEffect;
         [Separator]
+        [SerializeField] private bool localRotation = true;
         [SerializeReference, SerializableSelector] private RotationEffect rotationEffect;
         [Separator]
         [SerializeReference, SerializableSelector] private ScaleEffect scaleEffect;
 
         private void Awake()
         {
-            positionEffect?.Initialize(transform);
-            rotationEffect?.Initialize(transform);
-            scaleEffect?.Initialize(transform);
+            positionEffect?.Initialize(transform, localPosition);
+            rotationEffect?.Initialize(transform, localRotation);
+            scaleEffect?.Initialize(transform, true);
         }
 
         private void Update()
         {
-            positionEffect?.Tick(transform);
-            rotationEffect?.Tick(transform);
-            scaleEffect?.Tick(transform);
+            positionEffect?.Tick(transform, localPosition);
+            rotationEffect?.Tick(transform, localRotation);
+            scaleEffect?.Tick(transform, true);
         }
     }
 }

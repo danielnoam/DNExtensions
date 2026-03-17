@@ -4,10 +4,9 @@ namespace DNExtensions.Systems.ObjectPooling
 {
     /// <summary>
     /// Automatically returns object after a specified lifetime.
-    /// Useful for temporary effects, projectiles, or time-based spawned objects.
     /// </summary>
     [DisallowMultipleComponent]
-    [AddComponentMenu("DNExtensions/Poolable/Auto Return")]
+    [AddComponentMenu("DNExtensions/ObjectPooling/Auto Return To Pool")]
     public class PoolableAutoReturn : MonoBehaviour, IPoolable
     {
         public float lifeTime;

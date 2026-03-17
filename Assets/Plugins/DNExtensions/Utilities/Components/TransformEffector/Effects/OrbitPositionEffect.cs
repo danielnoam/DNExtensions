@@ -20,20 +20,28 @@ namespace DNExtensions.Utilities
         private float _currentAngle;
         private float _radius;
 
-        public override void Initialize(Transform target)
+        public override void Initialize(Transform target, bool localSpace)
         {
             Vector3 offset = target.position - center.Position;
             _radius = new Vector3(offset.x, offset.y, offset.z).magnitude;
             _currentAngle = Mathf.Atan2(offset.z, offset.x) * Mathf.Rad2Deg;
         }
 
-        public override void Tick(Transform target)
+        public override void Tick(Transform target, bool localSpace)
         {
             _currentAngle += speed * Time.deltaTime;
 
             Quaternion rotation = Quaternion.AngleAxis(_currentAngle, axis.normalized);
             Vector3 offset = rotation * (Vector3.right * _radius);
-            target.position = center.Position + offset;
+
+            if (localSpace)
+            {
+                target.localPosition = center.Position + offset;
+            }
+            else
+            {
+                target.position = center.Position + offset;
+            }
         }
     }
 }

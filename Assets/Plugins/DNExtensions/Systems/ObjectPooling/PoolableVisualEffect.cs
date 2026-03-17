@@ -1,20 +1,20 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.VFX;
 
 namespace DNExtensions.Systems.ObjectPooling
 {
-    
-
     /// <summary>
-    /// Automatically returns particle system  to the object pool after completion.
+    /// Automatically returns Visual Effect to the object pool after a completion.
     /// </summary>
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(ParticleSystem))]
-    [AddComponentMenu("DNExtensions/Poolable/Poolable Particle System")]
-    public class PoolableParticleSystem : MonoBehaviour, IPoolable
+    [RequireComponent(typeof(VisualEffect))]
+    [AddComponentMenu("DNExtensions/ObjectPooling/Poolable Visual Effect")]
+    public class PoolableVisualEffect : MonoBehaviour, IPoolable
     {
-        public ParticleSystem particle;
-        
+        [SerializeField] private VisualEffect effect;
+        [SerializeField, Min(0.1f)] private float duration = 2f;
+
         private Coroutine _returnRoutine;
 
         private void OnDisable()
@@ -24,13 +24,11 @@ namespace DNExtensions.Systems.ObjectPooling
 
         public void Play()
         {
-            if (!particle) return;
-            
+            if (!effect) return;
+
             if (_returnRoutine != null) StopCoroutine(_returnRoutine);
 
-            particle.Play();
-
-            float duration = particle.main.duration + particle.main.startLifetime.constantMax;
+            effect.Play();
             _returnRoutine = StartCoroutine(ReturnAfter(duration));
         }
 
@@ -48,25 +46,21 @@ namespace DNExtensions.Systems.ObjectPooling
 
         public void OnPoolGet()
         {
-
+            
         }
 
         public void OnPoolReturn()
         {
-            if (particle)
-            {
-                particle.Stop(true);
-                particle.Clear(true);
-            }
+            if (!effect) return;
+            effect.Stop();
+            effect.Reinit();
         }
 
         public void OnPoolRecycle()
         {
-            if (particle)
-            {
-                particle.Stop(true);
-                particle.Clear(true);
-            }
+            if (!effect) return;
+            effect.Stop();
+            effect.Reinit();
         }
     }
 }

@@ -19,18 +19,17 @@ namespace DNExtensions.Utilities
         private Vector3 _initialScale = Vector3.one;
         private float _pulseTimer;
 
-        public override void Initialize(Transform target)
+        public override void Initialize(Transform target, bool localSpace)
         {
             _initialScale = target.localScale;
             _pulseTimer = 0f;
         }
 
-        public override void Tick(Transform target)
+        public override void Tick(Transform target, bool localSpace)
         {
             _pulseTimer += Time.deltaTime;
 
-            if (_pulseTimer >= pulseCooldown)
-                _pulseTimer = 0f;
+            if (_pulseTimer >= pulseCooldown) _pulseTimer = 0f;
 
             float t = pulseCurve.Evaluate(_pulseTimer / pulseCooldown);
 

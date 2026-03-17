@@ -19,9 +19,9 @@ namespace DNExtensions.Utilities
         private Vector3 _startPosition;
         private Vector3 _timeOffset;
 
-        public override void Initialize(Transform target)
+        public override void Initialize(Transform target, bool localSpace)
         {
-            _startPosition = target.localPosition;
+            _startPosition = localSpace ? target.localPosition : target.position;
             _timeOffset = new Vector3(
                 Random.value * 100f,
                 Random.value * 100f,
@@ -29,7 +29,7 @@ namespace DNExtensions.Utilities
             );
         }
 
-        public override void Tick(Transform target)
+        public override void Tick(Transform target, bool localSpace)
         {
             float t = Time.time * shakeSpeed;
 
@@ -39,7 +39,14 @@ namespace DNExtensions.Utilities
                 (Mathf.PerlinNoise(t + _timeOffset.z, 2f) - 0.5f) * 2f
             );
 
-            target.localPosition = _startPosition + Vector3.Scale(noise, shakeAmount);
+            if (localSpace)
+            {
+                target.localPosition = _startPosition + Vector3.Scale(noise, shakeAmount);
+            }
+            else
+            {
+                target.position = _startPosition + Vector3.Scale(noise, shakeAmount);
+            }
         }
     }
 }

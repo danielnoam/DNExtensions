@@ -17,16 +17,27 @@ namespace DNExtensions.Utilities
         [SerializeField] private Vector3 upVector = Vector3.up;
         [SerializeField] private float speed = 5f;
 
-        public override void Initialize(Transform transform) { }
+        public override void Initialize(Transform transform, bool localSpace)
+        {
+            
+        }
 
-        public override void Tick(Transform transform)
+        public override void Tick(Transform transform, bool localSpace)
         {
             Vector3 direction = target.Position - transform.position;
 
             if (direction.sqrMagnitude < 0.001f) return;
 
             Quaternion targetRotation = Quaternion.LookRotation(direction, upVector);
-            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, speed * Time.deltaTime);
+
+            if (localSpace)
+            {
+                transform.localRotation = Quaternion.Lerp(transform.localRotation, targetRotation, speed * Time.deltaTime);
+            }
+            else
+            {
+                transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, speed * Time.deltaTime);
+            }
         }
     }
 }

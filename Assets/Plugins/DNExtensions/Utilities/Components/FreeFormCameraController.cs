@@ -45,7 +45,7 @@ namespace DNExtensions.Utilities
         [Header("Zoom")]
         [SerializeField] private bool allowZoom = true;
         [SerializeField, Min(1f)] private float zoomSpeed = 10f;
-        [SerializeField, MinMaxRange(0, 50)] private RangedFloat zoomLimits = new RangedFloat(5f, 50f);
+        [SerializeField, MinMaxRange(0, 100f)] private RangedFloat zoomLimits = new RangedFloat(5f, 70f);
 
         [SerializeField, AutoGetSelf, HideInInspector] private Camera cam;
 

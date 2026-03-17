@@ -23,13 +23,13 @@ namespace DNExtensions.Utilities
         private Vector3 _initialScale = Vector3.one;
         private float _time;
 
-        public override void Initialize(Transform target)
+        public override void Initialize(Transform target, bool localSpace)
         {
             _initialScale = target.localScale;
             _time = Random.value * Mathf.PI * 2f;
         }
 
-        public override void Tick(Transform target)
+        public override void Tick(Transform target, bool localSpace)
         {
             _time += stretchSpeed * Time.deltaTime;
 

@@ -58,7 +58,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 10
@@ -100,14 +100,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   autoSetupPostProcessing: 1
   autoSetCameraIfUsingCameraOverlay: 0
-  postProcessingVolume: {fileID: 0}
-  mainCamera: {fileID: 0}
   iconImage: {fileID: 5646557657411839832}
   fullScreenImage: {fileID: 505253833126219681}
   fullscreenCanvas: {fileID: 8434494797635188864}
   effectsSequences:
   - {fileID: 11400000, guid: 2cf701e889338b54b9338039b720f844, type: 2}
   - {fileID: 11400000, guid: 661c164b035891047885f26f16312cc4, type: 2}
+  - {fileID: 11400000, guid: 5954c660a2e749941856a10e3f076840, type: 2}
+  - {fileID: 11400000, guid: 68a92175e9b8afd47b533d374166d55c, type: 2}
 --- !u!1 &7620994784586449836
 GameObject:
   m_ObjectHideFlags: 0

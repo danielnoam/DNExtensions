@@ -1,5 +1,6 @@
 using System;
 using DNExtensions.Utilities;
+using DNExtensions.Utilities.CustomFields;
 using UnityEngine;
 
 namespace DNExtensions.Systems.AudioLibrary
@@ -31,13 +32,16 @@ namespace DNExtensions.Systems.AudioLibrary
 
 
         [SerializeField] private bool enabled = true;
-        [Tooltip("Number of audio sources to create in the pool at startup")]
-        [SerializeField] private int preWarmAmount = 15;
+        [Tooltip("If the pool should be limited")]
+        [SerializeField] private OptionalField<int> limitPoolSize = new OptionalField<int>(30, true);
+        [Tooltip("If the pool should be pre-created and how many audio sources to create at startup")]
+        [SerializeField] private OptionalField<int> preWarm = new OptionalField<int>(15, true);
         [SerializeField] private SOAudioCategory[] audioCategories = Array.Empty<SOAudioCategory>();
 
         public SOAudioCategory[] AudioCategories => audioCategories;
         public bool Enabled => enabled;
-        public int PreWarmAmount => preWarmAmount;
+        public OptionalField<int> PreWarm => preWarm;
+        public OptionalField<int> LimitPoolSize => limitPoolSize;
 
     }
 }

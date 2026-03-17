@@ -12,7 +12,6 @@ namespace DNExtensions.Utilities
     [SerializableSelectorTooltip("Moves the transform back and forth between its start position and an end position.")]
     public class PingPongPositionEffect : PositionEffect
     {
-        [SerializeField] private bool useLocalSpace = true;
         [SerializeField] private Vector3 endPosition = Vector3.right;
         [SerializeField] private float speed = 2f;
 
@@ -21,14 +20,14 @@ namespace DNExtensions.Utilities
         private float _t;
         private bool _movingForward = true;
 
-        public override void Initialize(Transform target)
+        public override void Initialize(Transform target, bool localSpace)
         {
-            _startPosition = useLocalSpace ? target.localPosition : target.position;
+            _startPosition = localSpace ? target.localPosition : target.position;
             _t = 0f;
             _movingForward = true;
         }
 
-        public override void Tick(Transform target)
+        public override void Tick(Transform target, bool localSpace)
         {
             _t += Time.deltaTime * speed * (_movingForward ? 1f : -1f);
 
@@ -45,7 +44,7 @@ namespace DNExtensions.Utilities
 
             Vector3 newPosition = Vector3.Lerp(_startPosition, endPosition, _t);
 
-            if (useLocalSpace)
+            if (localSpace)
             {
                 target.localPosition = newPosition;
             }

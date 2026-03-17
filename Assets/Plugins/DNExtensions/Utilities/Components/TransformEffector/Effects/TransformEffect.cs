@@ -11,10 +11,10 @@ namespace DNExtensions.Utilities
     public abstract class TransformEffect
     {
         /// <summary>Called once when the effector starts.</summary>
-        public abstract void Initialize(Transform target);
+        public abstract void Initialize(Transform target, bool localSpace);
 
         /// <summary>Called every frame by the effector.</summary>
-        public abstract void Tick(Transform target);
+        public abstract void Tick(Transform target, bool localSpace);
     }
 
     /// <summary>

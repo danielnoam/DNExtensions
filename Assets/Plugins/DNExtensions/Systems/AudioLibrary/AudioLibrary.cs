@@ -16,6 +16,7 @@ namespace DNExtensions.Systems.AudioLibrary
 
         private SOAudioLibrarySettings _librarySettings;
         private int _preWarmAmount = 20;
+        private int _maxPoolSize = 1000;
 
         private readonly Dictionary<string, AudioData> _audioCache = new();
         private readonly Dictionary<string, AudioSource> _activeLoopSources = new();
@@ -49,9 +50,17 @@ namespace DNExtensions.Systems.AudioLibrary
         public void Initialize(SOAudioLibrarySettings settings)
         {
             _librarySettings = settings;
-            _preWarmAmount = settings.PreWarmAmount;
+            if (settings.LimitPoolSize)
+            {
+                _maxPoolSize = settings.LimitPoolSize.Value;
+            }
+            if (settings.PreWarm)
+            {
+                _preWarmAmount = settings.PreWarm.Value;
+                CreatePool();
+            }
             InitializeCache();
-            CreatePool();
+            
         }
 
         private void InitializeCache()
@@ -120,6 +129,8 @@ namespace DNExtensions.Systems.AudioLibrary
 
         private void SetupAndPlay(string id, AudioSource source, AudioData data, Vector3 pos, bool usePos)
         {
+            if (!source) return;
+            
             source.gameObject.SetActive(true);
 
             if (!ConfigureSource(source, data, pos, usePos))
@@ -128,12 +139,17 @@ namespace DNExtensions.Systems.AudioLibrary
                 return;
             }
 
-            if (source.loop) _activeLoopSources[id] = source;
+            if (source.loop)
+            {
+                _activeLoopSources[id] = source;
+            }
 
             source.Play();
 
             if (!source.loop)
+            {
                 StartCoroutine(AutoReturnRoutine(source, source.clip.length / Mathf.Abs(source.pitch), id));
+            }
         }
 
         #endregion
@@ -160,6 +176,7 @@ namespace DNExtensions.Systems.AudioLibrary
 
         private AudioSource GetSourceFromPool()
         {
+            if (_pool.Count < 1 && _totalCreatedSources >= _maxPoolSize) return null;
             return _pool.Count > 0 ? _pool.Dequeue() : CreateAudioSource();
         }
 
@@ -180,6 +197,21 @@ namespace DNExtensions.Systems.AudioLibrary
                 {
                     _activeLoopSources.Remove(id);
                 }
+            }
+
+            ReturnSourceToPool(source);
+        }
+        
+        private IEnumerator FadeOut(AudioSource source, float duration)
+        {
+            float startVolume = source.volume;
+            float time = 0f;
+
+            while (time < duration)
+            {
+                time += Time.deltaTime;
+                source.volume = Mathf.Lerp(startVolume, 0f, time / duration);
+                yield return null;
             }
 
             ReturnSourceToPool(source);
@@ -252,14 +284,22 @@ namespace DNExtensions.Systems.AudioLibrary
         /// Stops a looping sound associated with the given ID.
         /// If the ID is currently playing a looping sound, it will be stopped and the AudioSource will be returned to the pool.
         /// </summary>
-        /// <param name="id"></param>
-        public static void StopLoop(string id)
+        /// <param name="id"></param> The ID of the looping sound to stop.
+        /// <param name="fadeOutTime"> If greater than 0, the sound will fade out over the specified time.</param>
+        public static void StopLoop(string id, float fadeOutTime = 0f)
         {
             if (!Instance) return;
 
             if (Instance._activeLoopSources.Remove(id, out AudioSource source))
             {
-                Instance.ReturnSourceToPool(source);
+                if (fadeOutTime > 0f)
+                {
+                    Instance.StartCoroutine(Instance.FadeOut(source, fadeOutTime));
+                }
+                else
+                {
+                    Instance.ReturnSourceToPool(source);
+                }
             }
         }
 

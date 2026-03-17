@@ -20,17 +20,28 @@ namespace DNExtensions.Utilities
         private Vector3 _startPosition;
         private float _hoverTime;
 
-        public override void Initialize(Transform target)
+        public override void Initialize(Transform target, bool localSpace)
         {
-            _startPosition = target.localPosition;
+            if (localSpace)
+            {
+                _startPosition = target.localPosition;
+            }
             _hoverTime = Random.value * Mathf.PI * 2f;
         }
 
-        public override void Tick(Transform target)
+        public override void Tick(Transform target, bool localSpace)
         {
             _hoverTime += hoverSpeed * Time.deltaTime;
             float offset = Mathf.Sin(_hoverTime) * hoverAmount;
-            target.localPosition = _startPosition + hoverDirection.normalized * offset;
+
+            if (localSpace)
+            {
+                target.localPosition = _startPosition + hoverDirection.normalized * offset;
+            }
+            else
+            {
+                target.position = _startPosition + hoverDirection.normalized * offset;
+            }
         }
     }
 }

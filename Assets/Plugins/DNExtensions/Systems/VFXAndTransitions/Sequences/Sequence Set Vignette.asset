@@ -15,7 +15,39 @@ MonoBehaviour:
   duration: 1
   isAdditive: 0
   resetEffectsOnComplete: 0
-  effects: []
+  effects:
+  - rid: 6000861080652611849
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 6000861080652611849
+      type: {class: SetVignette, ns: DNExtensions.Systems.VFXManager, asm: Assembly-CSharp-firstpass}
+      data:
+        duration:
+          minValue: 0
+          maxValue: 1
+        intensity:
+          animate: 1
+          startValue:
+            isSet: 0
+            hideValueIfSet: 0
+            value: 0
+          endValue: 0.5
+          ease: 1
+        smoothness:
+          animate: 0
+          startValue:
+            isSet: 0
+            hideValueIfSet: 0
+            value: 0
+          endValue: 0.2
+          ease: 1
+        center:
+          animate: 0
+          startValue:
+            isSet: 0
+            hideValueIfSet: 0
+            value: {x: 0, y: 0}
+          endValue: {x: 0.5, y: 0.5}
+          ease: 1
+        rounded: 0
