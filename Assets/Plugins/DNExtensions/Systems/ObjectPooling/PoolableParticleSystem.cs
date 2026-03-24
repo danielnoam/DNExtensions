@@ -10,7 +10,7 @@ namespace DNExtensions.Systems.ObjectPooling
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(ParticleSystem))]
-    [AddComponentMenu("DNExtensions/Poolable/Poolable Particle System")]
+    [AddComponentMenu("DNExtensions/Object Pooling/Poolable Particle System")]
     public class PoolableParticleSystem : MonoBehaviour, IPoolable
     {
         public ParticleSystem particle;

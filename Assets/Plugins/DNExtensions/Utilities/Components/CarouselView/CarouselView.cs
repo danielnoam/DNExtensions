@@ -16,7 +16,7 @@ namespace DNExtensions.Utilities
     /// Resize or offset Content to control the slot size all items share.
     /// Clip with a <see cref="Mask"/> or <see cref="RectMask2D"/> on the viewport.
     /// </remarks>
-    [AddComponentMenu("DNExtensions/UI/Carousel View")]
+    [AddComponentMenu("DNExtensions/Carousel View")]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(RectTransform))]
     public class CarouselView : UIBehaviour, IInitializePotentialDragHandler, IBeginDragHandler, IDragHandler, IEndDragHandler

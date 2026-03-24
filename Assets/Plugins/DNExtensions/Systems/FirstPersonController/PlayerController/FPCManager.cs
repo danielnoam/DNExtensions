@@ -12,6 +12,7 @@ namespace DNExtensions.Systems.FirstPersonController
     /// </summary>
     [SelectionBase]
     [DisallowMultipleComponent]
+    [AddComponentMenu("DNExtensions/FPC Manager")]
     public class FpcManager : MonoBehaviour
     {
         [Header("References")]

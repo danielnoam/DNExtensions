@@ -6,7 +6,7 @@ namespace DNExtensions.Systems.ObjectPooling
     /// Automatically returns object after a specified lifetime.
     /// </summary>
     [DisallowMultipleComponent]
-    [AddComponentMenu("DNExtensions/ObjectPooling/Auto Return To Pool")]
+    [AddComponentMenu("DNExtensions/Object Pooling/Auto Return To Pool")]
     public class PoolableAutoReturn : MonoBehaviour, IPoolable
     {
         public float lifeTime;

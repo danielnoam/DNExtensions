@@ -9,7 +9,7 @@ namespace DNExtensions.Systems.ObjectPooling
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(VisualEffect))]
-    [AddComponentMenu("DNExtensions/ObjectPooling/Poolable Visual Effect")]
+    [AddComponentMenu("DNExtensions/Object Pooling/Poolable Visual Effect")]
     public class PoolableVisualEffect : MonoBehaviour, IPoolable
     {
         [SerializeField] private VisualEffect effect;

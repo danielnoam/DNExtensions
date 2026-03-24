@@ -11,7 +11,7 @@ namespace DNExtensions.Systems.FirstPersonController
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(FpcManager))]
-    [AddComponentMenu("DNExtensions/First Person Controller/FPC Effects")]
+    [AddComponentMenu("")]
     public class FPCEffects : MonoBehaviour
     {
         [Header("FOV")]

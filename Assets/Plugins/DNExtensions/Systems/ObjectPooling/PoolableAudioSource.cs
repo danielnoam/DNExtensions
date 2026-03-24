@@ -9,7 +9,7 @@ namespace DNExtensions.Systems.ObjectPooling
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(AudioSource))]
-    [AddComponentMenu("DNExtensions/ObjectPooling/Poolable Audio Source")]
+    [AddComponentMenu("DNExtensions/Object Pooling/Poolable Audio Source")]
     public class PoolableAudioSource : MonoBehaviour, IPoolable
     {
         public AudioSource audioSource;
