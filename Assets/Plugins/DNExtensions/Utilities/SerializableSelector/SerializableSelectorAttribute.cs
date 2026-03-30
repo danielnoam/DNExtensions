@@ -33,6 +33,8 @@ namespace DNExtensions.Utilities.SerializableSelector
         /// Show category headers in the dropdown
         /// </summary>
         public bool ShowCategoryHeaders { get; set; } = true;
+        
+        public bool Foldout { get; set; } = true;
 
         
         

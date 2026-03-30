@@ -19,14 +19,40 @@ namespace DNExtensions.Systems.Scriptables
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            
+
             EditorGUILayout.Space(10);
 
-            DrawPropertiesExcluding(serializedObject, "m_Script", _allowEditingProp.name);
-            
+            SerializedProperty iterator = serializedObject.GetIterator();
+            iterator.NextVisible(true);
+
+            while (iterator.NextVisible(false))
+            {
+                if (iterator.name == _allowEditingProp.name)
+                {
+                    continue;
+                }
+
+                if (iterator.name == "value")
+                {
+                    DrawValueProperty(iterator);
+                }
+                else
+                {
+                    EditorGUILayout.PropertyField(iterator, true);
+                }
+            }
+
             EditorGUILayout.PropertyField(_allowEditingProp, new GUIContent("Show In References"));
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        /// <summary>
+        /// Draws the value property. Override to customize how the value is displayed.
+        /// </summary>
+        protected virtual void DrawValueProperty(SerializedProperty valueProperty)
+        {
+            EditorGUILayout.PropertyField(valueProperty, true);
         }
     }
 }

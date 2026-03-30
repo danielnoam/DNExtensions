@@ -5,11 +5,11 @@ using UnityEngine;
 namespace DNExtensions.Systems.AudioLibrary
 {
     /// <summary>
-    /// Custom property drawer for AudioLibraryIDAttribute that displays a dropdown of available audio IDs
-    /// and shows status icons for missing or invalid IDs.
+    /// Custom property drawer for <see cref="AudioLibraryIDAttribute"/> that displays a grouped dropdown
+    /// of available audio IDs organized by category, with status icons for missing or invalid IDs.
     /// </summary>
     [CustomPropertyDrawer(typeof(AudioLibraryIDAttribute))]
-    public class AudioLibraryIDDrawer : PropertyDrawer
+    internal class AudioLibraryIDDrawer : PropertyDrawer
     {
         private enum FieldState { Valid, MissingID, NoIDs, NoLibrary }
 
@@ -24,25 +24,32 @@ namespace DNExtensions.Systems.AudioLibrary
             EditorGUI.BeginProperty(position, GUIContent.none, property);
 
             var settings = SOAudioLibrarySettings.Instance;
-
-            List<string> ids = new();
+            var ids = new List<string>();
+            var displayPaths = new List<string>();
             FieldState state;
 
             if (!settings)
             {
                 state = FieldState.NoLibrary;
                 if (!string.IsNullOrEmpty(property.stringValue))
+                {
                     property.stringValue = string.Empty;
+                }
             }
             else
             {
                 foreach (var category in settings.AudioCategories)
                 {
                     if (!category) continue;
+
+                    string categoryLabel = string.IsNullOrEmpty(category.label) ? category.name : category.label;
+
                     foreach (var mapping in category.AudioMappings)
                     {
-                        if (!string.IsNullOrEmpty(mapping.id))
-                            ids.Add(mapping.id);
+                        if (string.IsNullOrEmpty(mapping.id)) continue;
+
+                        ids.Add(mapping.id);
+                        displayPaths.Add($"{categoryLabel}/{mapping.id}");
                     }
                 }
 
@@ -50,7 +57,9 @@ namespace DNExtensions.Systems.AudioLibrary
                 {
                     state = FieldState.NoIDs;
                     if (!string.IsNullOrEmpty(property.stringValue))
+                    {
                         property.stringValue = string.Empty;
+                    }
                 }
                 else if (string.IsNullOrEmpty(property.stringValue))
                 {
@@ -69,38 +78,38 @@ namespace DNExtensions.Systems.AudioLibrary
             bool hasIssue = state != FieldState.Valid;
             float iconWidth = hasIssue ? 20f : 0f;
 
-            Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth - iconWidth, position.height);
-            Rect iconRect = new Rect(position.x + EditorGUIUtility.labelWidth - iconWidth, position.y, iconWidth, position.height);
-            Rect popupRect = new Rect(position.x + EditorGUIUtility.labelWidth, position.y, position.width - EditorGUIUtility.labelWidth, position.height);
+            var labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth - iconWidth, position.height);
+            var iconRect = new Rect(position.x + EditorGUIUtility.labelWidth - iconWidth, position.y, iconWidth, position.height);
+            var popupRect = new Rect(position.x + EditorGUIUtility.labelWidth, position.y, position.width - EditorGUIUtility.labelWidth, position.height);
 
             EditorGUI.LabelField(labelRect, label);
 
-            if (hasIssue) DrawStatusIcon(iconRect, state, property.stringValue);
+            if (hasIssue)
+            {
+                DrawStatusIcon(iconRect, state, property.stringValue);
+            }
 
-            ids.Insert(0, "None");
+            ids.Insert(0, string.Empty);
+            displayPaths.Insert(0, "None");
 
-            int currentIndex = string.IsNullOrEmpty(property.stringValue) ? 0 : ids.IndexOf(property.stringValue);
+            int currentIndex = 0;
 
             if (state == FieldState.MissingID)
             {
-                ids.Insert(1, $"{property.stringValue} (Missing)");
+                ids.Insert(1, property.stringValue);
+                displayPaths.Insert(1, $"(Missing) {property.stringValue}");
                 currentIndex = 1;
+            }
+            else if (!string.IsNullOrEmpty(property.stringValue))
+            {
+                currentIndex = ids.IndexOf(property.stringValue);
             }
 
             EditorGUI.BeginChangeCheck();
-            int selected = EditorGUI.Popup(popupRect, Mathf.Max(currentIndex, 0), ids.ToArray());
+            int selected = EditorGUI.Popup(popupRect, Mathf.Max(currentIndex, 0), displayPaths.ToArray());
             if (EditorGUI.EndChangeCheck())
             {
-                if (selected == 0)
-                {
-                    property.stringValue = string.Empty;
-                }
-                else
-                {
-                    int adjustedIndex = state == FieldState.MissingID ? selected - 1 : selected;
-                    if (adjustedIndex >= 0 && adjustedIndex < ids.Count)
-                        property.stringValue = ids[adjustedIndex];
-                }
+                property.stringValue = ids[selected];
             }
 
             EditorGUI.EndProperty();
@@ -108,33 +117,18 @@ namespace DNExtensions.Systems.AudioLibrary
 
         private static void DrawStatusIcon(Rect rect, FieldState state, string audioID)
         {
-            string icon;
-            string tooltip;
-            Color iconColor;
-
-            switch (state)
+            (string icon, string tooltip, Color color) = state switch
             {
-                case FieldState.NoLibrary:
-                    icon = "✕";
-                    tooltip = "Audio Library asset not found.";
-                    iconColor = Color.red;
-                    break;
-                case FieldState.NoIDs:
-                    icon = "⚠";
-                    tooltip = "No Audio IDs defined in the library.";
-                    iconColor = new Color(1f, 0.6f, 0f);
-                    break;
-                case FieldState.MissingID:
-                    icon = "✕";
-                    tooltip = $"Audio ID '{audioID}' not found in Audio Library.";
-                    iconColor = Color.red;
-                    break;
-                default:
-                    return;
-            }
+                FieldState.NoLibrary => ("✕", "Audio Library asset not found.", Color.red),
+                FieldState.NoIDs => ("⚠", "No Audio IDs defined in the library.", new Color(1f, 0.6f, 0f)),
+                FieldState.MissingID => ("✕", $"Audio ID '{audioID}' not found in Audio Library.", Color.red),
+                _ => default
+            };
+
+            if (icon == null) return;
 
             Color prev = GUI.color;
-            GUI.color = iconColor;
+            GUI.color = color;
             EditorGUI.LabelField(rect, new GUIContent(icon, tooltip), new GUIStyle(EditorStyles.label)
             {
                 alignment = TextAnchor.MiddleCenter,

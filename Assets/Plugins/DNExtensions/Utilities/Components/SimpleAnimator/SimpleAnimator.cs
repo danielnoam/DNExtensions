@@ -174,6 +174,18 @@ namespace DNExtensions.Utilities
             _currentIndex = -1;
             _isCrossfading = false;
         }
+
+        /// <summary>
+        /// Gets the clip at the specified index, or null if out of range.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public AnimationClip GetClip(int index)
+        {
+            if (index < 0 || index >= clips.Length) return null;
+
+            return clips[index];
+        }
         
         /// <summary>
         /// Plays a clip by name with an optional crossfade duration in seconds.

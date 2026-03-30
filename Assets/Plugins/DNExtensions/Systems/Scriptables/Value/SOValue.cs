@@ -41,5 +41,19 @@ namespace DNExtensions.Systems.Scriptables
                 OnValueChanged?.Invoke(value);
             }
         }
+        
+        /// <summary>
+        /// Implicitly converts an <see cref="SOValue{T}"/> to its underlying value.
+        /// </summary>
+        public static implicit operator T(SOValue<T> soValue)
+        {
+            if (!soValue)
+            {
+                throw new System.NullReferenceException(
+                    $"Attempted to use a null SOValue<{typeof(T).Name}> as {typeof(T).Name}.");
+            }
+
+            return soValue.Value;
+        }
     }
 }

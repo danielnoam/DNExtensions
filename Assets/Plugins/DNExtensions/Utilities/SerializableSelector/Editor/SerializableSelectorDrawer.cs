@@ -44,6 +44,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             
             float lineHeight = EditorGUIUtility.singleLineHeight;
             bool inArray = IsInArray(property);
+            bool inline = attr is { Foldout: true };
             
             Rect dropdownRect = inArray 
                 ? new Rect(position.x, position.y, position.width, lineHeight)
@@ -56,8 +57,20 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             
             if (!inArray)
             {
-                Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, lineHeight);
-                EditorGUI.LabelField(labelRect, label);
+                if (inline && property.managedReferenceValue != null)
+                {
+                    property.isExpanded = EditorGUI.Foldout(
+                        new Rect(position.x, position.y, EditorGUIUtility.labelWidth, lineHeight),
+                        property.isExpanded,
+                        label,
+                        true
+                    );
+                }
+                else
+                {
+                    Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, lineHeight);
+                    EditorGUI.LabelField(labelRect, label);
+                }
             }
             
             string currentTypeName = GetTypeName(property);
@@ -74,7 +87,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 e.Use();
             }
             
-            if (property.managedReferenceValue != null)
+            if (property.managedReferenceValue != null && (!inline || property.isExpanded))
             {
                 Rect contentRect = new Rect(
                     position.x,
@@ -119,7 +132,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 EditorGUI.indentLevel--;
             }
         }
-        
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             ErrorInfo error = ValidateProperty(property);
@@ -134,6 +147,13 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             
             if (property.managedReferenceValue != null)
             {
+                SerializableSelectorAttribute attr = attribute as SerializableSelectorAttribute;
+                
+                if (attr is { Foldout: true } && !property.isExpanded)
+                {
+                    return height;
+                }
+                
                 height += EditorGUIUtility.standardVerticalSpacing;
                 
                 SerializedProperty iterator = property.Copy();
