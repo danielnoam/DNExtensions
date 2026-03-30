@@ -52,6 +52,7 @@ namespace DNExtensions
         [SerializeField, RequireInterface(typeof(ITest))] public MonoBehaviour interactableObject;
         
         [Separator("Serializable Selector")] 
+        [SerializeReference, SerializableSelector(SearchThreshold = -1, Foldout = false)] public TestBehavior serializableSelectorNoFoldout;
         [SerializeReference, SerializableSelector(SearchThreshold = -1)] public TestBehavior serializableSelector;
         [SerializeReference, SerializableSelector(SearchThreshold = 0)] public List<TestBehavior> serializableSelectorList;
 
@@ -101,7 +102,7 @@ namespace DNExtensions
     [Serializable]
     public abstract class TestBehavior
     {
-        public float varFloat;
+        
     }
     
     [Serializable]
@@ -134,6 +135,6 @@ namespace DNExtensions
     [SerializableSelectorName("Direct Damage", "Damage")]
     public class Behavior5 : TestBehavior
     {
-        public bool varBool;
+     
     }
 }

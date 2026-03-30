@@ -46,7 +46,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             bool inArray = IsInArray(property);
             bool inline = attr is { Foldout: true };
             bool hasValue = property.managedReferenceValue != null;
-            bool showFoldout = inline && hasValue;
+            bool showFoldout = inline && hasValue && HasVisibleChildren(property);
             
             Rect dropdownRect;
             
@@ -112,14 +112,14 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             
             if (hasValue && (!inline || property.isExpanded))
             {
+                float indent = inArray ? 0f : 15f;
+                
                 Rect contentRect = new Rect(
-                    position.x,
+                    position.x + indent,
                     position.y + lineHeight + EditorGUIUtility.standardVerticalSpacing,
-                    position.width,
+                    position.width - indent,
                     position.height - lineHeight - EditorGUIUtility.standardVerticalSpacing
                 );
-                
-                EditorGUI.indentLevel++;
                 
                 SerializedProperty iterator = property.Copy();
                 SerializedProperty endProperty = iterator.GetEndProperty();
@@ -130,7 +130,9 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 while (iterator.NextVisible(enterChildren))
                 {
                     if (SerializedProperty.EqualContents(iterator, endProperty))
+                    {
                         break;
+                    }
                     
                     float propertyHeight = EditorGUI.GetPropertyHeight(iterator, true);
                     Rect propertyRect = new Rect(
@@ -140,19 +142,11 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                         propertyHeight
                     );
                     
-                    int oldIndent = EditorGUI.indentLevel;
-                    EditorGUI.indentLevel = 0;
-                    
                     EditorGUI.PropertyField(propertyRect, iterator, true);
                     
-                    EditorGUI.indentLevel = oldIndent;
-                    
                     yOffset += propertyHeight + EditorGUIUtility.standardVerticalSpacing;
-                    
                     enterChildren = false;
                 }
-                
-                EditorGUI.indentLevel--;
             }
         }
 
@@ -169,9 +163,12 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             
             if (property.managedReferenceValue != null)
             {
-                if (attribute is SerializableSelectorAttribute { Foldout: true } attr && !property.isExpanded)
+                if (attribute is SerializableSelectorAttribute { Foldout: true })
                 {
-                    return height;
+                    if (!HasVisibleChildren(property) || !property.isExpanded)
+                    {
+                        return height;
+                    }
                 }
                 
                 height += EditorGUIUtility.standardVerticalSpacing;
@@ -183,7 +180,9 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 while (iterator.NextVisible(enterChildren))
                 {
                     if (SerializedProperty.EqualContents(iterator, endProperty))
+                    {
                         break;
+                    }
                     
                     height += EditorGUI.GetPropertyHeight(iterator, true) + EditorGUIUtility.standardVerticalSpacing;
                     enterChildren = false;
@@ -193,11 +192,6 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             return height;
         }
         
-        
-        
-        /// <summary>
-        /// Validate property and return error information
-        /// </summary>
         private ErrorInfo ValidateProperty(SerializedProperty property)
         {
             if (property.propertyType != SerializedPropertyType.ManagedReference)
@@ -235,9 +229,6 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             return new ErrorInfo { Type = ErrorType.None };
         }
         
-        /// <summary>
-        /// Draw error message with context menu option to clear
-        /// </summary>
         private void DrawError(Rect position, SerializedProperty property, GUIContent label, ErrorInfo error)
         {
             float lineHeight = EditorGUIUtility.singleLineHeight;
@@ -265,7 +256,6 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             EditorGUI.LabelField(messageRect, errorContent);
             GUI.color = previousColor;
             
-            // Click to ping object
             Event clickEvent = Event.current;
             if (clickEvent.type == EventType.MouseDown && messageRect.Contains(clickEvent.mousePosition))
             {
@@ -307,10 +297,20 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             }
         }
         
+        private bool HasVisibleChildren(SerializedProperty property)
+        {
+            SerializedProperty iterator = property.Copy();
+            SerializedProperty endProperty = iterator.GetEndProperty();
+
+            return iterator.NextVisible(true) && !SerializedProperty.EqualContents(iterator, endProperty);
+        }
+        
         private string GetTypeName(SerializedProperty property)
         {
             if (string.IsNullOrEmpty(property.managedReferenceFullTypename))
+            {
                 return "<null>";
+            }
     
             object value = property.managedReferenceValue;
             if (value != null)
@@ -426,7 +426,10 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         private void CopyValue(SerializedProperty property)
         {
             object value = property.managedReferenceValue;
-            if (value == null) return;
+            if (value == null)
+            {
+                return;
+            }
             
             _clipboardType = value.GetType();
             _clipboard = value.CopyReference();
@@ -434,7 +437,10 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         
         private bool CanPaste(SerializedProperty property)
         {
-            if (_clipboard == null) return false;
+            if (_clipboard == null)
+            {
+                return false;
+            }
             
             Type baseType = GetBaseType(property);
             return baseType != null && baseType.IsAssignableFrom(_clipboardType);
@@ -442,7 +448,10 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         
         private void PasteValue(SerializedProperty property)
         {
-            if (_clipboard == null) return;
+            if (_clipboard == null)
+            {
+                return;
+            }
             
             property.managedReferenceValue = _clipboard.CopyReference();
             property.serializedObject.ApplyModifiedProperties();
@@ -458,13 +467,17 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             var existingTypes = new HashSet<Type>();
     
             if (!IsInArray(property))
+            {
                 return existingTypes;
+            }
     
             string arrayPath = property.propertyPath.Substring(0, property.propertyPath.LastIndexOf(".Array.data[", StringComparison.Ordinal));
             SerializedProperty arrayProperty = property.serializedObject.FindProperty(arrayPath);
     
             if (arrayProperty == null || !arrayProperty.isArray)
+            {
                 return existingTypes;
+            }
     
             for (int i = 0; i < arrayProperty.arraySize; i++)
             {
@@ -500,7 +513,9 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                     FieldInfo field = GetFieldIncludingBase(parentType, fieldName);
             
                     if (field == null)
+                    {
                         return null;
+                    }
             
                     Type fieldType = field.FieldType;
                     if (fieldType.IsArray)
@@ -516,7 +531,9 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 {
                     FieldInfo field = GetFieldIncludingBase(parentType, part);
                     if (field == null)
+                    {
                         return null;
+                    }
                     
                     parentType = field.FieldType;
                 }
@@ -573,7 +590,10 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         private void CopyList(SerializedProperty property)
         {
             SerializedProperty arrayProperty = GetArrayProperty(property);
-            if (arrayProperty == null) return;
+            if (arrayProperty == null)
+            {
+                return;
+            }
             
             _listClipboard = new List<object>();
             
@@ -593,10 +613,16 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
 
         private void PasteList(SerializedProperty property)
         {
-            if (_listClipboard == null) return;
+            if (_listClipboard == null)
+            {
+                return;
+            }
             
             SerializedProperty arrayProperty = GetArrayProperty(property);
-            if (arrayProperty == null) return;
+            if (arrayProperty == null)
+            {
+                return;
+            }
             
             arrayProperty.ClearArray();
             
@@ -621,7 +647,10 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         private void ClearList(SerializedProperty property)
         {
             SerializedProperty arrayProperty = GetArrayProperty(property);
-            if (arrayProperty == null) return;
+            if (arrayProperty == null)
+            {
+                return;
+            }
             
             arrayProperty.ClearArray();
             arrayProperty.serializedObject.ApplyModifiedProperties();

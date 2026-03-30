@@ -24,21 +24,21 @@ namespace DNExtensions.Utilities
         /// <param name="showLock">Whether to show the proportional lock toggle.</param>
         /// <param name="locked">Current lock state. Passed by ref — updated when toggled.</param>
         /// <param name="extraContextItems">Optional extra items appended to the right-click context menu.</param>
+        /// <param name="extraResetItems">Optional extra items shown when right-clicking the reset button.</param>
         /// <returns>The new Vector3 value after any edits.</returns>
-        public static Vector3 Draw(string label, Vector3 value, Vector3 resetValue, bool showLock, ref bool locked, Action<GenericMenu> extraContextItems = null)
+        public static Vector3 Draw(string label, Vector3 value, Vector3 resetValue, bool showLock, ref bool locked,
+            Action<GenericMenu> extraContextItems = null, Action<GenericMenu> extraResetItems = null)
         {
             Vector3 newValue = value;
             float lockW = showLock ? LockWidth : 0f;
 
             if (EditorGUIUtility.wideMode)
             {
-                // Single Rect row — no BeginHorizontal so no extra spacing
                 Rect rowRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-                newValue = DrawRow(rowRect, label, value, resetValue, showLock, lockW, ref locked, extraContextItems);
+                newValue = DrawRow(rowRect, label, value, resetValue, showLock, lockW, ref locked, extraContextItems, extraResetItems);
             }
             else
             {
-                // Row 1: label | lock
                 EditorGUILayout.BeginHorizontal();
                 float labelW = EditorGUIUtility.labelWidth - lockW;
                 Rect labelRect = GUILayoutUtility.GetRect(new GUIContent(label), GUI.skin.label, GUILayout.Width(labelW));
@@ -56,7 +56,6 @@ namespace DNExtensions.Utilities
                 GUILayout.FlexibleSpace();
                 EditorGUILayout.EndHorizontal();
 
-                // Row 2: field | buttons (force wideMode so Vector3Field renders single-line)
                 Rect fieldRow = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
                 Rect fieldRect   = new Rect(fieldRow.x, fieldRow.y, fieldRow.width - ButtonsTotal - Spacing, fieldRow.height);
                 Rect buttonsRect = new Rect(fieldRect.xMax + Spacing, fieldRow.y, ButtonsTotal, fieldRow.height);
@@ -77,7 +76,8 @@ namespace DNExtensions.Utilities
                 DrawButtonsRect(buttonsRect, value, resetValue, label,
                     onCopy:  () => CopyToClipboard(value),
                     onPaste: pasted => newValue = pasted,
-                    onReset: () => newValue = resetValue);
+                    onReset: () => newValue = resetValue,
+                    extraResetItems: extraResetItems);
             }
 
             return newValue;
@@ -87,13 +87,14 @@ namespace DNExtensions.Utilities
         /// Layout-free version for use inside custom Rect-based drawers.
         /// Always renders as a single line. Returns height consumed.
         /// </summary>
-        public static Vector3 Draw(Rect position, string label, Vector3 value, Vector3 resetValue, bool showLock, ref bool locked, out float heightUsed, Action<GenericMenu> extraContextItems = null)
+        public static Vector3 Draw(Rect position, string label, Vector3 value, Vector3 resetValue, bool showLock, ref bool locked, out float heightUsed,
+            Action<GenericMenu> extraContextItems = null, Action<GenericMenu> extraResetItems = null)
         {
             float lineHeight = EditorGUIUtility.singleLineHeight;
             Rect rowRect = new Rect(position.x, position.y, position.width, lineHeight);
             heightUsed = lineHeight;
             bool dummy = locked;
-            Vector3 result = DrawRow(rowRect, label, value, resetValue, showLock, showLock ? LockWidth : 0f, ref dummy, extraContextItems);
+            Vector3 result = DrawRow(rowRect, label, value, resetValue, showLock, showLock ? LockWidth : 0f, ref dummy, extraContextItems, extraResetItems);
             locked = dummy;
             return result;
         }
@@ -121,7 +122,8 @@ namespace DNExtensions.Utilities
             return reference * ratio;
         }
 
-        private static Vector3 DrawRow(Rect rowRect, string label, Vector3 value, Vector3 resetValue, bool showLock, float lockW, ref bool locked, Action<GenericMenu> extraContextItems)
+        private static Vector3 DrawRow(Rect rowRect, string label, Vector3 value, Vector3 resetValue, bool showLock, float lockW, ref bool locked,
+            Action<GenericMenu> extraContextItems, Action<GenericMenu> extraResetItems)
         {
             Vector3 newValue = value;
             float labelW   = EditorGUIUtility.labelWidth - lockW;
@@ -159,29 +161,49 @@ namespace DNExtensions.Utilities
             DrawButtonsRect(buttonsRect, value, resetValue, label,
                 onCopy:  () => CopyToClipboard(value),
                 onPaste: pasted => newValue = pasted,
-                onReset: () => newValue = resetValue);
+                onReset: () => newValue = resetValue,
+                extraResetItems: extraResetItems);
 
             return newValue;
         }
 
         private static void DrawButtonsRect(Rect rect, Vector3 current, Vector3 resetValue, string label,
-            Action onCopy, Action<Vector3> onPaste, Action onReset)
+            Action onCopy, Action<Vector3> onPaste, Action onReset, Action<GenericMenu> extraResetItems = null)
         {
             Rect copyRect  = new Rect(rect.x,                rect.y, ButtonWidth, rect.height);
             Rect pasteRect = new Rect(rect.x + ButtonWidth,  rect.y, ButtonWidth, rect.height);
             Rect resetRect = new Rect(rect.x + ButtonWidth * 2f, rect.y, ButtonWidth, rect.height);
-
+            
+            
             if (GUI.Button(copyRect, new GUIContent("C", "Copy"), EditorStyles.miniButtonLeft))
+            {
                 onCopy?.Invoke();
+            }
 
             EditorGUI.BeginDisabledGroup(!CanPaste());
             if (GUI.Button(pasteRect, new GUIContent("P", "Paste"), EditorStyles.miniButtonMid))
-                if (TryParseClipboard(out Vector3 parsed)) onPaste?.Invoke(parsed);
+            {
+                if (TryParseClipboard(out Vector3 parsed))
+                {
+                    onPaste?.Invoke(parsed);
+                }
+            }
             EditorGUI.EndDisabledGroup();
+            
+            if (extraResetItems != null && Event.current.type == EventType.MouseDown && Event.current.button == 1 && resetRect.Contains(Event.current.mousePosition))
+            {
+                GenericMenu menu = new GenericMenu();
+                extraResetItems(menu);
+                menu.ShowAsContext();
+                Event.current.Use();
+                return;
+            }
 
             EditorGUI.BeginDisabledGroup(current == resetValue);
             if (GUI.Button(resetRect, new GUIContent("R", $"Reset {label.ToLower()}"), EditorStyles.miniButtonRight))
+            {
                 onReset?.Invoke();
+            }
             EditorGUI.EndDisabledGroup();
         }
 

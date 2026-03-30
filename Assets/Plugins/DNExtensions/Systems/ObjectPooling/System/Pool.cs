@@ -58,8 +58,10 @@ namespace DNExtensions.Systems.ObjectPooling
         /// <param name="position">World position for the object</param>
         /// <param name="rotation">World rotation for the object</param>
         /// <returns>GameObject from pool, or null if pool is full and recycling is disabled</returns>
-        public GameObject GetObjectFromPool(Vector3 position = default, Quaternion rotation = default)
+        public GameObject GetObjectFromPool(Vector3 position = default, Quaternion? rotation = null)
         {
+            var rot = rotation ?? Quaternion.identity;
+            
             if (!_isInitialized)
             {
                 Debug.LogError($"[{poolName}] Pool not initialized!");
@@ -75,7 +77,7 @@ namespace DNExtensions.Systems.ObjectPooling
                 _activePoolSet.Add(obj);
 
                 obj.transform.position = position;
-                obj.transform.rotation = rotation;
+                obj.transform.rotation = rot;
                 obj.SetActive(true);
 
                 if (_pooledObjects.TryGetValue(obj, out var pooledObject))
@@ -86,15 +88,13 @@ namespace DNExtensions.Systems.ObjectPooling
                 return obj;
             }
             // Create a new object if under max pool size
-            else if ((_activePool.Count + _inactivePool.Count) < maxPoolSize)
+            if ((_activePool.Count + _inactivePool.Count) < maxPoolSize)
             {
-                var obj = InstantiatePoolObject();
+                var obj = InstantiatePoolObject(position, rotation);
 
                 _activePool.Add(obj);
                 _activePoolSet.Add(obj);
-
-                obj.transform.position = position;
-                obj.transform.rotation = rotation;
+                
                 obj.SetActive(true);
 
                 if (_pooledObjects.TryGetValue(obj, out var pooledObject))
@@ -105,7 +105,7 @@ namespace DNExtensions.Systems.ObjectPooling
                 return obj;
             }
             // Recycle the oldest active object if allowed
-            else if (recycleActiveObjects && _activePool.Count > 0)
+            if (recycleActiveObjects && _activePool.Count > 0)
             {
                 var obj = _activePool[0];
 
@@ -119,7 +119,7 @@ namespace DNExtensions.Systems.ObjectPooling
                 _activePool.Add(obj);
 
                 obj.transform.position = position;
-                obj.transform.rotation = rotation;
+                obj.transform.rotation = rot;
                 obj.SetActive(true);
 
                 pooledObject?.OnPoolGet();
@@ -267,11 +267,11 @@ namespace DNExtensions.Systems.ObjectPooling
         /// Creates a new pool object instance and registers any IPooledObject components.
         /// </summary>
         /// <returns>Newly instantiated GameObject ready for pooling</returns>
-        private GameObject InstantiatePoolObject()
+        private GameObject InstantiatePoolObject(Vector3 position = default, Quaternion? rotation = null)
         {
             if (!prefab) return null;
 
-            var obj = Object.Instantiate(prefab);
+            var obj = Object.Instantiate(prefab, position, rotation ?? Quaternion.identity);
             obj.SetActive(false);
             if (_poolHolder) obj.transform.SetParent(_poolHolder);
 
