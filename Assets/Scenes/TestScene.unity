@@ -2311,7 +2311,11 @@ MonoBehaviour:
     underlyingValue: {fileID: 0}
   interactableObject: {fileID: 0}
   serializableSelector:
-    rid: 5778561754236715089
+    rid: 6000861377164738635
+  serializableSelectorList:
+  - rid: 6000861377164738636
+  - rid: 6000861377164738637
+  - rid: 6000861377164738638
   testImpulseSource: {fileID: 1526888421}
   testImpulse:
     impulseChannel: 1
@@ -2341,11 +2345,26 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
-    - rid: 5778561754236715089
+    - rid: 6000861377164738635
       type: {class: Behavior1, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
       data:
         varFloat: 0
         varString: 
+    - rid: 6000861377164738636
+      type: {class: Behavior1, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
+      data:
+        varFloat: 0
+        varString: 
+    - rid: 6000861377164738637
+      type: {class: Behavior2, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
+      data:
+        varFloat: 0
+        varBool: 0
+    - rid: 6000861377164738638
+      type: {class: Behavior3, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
+      data:
+        varFloat: 0
+        varBool: 0
 --- !u!114 &1526888421
 MonoBehaviour:
   m_ObjectHideFlags: 0

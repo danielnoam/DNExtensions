@@ -45,19 +45,42 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             float lineHeight = EditorGUIUtility.singleLineHeight;
             bool inArray = IsInArray(property);
             bool inline = attr is { Foldout: true };
+            bool hasValue = property.managedReferenceValue != null;
+            bool showFoldout = inline && hasValue;
             
-            Rect dropdownRect = inArray 
-                ? new Rect(position.x, position.y, position.width, lineHeight)
-                : new Rect(
+            Rect dropdownRect;
+            
+            if (inArray)
+            {
+                if (showFoldout)
+                {
+                    float foldoutOffset = 5f;
+                    float foldoutWidth = 5f;
+                    Rect foldoutRect = new Rect(position.x + foldoutOffset, position.y, foldoutWidth, lineHeight);
+                    property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, GUIContent.none, true);
+    
+                    dropdownRect = new Rect(
+                        position.x + foldoutOffset + foldoutWidth,
+                        position.y,
+                        position.width - foldoutOffset - foldoutWidth,
+                        lineHeight
+                    );
+                }
+                else
+                {
+                    dropdownRect = new Rect(position.x, position.y, position.width, lineHeight);
+                }
+            }
+            else
+            {
+                dropdownRect = new Rect(
                     position.x + EditorGUIUtility.labelWidth + 2, 
                     position.y, 
                     position.width - EditorGUIUtility.labelWidth - 2, 
                     lineHeight
                 );
-            
-            if (!inArray)
-            {
-                if (inline && property.managedReferenceValue != null)
+                
+                if (showFoldout)
                 {
                     property.isExpanded = EditorGUI.Foldout(
                         new Rect(position.x, position.y, EditorGUIUtility.labelWidth, lineHeight),
@@ -87,7 +110,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
                 e.Use();
             }
             
-            if (property.managedReferenceValue != null && (!inline || property.isExpanded))
+            if (hasValue && (!inline || property.isExpanded))
             {
                 Rect contentRect = new Rect(
                     position.x,
@@ -139,17 +162,14 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             
             if (error.Type != ErrorType.None)
             {
-                return EditorGUIUtility.singleLineHeight + 
-                       (string.IsNullOrEmpty(error.Details) ? 0 : EditorGUIUtility.singleLineHeight);
+                return EditorGUIUtility.singleLineHeight + (string.IsNullOrEmpty(error.Details) ? 0 : EditorGUIUtility.singleLineHeight);
             }
             
             float height = EditorGUIUtility.singleLineHeight;
             
             if (property.managedReferenceValue != null)
             {
-                SerializableSelectorAttribute attr = attribute as SerializableSelectorAttribute;
-                
-                if (attr is { Foldout: true } && !property.isExpanded)
+                if (attribute is SerializableSelectorAttribute { Foldout: true } attr && !property.isExpanded)
                 {
                     return height;
                 }
@@ -172,6 +192,8 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
             
             return height;
         }
+        
+        
         
         /// <summary>
         /// Validate property and return error information

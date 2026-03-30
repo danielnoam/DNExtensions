@@ -50,7 +50,9 @@ namespace DNExtensions
         [Separator("Serialized Interface")]
         public InterfaceReference<ITest> testInterface;
         [SerializeField, RequireInterface(typeof(ITest))] public MonoBehaviour interactableObject;
-        [Separator("Serializable Selector")] [SerializeReference, SerializableSelector(SearchThreshold = -1)] public TestBehavior serializableSelector;
+        
+        [Separator("Serializable Selector")] 
+        [SerializeReference, SerializableSelector(SearchThreshold = -1)] public TestBehavior serializableSelector;
         [SerializeReference, SerializableSelector(SearchThreshold = 0)] public List<TestBehavior> serializableSelectorList;
 
         [Separator("Cinemachine")]
@@ -96,6 +98,7 @@ namespace DNExtensions
         Option3
     }
     
+    [Serializable]
     public abstract class TestBehavior
     {
         public float varFloat;
