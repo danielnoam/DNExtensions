@@ -12,7 +12,7 @@ namespace DNExtensions.Utilities
     /// </summary>
     internal static class CarouselViewCreator
     {
-        private const string MenuPath = "GameObject/UI (Canvas)/Carousel View";
+        private const string MenuPath = "GameObject/DNExtensions/Carousel View";
         private const int MenuPriority = 2062;
         private const float IndicatorHeight = 150f;
 
