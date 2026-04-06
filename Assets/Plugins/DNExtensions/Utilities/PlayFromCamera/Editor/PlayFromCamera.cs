@@ -95,28 +95,31 @@ namespace DNExtensions.Utilities.PlayFromCamera
                     characterController.enabled = false;
                 }
                 
-                player.transform.position = targetPos;
-                if (setRotation)
+                var rigidbody = player.GetComponent<Rigidbody>();
+                if (rigidbody)
                 {
-                    player.transform.rotation = targetRot;
+                    if (rigidbody.isKinematic)
+                    {
+                        rigidbody.linearVelocity = Vector3.zero;
+                        rigidbody.angularVelocity = Vector3.zero;
+                    }
+                    
+                    rigidbody.transform.rotation = targetRot;
+                    if (setRotation) rigidbody.transform.rotation = targetRot;
                 }
+                else
+                {
+                    player.transform.position = targetPos;
+                    if (setRotation) player.transform.rotation = targetRot;
+                }
+                
                 
                 if (characterController && ccWasEnabled)
                 {
                     EditorApplication.delayCall += () => 
                     {
-                        if (characterController != null)
-                        {
-                            characterController.enabled = true;
-                        }
+                        characterController.enabled = true;
                     };
-                }
-                
-                var rigidbody = player.GetComponent<Rigidbody>();
-                if (rigidbody)
-                {
-                    rigidbody.linearVelocity = Vector3.zero;
-                    rigidbody.angularVelocity = Vector3.zero;
                 }
                 
                 return true;
