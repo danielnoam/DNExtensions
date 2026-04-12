@@ -84,7 +84,18 @@ namespace DNExtensions.Systems.AudioLibrary
 
         private bool TryGetAudioData(string audioID, out AudioData data)
         {
-            if (_audioCache.TryGetValue(audioID, out data)) return true;
+            data = default;
+            
+            if (string.IsNullOrEmpty(audioID))
+            {
+                return false;
+            }
+            
+            if (_audioCache.TryGetValue(audioID, out data))
+            {
+                return true;
+            }
+            
             Debug.LogWarning($"AudioManager: ID '{audioID}' not found.");
             return false;
         }

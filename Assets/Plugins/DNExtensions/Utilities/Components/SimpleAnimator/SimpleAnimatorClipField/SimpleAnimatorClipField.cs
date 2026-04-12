@@ -42,24 +42,23 @@ namespace DNExtensions.Utilities.CustomFields
     public static class SimpleAnimatorClipFieldExtensions
     {
         /// <summary>
-        /// Plays the referenced clip with an optional crossfade.
-        /// Uses the field's own <see cref="SimpleAnimator"/> reference.
+        /// Plays the referenced clip and holds the last frame when finished.
         /// </summary>
-        public static void Play(this SimpleAnimatorClipField field, float crossfadeDuration = 0f)
+        public static void Play(this SimpleAnimatorClipField field, float crossfadeDuration = 0f, Action onFinished = null)
         {
             if (!field.IsAssigned || !field.SimpleAnimator) return;
 
-            field.SimpleAnimator.Play(field.ClipIndex, crossfadeDuration);
+            field.SimpleAnimator.Play(field.ClipIndex, crossfadeDuration, onFinished);
         }
 
         /// <summary>
-        /// Plays the referenced clip on a specific <see cref="SimpleAnimator"/> by clip name.
+        /// Plays the referenced clip once, then stops the graph and releases the transforms.
         /// </summary>
-        public static void Play(this SimpleAnimator simpleAnimator, SimpleAnimatorClipField field, float crossfadeDuration = 0f)
+        public static void PlayOnce(this SimpleAnimatorClipField field, float crossfadeDuration = 0f, Action onFinished = null)
         {
-            if (!field.IsAssigned) return;
+            if (!field.IsAssigned || !field.SimpleAnimator) return;
 
-            simpleAnimator.Play(field.ClipName, crossfadeDuration);
+            field.SimpleAnimator.PlayOnce(field.ClipIndex, crossfadeDuration, onFinished);
         }
     }
 }

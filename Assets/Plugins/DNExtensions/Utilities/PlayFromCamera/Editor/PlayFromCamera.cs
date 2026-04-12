@@ -104,8 +104,8 @@ namespace DNExtensions.Utilities.PlayFromCamera
                         rigidbody.angularVelocity = Vector3.zero;
                     }
                     
-                    rigidbody.transform.rotation = targetRot;
-                    if (setRotation) rigidbody.transform.rotation = targetRot;
+                    rigidbody.position = targetPos;
+                    if (setRotation) rigidbody.rotation = targetRot;
                 }
                 else
                 {

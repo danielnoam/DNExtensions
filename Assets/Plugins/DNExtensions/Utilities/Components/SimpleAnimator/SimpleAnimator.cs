@@ -25,6 +25,8 @@ namespace DNExtensions.Utilities
         private float _crossfadeDuration;
         private float _crossfadeElapsed;
         private bool _isCrossfading;
+        private bool _autoStop;
+        private Action _onFinished;
 
         public bool IsPlaying => _graph.IsValid() && _graph.IsPlaying();
         public int CurrentIndex => _currentIndex;
@@ -37,64 +39,74 @@ namespace DNExtensions.Utilities
             set
             {
                 if (_graph.IsValid())
-                {
                     _mixer.SetSpeed(value);
-                }
             }
         }
 
         private void OnValidate()
         {
             if (clips is not { Length: > 0 }) return;
-            
             playOnStart.Value = Mathf.Clamp(playOnStart.Value, 0, clips.Length - 1);
         }
-        
+
         private void Awake()
         {
             _animator = GetComponent<Animator>();
             _animator.runtimeAnimatorController = null;
         }
 
-        private void OnDisable()
-        {
-            DestroyGraph();
-        }
+        private void OnDisable() => DestroyGraph();
+        private void OnDestroy() => DestroyGraph();
 
-        private void OnDestroy()
-        {
-            DestroyGraph();
-        }
-        
         private void Start()
         {
             if (playOnStart && clips is { Length: > 0 })
-            {
                 Play(playOnStart.Value);
-            }
         }
 
         private void Update()
         {
-            if (!_isCrossfading) return;
+            if (_isCrossfading)
+            {
+                _crossfadeElapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(_crossfadeElapsed / _crossfadeDuration);
 
-            _crossfadeElapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(_crossfadeElapsed / _crossfadeDuration);
+                int fromSlot = 1 - _activeSlot;
+                _mixer.SetInputWeight(fromSlot, 1f - t);
+                _mixer.SetInputWeight(_activeSlot, t);
 
-            int fromSlot = 1 - _activeSlot;
-            _mixer.SetInputWeight(fromSlot, 1f - t);
-            _mixer.SetInputWeight(_activeSlot, t);
+                if (t >= 1f)
+                {
+                    _isCrossfading = false;
+                    ClearSlot(fromSlot);
+                }
+            }
 
-            if (t < 1f) return;
+            if ((!_autoStop && _onFinished == null) || _currentIndex < 0 || !_graph.IsValid() || !_graph.IsPlaying()) return;
 
-            _isCrossfading = false;
-            ClearSlot(fromSlot);
+            var active = _mixer.GetInput(_activeSlot);
+            if (!active.IsValid()) return;
+
+            var clipPlayable = (AnimationClipPlayable)active;
+            var clip = clipPlayable.GetAnimationClip();
+
+            if (!clip.isLooping && clipPlayable.GetTime() >= clip.length)
+            {
+                var callback = _onFinished;
+                _onFinished = null;
+
+                if (_autoStop) Stop();
+
+                callback?.Invoke();
+            }
         }
 
-        private void PlayInternal(AnimationClip clip, int index, float crossfadeDuration)
+        private void PlayInternal(AnimationClip clip, int index, float crossfadeDuration, bool autoStop, Action onFinished)
         {
             EnsureGraph();
 
+            _autoStop = autoStop;
+            _onFinished = onFinished;
             bool isFirstPlay = _currentIndex < 0;
 
             if (_isCrossfading)
@@ -131,9 +143,39 @@ namespace DNExtensions.Utilities
             _currentIndex = index;
 
             if (!_graph.IsPlaying())
-            {
                 _graph.Play();
+        }
+
+        private bool TryGetClip(int index, out AnimationClip clip)
+        {
+            clip = null;
+
+            if (index < 0 || index >= clips.Length)
+            {
+                Debug.LogError($"Index {index} out of range.", this);
+                return false;
             }
+
+            clip = clips[index];
+            if (!clip)
+            {
+                Debug.LogError($"Clip at index {index} is null.", this);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool TryGetIndex(string clipName, out int index)
+        {
+            index = Array.FindIndex(clips, c => c && c.name == clipName);
+            if (index < 0)
+            {
+                Debug.LogError($"Clip '{clipName}' not found.", this);
+                return false;
+            }
+
+            return true;
         }
 
         private void EnsureGraph()
@@ -152,7 +194,6 @@ namespace DNExtensions.Utilities
         private void SetSlotClip(int slot, AnimationClip clip)
         {
             ClearSlot(slot);
-
             var playable = AnimationClipPlayable.Create(_graph, clip);
             _graph.Connect(playable, 0, _mixer, slot);
         }
@@ -173,77 +214,82 @@ namespace DNExtensions.Utilities
             _graph.Destroy();
             _currentIndex = -1;
             _isCrossfading = false;
+            _autoStop = false;
+            _onFinished = null;
         }
+
+   
 
         /// <summary>
         /// Gets the clip at the specified index, or null if out of range.
         /// </summary>
-        /// <param name="index"></param>
-        /// <returns></returns>
         public AnimationClip GetClip(int index)
         {
-            if (index < 0 || index >= clips.Length) return null;
-
-            return clips[index];
+            return index >= 0 && index < clips.Length ? clips[index] : null;
         }
-        
+
         /// <summary>
-        /// Plays a clip by name with an optional crossfade duration in seconds.
+        /// Plays a clip and holds the last frame when finished.
         /// </summary>
-        /// <param name="clipName">The name of the clip to play</param>
-        /// <param name="crossfadeDuration">If greater than zero, crossfades from the current clip to this one</param>
-        public void Play(string clipName, float crossfadeDuration = 0f)
+        public void Play(string clipName, float crossfadeDuration = 0f, Action onFinished = null)
         {
-            int index = Array.FindIndex(clips, c => c && c.name == clipName);
-            if (index < 0)
-            {
-                Debug.LogError($"Clip '{clipName}' not found.", this);
-                return;
-            }
-
-            Play(index, crossfadeDuration);
+            if (TryGetIndex(clipName, out int index)) Play(index, crossfadeDuration, onFinished);
         }
 
         /// <summary>
-        /// Plays a clip by index with an optional crossfade duration in seconds.
+        /// Plays a clip and holds the last frame when finished.
         /// </summary>
-        /// <param name="index">The index of the clip to play</param>
-        /// <param name="crossfadeDuration">If greater than zero, crossfades from the current clip to this one</param>
-        public void Play(int index, float crossfadeDuration = 0f)
+        public void Play(int index, float crossfadeDuration = 0f, Action onFinished = null)
         {
-            if (index < 0 || index >= clips.Length)
-            {
-                Debug.LogError($"Index {index} out of range.", this);
-                return;
-            }
-
-            if (!clips[index])
-            {
-                Debug.LogError($"Clip at index {index} is null.", this);
-                return;
-            }
-
-            PlayInternal(clips[index], index, crossfadeDuration);
+            if (TryGetClip(index, out var clip)) PlayInternal(clip, index, crossfadeDuration, false, onFinished);
         }
-        
+
         /// <summary>
-        /// Plays a clip with an optional crossfade duration in seconds.
+        /// Plays a clip and holds the last frame when finished.
         /// </summary>
-        /// <param name="clip">The clip to play</param>
-        /// <param name="crossfadeDuration">If greater than zero, crossfades from the current clip to this one</param>
-        public void Play(AnimationClip clip, float crossfadeDuration = 0f)
+        public void Play(AnimationClip clip, float crossfadeDuration = 0f, Action onFinished = null)
         {
             if (!clip)
             {
-                Debug.LogError($"Clip not found.", this);
+                Debug.LogError("Clip is null.", this);
                 return;
             }
 
-            PlayInternal(clip, -1, crossfadeDuration);
+            PlayInternal(clip, -1, crossfadeDuration, false, onFinished);
         }
 
         /// <summary>
-        /// Stops playback and resets the current clip index.
+        /// Plays a clip once, then stops the graph and releases the transforms.
+        /// </summary>
+        public void PlayOnce(string clipName, float crossfadeDuration = 0f, Action onFinished = null)
+        {
+            if (TryGetIndex(clipName, out int index)) PlayOnce(index, crossfadeDuration, onFinished);
+        }
+
+        /// <summary>
+        /// Plays a clip once, then stops the graph and releases the transforms.
+        /// </summary>
+        public void PlayOnce(int index, float crossfadeDuration = 0f, Action onFinished = null)
+        {
+            if (TryGetClip(index, out var clip)) PlayInternal(clip, index, crossfadeDuration, true, onFinished);
+        }
+
+        /// <summary>
+        /// Plays a clip once, then stops the graph and releases the transforms.
+        /// </summary>
+        public void PlayOnce(AnimationClip clip, float crossfadeDuration = 0f, Action onFinished = null)
+        {
+            if (!clip)
+            {
+                Debug.LogError("Clip is null.", this);
+                return;
+            }
+
+            PlayInternal(clip, -1, crossfadeDuration, true, onFinished);
+        }
+
+        /// <summary>
+        /// Stops playback and releases the transforms.
         /// </summary>
         public void Stop()
         {
@@ -254,6 +300,8 @@ namespace DNExtensions.Utilities
             ClearSlot(1);
             _currentIndex = -1;
             _isCrossfading = false;
+            _autoStop = false;
+            _onFinished = null;
         }
     }
 }
