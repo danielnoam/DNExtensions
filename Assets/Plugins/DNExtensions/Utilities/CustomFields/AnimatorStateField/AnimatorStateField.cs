@@ -29,6 +29,18 @@ namespace DNExtensions.Utilities.CustomFields
             stateHash = Animator.StringToHash(stateName);
             assigned = !string.IsNullOrEmpty(stateName);
         }
+        
+        public void Play(int layer = -1, float normalizedTime = float.NegativeInfinity)
+        {
+            if (!assigned || !animator) return;
+            animator.Play(stateHash, layer, normalizedTime);
+        }
+        
+        public void CrossFade(float duration, int layer = -1, float normalizedTime = 0f)
+        {
+            if (!assigned || !animator) return;
+            animator.CrossFade(stateHash, duration, layer, normalizedTime);
+        }
 
         public static implicit operator int(AnimatorStateField field) => field.stateHash;
         public static implicit operator string(AnimatorStateField field) => field.stateName;

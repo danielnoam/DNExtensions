@@ -3,11 +3,10 @@ using Unity.Cinemachine;
 
 namespace DNExtensions.Utilities.CinemachineExtensions
 {
-    [AddComponentMenu("Cinemachine/Extensions/Rotation Offset Extension")]
     [SaveDuringPlay]
     [DisallowMultipleComponent]
     [CameraPipeline(CinemachineCore.Stage.Aim)]
-    public class CinemachineRotationOffsetExtension : CinemachineExtension
+    public class CinemachineRotationOffset : CinemachineExtension
     {
         [Tooltip("Additional rotation offset to apply (in euler angles)")]
         public Vector3 rotationOffset = Vector3.zero;
