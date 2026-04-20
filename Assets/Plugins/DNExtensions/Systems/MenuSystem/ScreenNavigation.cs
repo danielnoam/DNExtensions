@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using DNExtensions.Utilities;
+using DNExtensions.Utilities.AutoGet;
 using DNExtensions.Utilities.CustomFields;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -9,9 +10,9 @@ using UnityEngine.UI;
 
 namespace DNExtensions.Systems.MenuSystem
 {
-    
     [DisallowMultipleComponent]
     [AddComponentMenu("DNExtensions/Menu System/Screen Navigator")]
+    [RequireComponent(typeof(Screen))]
     public class ScreenNavigation : MonoBehaviour
     {
         [Header("Settings")]
@@ -20,19 +21,38 @@ namespace DNExtensions.Systems.MenuSystem
         [SerializeField] private bool rememberPreviousSelection = true;
         [SerializeField] private bool enableOnPointerEnterSelection = true;
         [SerializeField] private bool enableOnPointerExitDeselection = true;
-        [SerializeField] private OptionalField<Selectable> overrideDefaultSelectable = new OptionalField<Selectable>(false,true);
-
+        [SerializeField] private OptionalField<Selectable> overrideDefaultSelectable = new OptionalField<Selectable>(false, true);
+        [SerializeField, AutoGetSelf, HideInInspector] private Screen screen;
 
         private List<Selectable> _selectables;
         private GameObject _lastSelectedObject;
         private Selectable _defaultSelectable;
 
+        private void OnValidate()
+        {
+            AutoGetSystem.Process(this);
+        }
+
 
         private void Awake()
         {
             SetUpSelectables();
+
+            if (screen)
+            {
+                screen.OnShowComplete += OnScreenShowComplete;
+                screen.OnHideComplete += OnScreenHideComplete;
+            }
         }
-        
+
+        private void OnDestroy()
+        {
+            if (screen)
+            {
+                screen.OnShowComplete -= OnScreenShowComplete;
+                screen.OnHideComplete -= OnScreenHideComplete;
+            }
+        }
 
         private void Update()
         {
@@ -44,48 +64,25 @@ namespace DNExtensions.Systems.MenuSystem
             }
         }
 
-        private void OnEnable()
+        private void OnScreenShowComplete()
         {
-            if (autoSelectOnEnable && EventSystem.current  && !EventSystem.current.currentSelectedGameObject)
+            if (autoSelectOnEnable && EventSystem.current && !EventSystem.current.currentSelectedGameObject)
             {
                 SelectDefault();
             }
         }
 
-        private void OnDisable()
+        private void OnScreenHideComplete()
         {
-            if (rememberPreviousSelection && EventSystem.current)
+            if (!rememberPreviousSelection || !EventSystem.current) return;
+
+            var currentSelected = EventSystem.current.currentSelectedGameObject;
+            if (currentSelected && _selectables.Any(s => s && s.gameObject == currentSelected))
             {
-                var currentSelected = EventSystem.current.currentSelectedGameObject;
-                if (currentSelected && _selectables.Any(s => s && s.gameObject == currentSelected))
-                {
-                    _lastSelectedObject = currentSelected;
-                }
+                _lastSelectedObject = currentSelected;
             }
         }
         
-        public void SetUpSelectables()
-        {
-            _selectables = new List<Selectable>(GetComponentsInChildren<Selectable>(true));
-
-            if (_selectables.Count == 0)
-            {
-                return;
-            }
-
-            _defaultSelectable = overrideDefaultSelectable ? overrideDefaultSelectable.Value : _selectables[0];
-
-            if (enableOnPointerEnterSelection)
-            {
-                _selectables?.EnableOnPointerEnterSelection();
-            }
-
-            if (enableOnPointerExitDeselection)
-            {
-                _selectables?.EnableOnPointerExitDeselection();
-            }
-        }
-
         private void SelectDefault()
         {
             if (rememberPreviousSelection && _lastSelectedObject && _lastSelectedObject.activeInHierarchy)
@@ -97,14 +94,12 @@ namespace DNExtensions.Systems.MenuSystem
                 }
             }
 
-            
             if (_defaultSelectable)
             {
                 _defaultSelectable.SetSelected();
                 return;
             }
-            
-            
+
             foreach (var selectable in _selectables)
             {
                 if (selectable)
@@ -114,7 +109,6 @@ namespace DNExtensions.Systems.MenuSystem
                 }
             }
         }
-        
 
         private bool IsNavigationInputPressed()
         {
@@ -126,6 +120,25 @@ namespace DNExtensions.Systems.MenuSystem
 
             return moveAction.ReadValue<Vector2>() != Vector2.zero;
         }
-        
+
+        public void SetUpSelectables()
+        {
+            _selectables = new List<Selectable>(GetComponentsInChildren<Selectable>(true));
+
+            if (_selectables.Count != 0)
+            {
+                _defaultSelectable = overrideDefaultSelectable ? overrideDefaultSelectable.Value : _selectables[0];
+
+                if (enableOnPointerEnterSelection)
+                {
+                    _selectables?.EnableOnPointerEnterSelection();
+                }
+
+                if (enableOnPointerExitDeselection)
+                {
+                    _selectables?.EnableOnPointerExitDeselection();
+                }
+            }
+        }
     }
 }

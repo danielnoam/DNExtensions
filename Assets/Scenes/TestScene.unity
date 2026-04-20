@@ -2927,6 +2927,32 @@ MonoBehaviour:
   soLayerMask: {fileID: 11400000, guid: 96fbcfbb71363524cbbe1adcd3d8301c, type: 2}
   soAnimationCurve: {fileID: 11400000, guid: a7e17dced47b47e448d07683c930d6e0, type: 2}
   soEvent: {fileID: 11400000, guid: 49b49b563de60294da9f038f50f57d25, type: 2}
+  optionalSoAnimationCurve:
+    soValue: {fileID: 0}
+    fallbackValue:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
   references:
     version: 2
     RefIds:

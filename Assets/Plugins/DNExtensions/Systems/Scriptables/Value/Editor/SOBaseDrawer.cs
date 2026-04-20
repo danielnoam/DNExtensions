@@ -3,13 +3,10 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.Scriptables
 {
-    /// <summary>
-    /// Custom property drawer for SOBase that displays inline value editing in the inspector.
-    /// </summary>
     [CustomPropertyDrawer(typeof(SOBase), true)]
-    public class SOValueDrawer : PropertyDrawer
+    internal class SOBaseDrawer : PropertyDrawer
     {
-        private const float ValueWidthRatio = 0.6f; 
+        private const float ValueWidthRatio = 0.6f;
         private const float Gap = 5f;
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -21,9 +18,9 @@ namespace DNExtensions.Systems.Scriptables
             if (property.objectReferenceValue != null)
             {
                 using var so = new SerializedObject(property.objectReferenceValue);
-                var valueProp = so.FindProperty("value");
-                var allowEditingProp = so.FindProperty("allowEditingInReference");
-                
+                SerializedProperty valueProp = so.FindProperty("value");
+                SerializedProperty allowEditingProp = so.FindProperty("allowEditingInReference");
+
                 bool showValue = allowEditingProp == null || allowEditingProp.boolValue;
 
                 if (showValue && valueProp != null)
@@ -34,12 +31,12 @@ namespace DNExtensions.Systems.Scriptables
 
                     Rect valueRect = new Rect(position.x, position.y, valueWidth, position.height);
                     Rect objectRect = new Rect(position.x + valueWidth + Gap, position.y, objectWidth, EditorGUIUtility.singleLineHeight);
-                    
+
                     EditorGUI.ObjectField(objectRect, property, GUIContent.none);
 
                     so.Update();
                     EditorGUI.BeginChangeCheck();
-                    
+
                     bool prevWideMode = EditorGUIUtility.wideMode;
                     float prevLabelWidth = EditorGUIUtility.labelWidth;
                     int prevIndent = EditorGUI.indentLevel;
@@ -47,8 +44,8 @@ namespace DNExtensions.Systems.Scriptables
                     EditorGUIUtility.wideMode = true;
                     EditorGUI.indentLevel = 0;
                     EditorGUIUtility.labelWidth = 14f;
-                    
-                    EditorGUI.PropertyField(valueRect, valueProp, GUIContent.none, true);
+
+                    DrawColorAwareField(valueRect, so, valueProp);
 
                     EditorGUI.indentLevel = prevIndent;
                     EditorGUIUtility.labelWidth = prevLabelWidth;
@@ -71,14 +68,14 @@ namespace DNExtensions.Systems.Scriptables
 
             EditorGUI.EndProperty();
         }
-        
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             if (property.objectReferenceValue)
             {
                 using var so = new SerializedObject(property.objectReferenceValue);
-                var valueProp = so.FindProperty("value");
-                var allowEditingProp = so.FindProperty("allowEditingInReference");
+                SerializedProperty valueProp = so.FindProperty("value");
+                SerializedProperty allowEditingProp = so.FindProperty("allowEditingInReference");
 
                 bool showValue = allowEditingProp == null || allowEditingProp.boolValue;
 
@@ -87,7 +84,35 @@ namespace DNExtensions.Systems.Scriptables
                     return Mathf.Max(EditorGUI.GetPropertyHeight(valueProp, true), EditorGUIUtility.singleLineHeight);
                 }
             }
+
             return EditorGUIUtility.singleLineHeight;
+        }
+
+        private static void DrawColorAwareField(Rect rect, SerializedObject so, SerializedProperty valueProp)
+        {
+            if (valueProp.propertyType != SerializedPropertyType.Color)
+            {
+                EditorGUI.PropertyField(rect, valueProp, GUIContent.none, true);
+                return;
+            }
+
+            SerializedProperty isHDRProp = so.FindProperty("isHDR");
+            SerializedProperty showAlphaProp = so.FindProperty("showAlpha");
+
+            if (isHDRProp == null && showAlphaProp == null)
+            {
+                EditorGUI.PropertyField(rect, valueProp, GUIContent.none, true);
+                return;
+            }
+
+            valueProp.colorValue = EditorGUI.ColorField(
+                rect,
+                GUIContent.none,
+                valueProp.colorValue,
+                showEyedropper: true,
+                showAlpha: showAlphaProp?.boolValue ?? true,
+                hdr: isHDRProp?.boolValue ?? false
+            );
         }
     }
 }

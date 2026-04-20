@@ -60,8 +60,7 @@ namespace DNExtensions.Utilities
 
         private void Start()
         {
-            if (playOnStart && clips is { Length: > 0 })
-                Play(playOnStart.Value);
+            if (playOnStart && clips is { Length: > 0 }) Play(playOnStart.Value);
         }
 
         private void Update()
@@ -217,23 +216,16 @@ namespace DNExtensions.Utilities
             _autoStop = false;
             _onFinished = null;
         }
-
-   
-
+        
         /// <summary>
-        /// Gets the clip at the specified index, or null if out of range.
+        /// Plays a clip starting at the specified normalized time (0 = start, 1 = end).
         /// </summary>
-        public AnimationClip GetClip(int index)
+        public void Play(int index, float normalizedTime, float crossfadeDuration = 0f, Action onFinished = null)
         {
-            return index >= 0 && index < clips.Length ? clips[index] : null;
-        }
-
-        /// <summary>
-        /// Plays a clip and holds the last frame when finished.
-        /// </summary>
-        public void Play(string clipName, float crossfadeDuration = 0f, Action onFinished = null)
-        {
-            if (TryGetIndex(clipName, out int index)) Play(index, crossfadeDuration, onFinished);
+            if (!TryGetClip(index, out var clip)) return;
+            PlayInternal(clip, index, crossfadeDuration, false, onFinished);
+            var clipPlayable = (AnimationClipPlayable)_mixer.GetInput(_activeSlot);
+            clipPlayable.SetTime(clip.length * normalizedTime);
         }
 
         /// <summary>
@@ -257,14 +249,7 @@ namespace DNExtensions.Utilities
 
             PlayInternal(clip, -1, crossfadeDuration, false, onFinished);
         }
-
-        /// <summary>
-        /// Plays a clip once, then stops the graph and releases the transforms.
-        /// </summary>
-        public void PlayOnce(string clipName, float crossfadeDuration = 0f, Action onFinished = null)
-        {
-            if (TryGetIndex(clipName, out int index)) PlayOnce(index, crossfadeDuration, onFinished);
-        }
+        
 
         /// <summary>
         /// Plays a clip once, then stops the graph and releases the transforms.
@@ -290,6 +275,7 @@ namespace DNExtensions.Utilities
 
         /// <summary>
         /// Stops playback and releases the transforms.
+        /// Does not invoke onFinished — that only fires on natural clip completion.
         /// </summary>
         public void Stop()
         {
@@ -302,6 +288,24 @@ namespace DNExtensions.Utilities
             _isCrossfading = false;
             _autoStop = false;
             _onFinished = null;
+        }
+        
+        /// <summary>
+        /// Gets the clip at the specified index, or null if out of range.
+        /// </summary>
+        public AnimationClip GetClip(int index)
+        {
+            return index >= 0 && index < clips.Length ? clips[index] : null;
+        }
+
+        /// <summary>
+        /// Checks if the specified clip is in the clips array and can be played.
+        /// </summary>
+        /// <param name="clip"></param>
+        /// <returns></returns>
+        public bool IsClipAvailable(AnimationClip clip)
+        {
+            return clip && Array.Exists(clips, c => c == clip);
         }
     }
 }

@@ -3,22 +3,22 @@ using UnityEngine;
 
 namespace DNExtensions.Systems.Scriptables
 {
-    /// <summary>
-    /// Custom editor for <see cref="SOColorHDR"/> that draws the value field with HDR support.
-    /// </summary>
-    [CustomEditor(typeof(SOColorHDR))]
-    public class SOColorHDREditor : SOBaseEditor
+    [CustomEditor(typeof(SOColor))]
+    internal class SOColorEditor : SOBaseEditor
     {
         protected override void DrawValueProperty(SerializedProperty valueProperty)
         {
+            SerializedProperty isHDRProp = serializedObject.FindProperty("isHDR");
+            SerializedProperty showAlphaProp = serializedObject.FindProperty("showAlpha");
+
             EditorGUI.BeginChangeCheck();
 
             Color color = EditorGUILayout.ColorField(
                 new GUIContent("Value"),
                 valueProperty.colorValue,
                 showEyedropper: true,
-                showAlpha: true,
-                hdr: true
+                showAlpha: showAlphaProp?.boolValue ?? true,
+                hdr: isHDRProp?.boolValue ?? false
             );
 
             if (EditorGUI.EndChangeCheck())

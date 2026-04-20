@@ -23,16 +23,20 @@ namespace DNExtensions.Systems.MenuSystem
         private Sequence _animationSequence;
         private CanvasGroup _canvasGroup;
         private RectTransform _rectTransform;
+
         public Vector3 TransformOriginalAnchoredPosition { get; private set; }
         public Vector3 TransformOriginalScale { get; private set; }
         public CanvasGroup CanvasGroup => _canvasGroup ? _canvasGroup : _canvasGroup = GetComponent<CanvasGroup>();
         public RectTransform RectTransform => _rectTransform ? _rectTransform : _rectTransform = GetComponent<RectTransform>();
 
+        public event Action OnShowComplete;
+        public event Action OnHideComplete;
+
         private void Awake()
         {
             _canvasGroup = this.GetOrAddComponent<CanvasGroup>();
             _rectTransform = this.GetOrAddComponent<RectTransform>();
-            
+
             TransformOriginalScale = RectTransform.localScale;
             TransformOriginalAnchoredPosition = RectTransform.anchoredPosition3D;
         }
@@ -57,7 +61,7 @@ namespace DNExtensions.Systems.MenuSystem
             }
 
             CanvasGroup.alpha = 0f;
-            CanvasGroup.interactable = disableInteractionsDuringAnimation;
+            CanvasGroup.interactable = !disableInteractionsDuringAnimation;
             CanvasGroup.blocksRaycasts = false;
 
             _animationSequence = Sequence.Create();
@@ -65,15 +69,13 @@ namespace DNExtensions.Systems.MenuSystem
             foreach (var anim in showAnimations)
             {
                 if (anim == null) continue;
-                var sequence = anim.CreateSequence(this);
-                _animationSequence.Group(sequence);
+                _animationSequence.Group(anim.CreateSequence(this));
             }
 
             _animationSequence.ChainCallback(() =>
             {
-                CanvasGroup.interactable = true;
-                CanvasGroup.blocksRaycasts = true;
                 onComplete?.Invoke();
+                ShowInstant();
             });
         }
 
@@ -87,8 +89,8 @@ namespace DNExtensions.Systems.MenuSystem
 
             if (!animated || hideAnimations == null || hideAnimations.Count == 0)
             {
-                HideInstant();
                 onComplete?.Invoke();
+                HideInstant();
                 return;
             }
 
@@ -102,14 +104,13 @@ namespace DNExtensions.Systems.MenuSystem
             foreach (var anim in hideAnimations)
             {
                 if (anim == null) continue;
-                var sequence = anim.CreateSequence(this);
-                _animationSequence.Group(sequence);
+                _animationSequence.Group(anim.CreateSequence(this));
             }
 
             _animationSequence.ChainCallback(() =>
             {
-                gameObject.SetActive(false);
                 onComplete?.Invoke();
+                HideInstant();
             });
         }
 
@@ -120,11 +121,13 @@ namespace DNExtensions.Systems.MenuSystem
             CanvasGroup.blocksRaycasts = true;
             RectTransform.localScale = TransformOriginalScale;
             RectTransform.anchoredPosition3D = TransformOriginalAnchoredPosition;
+            OnShowComplete?.Invoke();
         }
 
         private void HideInstant()
         {
             CanvasGroup.alpha = 0f;
+            OnHideComplete?.Invoke();
             gameObject.SetActive(false);
         }
     }

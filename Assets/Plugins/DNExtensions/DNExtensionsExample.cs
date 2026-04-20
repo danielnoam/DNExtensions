@@ -76,6 +76,7 @@ namespace DNExtensions
         public SOLayerMask soLayerMask;
         public SOAnimationCurve soAnimationCurve;
         public SOEvent soEvent;
+        public OptionalSOAnimationCurve optionalSoAnimationCurve;
 
         /// <summary>
         /// Generates an impulse using the configured Cinemachine impulse source.
