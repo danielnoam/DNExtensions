@@ -51,6 +51,36 @@ namespace DNExtensions.Utilities
             get => endAngle;
             set { endAngle = value; SetDirty(); }
         }
+
+        public bool OnlyLayoutVisible
+        {
+            get => onlyLayoutVisible;
+            set { onlyLayoutVisible = value; SetDirty(); }
+        }
+
+        public bool ControlChildSize
+        {
+            get => controlChildSize;
+            set { controlChildSize = value; SetDirty(); }
+        }
+        
+        public Vector2 ChildSize
+        {
+            get => childSize;
+            set { childSize = value; SetDirty(); }
+        }
+        
+        public bool RotateChildren
+        {
+            get => rotateChildren;
+            set { rotateChildren = value; SetDirty(); }
+        }
+
+        public float ChildRotationOffset
+        {
+            get => childRotationOffset;
+            set { childRotationOffset = value; SetDirty(); }
+        }
         
         public override void CalculateLayoutInputHorizontal()
         {

@@ -131,7 +131,7 @@ namespace DNExtensions.Systems.ObjectPooling
 
                 if (pool.usePoolHolder)
                 {
-                    var poolHolder = new GameObject() { name = $"{pool.poolName} Holder" };
+                    var poolHolder = new GameObject() { name = $"{pool.PoolName} Holder" };
                     poolHolder.transform.SetParent(Instance._destroyOnLoadParent);
                     parent = poolHolder.transform;
                 }
@@ -165,7 +165,7 @@ namespace DNExtensions.Systems.ObjectPooling
 
                 if (pool.usePoolHolder)
                 {
-                    var poolHolder = new GameObject() { name = $"{pool.poolName} Holder" };
+                    var poolHolder = new GameObject() { name = $"{pool.PoolName} Holder" };
                     poolHolder.transform.SetParent(pool.dontDestroyOnLoad
                         ? _dontDestroyOnLoadParent
                         : _destroyOnLoadParent);

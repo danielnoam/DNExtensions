@@ -17,7 +17,7 @@ namespace DNExtensions.Systems.ObjectPooling
     public class Pool
     {
         [Tooltip("Name of the pool for identification purposes")]
-        public string poolName = "New Pool";
+        public OptionalField<string> overridePoolName = new OptionalField<string>("New Pool", false);
         [Tooltip("Maximum number of objects allowed in the pool")]
         [Min(1)] public int maxPoolSize = 50;
         [Tooltip("The prefab to pool")]
@@ -29,14 +29,14 @@ namespace DNExtensions.Systems.ObjectPooling
         public bool usePoolHolder = true;
         [Tooltip("If max pool size reached and there are no objects in inactive pool, recycle the last active object (this is not recommended, objects are notified that they have been recycled but it is not performant")]
         public bool recycleActiveObjects;
-
-        [Header("Pre Warm")] 
+        
+        [Space(10)]
         [Tooltip("Pre populate the pool")]
         public bool preWarmPool;
         [Tooltip("If pre warm pool, how many objects to pre warm")]
-        public int preWarmPoolSize = 5;
-        [Tooltip("If there are scenes, only pre warm pool if its in the selected scenes")]
-        public SceneField[] scenesToPreWarm = Array.Empty<SceneField>();
+        [EnableIf(nameof(preWarmPool))] public int preWarmPoolSize = 5;
+        [Tooltip("If there are scenes, only pre warm pool if its in the selected sce-=nes")]
+        [EnableIf(nameof(preWarmPool))] public SceneField[] scenesToPreWarm = Array.Empty<SceneField>();
         
         private readonly List<GameObject> _activePool = new List<GameObject>();
         private readonly Queue<GameObject> _inactivePool = new Queue<GameObject>();
@@ -50,6 +50,7 @@ namespace DNExtensions.Systems.ObjectPooling
         public int PoolSize => _activePool.Count + _inactivePool.Count;
         public int ActiveCount => _activePool.Count;
         public int InactiveCount => _inactivePool.Count;
+        public string PoolName => overridePoolName.IsSetAndHasValue() ? overridePoolName.Value :  prefab ? prefab.name : "New Pool";
 
         /// <summary>
         /// Gets an object from the pool or creates a new one if needed.
@@ -64,7 +65,7 @@ namespace DNExtensions.Systems.ObjectPooling
             
             if (!_isInitialized)
             {
-                Debug.LogError($"[{poolName}] Pool not initialized!");
+                Debug.LogError($"[{PoolName}] Pool not initialized!");
                 return null;
             }
 
@@ -139,13 +140,13 @@ namespace DNExtensions.Systems.ObjectPooling
 
             if (_objectsBeingReturned.Contains(obj))
             {
-                Debug.LogWarning($"[{poolName}] Object {obj.name} is already being returned to this pool");
+                Debug.LogWarning($"[{PoolName}] Object {obj.name} is already being returned to this pool");
                 return;
             }
 
             if (!_activePoolSet.Contains(obj))
             {
-                Debug.LogWarning($"[{poolName}] Object {obj.name} not found in active pool");
+                Debug.LogWarning($"[{PoolName}] Object {obj.name} not found in active pool");
                 return;
             }
 

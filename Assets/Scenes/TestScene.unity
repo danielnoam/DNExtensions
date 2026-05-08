@@ -2845,7 +2845,7 @@ MonoBehaviour:
     tagName: Untagged
   optionalField:
     isSet: 1
-    hideValueIfSet: 0
+    hideWhenUnchecked: 0
     value: 
   animatorParameterField:
     parameterType: 1

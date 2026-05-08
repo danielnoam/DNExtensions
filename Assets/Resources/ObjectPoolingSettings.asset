@@ -18,14 +18,32 @@ MonoBehaviour:
   hidePoolHolders: 0
   showDebugMessages: 0
   pools:
-  - poolName: Bullet
+  - overridePoolName:
+      isSet: 1
+      hideWhenUnchecked: 0
+      value: New Pool
     maxPoolSize: 50
     prefab: {fileID: 8842675776293222798, guid: 385e2d0b9f979d14ca7b058fc6b2988c, type: 3}
     dontDestroyOnLoad: 0
     usePoolHolder: 0
     recycleActiveObjects: 0
     preWarmPool: 1
-    preWarmPoolSize: 5
+    preWarmPoolSize: 1
+    scenesToPreWarm:
+    - sceneAsset: {fileID: 102900000, guid: 5db86f2bb95500b438ebfbf95acd3568, type: 3}
+      sceneName: TestScene
+      scenePath: Assets/Scenes/TestScene.unity
+  - overridePoolName:
+      isSet: 0
+      hideWhenUnchecked: 0
+      value: New Pool fghfgh
+    maxPoolSize: 50
+    prefab: {fileID: 919132149155446097, guid: 1a4f638424573cc499865f3aad334cd2, type: 3}
+    dontDestroyOnLoad: 0
+    usePoolHolder: 0
+    recycleActiveObjects: 0
+    preWarmPool: 0
+    preWarmPoolSize: 0
     scenesToPreWarm:
     - sceneAsset: {fileID: 102900000, guid: 5db86f2bb95500b438ebfbf95acd3568, type: 3}
       sceneName: TestScene

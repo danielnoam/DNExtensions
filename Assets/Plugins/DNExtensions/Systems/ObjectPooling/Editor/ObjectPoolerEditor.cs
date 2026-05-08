@@ -29,7 +29,7 @@ namespace DNExtensions.Systems.ObjectPooling
             {
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-                EditorGUILayout.LabelField(pool.poolName, EditorStyles.boldLabel);
+                EditorGUILayout.LabelField(pool.PoolName, EditorStyles.boldLabel);
 
                 EditorGUI.indentLevel++;
                 EditorGUILayout.LabelField("Pool Size", pool.PoolSize.ToString());

@@ -11,7 +11,7 @@ namespace DNExtensions.Utilities.CustomFields
     public struct OptionalField<T>
     {
         public bool isSet;
-        public bool hideValueIfSet;
+        public bool hideWhenUnchecked;
         [SerializeField] private T value;
         
         
@@ -20,24 +20,24 @@ namespace DNExtensions.Utilities.CustomFields
         /// </summary>
         /// <param name="value"></param>
         /// <param name="isSet"></param>
-        /// <param name="hideValueIfSet"></param>
-        public OptionalField(T value, bool isSet = false, bool hideValueIfSet = false)
+        /// <param name="hideWhenUnchecked"></param>
+        public OptionalField(T value, bool isSet = false, bool hideWhenUnchecked = false)
         {
             this.value = value;
             this.isSet = isSet;
-            this.hideValueIfSet = hideValueIfSet;
+            this.hideWhenUnchecked = hideWhenUnchecked;
         }
         
         /// <summary>
         /// Constructor. Creates unchecked field with default(T) value.
         /// </summary>
         /// <param name="isSet"></param>
-        /// <param name="hideValueIfSet"></param>
-        public OptionalField(bool isSet = false, bool hideValueIfSet = false)
+        /// <param name="hideWhenUnchecked"></param>
+        public OptionalField(bool isSet = false, bool hideWhenUnchecked = false)
         {
             value = default;
             this.isSet = isSet;
-            this.hideValueIfSet = hideValueIfSet;
+            this.hideWhenUnchecked = hideWhenUnchecked;
         }
         
         
