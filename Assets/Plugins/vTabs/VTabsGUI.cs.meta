@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 3513d7b44a8b94c8d800e841067bf035
+guid: 291c4a11da18041c49b4772d9e054145
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
@@ -11,8 +11,8 @@ MonoImporter:
   assetBundleVariant: 
 AssetOrigin:
   serializedVersion: 1
-  productId: 253397
-  packageName: vHierarchy 2
-  packageVersion: 2.1.9
-  assetPath: Assets/Plugins/vHierarchy/VHierarchyController.cs
-  uploadId: 936112
+  productId: 253396
+  packageName: vTabs 2
+  packageVersion: 2.1.6
+  assetPath: Assets/vTabs/VTabsGUI.cs
+  uploadId: 874244

@@ -907,7 +907,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.027
   m_OutlineColor: {r: 0, g: 0.9176359, b: 1, a: 1}
-  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_Size: 0.434
   m_Sides: 8
   m_InnerRadius: 0.266
@@ -1135,6 +1134,8 @@ GameObject:
   - component: {fileID: 551287425}
   - component: {fileID: 551287426}
   - component: {fileID: 551287427}
+  - component: {fileID: 551287429}
+  - component: {fileID: 551287428}
   m_Layer: 5
   m_Name: Menu
   m_TagString: Untagged
@@ -1201,8 +1202,39 @@ MonoBehaviour:
   enableOnPointerExitDeselection: 1
   overrideDefaultSelectable:
     isSet: 0
-    hideValueIfSet: 0
+    hideWhenUnchecked: 1
     value: {fileID: 0}
+  screen: {fileID: 551287428}
+--- !u!114 &551287428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 551287424}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ef3bbb82197ca04a8d17adf2d9adec3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensions.Systems.MenuSystem.Screen
+  disableInteractionsDuringAnimation: 1
+  showAnimations: []
+  hideAnimations: []
+  references:
+    version: 2
+    RefIds: []
+--- !u!225 &551287429
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 551287424}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &554429278
 GameObject:
   m_ObjectHideFlags: 0
@@ -1913,8 +1945,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1363994941}
   m_HandleRect: {fileID: 1363994940}
   m_Direction: 2
-  m_Value: 1.0000001
-  m_Size: 0
+  m_Value: 1
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2577,7 +2609,7 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1091749623}
   m_Enabled: 1
-  serializedVersion: 12
+  serializedVersion: 13
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
@@ -2629,7 +2661,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShadowRadius: 0
+  m_ShapeRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -2919,7 +2951,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.02
   m_OutlineColor: {r: 0.72955966, g: 0.72955966, b: 0.72955966, a: 1}
-  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_Width: 0.48
   m_Height: 0.48
   m_Rounding: 0.029
@@ -3398,7 +3429,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1244931439}
   m_HandleRect: {fileID: 1244931438}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -3843,7 +3874,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.027
   m_OutlineColor: {r: 0, g: 0.9176359, b: 1, a: 1}
-  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_Size: 0.434
   m_Sides: 8
   m_InnerRadius: 0.266
@@ -5402,7 +5432,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0}
   m_OutlineThickness: 0.02
   m_OutlineColor: {r: 0.72955966, g: 0.72955966, b: 0.72955966, a: 1}
-  m_SDFShader: {fileID: -6465566751694194690, guid: e616caa92c5094c48a31e485a4eadd13, type: 3}
   m_Width: 0.48
   m_Height: 0.48
   m_Rounding: 0.029
@@ -5433,6 +5462,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
