@@ -71,6 +71,18 @@ namespace DNExtensions.Systems.AudioTrack
         }
 
         /// <summary>
+        /// Restarts a track from the beginning and fades it in.
+        /// </summary>
+        /// <param name="id">Track ID as defined in SOAudioTrackSettings.</param>
+        /// <param name="fadeDuration">Duration of the fade-in in seconds.</param>
+        public static void Restart(string id, float fadeDuration = 1f)
+        {
+            if (!Instance || !Instance.TryGetTrack(id, out var track)) return;
+            track.Source.time = 0f;
+            Instance.StartFade(track, track.TargetVolume, fadeDuration);
+        }
+
+        /// <summary>
         /// Fades out one track and in another sequentially or simultaneously.
         /// </summary>
         /// <param name="trackOutID">Track ID to fade out.</param>

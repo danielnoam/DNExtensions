@@ -119,6 +119,55 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &13160641
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 13160643}
+  - component: {fileID: 13160642}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!320 &13160642
+PlayableDirector:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 13160641}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_PlayableAsset: {fileID: 11400000, guid: 7a4b838d90e75434193309630c97b388, type: 2}
+  m_InitialState: 1
+  m_WrapMode: 2
+  m_DirectorUpdateMode: 1
+  m_InitialTime: 0
+  m_SceneBindings: []
+  m_ExposedReferences:
+    m_References: []
+--- !u!4 &13160643
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 13160641}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.26409, y: -2.66, z: 13.05922}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &165824873
 GameObject:
   m_ObjectHideFlags: 0
@@ -1327,7 +1376,7 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1003238961}
   m_Enabled: 1
-  serializedVersion: 12
+  serializedVersion: 13
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
@@ -1379,7 +1428,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShadowRadius: 0
+  m_ShapeRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -2832,7 +2881,7 @@ MonoBehaviour:
   conditionalFloat: 6.38
   conditionalInt: 17
   prefabSelector: {fileID: 8842675776293222798, guid: 385e2d0b9f979d14ca7b058fc6b2988c, type: 3}
-  soSelector: {fileID: 11400000, guid: 9eb30a3edc84f4d4b921d3b0f252bda2, type: 2}
+  soSelector: {fileID: 0}
   linkedVector3Field: {x: 0, y: 0, z: 0}
   sceneField:
     sceneAsset: {fileID: 0}
@@ -2851,7 +2900,7 @@ MonoBehaviour:
     parameterType: 1
     source: 1
     componentAnimator: {fileID: 1526888422}
-    assetController: {fileID: 9100000, guid: e121b90c731a0ad408cf278f3785c092, type: 2}
+    assetController: {fileID: 0}
     parameterName: 
     parameterHash: 0
   animatorStateField:
@@ -2876,13 +2925,13 @@ MonoBehaviour:
   testStrings:
     internalItems:
     - item: 
-      chance: 63
+      chance: 65
       isLocked: 0
     - item: 
-      chance: 19
+      chance: 24
       isLocked: 0
     - item: 
-      chance: 18
+      chance: 11
       isLocked: 0
   testInts:
     internalItems: []
@@ -4746,3 +4795,4 @@ SceneRoots:
   - {fileID: 624202928}
   - {fileID: 1988736370}
   - {fileID: 180313890}
+  - {fileID: 13160643}

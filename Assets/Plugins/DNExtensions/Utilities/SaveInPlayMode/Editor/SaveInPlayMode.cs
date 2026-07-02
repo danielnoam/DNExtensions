@@ -2,21 +2,37 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DNExtensions.Utilities {
-    
+
     /// <summary>
     /// Handles SaveInPlayMode functionality by adding save buttons and managing state preservation.
     /// During play mode, all components (except blacklisted ones) get a save button.
     /// </summary>
     [InitializeOnLoad]
     internal static class SaveInPlayModeHandler {
-        
-        
+
+
         private const string SaveIcon = "💾";
         private static readonly Color StyleBackgroundColor = new Color(0.3f, 0.7f, 0.3f, 0.3f);
         private static readonly HashSet<string> MarkedForSave = new HashSet<string>();
-        private static readonly Dictionary<string, string> SavedData = new Dictionary<string, string>();
+        private static readonly Dictionary<string, ComponentSnapshot> SavedData = new Dictionary<string, ComponentSnapshot>();
+
+        /// <summary>
+        /// Snapshot of a component's state. Object reference fields are captured separately via
+        /// GlobalObjectId rather than relying on EditorJsonUtility, because JSON embeds the raw
+        /// instance ID of referenced objects. Instance IDs are only valid for the play mode session
+        /// they were captured in - once play mode exits those objects are gone and the IDs get
+        /// recycled, so restoring them directly either nulls the reference out or points it at
+        /// whatever unrelated object now owns that recycled ID. GlobalObjectId instead encodes a
+        /// stable identifier (scene + local file ID for scene objects, asset GUID for assets) that
+        /// still resolves correctly after returning to edit mode.
+        /// </summary>
+        private class ComponentSnapshot {
+            public string Json;
+            public Dictionary<string, string> ObjectReferences;
+        }
 
 
         static SaveInPlayModeHandler()
@@ -80,8 +96,7 @@ namespace DNExtensions.Utilities {
                 SavedData.Remove(key);
             }
             else {
-                string json = EditorJsonUtility.ToJson(comp, false);
-                SavedData[key] = json;
+                SavedData[key] = CaptureSnapshot(comp);
             }
         }
 
@@ -104,24 +119,81 @@ namespace DNExtensions.Utilities {
             foreach (string key in MarkedForSave) {
                 Component comp = GetComponentFromKey(key);
                 if (comp != null) {
-                    string json = EditorJsonUtility.ToJson(comp, false);
-                    SavedData[key] = json;
+                    SavedData[key] = CaptureSnapshot(comp);
                 }
             }
+        }
+
+        /// <summary>
+        /// Captures a component's state as JSON plus a separate table of object reference fields
+        /// keyed by property path, using GlobalObjectId to identify each referenced object.
+        /// </summary>
+        private static ComponentSnapshot CaptureSnapshot(Component comp) {
+            var snapshot = new ComponentSnapshot {
+                Json = EditorJsonUtility.ToJson(comp, false),
+                ObjectReferences = new Dictionary<string, string>()
+            };
+
+            var serializedObject = new SerializedObject(comp);
+            var property = serializedObject.GetIterator();
+            while (property.NextVisible(true)) {
+                if (property.propertyType != SerializedPropertyType.ObjectReference) continue;
+
+                var value = property.objectReferenceValue;
+                snapshot.ObjectReferences[property.propertyPath] = value != null
+                    ? GlobalObjectId.GetGlobalObjectIdSlow(value).ToString()
+                    : string.Empty;
+            }
+
+            return snapshot;
         }
 
         private static void RestoreSavedComponents() {
             foreach (var kvp in SavedData) {
                 Component comp = GetComponentFromKey(kvp.Key);
                 if (comp != null) {
-                    Undo.RecordObject(comp, "Restore Play Mode Changes");
-                    EditorJsonUtility.FromJsonOverwrite(kvp.Value, comp);
-                    EditorUtility.SetDirty(comp);
+                    ApplySnapshot(comp, kvp.Value);
                 }
             }
-            
+
             MarkedForSave.Clear();
             SavedData.Clear();
+        }
+
+        /// <summary>
+        /// Restores a captured snapshot onto a component. Non-reference fields are restored via
+        /// JSON overwrite; object reference fields are then resolved from their GlobalObjectId and
+        /// applied explicitly, overriding whatever (potentially stale) reference JSON produced.
+        /// </summary>
+        private static void ApplySnapshot(Component comp, ComponentSnapshot snapshot) {
+            Undo.RecordObject(comp, "Restore Play Mode Changes");
+            EditorJsonUtility.FromJsonOverwrite(snapshot.Json, comp);
+
+            if (snapshot.ObjectReferences.Count > 0) {
+                var serializedObject = new SerializedObject(comp);
+                bool changed = false;
+
+                foreach (var kvp in snapshot.ObjectReferences) {
+                    var property = serializedObject.FindProperty(kvp.Key);
+                    if (property == null) continue;
+
+                    Object resolved = null;
+                    if (!string.IsNullOrEmpty(kvp.Value) && GlobalObjectId.TryParse(kvp.Value, out var id)) {
+                        resolved = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(id);
+                    }
+
+                    if (property.objectReferenceValue != resolved) {
+                        property.objectReferenceValue = resolved;
+                        changed = true;
+                    }
+                }
+
+                if (changed) {
+                    serializedObject.ApplyModifiedPropertiesWithoutUndo();
+                }
+            }
+
+            EditorUtility.SetDirty(comp);
         }
 
         private static string GetGameObjectPath(GameObject go) {

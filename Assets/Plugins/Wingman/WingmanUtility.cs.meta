@@ -1,14 +1,9 @@
 fileFormatVersion: 2
-guid: 7dc29c195490c3c4bacb8aa66e5c1975
-DefaultImporter:
-  externalObjects: {}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+guid: 656a54107deabaf4da994749a655f7d1
 AssetOrigin:
   serializedVersion: 1
   productId: 303181
   packageName: "Wingman - Your Inspector\u2019s Best Friend"
   packageVersion: 1.4.0
-  assetPath: Assets/Plugins/Wingman/ReadMe.pdf
+  assetPath: Assets/Plugins/Wingman/WingmanUtility.cs
   uploadId: 941412
