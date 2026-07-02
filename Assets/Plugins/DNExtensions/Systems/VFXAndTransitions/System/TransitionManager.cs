@@ -12,7 +12,8 @@ namespace DNExtensions.Systems.VFXManager
         private static EffectSequence _pendingOutSequence;
         private static bool _isInitialized;
         private static bool _playingASequence;
-        
+        private static bool _holdAfterLoad = true;
+
 
         static TransitionManager()
         {
@@ -35,13 +36,15 @@ namespace DNExtensions.Systems.VFXManager
                 VFXManager.Instance.PlaySequence(_pendingOutSequence);
                 _pendingOutSequence = null;
             }
-            else
+            else if (!_holdAfterLoad)
             {
                 VFXManager.Instance.ResetActiveEffects();
             }
+
+            _holdAfterLoad = true;
         }
 
-        private static void StartTransition(EffectSequence sequenceIn, EffectSequence sequenceOut, Action loadAction)
+        private static void StartTransition(EffectSequence sequenceIn, EffectSequence sequenceOut, Action loadAction, bool holdAfterLoad = false)
         {
             if (_activeTransition.isAlive)
             {
@@ -51,6 +54,7 @@ namespace DNExtensions.Systems.VFXManager
 
             var duration = VFXManager.Instance.PlaySequence(sequenceIn);
             _pendingOutSequence = sequenceOut;
+            _holdAfterLoad = holdAfterLoad;
             _playingASequence = true;
 
             _activeTransition = Sequence.Create()
@@ -64,38 +68,44 @@ namespace DNExtensions.Systems.VFXManager
 
         /// <summary>
         /// Transitions to a new scene with optional visual effects sequences for in and out transitions.
+        /// When holdAfterLoad is true and no out sequence is provided, the active effects are kept after the load
+        /// instead of being reset (e.g. to keep the screen black until a cinematic fades it back in).
         /// </summary>
-        public static void TransitionToScene(string sceneName, EffectSequence sequenceIn = null, EffectSequence sequenceOut = null)
+        public static void TransitionToScene(string sceneName, EffectSequence sequenceIn = null, EffectSequence sequenceOut = null, bool holdAfterLoad = false)
         {
             if (!VFXManager.Instance)
             {
-                SceneManager.LoadScene(sceneName); return; 
+                SceneManager.LoadScene(sceneName); return;
             }
-            StartTransition(sequenceIn, sequenceOut, () => SceneManager.LoadScene(sceneName));
+            StartTransition(sequenceIn, sequenceOut, () => SceneManager.LoadScene(sceneName), holdAfterLoad);
         }
 
         /// <summary>
         /// Transitions to a new scene by index with optional visual effects sequences for in and out transitions.
+        /// When holdAfterLoad is true and no out sequence is provided, the active effects are kept after the load
+        /// instead of being reset (e.g. to keep the screen black until a cinematic fades it back in).
         /// </summary>
-        public static void TransitionToScene(int sceneIndex, EffectSequence sequenceIn = null, EffectSequence sequenceOut = null)
+        public static void TransitionToScene(int sceneIndex, EffectSequence sequenceIn = null, EffectSequence sequenceOut = null, bool holdAfterLoad = false)
         {
             if (!VFXManager.Instance)
             {
                 SceneManager.LoadScene(sceneIndex); return;
             }
-            StartTransition(sequenceIn, sequenceOut, () => SceneManager.LoadScene(sceneIndex));
+            StartTransition(sequenceIn, sequenceOut, () => SceneManager.LoadScene(sceneIndex), holdAfterLoad);
         }
 
         /// <summary>
         /// Transitions to a new scene using a SceneField with optional visual effects sequences for in and out transitions.
+        /// When holdAfterLoad is true and no out sequence is provided, the active effects are kept after the load
+        /// instead of being reset (e.g. to keep the screen black until a cinematic fades it back in).
         /// </summary>
-        public static void TransitionToScene(SceneField scene, EffectSequence sequenceIn = null, EffectSequence sequenceOut = null)
+        public static void TransitionToScene(SceneField scene, EffectSequence sequenceIn = null, EffectSequence sequenceOut = null, bool holdAfterLoad = false)
         {
             if (!VFXManager.Instance)
             {
-                scene?.LoadScene(); return; 
+                scene?.LoadScene(); return;
             }
-            StartTransition(sequenceIn, sequenceOut, () => scene?.LoadScene());
+            StartTransition(sequenceIn, sequenceOut, () => scene?.LoadScene(), holdAfterLoad);
         }
 
         /// <summary>
@@ -105,7 +115,7 @@ namespace DNExtensions.Systems.VFXManager
         {
             if (!VFXManager.Instance)
             {
-                Application.Quit(); return; 
+                Application.Quit(); return;
             }
 
             #if UNITY_EDITOR

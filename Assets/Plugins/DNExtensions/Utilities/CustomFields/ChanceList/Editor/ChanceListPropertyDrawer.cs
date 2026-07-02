@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -7,33 +6,32 @@ using UnityEngine;
 namespace DNExtensions.Utilities
 {
     [CustomPropertyDrawer(typeof(ChanceList<>), true)]
-    internal class ChanceListPropertyDrawer : PropertyDrawer
+    public class ChanceListPropertyDrawer : PropertyDrawer
     {
         private readonly Dictionary<string, ReorderableList> _lists = new();
         private readonly Dictionary<string, bool> _isDragging = new();
         private readonly Dictionary<string, int> _dragValues = new();
 
-        private const float ElementHeight = 3f;
         private const float ItemWidthRatio = 0.55f;
-        private const float IntFieldWidth = 30f;
+        private const float ChanceRowHeight = 18f;
+        private const float IntFieldWidth = 35f;
         private const float LockButtonWidth = 20f;
-        private const float Spacing = 5f;
+        private const float Spacing = 4f;
+        private const float ElementPadding = 3f;
 
-        private ReorderableList GetList(SerializedProperty property)
+        private ReorderableList GetOrCreateList(SerializedProperty property)
         {
             string key = property.propertyPath;
-            if (_lists.TryGetValue(key, out var list)) return list;
+            if (_lists.TryGetValue(key, out var existing)) return existing;
 
-            var internalItemsProperty = property.FindPropertyRelative("internalItems");
-            if (internalItemsProperty == null) return null;
-
-            list = new ReorderableList(property.serializedObject, internalItemsProperty, true, false, true, true)
+            var itemsProp = property.FindPropertyRelative("internalItems");
+            var list = new ReorderableList(property.serializedObject, itemsProp, true, true, true, true)
             {
-                drawElementCallback = (rect, index, isActive, isFocused) => DrawElement(rect, index, property),
-                elementHeight = EditorGUIUtility.singleLineHeight + ElementHeight,
+                drawHeaderCallback = rect => DrawHeader(rect, property),
+                drawElementCallback = (rect, index, _, _) => DrawElement(rect, index, property),
+                elementHeightCallback = index => GetElementHeight(index, itemsProp),
                 onAddCallback = OnAdd,
                 onRemoveCallback = OnRemove,
-                drawHeaderCallback = null
             };
 
             _lists[key] = list;
@@ -42,94 +40,17 @@ namespace DNExtensions.Utilities
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            var list = GetList(property);
-            if (list == null) return;
-
             EditorGUI.BeginProperty(position, label, property);
 
-            var internalItemsProperty = property.FindPropertyRelative("internalItems");
-
-            var foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
-
-            if (Event.current.type == EventType.ContextClick && foldoutRect.Contains(Event.current.mousePosition))
-            {
-                ShowContextMenu(property);
-                Event.current.Use();
-            }
-
-            var sizeWidth = GUI.skin.textField.CalcSize(new GUIContent(internalItemsProperty.arraySize.ToString())).x + 35f;
-            var foldoutWidth = position.width - sizeWidth - 5f;
-
-            var actualFoldoutRect = new Rect(foldoutRect.x, foldoutRect.y, foldoutWidth, foldoutRect.height);
-            var sizeFieldRect = new Rect(actualFoldoutRect.xMax + 5f, foldoutRect.y, sizeWidth, foldoutRect.height);
-
-            var boldFoldout = new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold };
-            property.isExpanded = EditorGUI.Foldout(actualFoldoutRect, property.isExpanded, label.text, true, boldFoldout);
-
-            EditorGUI.BeginChangeCheck();
-            int newSize = EditorGUI.DelayedIntField(sizeFieldRect, internalItemsProperty.arraySize);
-            if (EditorGUI.EndChangeCheck())
-            {
-                internalItemsProperty.arraySize = Mathf.Max(0, newSize);
-
-                for (int i = 0; i < internalItemsProperty.arraySize; i++)
-                {
-                    var element = internalItemsProperty.GetArrayElementAtIndex(i);
-                    var chanceProp = element.FindPropertyRelative("chance");
-                    var lockedProp = element.FindPropertyRelative("isLocked");
-                    if (chanceProp.intValue == 0 && !lockedProp.boolValue)
-                        chanceProp.intValue = 10;
-                }
-
-                TriggerNormalization(property, internalItemsProperty);
-            }
+            float foldoutHeight = EditorGUIUtility.singleLineHeight;
+            property.isExpanded = EditorGUI.Foldout(
+                new Rect(position.x, position.y, position.width, foldoutHeight),
+                property.isExpanded, label, true);
 
             if (property.isExpanded)
             {
-                EditorGUI.indentLevel++;
-
-                var contentStartY = position.y + EditorGUIUtility.singleLineHeight + 2f;
-
-                if (internalItemsProperty.arraySize == 0)
-                {
-                    var backgroundRect = new Rect(position.x, contentStartY, position.width, EditorGUIUtility.singleLineHeight * 2f);
-                    GUI.Box(backgroundRect, "", "RL Background");
-
-                    var headerRect = new Rect(backgroundRect.x, backgroundRect.y, backgroundRect.width, EditorGUIUtility.singleLineHeight);
-                    GUI.Box(headerRect, "", "RL Header");
-                    DrawHeader(headerRect);
-
-                    var emptyRect = new Rect(backgroundRect.x + 6f, headerRect.yMax, backgroundRect.width - 12f, EditorGUIUtility.singleLineHeight);
-                    EditorGUI.LabelField(emptyRect, "List is Empty", new GUIStyle(EditorStyles.label) { fontStyle = FontStyle.Italic });
-
-                    var buttonGroupRect = new Rect(backgroundRect.xMax - 71f, backgroundRect.yMax + 1f, 60f, 20f);
-                    GUI.Box(buttonGroupRect, "", "RL Footer");
-
-                    if (GUI.Button(new Rect(buttonGroupRect.x, buttonGroupRect.y, 30f, 16f), "+", "RL FooterButton"))
-                        OnAdd(list);
-
-                    EditorGUI.BeginDisabledGroup(true);
-                    GUI.Button(new Rect(buttonGroupRect.x + 30f, buttonGroupRect.y, 30f, 16f), "-", "RL FooterButton");
-                    EditorGUI.EndDisabledGroup();
-                }
-                else
-                {
-                    var headerRect = new Rect(position.x, contentStartY, position.width, EditorGUIUtility.singleLineHeight);
-                    GUI.Box(headerRect, "", "RL Header");
-                    DrawHeader(headerRect);
-
-                    var listRect = new Rect(position.x, headerRect.yMax, position.width, list.GetHeight());
-
-                    if (Event.current.type == EventType.ContextClick && listRect.Contains(Event.current.mousePosition))
-                    {
-                        ShowContextMenu(property);
-                        Event.current.Use();
-                    }
-
-                    list.DoList(listRect);
-                }
-
-                EditorGUI.indentLevel--;
+                var list = GetOrCreateList(property);
+                list.DoList(new Rect(position.x, position.y + foldoutHeight + 2f, position.width, list.GetHeight()));
             }
 
             EditorGUI.EndProperty();
@@ -137,234 +58,241 @@ namespace DNExtensions.Utilities
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            var list = GetList(property);
-            float height = EditorGUIUtility.singleLineHeight;
-
-            if (!property.isExpanded) return height;
-
-            var internalItemsProperty = property.FindPropertyRelative("internalItems");
-
-            if (internalItemsProperty.arraySize == 0)
-            {
-                height += EditorGUIUtility.singleLineHeight + 2f;
-                height += EditorGUIUtility.singleLineHeight;
-                height += 20f;
-            }
-            else
-            {
-                height += EditorGUIUtility.singleLineHeight + 2f;
-                if (list != null) height += list.GetHeight();
-            }
-
-            return height;
+            if (!property.isExpanded) return EditorGUIUtility.singleLineHeight;
+            return EditorGUIUtility.singleLineHeight + 2f + GetOrCreateList(property).GetHeight();
         }
 
-        private void DrawHeader(Rect rect)
+        private static void DrawHeader(Rect rect, SerializedProperty property)
         {
-            rect.x += EditorGUI.indentLevel * 15f;
-            rect.width -= EditorGUI.indentLevel * 15f;
-
             var bold = new GUIStyle(EditorStyles.label) { fontStyle = FontStyle.Bold };
             var centered = new GUIStyle(EditorStyles.label) { fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
 
+            float lockX = rect.xMax - LockButtonWidth;
+            float intX = lockX - Spacing - IntFieldWidth;
+            float sliderX = rect.x + rect.width * ItemWidthRatio + Spacing;
+            float chanceWidth = lockX - sliderX - Spacing;
+
             GUI.Label(new Rect(rect.x, rect.y, rect.width * ItemWidthRatio, rect.height), "Item", bold);
-            GUI.Label(new Rect(rect.x + rect.width * ItemWidthRatio + 3f, rect.y, rect.width * 0.35f, rect.height), "Chance %", centered);
-            GUI.Label(new Rect(rect.x + rect.width - LockButtonWidth, rect.y, LockButtonWidth, rect.height), "🔒", centered);
+            GUI.Label(new Rect(sliderX, rect.y, chanceWidth + IntFieldWidth + Spacing, rect.height), "Chance %", centered);
+            GUI.Label(new Rect(lockX, rect.y, LockButtonWidth, rect.height), "🔒", centered);
+
+            if (Event.current.type == EventType.ContextClick && rect.Contains(Event.current.mousePosition))
+            {
+                ShowContextMenu(property);
+                Event.current.Use();
+            }
+        }
+
+        private static void ShowContextMenu(SerializedProperty property)
+        {
+            var itemsProp = property.FindPropertyRelative("internalItems");
+            var menu = new GenericMenu();
+
+            menu.AddItem(new GUIContent("Equalize All"), false, () =>
+            {
+                for (int i = 0; i < itemsProp.arraySize; i++)
+                {
+                    var el = itemsProp.GetArrayElementAtIndex(i);
+                    el.FindPropertyRelative("isLocked").boolValue = false;
+                    el.FindPropertyRelative("chance").intValue = 0;
+                }
+                itemsProp.serializedObject.ApplyModifiedProperties();
+                NormalizeViaSp(itemsProp);
+                itemsProp.serializedObject.ApplyModifiedProperties();
+            });
+
+            menu.AddSeparator("");
+
+            menu.AddItem(new GUIContent("Lock All"), false, () =>
+            {
+                for (int i = 0; i < itemsProp.arraySize; i++)
+                    itemsProp.GetArrayElementAtIndex(i).FindPropertyRelative("isLocked").boolValue = true;
+                itemsProp.serializedObject.ApplyModifiedProperties();
+            });
+
+            menu.AddItem(new GUIContent("Unlock All"), false, () =>
+            {
+                for (int i = 0; i < itemsProp.arraySize; i++)
+                    itemsProp.GetArrayElementAtIndex(i).FindPropertyRelative("isLocked").boolValue = false;
+                ApplyAndNormalize(itemsProp);
+            });
+
+            menu.ShowAsContext();
+        }
+
+        private float GetElementHeight(int index, SerializedProperty itemsProp)
+        {
+            if (index >= itemsProp.arraySize) return EditorGUIUtility.singleLineHeight;
+            var itemProp = itemsProp.GetArrayElementAtIndex(index).FindPropertyRelative("item");
+            float itemHeight = EditorGUI.GetPropertyHeight(itemProp, true);
+            return Mathf.Max(itemHeight, ChanceRowHeight) + ElementPadding * 2f;
         }
 
         private void DrawElement(Rect rect, int index, SerializedProperty property)
         {
-            var internalItemsProperty = property.FindPropertyRelative("internalItems");
-            var element = internalItemsProperty.GetArrayElementAtIndex(index);
+            var itemsProp = property.FindPropertyRelative("internalItems");
+            var element = itemsProp.GetArrayElementAtIndex(index);
+            var itemProp = element.FindPropertyRelative("item");
+            var chanceProp = element.FindPropertyRelative("chance");
+            var isLockedProp = element.FindPropertyRelative("isLocked");
 
-            rect.y += 2f;
-            rect.height = EditorGUIUtility.singleLineHeight;
+            float itemHeight = EditorGUI.GetPropertyHeight(itemProp, true);
+            float contentY = rect.y + ElementPadding;
 
-            var itemProperty = element.FindPropertyRelative("item");
-            var chanceProperty = element.FindPropertyRelative("chance");
-            var isLockedProperty = element.FindPropertyRelative("isLocked");
+            float lockX = rect.xMax - LockButtonWidth;
+            float intX = lockX - Spacing - IntFieldWidth;
+            float sliderX = rect.x + rect.width * ItemWidthRatio + Spacing;
 
-            var itemRect = new Rect(rect.x, rect.y, rect.width * ItemWidthRatio, rect.height);
-            var lockButtonRect = new Rect(rect.x + rect.width - LockButtonWidth, rect.y, LockButtonWidth, rect.height);
-            var intFieldRect = new Rect(lockButtonRect.x - Spacing - IntFieldWidth, rect.y, IntFieldWidth, rect.height);
-            var sliderRect = new Rect(itemRect.xMax + Spacing, rect.y, intFieldRect.x - itemRect.xMax - (Spacing * 2), rect.height);
+            var itemRect = new Rect(rect.x, contentY, rect.width * ItemWidthRatio, itemHeight);
 
-            EditorGUI.PropertyField(itemRect, itemProperty, GUIContent.none);
+            // Chance controls anchor to the top of the element row
+            float chanceY = contentY + (itemHeight - ChanceRowHeight) * 0.5f; // vertically center relative to item
+            var sliderRect = new Rect(sliderX, chanceY, intX - sliderX - Spacing, ChanceRowHeight);
+            var intRect = new Rect(intX, chanceY, IntFieldWidth, ChanceRowHeight);
+            var lockRect = new Rect(lockX, chanceY, LockButtonWidth, ChanceRowHeight);
 
-            EditorGUI.BeginDisabledGroup(isLockedProperty.boolValue);
+            EditorGUI.PropertyField(itemRect, itemProp, GUIContent.none, true);
 
             string dragKey = $"{property.propertyPath}_{index}";
 
+            EditorGUI.BeginDisabledGroup(isLockedProp.boolValue);
+
             EditorGUI.BeginChangeCheck();
-            float newChance = GUI.HorizontalSlider(sliderRect, chanceProperty.intValue, 0f, 100f);
+            float sliderVal = GUI.HorizontalSlider(sliderRect, chanceProp.intValue, 0f, 100f);
             if (EditorGUI.EndChangeCheck())
             {
-                int rounded = Mathf.RoundToInt(newChance);
-                chanceProperty.intValue = rounded;
-                _dragValues[dragKey] = rounded;
+                chanceProp.intValue = Mathf.RoundToInt(sliderVal);
+                _dragValues[dragKey] = chanceProp.intValue;
                 _isDragging[dragKey] = true;
-                internalItemsProperty.serializedObject.ApplyModifiedProperties();
             }
 
             if (_isDragging.TryGetValue(dragKey, out bool dragging) && dragging && GUIUtility.hotControl == 0)
             {
                 _isDragging[dragKey] = false;
-                if (_dragValues.TryGetValue(dragKey, out int savedValue))
-                {
-                    chanceProperty.intValue = savedValue;
-                    internalItemsProperty.serializedObject.ApplyModifiedProperties();
-                }
-                TriggerNormalization(property, internalItemsProperty, index);
+                chanceProp.intValue = _dragValues.GetValueOrDefault(dragKey, chanceProp.intValue);
+                ApplyAndNormalize(itemsProp, index);
             }
 
             EditorGUI.BeginChangeCheck();
-            int intValue = EditorGUI.IntField(intFieldRect, chanceProperty.intValue);
+            int intVal = EditorGUI.IntField(intRect, chanceProp.intValue);
             if (EditorGUI.EndChangeCheck())
             {
-                chanceProperty.intValue = Mathf.Clamp(intValue, 0, 100);
-                TriggerNormalization(property, internalItemsProperty, index);
+                chanceProp.intValue = Mathf.Clamp(intVal, 0, 100);
+                ApplyAndNormalize(itemsProp, index);
             }
 
             EditorGUI.EndDisabledGroup();
 
             EditorGUI.BeginChangeCheck();
-            bool isLocked = EditorGUI.Toggle(lockButtonRect,
-                new GUIContent("", isLockedProperty.boolValue ? "Chance is locked" : "Chance is unlocked"),
-                isLockedProperty.boolValue);
+            bool locked = EditorGUI.Toggle(lockRect,
+                new GUIContent("", isLockedProp.boolValue ? "Locked" : "Unlocked"),
+                isLockedProp.boolValue);
             if (EditorGUI.EndChangeCheck())
             {
-                isLockedProperty.boolValue = isLocked;
-                TriggerNormalization(property, internalItemsProperty);
+                isLockedProp.boolValue = locked;
+                ApplyAndNormalize(itemsProp);
             }
         }
 
         private void OnAdd(ReorderableList list)
         {
             list.serializedProperty.arraySize++;
-            var newElement = list.serializedProperty.GetArrayElementAtIndex(list.serializedProperty.arraySize - 1);
-            newElement.FindPropertyRelative("chance").intValue = 10;
-            newElement.FindPropertyRelative("isLocked").boolValue = false;
-
-            var so = list.serializedProperty.serializedObject;
-            so.ApplyModifiedProperties();
-            InvokeNormalize(so.targetObject);
-            so.Update();
+            var newEl = list.serializedProperty.GetArrayElementAtIndex(list.serializedProperty.arraySize - 1);
+            newEl.FindPropertyRelative("chance").intValue = 10;
+            newEl.FindPropertyRelative("isLocked").boolValue = false;
+            ApplyAndNormalize(list.serializedProperty);
         }
 
         private void OnRemove(ReorderableList list)
         {
             ReorderableList.defaultBehaviours.DoRemoveButton(list);
-
-            var so = list.serializedProperty.serializedObject;
-            so.ApplyModifiedProperties();
-            InvokeNormalize(so.targetObject);
-            so.Update();
+            ApplyAndNormalize(list.serializedProperty);
         }
 
-        private void ShowContextMenu(SerializedProperty property)
+        private static void ApplyAndNormalize(SerializedProperty itemsProp, int lockedIndex = -1)
         {
-            var menu = new GenericMenu();
-            var internalItemsProperty = property.FindPropertyRelative("internalItems");
+            itemsProp.serializedObject.ApplyModifiedProperties();
+            NormalizeViaSp(itemsProp, lockedIndex);
+            itemsProp.serializedObject.ApplyModifiedProperties();
+        }
 
-            menu.AddItem(new GUIContent("Equalize All Chances"), false, () =>
+        public static void NormalizeViaSp(SerializedProperty itemsProp, int lockedIndex = -1)
+        {
+            int count = itemsProp.arraySize;
+            if (count == 0) return;
+
+            if (lockedIndex >= 0 && lockedIndex < count)
             {
-                property.serializedObject.ApplyModifiedProperties();
-                InvokeNormalize(property.serializedObject.targetObject, equalize: true);
-                property.serializedObject.Update();
-            });
-
-            menu.AddSeparator("");
-
-            menu.AddItem(new GUIContent("Lock All"), false, () => SetAllLocked(property, internalItemsProperty, true));
-            menu.AddItem(new GUIContent("Unlock All"), false, () => SetAllLocked(property, internalItemsProperty, false));
-
-            menu.AddSeparator("");
-
-            menu.AddItem(new GUIContent("Copy Property Path"), false,
-                () => EditorGUIUtility.systemCopyBuffer = property.propertyPath);
-
-            menu.ShowAsContext();
-        }
-
-        private void SetAllLocked(SerializedProperty property, SerializedProperty internalItemsProperty, bool locked)
-        {
-            for (int i = 0; i < internalItemsProperty.arraySize; i++)
-                internalItemsProperty.GetArrayElementAtIndex(i).FindPropertyRelative("isLocked").boolValue = locked;
-
-            TriggerNormalization(property, internalItemsProperty);
-        }
-
-        private void TriggerNormalization(SerializedProperty property, SerializedProperty internalItemsProperty, int excludeIndex = -1)
-        {
-            if (excludeIndex >= 0 && excludeIndex < internalItemsProperty.arraySize)
-            {
-                // Calculate how much room is left after locked items
-                int lockedTotal = 0;
-                for (int i = 0; i < internalItemsProperty.arraySize; i++)
+                int otherLockedTotal = 0;
+                for (int i = 0; i < count; i++)
                 {
-                    var el = internalItemsProperty.GetArrayElementAtIndex(i);
-                    if (i != excludeIndex && el.FindPropertyRelative("isLocked").boolValue)
-                        lockedTotal += el.FindPropertyRelative("chance").intValue;
+                    if (i == lockedIndex) continue;
+                    var el = itemsProp.GetArrayElementAtIndex(i);
+                    if (el.FindPropertyRelative("isLocked").boolValue)
+                        otherLockedTotal += Mathf.Max(0, el.FindPropertyRelative("chance").intValue);
                 }
-
-                int maxAllowed = Mathf.Max(0, 100 - lockedTotal);
-                var excluded = internalItemsProperty.GetArrayElementAtIndex(excludeIndex);
-                var excludedChance = excluded.FindPropertyRelative("chance");
-                excludedChance.intValue = Mathf.Clamp(excludedChance.intValue, 0, maxAllowed);
-
-                excluded.FindPropertyRelative("isLocked").boolValue = true;
+                var editedChance = itemsProp.GetArrayElementAtIndex(lockedIndex).FindPropertyRelative("chance");
+                editedChance.intValue = Mathf.Clamp(editedChance.intValue, 0, Mathf.Max(0, 100 - otherLockedTotal));
+                itemsProp.GetArrayElementAtIndex(lockedIndex).FindPropertyRelative("isLocked").boolValue = true;
             }
 
-            internalItemsProperty.serializedObject.ApplyModifiedProperties();
+            var unlocked = new List<int>();
+            int lockedTotal = 0;
 
-            InvokeNormalize(internalItemsProperty.serializedObject.targetObject);
-
-            internalItemsProperty.serializedObject.Update();
-
-            if (excludeIndex >= 0 && excludeIndex < internalItemsProperty.arraySize)
+            for (int i = 0; i < count; i++)
             {
-                internalItemsProperty.GetArrayElementAtIndex(excludeIndex)
-                    .FindPropertyRelative("isLocked").boolValue = false;
+                var el = itemsProp.GetArrayElementAtIndex(i);
+                if (el.FindPropertyRelative("isLocked").boolValue)
+                    lockedTotal += Mathf.Max(0, el.FindPropertyRelative("chance").intValue);
+                else
+                    unlocked.Add(i);
             }
 
-            internalItemsProperty.serializedObject.ApplyModifiedProperties();
-        }
+            int remaining = Mathf.Max(0, 100 - lockedTotal);
 
-        private static void InvokeNormalize(UnityEngine.Object target, bool equalize = false)
-        {
-            if (!target) return;
-
-            EditorUtility.SetDirty(target);
-
-            const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
-
-            foreach (var field in target.GetType().GetFields(flags))
+            if (unlocked.Count > 0)
             {
-                if (!field.FieldType.IsGenericType) continue;
-                if (field.FieldType.GetGenericTypeDefinition() != typeof(ChanceList<>)) continue;
+                int unlockedTotal = 0;
+                foreach (int i in unlocked)
+                    unlockedTotal += Mathf.Max(0, itemsProp.GetArrayElementAtIndex(i).FindPropertyRelative("chance").intValue);
 
-                var instance = field.GetValue(target);
-                if (instance == null) continue;
-
-                if (equalize)
+                if (unlockedTotal <= 0)
                 {
-                    var itemsField = field.FieldType.GetField("internalItems", BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (itemsField?.GetValue(instance) is System.Collections.IList list)
+                    int equal = remaining / unlocked.Count;
+                    int rem = remaining % unlocked.Count;
+                    for (int i = 0; i < unlocked.Count; i++)
+                        itemsProp.GetArrayElementAtIndex(unlocked[i]).FindPropertyRelative("chance").intValue = equal + (i < rem ? 1 : 0);
+                }
+                else if (unlockedTotal != remaining)
+                {
+                    int newTotal = 0;
+                    foreach (int i in unlocked)
                     {
-                        for (int i = 0; i < list.Count; i++)
+                        var cp = itemsProp.GetArrayElementAtIndex(i).FindPropertyRelative("chance");
+                        int val = Mathf.RoundToInt((cp.intValue / (float)unlockedTotal) * remaining);
+                        cp.intValue = val;
+                        newTotal += val;
+                    }
+
+                    int diff = remaining - newTotal;
+                    if (diff != 0)
+                    {
+                        unlocked.Sort((a, b) =>
+                            itemsProp.GetArrayElementAtIndex(b).FindPropertyRelative("chance").intValue
+                            .CompareTo(itemsProp.GetArrayElementAtIndex(a).FindPropertyRelative("chance").intValue));
+
+                        for (int i = 0; i < Mathf.Abs(diff) && i < unlocked.Count; i++)
                         {
-                            var item = list[i];
-                            var chanceField = item.GetType().GetField("chance");
-                            var lockedField = item.GetType().GetField("isLocked");
-                            if (chanceField != null) chanceField.SetValue(item, 0);
-                            if (lockedField != null) lockedField.SetValue(item, false);
-                            list[i] = item;
+                            var cp = itemsProp.GetArrayElementAtIndex(unlocked[i]).FindPropertyRelative("chance");
+                            if (diff > 0) cp.intValue++;
+                            else if (cp.intValue > 0) cp.intValue--;
                         }
                     }
                 }
-
-                field.FieldType.GetMethod("NormalizeChances")?.Invoke(instance, null);
             }
+
+            if (lockedIndex >= 0 && lockedIndex < count)
+                itemsProp.GetArrayElementAtIndex(lockedIndex).FindPropertyRelative("isLocked").boolValue = false;
         }
     }
 }

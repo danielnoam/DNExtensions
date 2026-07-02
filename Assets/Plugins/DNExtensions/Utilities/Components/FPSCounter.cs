@@ -8,9 +8,15 @@ namespace DNExtensions.Utilities
     [AddComponentMenu("DNExtensions/FPS Counter", -1000)]
     public class FPSCounter : MonoBehaviour
     {
+        [Header("Settings")]
         [SerializeField] private float updateInterval = 0.5f;
         [SerializeField] private int targetFPS = 60;
         [SerializeField] private TextAnchor anchor = TextAnchor.UpperLeft;
+        
+        [Header("Style")]
+        [SerializeField] private int fontSize = 13;
+        [SerializeField] private string prefix = "FPS:";
+
         
         private float _elapsed;
         private int _frames;
@@ -21,7 +27,7 @@ namespace DNExtensions.Utilities
         {
             _style = new GUIStyle
             {
-                fontSize = 20,
+                fontSize = fontSize,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = Color.white }
             };
@@ -42,19 +48,28 @@ namespace DNExtensions.Utilities
         
         private void OnGUI()
         {
+            _style.fontSize = fontSize;
+
             var percent10 = targetFPS * 0.1f;
             var percent40 = targetFPS * 0.4f;
-            
-            _style.normal.textColor = _fps >= targetFPS - percent10 
-                ? new Color(0.4f, 0.8f, 0.4f) 
-                : _fps >= targetFPS - percent40 
-                    ? new Color(0.9f, 0.9f, 0.3f) 
+
+            var fpsColor = _fps >= targetFPS - percent10
+                ? new Color(0.4f, 0.8f, 0.4f)
+                : _fps >= targetFPS - percent40
+                    ? new Color(0.9f, 0.9f, 0.3f)
                     : new Color(0.9f, 0.4f, 0.4f);
-            
-            var text = $"FPS: {_fps:F0}";
+
+            var text = string.IsNullOrEmpty(prefix) ? $"{_fps:F0}" : $"{prefix} {_fps:F0}";
             var size = _style.CalcSize(new GUIContent(text));
             var rect = GetAnchoredRect(size);
-            
+
+            _style.normal.textColor = Color.black;
+            GUI.Label(new Rect(rect.x - 1, rect.y - 1, size.x, size.y), text, _style);
+            GUI.Label(new Rect(rect.x + 1, rect.y - 1, size.x, size.y), text, _style);
+            GUI.Label(new Rect(rect.x - 1, rect.y + 1, size.x, size.y), text, _style);
+            GUI.Label(new Rect(rect.x + 1, rect.y + 1, size.x, size.y), text, _style);
+
+            _style.normal.textColor = fpsColor;
             GUI.Label(rect, text, _style);
         }
         
