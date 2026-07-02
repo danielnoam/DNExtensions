@@ -94,7 +94,7 @@ namespace DNExtensions.Utilities
             if (parent != null && parent.GetComponentInParent<Canvas>() != null)
                 return;
 
-            Canvas canvas = Object.FindFirstObjectByType<Canvas>();
+            Canvas canvas = Object.FindAnyObjectByType<Canvas>();
             if (canvas == null)
             {
                 GameObject canvasGo = new GameObject("Canvas");
@@ -105,7 +105,7 @@ namespace DNExtensions.Utilities
                 Undo.RegisterCreatedObjectUndo(canvasGo, "Create Canvas");
             }
 
-            if (Object.FindFirstObjectByType<EventSystem>() == null)
+            if (Object.FindAnyObjectByType<EventSystem>() == null)
             {
                 GameObject eventSystemGo = new GameObject("EventSystem");
                 eventSystemGo.AddComponent<EventSystem>();

@@ -238,7 +238,7 @@ namespace DNExtensions.Utilities.SerializedInterface
     {
         private readonly Dictionary<Type, InterfaceArgs> _typeArgsCache = new Dictionary<Type, InterfaceArgs>();
         private readonly Dictionary<(Type, Type), bool> _assignabilityCache = new Dictionary<(Type, Type), bool>();
-        private readonly Dictionary<(int, Type), Component> _componentCache = new Dictionary<(int, Type), Component>();
+        private readonly Dictionary<(EntityId, Type), Component> _componentCache = new Dictionary<(EntityId, Type), Component>();
 
         /// <summary>
         /// Gets the interface arguments for a field type with caching.
@@ -275,7 +275,7 @@ namespace DNExtensions.Utilities.SerializedInterface
         /// </summary>
         public Component FindComponentWithInterface(GameObject gameObject, Type interfaceType)
         {
-            var key = (gameObject.GetInstanceID(), interfaceType);
+            var key = (gameObject.GetEntityId(), interfaceType);
             
             if (_componentCache.TryGetValue(key, out Component cached) && cached != null)
             {

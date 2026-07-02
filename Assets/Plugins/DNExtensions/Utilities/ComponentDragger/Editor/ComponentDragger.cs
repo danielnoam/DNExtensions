@@ -16,7 +16,7 @@ namespace DNExtensions.Utilities.ComponentDragger
         static ComponentDragger()
         {
             // Hook into the hierarchy window item GUI
-            EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyWindowItemGUI;
+            EditorApplication.hierarchyWindowItemByEntityIdOnGUI += OnHierarchyWindowItemGUI;
             
             // Hook into update to check drag state
             EditorApplication.update += OnUpdate;
@@ -34,7 +34,7 @@ namespace DNExtensions.Utilities.ComponentDragger
             _handledThisFrame = false;
         }
 
-        private static void OnHierarchyWindowItemGUI(int instanceID, Rect selectionRect)
+        private static void OnHierarchyWindowItemGUI(EntityId entityId, Rect selectionRect)
         {
             Event evt = Event.current;
             
@@ -79,9 +79,7 @@ namespace DNExtensions.Utilities.ComponentDragger
                 _handledThisFrame = true;
 
                 // Check if we're dragging over a valid GameObject in the hierarchy
-#pragma warning disable CS0618 // Type or member is obsolete
-                GameObject targetObject = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
-#pragma warning restore CS0618
+                GameObject targetObject = EditorUtility.EntityIdToObject(entityId) as GameObject;
                 
                 if (targetObject == null)
                     return;

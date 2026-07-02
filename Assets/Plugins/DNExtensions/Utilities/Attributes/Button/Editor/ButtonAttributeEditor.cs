@@ -119,7 +119,7 @@ namespace DNExtensions.Utilities.Button
 
             if (validElements.Count == 0) return;
 
-            string foldoutKey = $"{target.GetInstanceID()}_arrayfoldout_{fieldName}";
+            string foldoutKey = $"{target.GetEntityId()}_arrayfoldout_{fieldName}";
             _groupFoldoutStates.TryAdd(foldoutKey, true);
 
             _groupFoldoutStates[foldoutKey] = EditorGUILayout.Foldout(
@@ -151,7 +151,7 @@ namespace DNExtensions.Utilities.Button
                 if (buttonAttr == null) continue;
                 if (!ValidateNestedMethod(method, fieldPath)) continue;
 
-                string methodKey = $"{target.GetInstanceID()}_{fieldPath}_{method.Name}";
+                string methodKey = $"{target.GetEntityId()}_{fieldPath}_{method.Name}";
                 buttons.Add(new ButtonInfo(method, buttonAttr, instance, methodKey));
             }
 
@@ -187,7 +187,7 @@ namespace DNExtensions.Utilities.Button
                     if (buttonAttr == null) continue;
                     if (!ValidateMethod(method)) continue;
 
-                    string methodKey = $"{target.GetInstanceID()}_{method.Name}";
+                    string methodKey = $"{target.GetEntityId()}_{method.Name}";
                     buttons.Add(new ButtonInfo(method, buttonAttr, null, methodKey));
                 }
 
@@ -318,7 +318,7 @@ namespace DNExtensions.Utilities.Button
         /// </summary>
         private void DrawButtonGroup(string groupName, List<ButtonInfo> buttons)
         {
-            string groupKey = $"{target.GetInstanceID()}_group_{groupName}";
+            string groupKey = $"{target.GetEntityId()}_group_{groupName}";
             _groupFoldoutStates.TryAdd(groupKey, true);
 
             GUILayout.Space(5);

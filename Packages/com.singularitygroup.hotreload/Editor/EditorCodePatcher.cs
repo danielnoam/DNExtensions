@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+#if UNITY_EDITOR_WIN
+using System.ComponentModel;
+#endif
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -16,13 +19,14 @@ using Debug = UnityEngine.Debug;
 using Task = System.Threading.Tasks.Task;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using SingularityGroup.HotReload.Editor.Localization;
+using SingularityGroup.HotReload.Localization;
 using SingularityGroup.HotReload.Newtonsoft.Json;
 using UnityEditor.Build;
 using UnityEditor.Compilation;
 using UnityEditor.UIElements;
 using UnityEditorInternal;
 using UnityEngine.UIElements;
+using Translations = SingularityGroup.HotReload.Editor.Localization.Translations;
 
 [assembly: InternalsVisibleTo("SingularityGroup.HotReload.IntegrationTests")]
 
@@ -100,7 +104,11 @@ namespace SingularityGroup.HotReload.Editor {
             Translations.LoadDefaultLocalization();
             SingularityGroup.HotReload.Localization.Translations.LoadDefaultLocalization();
             if (File.Exists(PackageConst.ConfigFilePath)) {
-                config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(PackageConst.ConfigFilePath));
+                try {
+                    config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(PackageConst.ConfigFilePath));
+                } catch {
+                    config = new Config();
+                }
             } else {
                 config = new Config();
             }
@@ -130,7 +138,7 @@ namespace SingularityGroup.HotReload.Editor {
             } else {
                 UpdateHost();
             }
-            licenseType = UnityLicenseHelper.GetLicenseType();
+            licenseType = UnityLicenseHelper.GetLicenseType(isChina: PackageConst.DefaultLocale == Locale.SimplifiedChinese);
             compileChecker = CompileChecker.Create();
             compileChecker.onCompilationFinished += OnCompilationFinished;
             EditorApplication.delayCall += InstallUtility.CheckForNewInstall;
@@ -149,7 +157,7 @@ namespace SingularityGroup.HotReload.Editor {
             };
             
             ServerHealthCheck.instance.CheckHealth();
-            if (ServerHealthCheck.I.IsServerHealthy && !HotReloadPrefs.AutoClearTimeline) {
+            if (ServerHealthCheck.I.IsServerHealthy) {
                 HotReloadTimelineHelper.InitPersistedEvents().Forget();
             } else {
                 HotReloadTimelineHelper.ClearPersistance();
@@ -159,10 +167,12 @@ namespace SingularityGroup.HotReload.Editor {
                 if (MultiplayerPlaymodeHelper.IsClone) {
                     return;
                 }
+                bool hasCompileError = false;
                 foreach (var message in messages) {
                     if (message.type != CompilerMessageType.Error) {
                         continue;
                     }
+                    hasCompileError = true;
                     if (!message.message.Contains("Sirenix")) {
                         continue;
                     }
@@ -183,6 +193,11 @@ namespace SingularityGroup.HotReload.Editor {
                         #endif
                     }
                 }
+                if (!hasCompileError) {
+                    HotReloadState.EditorAssemblyNames = "";
+                    HotReloadState.PlayerAssemblyNames = "";
+                    HotReloadState.OmittedAssemblies = "";
+                }
             };
             
             CompilationPipeline.compilationFinished += obj => {
@@ -199,9 +214,8 @@ namespace SingularityGroup.HotReload.Editor {
                 HotReloadRunTab.recompiling = false;
                 CompileMethodDetourer.Reset();
                 
-                if (!HotReloadPrefs.AutoClearTimeline) {
-                    HotReloadTimelineHelper.CreateReloadFinishedEventEntry(patchedMethodsDisplayNames: new string[]{"Full assembly recompilation"});
-                }
+                
+                HotReloadTimelineHelper.CreateReloadFinishedEventEntry(patchedMethodsDisplayNames: new string[]{ Translations.Timeline.FullAssemblyRecompilation }, isCompile: true);
             };
             DetectEditorStart();
             DetectVersionUpdate();
@@ -250,6 +264,7 @@ namespace SingularityGroup.HotReload.Editor {
             }
 
             CodePatcher.I.debuggerCompatibilityEnabled = !HotReloadPrefs.AutoDisableHotReloadWithDebugger;
+            CodePatcher.I.disableTelemetry = HotReloadPrefs.DisableTelemetry;
         }
 
         static void ResetSettingsOnQuit() {
@@ -298,7 +313,7 @@ namespace SingularityGroup.HotReload.Editor {
             if (!HotReloadPrefs.AutoRecompileUnsupportedChanges
                 || !CodePatcher.I.anyFailures
                     && (!HotReloadPrefs.AutoRecompilePartiallyUnsupportedChanges || !hasPartiallyUnsupportedPatches)
-                || _compileError 
+                || _compileError && !CodePatcher.I.ignoreCompileErrorOnRecompileUnsupported
                 || isPlaying && !HotReloadPrefs.AutoRecompileUnsupportedChangesInPlayMode
                 || !isPlaying && !HotReloadPrefs.AutoRecompileUnsupportedChangesInEditMode
             ) {
@@ -333,7 +348,11 @@ namespace SingularityGroup.HotReload.Editor {
             // because you might connect with a build downloaded onto the device. 
             if ((DateTime.UtcNow - lastPrepareBuildInfo).TotalSeconds > 5) {
                 lastPrepareBuildInfo = DateTime.UtcNow;
-                HotReloadCli.PrepareBuildInfoAsync().Forget();
+                var settingsObject = HotReloadSettingsEditor.LoadSettingsOrDefault();
+                var so = new SerializedObject(settingsObject);
+                if (IncludeInBuildOption.I.GetValue(so)) {
+                    HotReloadCli.PrepareBuildInfoAsync().Forget();
+                }
             }
         }
 
@@ -572,7 +591,7 @@ namespace SingularityGroup.HotReload.Editor {
             } else {
                 HotReloadState.WarnedDebuggerAttached = false;
             }
-            
+
             if(ServerHealthCheck.I.IsServerHealthy) {
                 // NOTE: avoid calling this method when HR is not running to avoid allocations
                 RequestServerInfo();
@@ -645,7 +664,7 @@ namespace SingularityGroup.HotReload.Editor {
                     foreach (var newInlinedMethod in newInlinedMethods) {
                         inlinedMethodsFound.Add(newInlinedMethod);
                     }
-                    RequestHelper.RequestEditorEventWithRetry(new Stat(StatSource.Client, StatLevel.Debug, StatFeature.Patching, StatEventType.Inlined)).Forget();
+                    SendEditorTelemetryIfEnabled(new Stat(StatSource.Client, StatLevel.Debug, StatFeature.Patching, StatEventType.Inlined));
                 }
             } catch (Exception e) {
                 Log.Warning(Translations.Errors.WarningInlineMethodChecker, e.Message);
@@ -698,14 +717,16 @@ namespace SingularityGroup.HotReload.Editor {
             // debug files
             ".mdb",
             ".pdb",
-            ".compute",
-            // ".shader", //use assetBlacklist instead
+            //use assetBlacklist instead
+            // ".compute",
+            // ".shader", 
         };
 
         public static string[] compileFiles = new[] {
             ".asmdef",
             ".asmref",
             ".rsp",
+            ".additionalfile",
         };
 
         public static string[] plugins = new[] {
@@ -716,14 +737,15 @@ namespace SingularityGroup.HotReload.Editor {
             ".so",
             // plugin scripts
             ".cpp",
-            ".h",
+            // don't need to recompile these
+            // ".h",
             ".aar",
             ".jar",
             ".a",
             ".java"
         };
         
-        static void HandleAssetChange(string assetPath) {
+        static void HandleAssetChange(string assetPath, bool tooManyChanges) {
             if (MultiplayerPlaymodeHelper.IsClone) {
                 return;
             }
@@ -742,6 +764,8 @@ namespace SingularityGroup.HotReload.Editor {
                 if (assetPath.EndsWith(compileFile, StringComparison.Ordinal)) {
                     HotReloadTimelineHelper.CreateErrorEventEntry(string.Format(Translations.Utility.AssemblyFileEditError, assetPath), entryType: EntryType.Foldout);
                     CodePatcher.I.anyFailures = true;
+                    // we need to ignore compile errors because changes to compile files can inherently introduce them and without recompiling there is no way to resolve them
+                    CodePatcher.I.ignoreCompileErrorOnRecompileUnsupported = true;
                     _applyingFailed = true;
                     if (HotReloadPrefs.AutoRecompileUnsupportedChangesImmediately || UnityEditorInternal.InternalEditorUtility.isApplicationActive) {
                         TryRecompileUnsupportedChanges();
@@ -764,7 +788,7 @@ namespace SingularityGroup.HotReload.Editor {
 
             // ignore file extensions that trigger domain reload
             if (!HotReloadPrefs.IncludeShaderChanges) { 
-                if (assetPath.EndsWith(".shader", StringComparison.Ordinal)) {
+                if (assetPath.EndsWith(".shader", StringComparison.Ordinal) || assetPath.EndsWith(".compute", StringComparison.Ordinal)) {
                     return;
                 }
             }
@@ -779,6 +803,11 @@ namespace SingularityGroup.HotReload.Editor {
                         return;
                     }
                 }
+            }
+            // On a large burst we skip the bulk asset re-import (it can storm/loop) — but only after the
+            // compile-file and plugin checks above, so those still trigger a recompile.
+            if (tooManyChanges) {
+                return;
             }
             var path = ToPath(assetPath);
             if (path == null) {
@@ -808,7 +837,7 @@ namespace SingularityGroup.HotReload.Editor {
                 // Might be inside a package "file:"
                 try {
                     foreach (var package in UnityEditor.PackageManager.PackageInfo.GetAllRegisteredPackages()) {
-                        if (assetPath.StartsWith(package.resolvedPath.Replace("\\", "/"), StringComparison.Ordinal)) {
+                        if (assetPath.Replace("\\", "/").StartsWith(package.resolvedPath.Replace("\\", "/"), StringComparison.Ordinal)) {
                             relativePathPackages = $"Packages/{package.name}/{assetPath.Substring(package.resolvedPath.Length)}";
                             break;
                         }
@@ -923,9 +952,9 @@ namespace SingularityGroup.HotReload.Editor {
                     }
                     lastCompileErrorLog = null;
                 }
-                RequestHelper.RequestEditorEventWithRetry(new Stat(StatSource.Client, StatLevel.Debug, StatFeature.Reload, StatEventType.CompileError), new EditorExtraData {
+                SendEditorTelemetryIfEnabled(new Stat(StatSource.Client, StatLevel.Debug, StatFeature.Reload, StatEventType.CompileError), new EditorExtraData {
                     { StatKey.PatchId, response.id },
-                }).Forget();
+                });
             } else if (_applyingFailed) {
                 if (partiallySupportedChangesFiltered.Count > 0) {
                     foreach (var responsePartiallySupportedChange in partiallySupportedChangesFiltered) {
@@ -952,9 +981,9 @@ namespace SingularityGroup.HotReload.Editor {
                 if (HotReloadPrefs.AutoRecompileUnsupportedChangesImmediately || UnityEditorInternal.InternalEditorUtility.isApplicationActive) {
                     autoRecompiled = TryRecompileUnsupportedChanges();
                 }
-                RequestHelper.RequestEditorEventWithRetry(new Stat(StatSource.Client, StatLevel.Debug, StatFeature.Reload, StatEventType.Failure), new EditorExtraData {
+                SendEditorTelemetryIfEnabled(new Stat(StatSource.Client, StatLevel.Debug, StatFeature.Reload, StatEventType.Failure), new EditorExtraData {
                     { StatKey.PatchId, response.id },
-                }).Forget();
+                });
             } else if (_appliedPartially) {
                 foreach (var responsePartiallySupportedChange in partiallySupportedChangesFiltered) {
                     HotReloadTimelineHelper.CreatePartiallyAppliedEventEntry(responsePartiallySupportedChange, entryType: EntryType.Child, detailed: false);
@@ -964,19 +993,19 @@ namespace SingularityGroup.HotReload.Editor {
                 if (HotReloadPrefs.AutoRecompileUnsupportedChangesImmediately || UnityEditorInternal.InternalEditorUtility.isApplicationActive) {
                     autoRecompiled = TryRecompileUnsupportedChanges();
                 }
-                RequestHelper.RequestEditorEventWithRetry(new Stat(StatSource.Client, StatLevel.Debug, StatFeature.Reload, StatEventType.Partial), new EditorExtraData {
+                SendEditorTelemetryIfEnabled(new Stat(StatSource.Client, StatLevel.Debug, StatFeature.Reload, StatEventType.Partial), new EditorExtraData {
                     { StatKey.PatchId, response.id },
-                }).Forget();
+                });
             } else if (_appliedUndetected)  {
                 HotReloadTimelineHelper.CreateReloadUndetectedChangeEventEntry();
-                RequestHelper.RequestEditorEventWithRetry(new Stat(StatSource.Client, StatLevel.Debug, StatFeature.Reload, StatEventType.Undetected), new EditorExtraData {
+                SendEditorTelemetryIfEnabled(new Stat(StatSource.Client, StatLevel.Debug, StatFeature.Reload, StatEventType.Undetected), new EditorExtraData {
                     { StatKey.PatchId, response.id },
-                }).Forget();
+                });
             } else {
                 HotReloadTimelineHelper.CreateReloadFinishedEventEntry(patchedMethodsDisplayNames: patchedMembersDisplayNames);
-                RequestHelper.RequestEditorEventWithRetry(new Stat(StatSource.Client, StatLevel.Debug, StatFeature.Reload, StatEventType.Finished), new EditorExtraData {
+                SendEditorTelemetryIfEnabled(new Stat(StatSource.Client, StatLevel.Debug, StatFeature.Reload, StatEventType.Finished), new EditorExtraData {
                     { StatKey.PatchId, response.id },
-                }).Forget();
+                });
             }
             
             if (!autoRecompiled && patchResult?.inspectorFieldAdded == true && HotReloadPrefs.AutoRecompileInspectorFieldsEdit && !Application.isPlaying) {
@@ -1095,10 +1124,14 @@ namespace SingularityGroup.HotReload.Editor {
         private static DateTime? startWaitingForCompile;
         static void OnCompilationFinished() {
             ServerHealthCheck.instance.CheckHealth();
+            var compileSessionId = compileChecker.CompilationSessionId;
             if(ServerHealthCheck.I.IsServerHealthy) {
                 startWaitingForCompile = DateTime.UtcNow;
                 firstPatchAttempted = false;
-                RequestCompile().Forget();
+                RequestCompile(compileSessionId).Forget();
+            } else {
+                // server not running, no request to send so clear this here
+                compileChecker.OnCompilationRequestFinished();
             }
             ClearPersistence();
         }
@@ -1111,21 +1144,22 @@ namespace SingularityGroup.HotReload.Editor {
         }
 
         static bool requestingCompile;
-        static async Task RequestCompile() {
+        static async Task RequestCompile(string compileSessionId) {
             if (MultiplayerPlaymodeHelper.IsClone) {
                 return;
             }
             requestingCompile = true;
             try {
-                await RequestHelper.RequestClearPatches();
+                await RequestHelper.RequestClearPatches(compileSessionId);
                 await ProjectGeneration.ProjectGeneration.GenerateSlnAndCsprojFiles(Application.dataPath);
-                await RequestHelper.RequestCompile(scenePath => {
+                await RequestHelper.RequestCompile(compileSessionId, scenePath => {
                     var path = ToPath(scenePath);
                     if (File.Exists(scenePath) && path != null) {
                         AssetDatabase.ImportAsset(path, ImportAssetOptions.Default);
                     }
                 });
             } finally {
+                ThreadUtility.RunOnMainThread(compileChecker.OnCompilationRequestFinished);
                 requestingCompile = false;
             }
         }
@@ -1173,6 +1207,7 @@ namespace SingularityGroup.HotReload.Editor {
             var disableConsoleWindow = HotReloadPrefs.DisableConsoleWindow;
             var isReleaseMode = RequestHelper.IsReleaseMode();
             var detailedErrorReporting = !HotReloadPrefs.DisableDetailedErrorReporting;
+            var disableTelemetry = HotReloadPrefs.DisableTelemetry;
 #if UNITY_EDITOR_WIN
             var useWatchman = HotReloadPrefs.UseWatchman;
 #endif
@@ -1188,6 +1223,7 @@ namespace SingularityGroup.HotReload.Editor {
                     disableConsoleWindow, 
                     isReleaseMode, 
                     detailedErrorReporting,
+                    disableTelemetry,
 #if UNITY_EDITOR_WIN
                     useWatchman,
 #endif
@@ -1195,6 +1231,12 @@ namespace SingularityGroup.HotReload.Editor {
                 ).ConfigureAwait(false);
             }
             catch (Exception ex) {
+#if UNITY_EDITOR_WIN
+                if (ex is Win32Exception && ex.Message.Contains("An Application Control policy has blocked this file")) {
+                    Log.Error("Hot Reload is not compatible with Windows Smart App Control yet. Please disable it to use Hot Reload. We are working on obtaining certificates for compatibility.");
+                    return;
+                }
+#endif
                 ThreadUtility.LogException(ex);
             }
             finally {
@@ -1251,11 +1293,34 @@ namespace SingularityGroup.HotReload.Editor {
         
         
         private static bool requestingDownloadAndRun;
+        private static bool requestingResetAndLogin;
         internal static float DownloadProgress => serverDownloader.Progress;
         internal static bool DownloadRequired => DownloadProgress < 1f;
         internal static bool DownloadStarted => serverDownloader.Started;
         internal static bool RequestingDownloadAndRun => requestingDownloadAndRun;
+        internal static bool RequestingResetAndLogin => requestingResetAndLogin;
         internal static CancellationTokenSource downloadCancelToken;
+        
+        internal static async Task RemoteResetAndLogin(string email, string password) {
+            if (requestingResetAndLogin) {
+                return;
+            }
+            try {
+                requestingResetAndLogin = true;
+                var resp = await RequestHelper.RequestRemoteLicenseReset(email, password, 10);
+                if (resp.error != null) {
+                    if (resp.error.Contains("License already reset")) {
+                        Log.Info("License was reset previously. Please reach out to support to reset license manually");
+                    } else {
+                        Log.Info("License reset failed. Please reach out to support to reset license manually");
+                    }
+                    return;
+                }
+                await EditorCodePatcher.RequestLogin(email, password);
+            } finally {
+                requestingResetAndLogin = false;
+            }
+        }
         
         internal static async Task<bool> DownloadAndRun(LoginData loginData = null, bool recompileOnDone = false) {
             if (requestingDownloadAndRun) {
@@ -1330,6 +1395,10 @@ namespace SingularityGroup.HotReload.Editor {
             if (resp.lastLicenseError == null) {
                 // If we got success, we should always show an error next time it comes up
                 HotReloadPrefs.ErrorHidden = false;
+            }
+
+            if (!string.IsNullOrEmpty(resp.hardwareId)) {
+                HotReloadPrefs.HardwareId = resp.hardwareId;
             }
 
             var oldStartupProgress = startupProgress;
@@ -1411,6 +1480,13 @@ namespace SingularityGroup.HotReload.Editor {
             HandleStatus(resp);
 
             lastServerPoll = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+        }
+        
+        internal static void SendEditorTelemetryIfEnabled(Stat stat, EditorExtraData extraData = null) {
+            if (HotReloadPrefs.DisableTelemetry) {
+                return;
+            }
+            RequestHelper.RequestEditorEventWithRetry(stat, extraData).Forget();
         }
     }
     

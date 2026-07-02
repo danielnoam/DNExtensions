@@ -73,7 +73,7 @@ namespace DNExtensions.Utilities.AutoGet
                     continue;
 
                 stream.GetChangeGameObjectStructureEvent(i, out var data);
-                var gameObject = EditorUtility.EntityIdToObject(data.instanceId) as GameObject;
+                var gameObject = EditorUtility.EntityIdToObject(data.entityId) as GameObject;
 
                 if (gameObject == null)
                     continue;

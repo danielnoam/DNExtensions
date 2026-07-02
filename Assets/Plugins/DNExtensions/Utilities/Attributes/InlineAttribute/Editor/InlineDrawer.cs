@@ -134,7 +134,7 @@ namespace DNExtensions.Utilities.Inline.Editor
             if (target == null)
                 return null;
 
-            string key = $"{property.serializedObject.targetObject.GetInstanceID()}_{property.propertyPath}";
+            string key = $"{property.serializedObject.targetObject.GetEntityId()}_{property.propertyPath}";
 
             if (Cache.TryGetValue(key, out var cached))
             {

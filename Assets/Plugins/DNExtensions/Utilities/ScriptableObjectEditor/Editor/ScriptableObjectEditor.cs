@@ -21,6 +21,8 @@ namespace DNExtensions.Utilities
         private Type _currentType;
         
         private List<ScriptableObject> _allAssets = new List<ScriptableObject>();
+        private readonly Dictionary<ScriptableObject, int> _assetIndexLookup = new Dictionary<ScriptableObject, int>();
+        private readonly Dictionary<Type, List<ScriptableObject>> _assetCache = new Dictionary<Type, List<ScriptableObject>>();
         private readonly HashSet<ScriptableObject> _selectedAssets = new HashSet<ScriptableObject>();
         
         private string _searchQuery = "";
@@ -89,7 +91,8 @@ namespace DNExtensions.Utilities
             {
                 if (this != null)
                 {
-                    RefreshAssets();
+                    _assetCache.Clear();
+                    RefreshAssets(forceRescan: true);
                     Repaint();
                 }
             };
@@ -336,7 +339,7 @@ namespace DNExtensions.Utilities
             }
             if (GUILayout.Button(new GUIContent("↻", "Refresh asset list"), EditorStyles.miniButtonRight, GUILayout.Width(25f)))
             {
-                RefreshAssets();
+                RefreshAssets(forceRescan: true);
             }
             GUILayout.Space(5f);
             EditorGUILayout.EndHorizontal();
@@ -538,7 +541,7 @@ namespace DNExtensions.Utilities
             {
                 _selectedAssets.Clear();
                 _selectedAssets.Add(asset);
-                _lastSelectedIndex = _allAssets.IndexOf(asset);
+                _lastSelectedIndex = IndexOfAsset(asset);
                 UpdateInspector();
             }
             
@@ -589,8 +592,8 @@ namespace DNExtensions.Utilities
             }
             else if (evt.shift && _selectedAssets.Count > 0)
             {
-                int startIndex = _lastSelectedIndex >= 0 ? _lastSelectedIndex : _allAssets.IndexOf(_selectedAssets.Last());
-                int endIndex = _allAssets.IndexOf(asset);
+                int startIndex = _lastSelectedIndex >= 0 ? _lastSelectedIndex : IndexOfAsset(_selectedAssets.Last());
+                int endIndex = IndexOfAsset(asset);
                 
                 if (startIndex >= 0 && endIndex >= 0)
                 {
@@ -610,7 +613,7 @@ namespace DNExtensions.Utilities
                 _selectedAssets.Add(asset);
             }
             
-            _lastSelectedIndex = _allAssets.IndexOf(asset);
+            _lastSelectedIndex = IndexOfAsset(asset);
             _foundReferences.Clear();
             UpdateInspector();
             Repaint();
@@ -716,29 +719,17 @@ namespace DNExtensions.Utilities
         private void RefreshAvailableTypes()
         {
             _allTypes.Clear();
-            
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+
+            foreach (var type in TypeCache.GetTypesDerivedFrom<ScriptableObject>())
             {
-                string assemblyName = assembly.GetName().Name;
-                
-                if (assemblyName.Contains("Unity") || assemblyName.Contains("Editor"))
-                    continue;
-                
-                try
-                {
-                    var types = assembly.GetTypes()
-                        .Where(t => t.IsSubclassOf(typeof(ScriptableObject)) && !t.IsAbstract)
-                        .Where(t => !IsUnityOrEditorType(t))
-                        .OrderBy(t => t.Name);
-                    
-                    _allTypes.AddRange(types);
-                }
-                catch
-                {
-                    // Skip assemblies that can't be loaded
-                }
+                if (type.IsAbstract) continue;
+                if (IsUnityOrEditorType(type)) continue;
+
+                _allTypes.Add(type);
             }
-            
+
+            _allTypes.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
+
             FilterTypes();
         }
         
@@ -777,37 +768,78 @@ namespace DNExtensions.Utilities
         private void SelectType(Type type)
         {
             _currentType = type;
-            RefreshAssets();
+            RefreshAssets(forceRescan: false);
         }
-        
-        private void RefreshAssets()
+
+        private void RefreshAssets(bool forceRescan)
         {
-            _allAssets.Clear();
             _selectedAssets.Clear();
             _lastSelectedIndex = -1;
             DestroyEditor();
-            
+
             if (_currentType == null)
+            {
+                SetAssetList(new List<ScriptableObject>());
                 return;
-            
-            string[] guids = AssetDatabase.FindAssets("t:ScriptableObject");
-            
+            }
+
+            List<ScriptableObject> assets;
+
+            if (!forceRescan && _assetCache.TryGetValue(_currentType, out List<ScriptableObject> cached)
+                && !cached.Exists(a => a == null))
+            {
+                assets = cached;
+            }
+            else
+            {
+                assets = ScanAssetsForType(_currentType);
+                _assetCache[_currentType] = assets;
+            }
+
+            SetAssetList(assets);
+        }
+
+        private static List<ScriptableObject> ScanAssetsForType(Type type)
+        {
+            var result = new List<ScriptableObject>();
+
+            string[] guids = AssetDatabase.FindAssets($"t:{type.Name}");
+
             foreach (string guid in guids)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
-                
+
                 if (!path.StartsWith("Assets/"))
                     continue;
-                
-                ScriptableObject asset = AssetDatabase.LoadAssetAtPath(path, _currentType) as ScriptableObject;
-                
-                if (asset != null && asset.GetType() == _currentType)
+
+                ScriptableObject asset = AssetDatabase.LoadAssetAtPath(path, type) as ScriptableObject;
+
+                if (asset != null && asset.GetType() == type)
                 {
-                    _allAssets.Add(asset);
+                    result.Add(asset);
                 }
             }
-            
-            _allAssets = _allAssets.OrderBy(a => a.name).ToList();
+
+            result.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.Ordinal));
+
+            return result;
+        }
+
+        private void SetAssetList(List<ScriptableObject> assets)
+        {
+            _allAssets = assets;
+            _assetIndexLookup.Clear();
+
+            for (int i = 0; i < _allAssets.Count; i++)
+            {
+                if (_allAssets[i] != null)
+                    _assetIndexLookup[_allAssets[i]] = i;
+            }
+        }
+
+        private int IndexOfAsset(ScriptableObject asset)
+        {
+            return _assetIndexLookup.TryGetValue(asset, out int index) ? index : -1;
         }
         
         private void DestroyEditor()
@@ -845,14 +877,14 @@ namespace DNExtensions.Utilities
             
             Undo.RegisterCreatedObjectUndo(instance, $"Create {_currentType.Name}");
             
-            RefreshAssets();
+            RefreshAssets(forceRescan: true);
             
             // Select and start renaming the new asset
             ScriptableObject newAsset = _allAssets.FirstOrDefault(a => a == instance);
             if (newAsset != null)
             {
                 _selectedAssets.Add(newAsset);
-                _lastSelectedIndex = _allAssets.IndexOf(newAsset);
+                _lastSelectedIndex = IndexOfAsset(newAsset);
                 UpdateInspector();
                 StartRename(newAsset);
             }
@@ -881,7 +913,7 @@ namespace DNExtensions.Utilities
                 EditorUtility.SetDirty(newAsset);
             }
             
-            RefreshAssets();
+            RefreshAssets(forceRescan: true);
         }
         
         /// <summary>
@@ -904,7 +936,7 @@ namespace DNExtensions.Utilities
                 AssetDatabase.DeleteAsset(path);
             }
             
-            RefreshAssets();
+            RefreshAssets(forceRescan: true);
         }
         
         private void LoadPreferences()
@@ -972,7 +1004,7 @@ namespace DNExtensions.Utilities
                 return;
             }
             
-            RefreshAssets();
+            RefreshAssets(forceRescan: true);
             
             ScriptableObject renamed = _allAssets.FirstOrDefault(a => a != null && a.name == newName);
             if (renamed != null)
@@ -1008,7 +1040,7 @@ namespace DNExtensions.Utilities
                         renamedNames.Add(newName);
                 }
                 
-                RefreshAssets();
+                RefreshAssets(forceRescan: true);
                 
                 // Reselect all renamed assets
                 foreach (string renamedName in renamedNames)

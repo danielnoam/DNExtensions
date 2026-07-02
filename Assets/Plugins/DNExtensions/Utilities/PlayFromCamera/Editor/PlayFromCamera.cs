@@ -158,7 +158,7 @@ namespace DNExtensions.Utilities.PlayFromCamera
                 
                 if (player == null)
                 {
-                    GameObject[] allObjects = Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+                    GameObject[] allObjects = Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include);
                     foreach (GameObject obj in allObjects)
                     {
                         if (obj.name.ToLower().Contains("player"))

@@ -33,7 +33,7 @@ namespace DNExtensions.Utilities {
 
         private static Dictionary<Type, List<ButtonData>> _buttonsByType;
         private static readonly List<Func<Component, ButtonData>> DynamicButtonProviders = new List<Func<Component, ButtonData>>();
-        private static readonly Dictionary<int, int> LastButtonHash = new Dictionary<int, int>();
+        private static readonly Dictionary<EntityId, int> LastButtonHash = new Dictionary<EntityId, int>();
         private static EditorWindow _currentInspector;
         private static VisualElement _editorList;
         
@@ -176,9 +176,9 @@ namespace DNExtensions.Utilities {
                 if (existingBar == null || existingBar.panel == null) {
                     needsRebuild = true;
                 } else {
-                    int instanceId = component.GetInstanceID();
+                    EntityId instanceId = component.GetEntityId();
                     int currentHash = GetButtonHash(buttons);
-                    
+
                     if (LastButtonHash.TryGetValue(instanceId, out int lastHash)) {
                         if (currentHash != lastHash) {
                             needsRebuild = true;
@@ -240,7 +240,7 @@ namespace DNExtensions.Utilities {
         }
 
         private static VisualElement CreateButtonBar(Component component, List<ButtonData> buttons) {
-            int componentInstanceID = component.GetInstanceID();
+            EntityId componentInstanceID = component.GetEntityId();
 
             bool isProSkin = EditorGUIUtility.isProSkin;
             Color barBackground = isProSkin ? ButtonBackgroundColor : ButtonBackgroundColorWhite;

@@ -43,6 +43,18 @@ namespace SingularityGroup.HotReload {
         public string generalInfo;
     }
 
+    public class BugReport {
+        public string reportId;
+        public string label;
+        public string title;
+        public string description;
+        public string email;
+        public string hotReloadVersion;
+        public string unityVersion;
+        public string operatingSystemVersionInfo;
+        public string hwId;
+    }
+
     static class RequestHelper {
         internal const ushort defaultPort = 33242;
         internal const string defaultServerHost = "127.0.0.1";
@@ -50,6 +62,7 @@ namespace SingularityGroup.HotReload {
             "https://d2tc55zjhw51ly.cloudfront.net/releases/latest/changelog-zh.json" :
             "https://d2tc55zjhw51ly.cloudfront.net/releases/latest/changelog.json";
         static readonly string defaultOrigin = GetProjectRoot();
+        const string BugReportLambdaURL = "https://api.unityhotreload.com";
         public static string origin { get; private set; } = defaultOrigin;
 
         static string GetProjectRoot() {
@@ -209,7 +222,7 @@ namespace SingularityGroup.HotReload {
         }
         
         static bool assetPollPending;
-        internal static async void PollAssetChanges(Action<string> onResponseReceived) {
+        internal static async void PollAssetChanges(Action<string, bool> onResponseReceived) {
             if (assetPollPending) return;
         
             assetPollPending = true;
@@ -221,6 +234,12 @@ namespace SingularityGroup.HotReload {
                 
                 if (result.statusCode == HttpStatusCode.OK) {
                     var responses = JsonConvert.DeserializeObject<List<string>>(result.responseText);
+                    // A large burst (e.g. branch switch / VCS op) of asset changes used to be dropped
+                    // wholesale, which silently swallowed recompile-triggering changes too (.asmdef/.asmref/
+                    // plugins). Instead, still forward every change but flag the burst so the handler skips
+                    // only the bulk asset re-import (the part that can storm/loop), while compile-relevant
+                    // files still trigger a recompile.
+                    var tooManyChanges = responses.Count >= 25;
                     await ThreadUtility.SwitchToMainThread();
                     // Looping in reverse order fixes moving files:
                     // by default new files come in before old ones which causes issues because meta files for old location has to be deleted first
@@ -231,7 +250,7 @@ namespace SingularityGroup.HotReload {
                             Log.Debug($"Ignoring asset change inside Unity: {response}");
                             continue;
                         }
-                        onResponseReceived(response);
+                        onResponseReceived(response, tooManyChanges);
                     }
                 } else if(result.statusCode == HttpStatusCode.Unauthorized || result.statusCode == 0) {
                     // Server is not running or not authorized.
@@ -272,6 +291,21 @@ namespace SingularityGroup.HotReload {
                 }
             }
             return null;
+        }
+        
+        public static async Task<RemoteLicenseResetRespone> RequestRemoteLicenseReset(string email, string password, int timeoutSeconds) {
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+            var json = SerializeRequestBody(new RemoteLicenseResetRequest(email, password));
+            var resp = await PostJson(url + "/remoteLicenseReset", json, timeoutSeconds, cts.Token);
+            if (resp.statusCode == HttpStatusCode.OK) {
+                try {
+                    return JsonConvert.DeserializeObject<RemoteLicenseResetRespone>(resp.responseText);
+                } catch (Exception e){
+                    return new RemoteLicenseResetRespone(error: $"{e.GetType().Name} {e.Message}");
+                }
+            } else {
+                return new RemoteLicenseResetRespone(error: resp.responseText ?? Localization.Translations.Logging.RequestTimeout);
+            }
         }
         
         public static async Task<LoginStatusResponse> RequestLogin(string email, string password, int timeoutSeconds) {
@@ -328,7 +362,16 @@ namespace SingularityGroup.HotReload {
                 return null;
             }
         }
-        
+
+        internal static async Task<string> SubmitBugReport(BugReport bugReport) {
+            var body = SerializeRequestBody(bugReport);
+            var resp = await PostJson(BugReportLambdaURL + "/report", body, int.MaxValue);
+            if (resp.statusCode != HttpStatusCode.OK) {
+                return $"Failed submitting bug report with status code {resp.statusCode}";
+            }
+            return null;
+        }
+
         internal static async Task RequestEditorEventWithRetry(Stat stat, EditorExtraData extraData = null) {
             if (MultiplayerPlaymodeHelper.IsClone) {
                 return;
@@ -340,6 +383,9 @@ namespace SingularityGroup.HotReload {
                     return;
                 }
                 await Task.Delay(TimeSpan.FromMilliseconds(200));
+                if (CodePatcher.I.disableTelemetry) {
+                    break;
+                }
             } while (attempt++ < 10000);
         }
         
@@ -395,13 +441,13 @@ namespace SingularityGroup.HotReload {
 #endif
         }
         
-        public static Task RequestClearPatches() {
-            var body = SerializeRequestBody(new CompileRequest(serverInfo.rootPath, IsReleaseMode()));
+        public static Task RequestClearPatches(string sessionId) {
+            var body = SerializeRequestBody(new CompileRequest(serverInfo.rootPath, IsReleaseMode(), sessionId));
             return PostJson(url + "/clearpatches", body, 10);
         }
         
-        public static async Task RequestCompile(Action<string> onResponseReceived) {
-            var body = SerializeRequestBody(new CompileRequest(serverInfo.rootPath, IsReleaseMode()));
+        public static async Task RequestCompile(string sessionId, Action<string> onResponseReceived) {
+            var body = SerializeRequestBody(new CompileRequest(serverInfo.rootPath, IsReleaseMode(), sessionId));
             var result = await PostJson(url + "/compile", body, 10);
             if (result.statusCode == HttpStatusCode.OK && !string.IsNullOrEmpty(result.responseText)) {
                 var responses = JsonConvert.DeserializeObject<List<string>>(result.responseText);
@@ -469,10 +515,11 @@ namespace SingularityGroup.HotReload {
             await ThreadUtility.SwitchToThreadPool();
             
             try {
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                using(var resp = await httpClient.PostAsync(uri, content, token).ConfigureAwait(false)) {
-                    var str = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    return new HttpResponse(resp.StatusCode, null, str);
+                using (var content = new StringContent(json, Encoding.UTF8, "application/json")) {
+                    using(var resp = await httpClient.PostAsync(uri, content, token).ConfigureAwait(false)) {
+                        var str = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        return new HttpResponse(resp.StatusCode, null, str);
+                    }
                 }
             } catch(Exception ex) {
                 return new HttpResponse(0, ex, null);

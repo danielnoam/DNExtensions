@@ -60,7 +60,7 @@ namespace DNExtensions.Utilities.CustomFields
             }
 
             var paramType = (AnimatorParameterType)parameterTypeProp.enumValueIndex;
-            var cacheKey = $"{controller.GetInstanceID()}_{paramType}";
+            var cacheKey = $"{controller.GetEntityId()}_{paramType}";
             var options = GetParameters(cacheKey, controller, paramType);
 
             var currentIndex = GetCurrentIndex(options, parameterNameProp.stringValue);

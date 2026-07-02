@@ -1,0 +1,45 @@
+{
+    "HistoryPaths": [
+        "9f230479a9294514aad8c0a208831af1",
+        "d51cfd60fd4c65b4f823477679820d99",
+        "90d9bed79b5faa349913cf73fd086fa8",
+        "b085cbc56c45148e9b385627b8638a18",
+        "594eb1054e5ed774699fd7dd79cf87cc",
+        "e781ffe8193af3c47b7ada63dab1d497",
+        "80f522c5b7544107823d62c652d22b6f",
+        "b1f869e1d8757e84ca53e337af30fc14",
+        "bea343b9900271546b0205334acdc3bb",
+        "09ab7054e8eb8e342bf18aa82fffbe99",
+        "721bd4045c856aa43ba417f0ee0f8099",
+        "fe97e871199174e4682da1e4d53fffc1",
+        "64fd5b6ffc2ec744b8b7a761a5c8619d",
+        "9bef420cb9b86ec4c80e9510db56247e",
+        "4946fe3823f039a4884efc4be9cbe494",
+        "4ef2dd6c14c610649a61e260d712ddb0",
+        "d19a32e60bda74281b7d676d15d0397b",
+        "1caf9ddfedebd4d9ba04beb7e96d1f0d",
+        "7da1332ad353649bbb2962483cac5c19",
+        "86f723aec728494ca791990358343682"
+    ],
+    "FavoritePaths": [],
+    "FavoriteTabs": [
+        {
+            "TabName": "General",
+            "TabColor": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
+            },
+            "IsArchived": false,
+            "Paths": [],
+            "Entries": [
+                {
+                    "Guid": "9f230479a9294514aad8c0a208831af1",
+                    "Path": "Assets/Plugins/DNExtensions",
+                    "IsExternal": false
+                }
+            ]
+        }
+    ]
+}

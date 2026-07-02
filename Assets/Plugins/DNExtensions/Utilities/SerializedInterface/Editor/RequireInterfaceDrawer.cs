@@ -254,7 +254,7 @@ namespace DNExtensions.Utilities.SerializedInterface
         
         private string GetPropertyKey(SerializedProperty property)
         {
-            return $"{property.serializedObject.targetObject.GetInstanceID()}_{property.propertyPath}";
+            return $"{property.serializedObject.targetObject.GetEntityId()}_{property.propertyPath}";
         }
         
         
