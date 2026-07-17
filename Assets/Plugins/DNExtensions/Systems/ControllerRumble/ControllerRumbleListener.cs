@@ -45,7 +45,7 @@ namespace DNExtensions.Systems.ControllerRumble
         {
             if (!playerInput)
             {
-                playerInput = FindFirstObjectByType<PlayerInput>();
+                playerInput = FindAnyObjectByType<PlayerInput>();
                 if (!playerInput) enabled = false;
             }
         }

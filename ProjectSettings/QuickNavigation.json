@@ -1,12 +1,34 @@
 {
     "HistoryPaths": [
+        "3519600bcad1391449ca4e1e1894e918",
+        "7a4b838d90e75434193309630c97b388",
+        "fe97e871199174e4682da1e4d53fffc1",
+        "5639b9c5c748b8741ae53c5dba2269b2",
+        "5a4617047096737409e15d9880263c9c",
+        "f30eb4ad289af39419722e9ee7446da1",
+        "9f64ea0c39f66414a9c0afa7f97808b1",
+        "9985066e59caafc4fb3b2a1829c33907",
+        "69c07c0f86eac474ea54a15c3a4a4046",
+        "e3ed9a780969e0f4d8d16f94f9485e39",
+        "a0612c5a5528450c9630d05667e80db1",
+        "ddf86da09f73af34ead22d56bf48a039",
+        "9918a243498e4778bff8a3c816ff27f8",
+        "759981084cccc7a41abef1c59a1c4df6",
+        "349c769e8bba44f4987decf61551cb4d",
+        "f9dc508ef294eef4798a8e7665a1886c",
+        "22e89c4425f77164ea8156ea54b1a4d5",
+        "90d9bed79b5faa349913cf73fd086fa8",
+        "0ec987af0ee3a754a91c77c05a5208f4",
+        "48189b354cd9fd944bba33c33dd72ba2",
+        "04169cb195ebfb643bc96e9d77484d96",
+        "64fd5b6ffc2ec744b8b7a761a5c8619d",
+        "9f230479a9294514aad8c0a208831af1",
+        "947d820e5568c7845bb940ea99434fb1",
+        "109ccfb08b9fd4bf5a9d8deee2ace2ed",
         "444bf60c48cb40e499c787bcabc004eb",
         "baa6e88cc47804cafb29dc337c1e639b",
         "dd2b9e231b0ec4a9f97e258072ae2b33",
-        "109ccfb08b9fd4bf5a9d8deee2ace2ed",
-        "9f230479a9294514aad8c0a208831af1",
         "d51cfd60fd4c65b4f823477679820d99",
-        "90d9bed79b5faa349913cf73fd086fa8",
         "b085cbc56c45148e9b385627b8638a18",
         "594eb1054e5ed774699fd7dd79cf87cc",
         "e781ffe8193af3c47b7ada63dab1d497",
@@ -15,8 +37,6 @@
         "bea343b9900271546b0205334acdc3bb",
         "09ab7054e8eb8e342bf18aa82fffbe99",
         "721bd4045c856aa43ba417f0ee0f8099",
-        "fe97e871199174e4682da1e4d53fffc1",
-        "64fd5b6ffc2ec744b8b7a761a5c8619d",
         "9bef420cb9b86ec4c80e9510db56247e",
         "4946fe3823f039a4884efc4be9cbe494",
         "4ef2dd6c14c610649a61e260d712ddb0",
@@ -39,8 +59,18 @@
             "Paths": [],
             "Entries": [
                 {
-                    "Guid": "9f230479a9294514aad8c0a208831af1",
-                    "Path": "Assets/Plugins/DNExtensions",
+                    "Guid": "90d9bed79b5faa349913cf73fd086fa8",
+                    "Path": "Assets/Plugins/DNExtensions/Utilities",
+                    "IsExternal": false
+                },
+                {
+                    "Guid": "fe97e871199174e4682da1e4d53fffc1",
+                    "Path": "Assets/Plugins/DNExtensions/Systems",
+                    "IsExternal": false
+                },
+                {
+                    "Guid": "64fd5b6ffc2ec744b8b7a761a5c8619d",
+                    "Path": "Assets/Plugins/DNExtensions/Shaders",
                     "IsExternal": false
                 }
             ]

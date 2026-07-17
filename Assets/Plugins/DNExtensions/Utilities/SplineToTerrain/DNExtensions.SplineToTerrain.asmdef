@@ -1,0 +1,23 @@
+{
+    "name": "DNExtensions.SplineToTerrain",
+    "rootNamespace": "",
+    "references": [
+        "Unity.Splines",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.splines",
+            "expression": "",
+            "define": "DNEXTENSIONS_SPLINES"
+        }
+    ],
+    "noEngineReferences": false
+}

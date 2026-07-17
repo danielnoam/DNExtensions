@@ -33,8 +33,7 @@ namespace DNExtensions.Utilities.AutoGet
 #if UNITY_2023_1_OR_NEWER
             return UnityEngine.Object.FindObjectsByType(
                 fieldType,
-                IncludeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None
+                IncludeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude
             );
 #else
             return UnityEngine.Object.FindObjectsOfType(fieldType, IncludeInactive);

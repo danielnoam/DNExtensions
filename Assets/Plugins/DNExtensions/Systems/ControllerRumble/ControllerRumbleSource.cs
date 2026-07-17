@@ -56,7 +56,7 @@ namespace DNExtensions.Systems.ControllerRumble
         {
             RemoveListeners();
             
-            foreach (var listener in FindObjectsByType<ControllerRumbleListener>(FindObjectsSortMode.None))
+            foreach (var listener in FindObjectsByType<ControllerRumbleListener>())
             {
                 _rumbleListeners.Add(listener);
             }

@@ -40,7 +40,7 @@ public class ShaderInteractorHolder : MonoBehaviour
  
     private void FindInteractors()
     {
-        _interactors = FindObjectsByType<ShaderInteractorPosition>(FindObjectsSortMode.None);
+        _interactors = FindObjectsByType<ShaderInteractorPosition>();
     }
  
 

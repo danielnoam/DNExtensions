@@ -38,7 +38,7 @@ public class DissolveMarkersHolder : MonoBehaviour
 
     private void FindInteractors()
     {
-        _interactors = FindObjectsByType<DissolveMarkerPosition>(FindObjectsSortMode.None);
+        _interactors = FindObjectsByType<DissolveMarkerPosition>();
         _positions = new Vector4[100];
         _radiuses = new float[100];
         _boxBounds = new Vector4[100];

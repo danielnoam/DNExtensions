@@ -459,7 +459,7 @@ namespace DNExtensions.Utilities.SerializableSelector.Editor
         
         private bool IsInArray(SerializedProperty property)
         {
-            return property.propertyPath.Contains(".Array.data[");
+            return property.propertyPath.EndsWith("]", StringComparison.Ordinal);
         }
         
         private HashSet<Type> GetExistingTypesInList(SerializedProperty property)

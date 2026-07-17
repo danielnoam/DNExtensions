@@ -115,7 +115,7 @@ namespace DNExtensions.Systems.VFXManager
 
         private void SetupPostProcessingVolume()
         {
-            if (!_postProcessingVolume) _postProcessingVolume = FindFirstObjectByType<Volume>();
+            if (!_postProcessingVolume) _postProcessingVolume = FindAnyObjectByType<Volume>();
             if (!_postProcessingVolume)
             {
                 Debug.LogWarning("No Post Processing Volume found in the scene!");

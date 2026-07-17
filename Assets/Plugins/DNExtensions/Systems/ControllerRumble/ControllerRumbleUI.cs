@@ -47,7 +47,7 @@ namespace DNExtensions.Systems.ControllerRumble
 
         private void Awake()
         {
-            if (!listener) listener = FindFirstObjectByType<ControllerRumbleListener>();
+            if (!listener) listener = FindAnyObjectByType<ControllerRumbleListener>();
         }
 
         private void Update()
