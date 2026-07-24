@@ -30,7 +30,7 @@ namespace UnityEngine.UI.Extensions
         void ObtainCanvasGroups()
         {
 #if UNITY_2023_1_OR_NEWER
-			canvasGroups = GameObject.FindObjectsByType<CanvasGroup>(FindObjectsSortMode.None);
+			canvasGroups = GameObject.FindObjectsByType<CanvasGroup>(FindObjectsInactive.Exclude);
 #else
             canvasGroups = GameObject.FindObjectsOfType<CanvasGroup>();
 #endif            

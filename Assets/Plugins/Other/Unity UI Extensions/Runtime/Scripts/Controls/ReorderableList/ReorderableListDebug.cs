@@ -14,7 +14,7 @@ namespace UnityEngine.UI.Extensions
         void Awake()
         {
 #if UNITY_2023_1_OR_NEWER
-            foreach (var list in FindObjectsByType<ReorderableList>(FindObjectsSortMode.None))
+            foreach (var list in FindObjectsByType<ReorderableList>(FindObjectsInactive.Exclude))
 #else
             foreach (var list in FindObjectsOfType<ReorderableList>())
 #endif

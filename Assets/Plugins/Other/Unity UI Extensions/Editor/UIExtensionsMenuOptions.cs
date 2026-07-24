@@ -160,7 +160,7 @@ namespace UnityEditor.UI
 		private static void CreateEventSystem(bool select, GameObject parent)
 		{
 #if UNITY_2023_1_OR_NEWER
-			var esys = Object.FindFirstObjectByType<EventSystem>();
+			var esys = Object.FindAnyObjectByType<EventSystem>();
 #else
 			var esys = Object.FindObjectOfType<EventSystem>();
 #endif     			
@@ -196,7 +196,7 @@ namespace UnityEditor.UI
 
 			// No canvas in selection or its parents? Then use just any canvas..
 #if UNITY_2023_1_OR_NEWER
-			canvas = Object.FindFirstObjectByType<Canvas>();
+			canvas = Object.FindAnyObjectByType<Canvas>();
 #else
 			canvas = Object.FindObjectOfType(typeof(Canvas)) as Canvas;
 #endif
@@ -1266,7 +1266,7 @@ namespace UnityEditor.UI
 		private static void CreateToolTipItem(bool select, GameObject parent)
 		{
 #if UNITY_2023_1_OR_NEWER
-			var btti = Object.FindFirstObjectByType<BoundTooltipItem>();
+			var btti = Object.FindAnyObjectByType<BoundTooltipItem>();
 #else
 			var btti = Object.FindObjectOfType<BoundTooltipItem>();
 #endif
