@@ -28,7 +28,6 @@ namespace DNExtensions
         [ShowIf("conditionalCheck")] public int conditionalInt;
         [PrefabSelector("Assets/2_Testing")] public GameObject prefabSelector;
         [SOSelector("Assets/2_Testing", LockToFilter = true)] public SOAudioEvent soSelector;
-        [LinkedVector3] public Vector3 linkedVector3Field;
 
         [Separator("Fields")]
         public SceneField sceneField;

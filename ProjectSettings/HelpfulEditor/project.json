@@ -1,0 +1,96 @@
+{
+    "moduleEnabled": true,
+    "hoverHighlightEnabled": true,
+    "hoverColor": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 1.0
+    },
+    "hoverOpacity": 0.05999999865889549,
+    "zebraStripesEnabled": true,
+    "zebraColorEven": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "zebraColorOdd": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 1.0
+    },
+    "zebraOpacity": 0.07000000029802323,
+    "treeLinesEnabled": true,
+    "treeLineColor": {
+        "r": 0.5,
+        "g": 0.5,
+        "b": 0.5,
+        "a": 0.3499999940395355
+    },
+    "treeLineStyle": 1,
+    "treeLineThickness": 2.0,
+    "twoLineNamesEnabled": true,
+    "nameViewScope": 2,
+    "showFileExtensions": true,
+    "createFolderButtonEnabled": true,
+    "dragConflictResolutionEnabled": true,
+    "conflictDefaultChoice": 0,
+    "cancelIsDefaultOnEscape": true,
+    "expandCollapseKey": {
+        "key": 101,
+        "ctrl": false,
+        "alt": false,
+        "shift": false
+    },
+    "expandCollapseRecursiveKey": {
+        "key": 101,
+        "ctrl": false,
+        "alt": false,
+        "shift": true
+    },
+    "collapseAllKey": {
+        "key": 101,
+        "ctrl": true,
+        "alt": false,
+        "shift": true
+    },
+    "revealInFinderKey": {
+        "key": 114,
+        "ctrl": true,
+        "alt": false,
+        "shift": false
+    },
+    "quickObjectWindowKey": {
+        "key": 323,
+        "ctrl": true,
+        "alt": false,
+        "shift": false
+    },
+    "closeWindowKey": {
+        "key": 119,
+        "ctrl": true,
+        "alt": false,
+        "shift": false
+    },
+    "closeWindowExcludedTypes": [
+        "SceneView",
+        "ConsoleWindow",
+        "ProjectBrowser",
+        "InspectorWindow",
+        "SceneHierarchyWindow"
+    ],
+    "navigateBackKey": {
+        "key": 326,
+        "ctrl": false,
+        "alt": false,
+        "shift": false
+    },
+    "navigateForwardKey": {
+        "key": 327,
+        "ctrl": false,
+        "alt": false,
+        "shift": false
+    }
+}

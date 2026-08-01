@@ -1,0 +1,130 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace DNExtensions.HelpfulEditor
+{
+    [Serializable]
+    internal class HierarchySettings
+    {
+        public bool moduleEnabled = true;
+
+        // Even rows are left untinted and odd rows only ever darken: Unity's hover highlight
+        // lightens the row, so a light stripe is indistinguishable from the cursor being there.
+        public bool zebraStripesEnabled = true;
+        public Color zebraColorEven = new Color(0f, 0f, 0f, 0f);
+        public Color zebraColorOdd = new Color(0f, 0f, 0f, 1f);
+        public float zebraOpacity = 0.07f;
+
+        public bool treeDepthLinesEnabled = true;
+        public Color treeDepthLineColor = new Color(0.5f, 0.5f, 0.5f, 0.35f);
+        public LineStyle treeDepthLineStyle = LineStyle.Solid;
+        public float treeDepthLineThickness = 1f;
+
+        public bool componentStripEnabled = true;
+        public int componentStripMaxIcons = 6;
+        public float componentIconSize = 14f;
+        public bool componentQuickEditEnabled = true;
+        public List<string> excludedComponentTypes = new List<string> { "Transform", "RectTransform" };
+
+        public bool childCountEnabled = true;
+        public BadgePosition childCountPosition = BadgePosition.RightAligned;
+        public bool childCountHideWhenOneOrZero;
+
+        public KeyBind toggleActiveKey = KeyBind.Of(KeyCode.A);
+        public KeyBind expandCollapseKey = KeyBind.Of(KeyCode.E);
+        public KeyBind expandCollapseRecursiveKey = KeyBind.Of(KeyCode.E, shift: true);
+        public KeyBind isolateKey = KeyBind.Of(KeyCode.E, ctrl: true);
+    }
+
+    [Serializable]
+    internal class InspectorSettings
+    {
+        public bool moduleEnabled = true;
+
+        public bool headerBarEnabled = true;
+        public float headerBarButtonHeight = 22f;
+        public bool fieldSearchEnabled = true;
+
+        // Empty by default: unlike the Hierarchy strip, the header bar is a per-object control panel
+        // and hiding the Transform from it would leave a gap where every object has a component.
+        public List<string> excludedComponentTypes = new List<string>();
+        public bool isolationPersistsAcrossSelection;
+
+        public bool betterTransformEnabled = true;
+        public bool betterRectTransformEnabled = true;
+        public bool scaleLockDefaultOn;
+        public bool resetMenuItemsEnabled = true;
+
+        public bool componentDraggerEnabled = true;
+        public bool altInvertsMoveCopyDefault;
+        public bool transferDependencies = true;
+        public List<ComponentDependencyPair> dependencyWhitelist = new List<ComponentDependencyPair>();
+
+        public KeyBind isolateKey = KeyBind.Of(KeyCode.E, ctrl: true);
+        public KeyBind expandCollapseKey = KeyBind.Of(KeyCode.E);
+        public KeyBind toggleEnabledKey = KeyBind.Of(KeyCode.A);
+        public KeyBind focusSearchKey = KeyBind.None;
+    }
+
+    /// <summary>User-added "dependent follows dependency" pair, matched by component type name.</summary>
+    [Serializable]
+    internal class ComponentDependencyPair
+    {
+        public string dependencyType;
+        public string dependentType;
+    }
+
+    [Serializable]
+    internal class ProjectModuleSettings
+    {
+        public bool moduleEnabled = true;
+
+        // The Project window has no hover tint of its own, unlike the Hierarchy, so the suite draws
+        // one to keep the two windows feeling the same.
+        public bool hoverHighlightEnabled = true;
+        public Color hoverColor = new Color(1f, 1f, 1f, 1f);
+        public float hoverOpacity = 0.06f;
+
+        // Same reasoning as the Hierarchy's stripes: only ever darken, so a stripe can't be mistaken
+        // for the hover highlight.
+        public bool zebraStripesEnabled = true;
+        public Color zebraColorEven = new Color(0f, 0f, 0f, 0f);
+        public Color zebraColorOdd = new Color(0f, 0f, 0f, 1f);
+        public float zebraOpacity = 0.07f;
+
+        public bool treeLinesEnabled = true;
+        public Color treeLineColor = new Color(0.5f, 0.5f, 0.5f, 0.35f);
+        public LineStyle treeLineStyle = LineStyle.Solid;
+        public float treeLineThickness = 1f;
+
+        public bool twoLineNamesEnabled;
+        public bool showFileExtensions;
+
+        public bool createFolderButtonEnabled = true;
+
+        public bool dragConflictResolutionEnabled = true;
+        public ConflictDefaultChoice conflictDefaultChoice = ConflictDefaultChoice.AlwaysAsk;
+        public bool cancelIsDefaultOnEscape = true;
+
+        // Mirrors the Hierarchy so the same keys mean the same thing in both windows.
+        public KeyBind expandCollapseKey = KeyBind.Of(KeyCode.E);
+        public KeyBind expandCollapseRecursiveKey = KeyBind.Of(KeyCode.E, shift: true);
+        public KeyBind collapseAllKey = KeyBind.Of(KeyCode.E, ctrl: true, shift: true);
+        public KeyBind revealInFinderKey = KeyBind.Of(KeyCode.R, ctrl: true);
+        public KeyBind quickObjectWindowKey = KeyBind.Of(KeyCode.Mouse0, ctrl: true);
+        public KeyBind closeWindowKey = KeyBind.Of(KeyCode.W, ctrl: true);
+
+        /// <summary>Window types Close Focused Window refuses to act on, matched by type name.</summary>
+        public List<string> closeWindowExcludedTypes = new List<string>
+        {
+            "SceneView",
+            "ConsoleWindow",
+            "ProjectBrowser",
+            "InspectorWindow",
+            "SceneHierarchyWindow"
+        };
+        public KeyBind navigateBackKey = KeyBind.Of(KeyCode.Mouse3);
+        public KeyBind navigateForwardKey = KeyBind.Of(KeyCode.Mouse4);
+    }
+}

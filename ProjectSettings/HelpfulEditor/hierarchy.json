@@ -1,0 +1,61 @@
+{
+    "moduleEnabled": true,
+    "zebraStripesEnabled": true,
+    "zebraColorEven": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "zebraColorOdd": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 1.0
+    },
+    "zebraOpacity": 0.07000000029802323,
+    "treeDepthLinesEnabled": true,
+    "treeDepthLineColor": {
+        "r": 0.5,
+        "g": 0.5,
+        "b": 0.5,
+        "a": 0.3499999940395355
+    },
+    "treeDepthLineStyle": 1,
+    "treeDepthLineThickness": 2.0,
+    "componentStripEnabled": true,
+    "componentStripMaxIcons": 6,
+    "componentIconSize": 14.0,
+    "componentQuickEditEnabled": true,
+    "excludedComponentTypes": [
+        "Transform",
+        "RectTransform"
+    ],
+    "childCountEnabled": true,
+    "childCountPosition": 2,
+    "childCountHideWhenOneOrZero": false,
+    "toggleActiveKey": {
+        "key": 97,
+        "ctrl": false,
+        "alt": false,
+        "shift": false
+    },
+    "expandCollapseKey": {
+        "key": 101,
+        "ctrl": false,
+        "alt": false,
+        "shift": false
+    },
+    "expandCollapseRecursiveKey": {
+        "key": 101,
+        "ctrl": false,
+        "alt": false,
+        "shift": true
+    },
+    "isolateKey": {
+        "key": 101,
+        "ctrl": true,
+        "alt": false,
+        "shift": false
+    }
+}

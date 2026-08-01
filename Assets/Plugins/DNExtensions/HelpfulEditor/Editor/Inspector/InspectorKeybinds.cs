@@ -1,0 +1,102 @@
+using System;
+using System.Reflection;
+using UnityEditor;
+using UnityEditorInternal;
+using UnityEngine;
+
+namespace DNExtensions.HelpfulEditor.Inspector
+{
+    /// <summary>
+    /// Hover keybinds for the Inspector. The per-component actions target whichever component button
+    /// in the header bar the cursor is over — that bar is the only place the suite knows where each
+    /// component sits, since Unity does not expose the inline component headers.
+    /// </summary>
+    [InitializeOnLoad]
+    internal static class InspectorKeybinds
+    {
+        static InspectorKeybinds()
+        {
+            GlobalKeyCapture.KeyEvent -= OnKeyEvent;
+            GlobalKeyCapture.KeyEvent += OnKeyEvent;
+        }
+
+        private static void OnKeyEvent()
+        {
+            InspectorSettings settings = HelpfulEditorSettings.Inspector;
+            if (!settings.moduleEnabled) return;
+            if (!HelpfulEditorWindows.MouseOverInspector) return;
+
+            Event evt = Event.current;
+            if (evt == null || evt.type != EventType.KeyDown) return;
+
+            if (settings.focusSearchKey.Matches(evt))
+            {
+                if (settings.fieldSearchEnabled) InspectorHeaderBar.FocusSearchField();
+                evt.Use();
+                return;
+            }
+
+            if (EditorGUIUtility.editingTextField) return;
+
+            if (settings.isolateKey.Matches(evt))
+            {
+                ComponentIsolation.ToggleActive();
+                evt.Use();
+                return;
+            }
+
+            // The component under the cursor in the Inspector body wins; the header bar button is
+            // the fallback for when the cursor is up in the bar itself.
+            Component hovered = InspectorComponentHover.HoveredComponent
+                ? InspectorComponentHover.HoveredComponent
+                : InspectorHeaderBar.HoveredComponent;
+
+            if (!hovered) return;
+
+            if (settings.expandCollapseKey.Matches(evt))
+            {
+                ToggleExpanded(hovered);
+                evt.Use();
+                return;
+            }
+
+            if (settings.toggleEnabledKey.Matches(evt))
+            {
+                ToggleEnabled(hovered);
+                evt.Use();
+            }
+        }
+
+        private static void ToggleExpanded(Component component)
+        {
+            InternalEditorUtility.SetIsInspectorExpanded(component, !InternalEditorUtility.GetIsInspectorExpanded(component));
+            ActiveEditorTracker.sharedTracker.ForceRebuild();
+        }
+
+        /// <summary>
+        /// Located by reflection rather than by casting: Behaviour, Renderer and Collider each
+        /// declare their own 'enabled' with no shared base that has it. Components without one —
+        /// Transform being the obvious case — are left alone.
+        /// </summary>
+        private static void ToggleEnabled(Component component)
+        {
+            PropertyInfo property = component.GetType().GetProperty("enabled",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy);
+
+            if (property == null || property.PropertyType != typeof(bool) || !property.CanRead || !property.CanWrite) return;
+
+            try
+            {
+                bool enabled = (bool)property.GetValue(component);
+
+                Undo.RecordObject(component, "Toggle Component Enabled");
+                property.SetValue(component, !enabled);
+                EditorUtility.SetDirty(component);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[HelpfulEditor] Could not toggle {component.GetType().Name}.enabled: {e.Message}");
+            }
+        }
+    }
+}

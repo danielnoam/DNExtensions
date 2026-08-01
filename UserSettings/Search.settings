@@ -73,6 +73,11 @@ providers = {
 		priority = 999
 		defaultAction = null
 	}
+	lightmaps = {
+		active = true
+		priority = 100
+		defaultAction = null
+	}
 }
 objectSelectors = {
 }
