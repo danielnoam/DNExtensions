@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -22,7 +21,6 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private const double ScanInterval = 0.5;
 
         private static readonly List<VisualElement> Registered = new List<VisualElement>();
-        private static readonly Dictionary<Type, MemberInfo> EditorMembers = new Dictionary<Type, MemberInfo>();
 
         private static double _lastScan;
 
@@ -80,67 +78,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
         private static Component FindComponentAt(IPanel panel, Vector2 panelPosition)
         {
-            VisualElement picked = panel.Pick(panelPosition);
-
-            for (VisualElement element = picked; element != null; element = element.parent)
-            {
-                Editor editor = GetEditor(element);
-                if (editor && editor.target is Component component) return component;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// The element type that owns the Editor is internal and has been renamed across versions,
-        /// so it is found by shape — any member on the element that hands back an Editor — rather
-        /// than by name. The lookup is cached per element type.
-        /// </summary>
-        private static Editor GetEditor(VisualElement element)
-        {
-            Type type = element.GetType();
-
-            if (!EditorMembers.TryGetValue(type, out MemberInfo member))
-            {
-                member = FindEditorMember(type);
-                EditorMembers[type] = member;
-            }
-
-            if (member == null) return null;
-
-            try
-            {
-                return member switch
-                {
-                    PropertyInfo property => property.GetValue(element) as Editor,
-                    FieldInfo field => field.GetValue(element) as Editor,
-                    _ => null
-                };
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
-        private static MemberInfo FindEditorMember(Type type)
-        {
-            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-
-            for (Type current = type; current != null && current != typeof(VisualElement); current = current.BaseType)
-            {
-                foreach (PropertyInfo property in current.GetProperties(flags | BindingFlags.DeclaredOnly))
-                {
-                    if (typeof(Editor).IsAssignableFrom(property.PropertyType) && property.CanRead) return property;
-                }
-
-                foreach (FieldInfo field in current.GetFields(flags | BindingFlags.DeclaredOnly))
-                {
-                    if (typeof(Editor).IsAssignableFrom(field.FieldType)) return field;
-                }
-            }
-
-            return null;
+            Editor editor = InspectorElementLookup.FindEditorInAncestors(panel.Pick(panelPosition));
+            return editor && editor.target is Component component ? component : null;
         }
     }
 }

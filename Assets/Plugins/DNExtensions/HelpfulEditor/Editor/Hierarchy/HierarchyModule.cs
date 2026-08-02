@@ -133,15 +133,20 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                 bool lastSibling = IsLastSibling(onPath);
                 float x = HelpfulEditorGUI.GuideColumnX(leftEdge, level);
 
-                float thickness = settings.treeDepthLineThickness;
+                const float thickness = HelpfulEditorGUI.TreeLineThickness;
+                float weight = HelpfulEditorGUI.LineThickness(thickness);
 
                 if (level < depth - 1)
                 {
-                    if (!lastSibling) HelpfulEditorGUI.DrawVerticalLine(x, rowRect.y, rowRect.yMax, color, settings.treeDepthLineStyle, thickness);
+                    if (!lastSibling) HelpfulEditorGUI.DrawVerticalLine(x, rowRect.y, rowRect.yMax, color, settings.treeDepthLineStyle, thickness, midY);
                     continue;
                 }
 
-                HelpfulEditorGUI.DrawVerticalLine(x, rowRect.y, lastSibling ? midY : rowRect.yMax, color, settings.treeDepthLineStyle, thickness);
+                // A terminating guide runs to the far side of the elbow so it owns the corner
+                // outright; the horizontal then starts past it. Overlapping the two would draw a
+                // translucent colour twice and leave a dark notch at the join.
+                float bottom = lastSibling ? midY + weight : rowRect.yMax;
+                HelpfulEditorGUI.DrawVerticalLine(x, rowRect.y, bottom, color, settings.treeDepthLineStyle, thickness, midY);
 
                 // A row with children owns the indent step left of its icon — that is where Unity
                 // draws the foldout arrow — so the elbow stops at the arrow's edge rather than
@@ -150,7 +155,8 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                     ? rowRect.x - HelpfulEditorGUI.IndentWidth
                     : rowRect.x - 2f;
 
-                HelpfulEditorGUI.DrawHorizontalLine(x, elbowEnd, midY, color, settings.treeDepthLineStyle, thickness);
+                float elbowStart = HelpfulEditorGUI.ElbowStart(x, thickness, settings.treeDepthLineStyle);
+                HelpfulEditorGUI.DrawHorizontalLine(elbowStart, elbowEnd, midY, color, settings.treeDepthLineStyle, thickness);
             }
         }
 

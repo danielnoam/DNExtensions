@@ -28,6 +28,13 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
             GameObject target = HierarchyModule.HoveredObject ? HierarchyModule.HoveredObject : Selection.activeGameObject;
 
+            if (settings.collapseAllKey.Matches(evt))
+            {
+                HelpfulEditorTreeReflection.CollapseAllHierarchy();
+                evt.Use();
+                return;
+            }
+
             if (settings.toggleActiveKey.Matches(evt))
             {
                 ToggleActive(target);

@@ -19,7 +19,6 @@ namespace DNExtensions.HelpfulEditor
         public bool treeDepthLinesEnabled = true;
         public Color treeDepthLineColor = new Color(0.5f, 0.5f, 0.5f, 0.35f);
         public LineStyle treeDepthLineStyle = LineStyle.Solid;
-        public float treeDepthLineThickness = 1f;
 
         public bool componentStripEnabled = true;
         public int componentStripMaxIcons = 6;
@@ -34,6 +33,7 @@ namespace DNExtensions.HelpfulEditor
         public KeyBind toggleActiveKey = KeyBind.Of(KeyCode.A);
         public KeyBind expandCollapseKey = KeyBind.Of(KeyCode.E);
         public KeyBind expandCollapseRecursiveKey = KeyBind.Of(KeyCode.E, shift: true);
+        public KeyBind collapseAllKey = KeyBind.Of(KeyCode.E, ctrl: true, shift: true);
         public KeyBind isolateKey = KeyBind.Of(KeyCode.E, ctrl: true);
     }
 
@@ -52,9 +52,25 @@ namespace DNExtensions.HelpfulEditor
         public bool isolationPersistsAcrossSelection;
 
         public bool betterTransformEnabled = true;
-        public bool betterRectTransformEnabled = true;
         public bool scaleLockDefaultOn;
         public bool resetMenuItemsEnabled = true;
+
+        public bool saveInPlayModeEnabled = true;
+
+        /// <summary>Component types that get no save button — ones whose state does not survive a restore usefully.</summary>
+        public List<string> saveInPlayModeBlacklist = new List<string>
+        {
+            "UnityEngine.Canvas",
+            "UnityEngine.CanvasRenderer",
+            "UnityEngine.Animator",
+            "UnityEngine.UI.CanvasScaler",
+            "UnityEngine.SignalReceiver"
+        };
+
+        public bool cameraAlignButtonsEnabled = true;
+        public bool rectTransformResetButtonsEnabled = true;
+        public bool graphicResetColorEnabled = true;
+        public bool textMeshProDuplicateMaterialEnabled = true;
 
         public bool componentDraggerEnabled = true;
         public bool altInvertsMoveCopyDefault;
@@ -96,10 +112,14 @@ namespace DNExtensions.HelpfulEditor
         public bool treeLinesEnabled = true;
         public Color treeLineColor = new Color(0.5f, 0.5f, 0.5f, 0.35f);
         public LineStyle treeLineStyle = LineStyle.Solid;
-        public float treeLineThickness = 1f;
 
         public bool twoLineNamesEnabled;
         public bool showFileExtensions;
+
+        public bool folderContentIconsEnabled = true;
+        public int folderContentMaxIcons = 4;
+        public float folderContentIconSize = 12f;
+        public bool folderContentRecursive;
 
         public bool createFolderButtonEnabled = true;
 
@@ -112,7 +132,7 @@ namespace DNExtensions.HelpfulEditor
         public KeyBind expandCollapseRecursiveKey = KeyBind.Of(KeyCode.E, shift: true);
         public KeyBind collapseAllKey = KeyBind.Of(KeyCode.E, ctrl: true, shift: true);
         public KeyBind revealInFinderKey = KeyBind.Of(KeyCode.R, ctrl: true);
-        public KeyBind quickObjectWindowKey = KeyBind.Of(KeyCode.Mouse0, ctrl: true);
+        public KeyBind quickObjectWindowKey = KeyBind.Of(KeyCode.Mouse0, alt: true);
         public KeyBind closeWindowKey = KeyBind.Of(KeyCode.W, ctrl: true);
 
         /// <summary>Window types Close Focused Window refuses to act on, matched by type name.</summary>

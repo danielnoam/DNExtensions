@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -21,6 +22,24 @@ namespace DNExtensions.HelpfulEditor.Project
     {
         private const string ElementName = "helpfuleditor-new-folder";
         private const double RefreshInterval = 1.0;
+        private const string CreateMenuRoot = "Assets/Create";
+
+        /// <summary>
+        /// Right-click shortcuts, named by the leaf of the Unity create-menu item they should run.
+        /// Only leaves are listed because the surrounding path moves between versions — scripting
+        /// gained a Scripting submenu in Unity 6 — and the real path is looked up at click time.
+        /// </summary>
+        private static readonly (string Label, string[] Leaves)[] CreateEntries =
+        {
+            ("Folder", new[] { "Folder" }),
+            ("C# Script", new[] { "MonoBehaviour Script", "C# Script" }),
+            ("ScriptableObject Script", new[] { "ScriptableObject Script" }),
+            ("Material", new[] { "Material" }),
+            ("Scene", new[] { "Scene" }),
+            ("Animator Controller", new[] { "Animator Controller" }),
+            ("Animation", new[] { "Animation", "Animation Clip" }),
+            ("Timeline", new[] { "Timeline" })
+        };
 
         private static double _lastRefresh;
 
@@ -69,8 +88,10 @@ namespace DNExtensions.HelpfulEditor.Project
             Button button = new Button(CreateFolder)
             {
                 name = ElementName,
-                tooltip = "New folder in the folder being browsed"
+                tooltip = "New folder in the folder being browsed\nRight-click for other asset types"
             };
+
+            button.AddManipulator(new ContextualMenuManipulator(BuildCreateMenu));
 
             button.style.position = Position.Absolute;
             button.style.top = 22f;
@@ -105,30 +126,104 @@ namespace DNExtensions.HelpfulEditor.Project
             return button;
         }
 
-        /// <summary>Creates in whatever folder the Project window is showing, and enters rename mode.</summary>
-        private static void CreateFolder()
+        private static void BuildCreateMenu(ContextualMenuPopulateEvent evt)
         {
-            if (TryCreateWithTemplates()) return;
+            Dictionary<string, string> menu = EnumerateCreateMenu();
 
-            EditorApplication.ExecuteMenuItem("Assets/Create/Folder");
+            foreach ((string label, string[] leaves) in CreateEntries)
+            {
+                string menuPath = ResolveMenuPath(menu, leaves);
+                if (menuPath == null) continue;
+
+                evt.menu.AppendAction(label, _ => EditorApplication.ExecuteMenuItem(menuPath));
+            }
         }
 
-        private static bool TryCreateWithTemplates()
+        private static string ResolveMenuPath(Dictionary<string, string> menu, string[] leaves)
         {
+            foreach (string leaf in leaves)
+            {
+                if (menu.TryGetValue(leaf, out string path)) return path;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Every real item under Assets/Create, keyed by its leaf name.
+        ///
+        /// Read from the live menu rather than assumed: most of these are not [MenuItem] attributes
+        /// at all in Unity 6 — they are registered at runtime — so a hardcoded path is wrong as
+        /// often as not, and Menu.GetEnabled happily reports true for paths that do not exist.
+        /// Enumerating is the only way to know what this editor actually has.
+        /// </summary>
+        private static Dictionary<string, string> EnumerateCreateMenu()
+        {
+            Dictionary<string, string> byLeaf = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
             try
             {
-                MethodInfo method = typeof(ProjectWindowUtil).GetMethod("CreateFolderWithTemplates",
+                MethodInfo method = typeof(Menu).GetMethod("GetMenuItems",
                     BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 
-                if (method == null) return false;
+                if (method?.Invoke(null, new object[] { CreateMenuRoot, false, false }) is not Array items) return byLeaf;
 
-                method.Invoke(null, new object[] { "New Folder", Array.Empty<string>() });
-                return true;
+                MemberInfo pathMember = null;
+
+                foreach (object item in items)
+                {
+                    if (item == null) continue;
+
+                    pathMember ??= FindPathMember(item.GetType());
+                    if (ReadPath(pathMember, item) is not string path || path.Length <= CreateMenuRoot.Length) continue;
+
+                    int slash = path.LastIndexOf('/');
+                    string leaf = slash >= 0 ? path.Substring(slash + 1) : path;
+
+                    // First wins, so a top-level item is preferred over a deeper one of the same name.
+                    if (!byLeaf.ContainsKey(leaf)) byLeaf[leaf] = path;
+                }
             }
             catch (Exception)
             {
-                return false;
+                // Menu enumeration is internal; without it the context menu is simply empty.
             }
+
+            return byLeaf;
+        }
+
+        private static MemberInfo FindPathMember(Type type)
+        {
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+            PropertyInfo property = type.GetProperty("path", flags);
+            if (property != null && property.PropertyType == typeof(string)) return property;
+
+            return type.GetField("path", flags);
+        }
+
+        private static string ReadPath(MemberInfo member, object item)
+        {
+            return member switch
+            {
+                PropertyInfo property => property.GetValue(item) as string,
+                FieldInfo field => field.GetValue(item) as string,
+                _ => null
+            };
+        }
+
+        /// <summary>
+        /// Creates in whatever folder the Project window is showing, and enters rename mode. Runs
+        /// the editor's own Folder item so it behaves exactly like creating one by hand; the path is
+        /// looked up rather than assumed, since CreateFolderWithTemplates no longer exists in
+        /// Unity 6 and the menu path is not a compile-time constant either.
+        /// </summary>
+        private static void CreateFolder()
+        {
+            string menuPath = ResolveMenuPath(EnumerateCreateMenu(), new[] { "Folder" });
+            if (menuPath == null) return;
+
+            EditorApplication.ExecuteMenuItem(menuPath);
         }
     }
 }

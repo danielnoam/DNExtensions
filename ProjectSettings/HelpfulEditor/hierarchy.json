@@ -22,10 +22,9 @@
         "a": 0.3499999940395355
     },
     "treeDepthLineStyle": 1,
-    "treeDepthLineThickness": 2.0,
     "componentStripEnabled": true,
     "componentStripMaxIcons": 6,
-    "componentIconSize": 14.0,
+    "componentIconSize": 12.0,
     "componentQuickEditEnabled": true,
     "excludedComponentTypes": [
         "Transform",
@@ -49,6 +48,12 @@
     "expandCollapseRecursiveKey": {
         "key": 101,
         "ctrl": false,
+        "alt": false,
+        "shift": true
+    },
+    "collapseAllKey": {
+        "key": 101,
+        "ctrl": true,
         "alt": false,
         "shift": true
     },

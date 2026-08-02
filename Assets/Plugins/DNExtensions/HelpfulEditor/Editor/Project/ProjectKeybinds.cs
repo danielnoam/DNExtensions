@@ -50,7 +50,15 @@ namespace DNExtensions.HelpfulEditor.Project
             // deliberately left unconsumed, so Unity's own shortcut on that key still runs —
             // otherwise Ctrl+R over empty Project space would swallow the domain reload.
             string path = ProjectModule.HoveredPath;
-            if (string.IsNullOrEmpty(path)) return;
+
+            if (string.IsNullOrEmpty(path))
+            {
+                // A row with no asset — the Packages root, say — can still be expanded by position.
+                bool expandPressed = settings.expandCollapseKey.Matches(evt) || settings.expandCollapseRecursiveKey.Matches(evt);
+                if (expandPressed && HelpfulEditorTreeReflection.ToggleProjectExpandedAtRow(ProjectModule.HoveredRowY)) evt.Use();
+
+                return;
+            }
 
             // Not gated on folders: an FBX, a prefab or any asset with sub-assets is an expandable
             // row too. Rows with nothing under them are already a no-op further down.

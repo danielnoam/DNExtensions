@@ -242,7 +242,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
         /// <summary>
         /// Shows whether every component is visible, and clears isolation when clicked. Drawn
-        /// pressed while anything is hidden, so the bar itself says the list is incomplete.
+        /// pressed while nothing is hidden, so losing the pressed state is what flags an incomplete
+        /// list.
         /// </summary>
         private static void DrawEyeButton(Rect rect, GUIStyle style, float iconSize)
         {
@@ -258,7 +259,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             if (evt.type == EventType.Repaint)
             {
-                style.Draw(rect, EyeContent, hovered, false, isolating, false);
+                // Pressed while everything is visible, matching the open eye: the button reads as
+                // "showing all", and releasing it is what a hidden component looks like.
+                style.Draw(rect, EyeContent, hovered, false, !isolating, false);
 
                 Texture eye = EditorGUIUtility.IconContent(isolating
                     ? "animationvisibilitytoggleoff"
@@ -362,9 +365,25 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
         private static void ShowIconContextMenu(Component component)
         {
+            List<Component> selection = ComponentIsolation.GetSelection(component);
             GenericMenu menu = new GenericMenu();
 
-            menu.AddItem(new GUIContent("Copy Component Values"), false, () => ComponentUtility.CopyComponent(component));
+            menu.AddItem(new GUIContent(selection.Count > 1 ? $"Copy {selection.Count} Components" : "Copy Component"),
+                false, () => ComponentClipboard.Copy(selection));
+
+            // Pasting values writes into one existing component, so it has no meaning for a
+            // multi-selection.
+            if (selection.Count > 1) menu.AddDisabledItem(new GUIContent("Copy Component Values"));
+            else menu.AddItem(new GUIContent("Copy Component Values"), false, () => ComponentUtility.CopyComponent(component));
+
+            int copied = ComponentClipboard.Count;
+            if (copied > 0)
+            {
+                GameObject target = component.gameObject;
+                menu.AddSeparator("");
+                menu.AddItem(new GUIContent(copied > 1 ? $"Paste {copied} Components" : "Paste Component"),
+                    false, () => ComponentClipboard.PasteTo(target));
+            }
 
             menu.ShowAsContext();
         }

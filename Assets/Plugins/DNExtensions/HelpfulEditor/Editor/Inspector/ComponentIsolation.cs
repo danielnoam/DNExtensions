@@ -59,12 +59,30 @@ namespace DNExtensions.HelpfulEditor.Inspector
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
 
+        /// <summary>
+        /// The flags come off on the way into play mode. Leaving them set would put HideInInspector
+        /// into the snapshot Unity takes of the scene, which is the same snapshot it restores from on
+        /// exit — so the hidden state would outlive the isolation.
+        /// </summary>
         private static void OnPlayModeStateChanged(PlayModeStateChange state)
         {
             if (state == PlayModeStateChange.ExitingEditMode) RestoreAndRepaint();
         }
 
         public static bool Contains(Component component) => component && Isolated.Contains(component);
+
+        /// <summary>
+        /// The isolated set when the given component is part of it, otherwise just that component —
+        /// the same rule the Hierarchy uses for acting on a selection versus a single hovered row.
+        /// </summary>
+        public static List<Component> GetSelection(Component component)
+        {
+            Prune();
+
+            if (Isolated.Count > 1 && Isolated.Contains(component)) return new List<Component>(Isolated);
+
+            return new List<Component> { component };
+        }
 
         /// <summary>Ctrl+Click behaviour: add or remove a single component from the isolated set.</summary>
         public static void Toggle(Component component, int index)

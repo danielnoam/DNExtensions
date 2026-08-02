@@ -21,6 +21,9 @@ namespace DNExtensions.HelpfulEditor.Project
         private static readonly Dictionary<string, (bool subfolders, bool children)> FoldoutCache =
             new Dictionary<string, (bool, bool)>();
 
+        private static readonly List<Rect> IconRects = new List<Rect>();
+        private static readonly GUIContent OverflowContent = new GUIContent();
+
         private static double _lastHoverTime;
         private static Rect _listAreaRect;
         private static bool _hasListAreaRect;
@@ -33,6 +36,9 @@ namespace DNExtensions.HelpfulEditor.Project
 
         /// <summary>Whether the hovered row was in the two-column right pane rather than the folder tree.</summary>
         public static bool HoveredInListArea { get; private set; }
+
+        /// <summary>Top of the hovered row, used to reach rows that have no asset path of their own.</summary>
+        public static float HoveredRowY { get; private set; }
 
         static ProjectModule()
         {
@@ -141,8 +147,10 @@ namespace DNExtensions.HelpfulEditor.Project
             ProjectModuleSettings settings = HelpfulEditorSettings.Project;
             if (!settings.moduleEnabled) return;
 
+            // Structural rows such as the Packages root have no asset behind them. They still need
+            // hover tracking and a highlight, so the path check gates only the overlays below.
             string path = AssetDatabase.GUIDToAssetPath(guid);
-            if (string.IsNullOrEmpty(path)) return;
+            bool hasAsset = !string.IsNullOrEmpty(path);
 
             bool isListView = rowRect.height <= ListViewRowHeightLimit;
             bool inListArea = IsInListArea(rowRect);
@@ -168,6 +176,8 @@ namespace DNExtensions.HelpfulEditor.Project
                 }
             }
 
+            if (!hasAsset) return;
+
             bool isFolder = AssetDatabase.IsValidFolder(path);
 
             int pathDepth = GetPathDepth(path);
@@ -181,12 +191,19 @@ namespace DNExtensions.HelpfulEditor.Project
                 // at the top level and get no line, exactly as the Hierarchy's scene roots do.
                 int depth = Mathf.Max(0, pathDepth - 1);
                 HelpfulEditorGUI.DrawDepthLines(rowRect, depth, rowRect.x - HelpfulEditorGUI.IndentWidth * depth,
-                    settings.treeLineColor, settings.treeLineStyle, HasFoldout(path, isFolder), settings.treeLineThickness);
+                    settings.treeLineColor, settings.treeLineStyle, HasFoldout(path, isFolder));
             }
 
             // Sub-asset rows report their parent's guid, so the path here is the parent file's. The
             // overlay would draw the FBX's name and extension over a mesh or material row.
-            if (!IsSubAssetRow(guid, rowRect)) ProjectNameOverlay.Draw(rowRect, path, isListView, settings);
+            bool subAsset = IsSubAssetRow(guid, rowRect);
+
+            if (!subAsset) ProjectNameOverlay.Draw(rowRect, path, isListView, isFolder, settings);
+
+            if (settings.folderContentIconsEnabled && isFolder && isListView && !subAsset)
+            {
+                DrawFolderContentIcons(rowRect, path, settings);
+            }
 
             if (settings.dragConflictResolutionEnabled && isFolder)
             {
@@ -201,6 +218,7 @@ namespace DNExtensions.HelpfulEditor.Project
 
             HoveredPath = path;
             HoveredInListArea = inListArea;
+            HoveredRowY = rowRect.y;
             _lastHoverTime = EditorApplication.timeSinceStartup;
             return true;
         }
@@ -218,6 +236,43 @@ namespace DNExtensions.HelpfulEditor.Project
             _lastMainGuid = guid;
             _lastMainX = rowRect.x;
             return false;
+        }
+
+        /// <summary>
+        /// Right-aligned strip showing which asset types the folder holds, most common first.
+        /// </summary>
+        private static void DrawFolderContentIcons(Rect rowRect, string path, ProjectModuleSettings settings)
+        {
+            Texture[] icons = ProjectFolderContents.Get(path, settings.folderContentRecursive);
+            if (icons.Length == 0) return;
+
+            float size = settings.folderContentIconSize;
+            int visible = settings.folderContentMaxIcons > 0
+                ? Mathf.Min(icons.Length, settings.folderContentMaxIcons)
+                : icons.Length;
+
+            float width = visible * (size + 1f);
+            if (visible < icons.Length) width += size + 6f;
+
+            Rect area = new Rect(rowRect.xMax - width, rowRect.y, width, rowRect.height);
+            HelpfulEditorGUI.LayoutIconStrip(area, icons.Length, size, settings.folderContentMaxIcons,
+                IconRects, out int shown, out Rect overflowRect);
+
+            Color previous = GUI.color;
+            GUI.color = new Color(previous.r, previous.g, previous.b, previous.a * HelpfulEditorGUI.IconStripOpacity);
+
+            for (int i = 0; i < shown; i++)
+            {
+                if (icons[i]) GUI.DrawTexture(IconRects[i], icons[i], ScaleMode.ScaleToFit);
+            }
+
+            if (shown < icons.Length)
+            {
+                OverflowContent.text = $"+{icons.Length - shown}";
+                GUI.Label(overflowRect, OverflowContent, HelpfulEditorGUI.BadgeStyle);
+            }
+
+            GUI.color = previous;
         }
 
         /// <summary>

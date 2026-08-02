@@ -78,6 +78,10 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             HelpfulEditorGUI.LayoutIconStrip(area, components.Count, settings.componentIconSize,
                 settings.componentStripMaxIcons, IconRects, out int shown, out Rect overflowRect);
 
+            Color previousColor = GUI.color;
+            GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b,
+                previousColor.a * HelpfulEditorGUI.IconStripOpacity);
+
             for (int i = 0; i < shown; i++)
             {
                 Component component = components[i];
@@ -100,6 +104,8 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                 GUI.Label(overflowRect, OverflowContent, HelpfulEditorGUI.BadgeStyle);
                 HandleOverflowInput(overflowRect, components, shown, settings);
             }
+
+            GUI.color = previousColor;
 
             return width;
         }

@@ -80,8 +80,6 @@ namespace DNExtensions
         /// <summary>
         /// Generates an impulse using the configured Cinemachine impulse source.
         /// </summary>
-        [Button(ButtonPlayMode.Both)]
-        [ComponentHeaderButton("Test")]
         public void TestImpulse()
         {
             testImpulseSource.GenerateImpulse(testImpulse);

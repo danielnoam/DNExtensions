@@ -10,7 +10,16 @@ namespace DNExtensions.HelpfulEditor
     {
         public const float IndentWidth = 14f;
 
-        private const float DashSegment = 2f;
+        /// <summary>Weight of the Hierarchy and Project tree guides. Shared so the two cannot drift apart.</summary>
+        public const float TreeLineThickness = 2f;
+
+        /// <summary>
+        /// Opacity of the row icon strips. They are supporting information, so they sit back from
+        /// the row's own icon and label rather than competing with them.
+        /// </summary>
+        public const float IconStripOpacity = 0.7f;
+
+        private const float BaseDashSegment = 2f;
         private const float DashGap = 2f;
 
         private static readonly Dictionary<Type, Texture> IconCache = new Dictionary<Type, Texture>();
@@ -87,6 +96,23 @@ namespace DNExtensions.HelpfulEditor
             return Mathf.Round(value);
         }
 
+        /// <summary>The whole-pixel thickness a line will actually be drawn at.</summary>
+        public static float LineThickness(float thickness)
+        {
+            return Mathf.Max(1f, Mathf.Round(thickness));
+        }
+
+        /// <summary>
+        /// Where an elbow's horizontal should begin. Solid abuts the vertical exactly — overlapping
+        /// would double-draw a translucent corner. Dotted leaves a further gap, so the turn reads as
+        /// the dash pattern continuing round the corner rather than as a solid blob at the join.
+        /// </summary>
+        public static float ElbowStart(float guideX, float thickness, LineStyle style)
+        {
+            float weight = LineThickness(thickness);
+            return style == LineStyle.Dotted ? guideX + weight + DashGap : guideX + weight;
+        }
+
         /// <summary>
         /// Full-height guide per ancestor level plus an elbow into the row's icon. Used by the
         /// Project window, which has no cheap way to know whether a row is its parent's last child;
@@ -96,36 +122,49 @@ namespace DNExtensions.HelpfulEditor
         /// True for rows that draw their own foldout arrow, so the elbow ends short of the arrow's
         /// column instead of running underneath the glyph.
         /// </param>
-        public static void DrawDepthLines(Rect rowRect, int depth, float leftEdge, Color color, LineStyle style, bool stopBeforeFoldout, float thickness = 1f)
+        public static void DrawDepthLines(Rect rowRect, int depth, float leftEdge, Color color, LineStyle style, bool stopBeforeFoldout)
         {
             if (depth <= 0 || color.a <= 0f) return;
 
+            float midY = SnapToPixel(rowRect.y + rowRect.height * 0.5f);
+
             for (int level = 0; level < depth; level++)
             {
-                DrawVerticalLine(GuideColumnX(leftEdge, level), rowRect.y, rowRect.yMax, color, style, thickness);
+                DrawVerticalLine(GuideColumnX(leftEdge, level), rowRect.y, rowRect.yMax, color, style, TreeLineThickness, midY);
             }
 
-            float midY = SnapToPixel(rowRect.y + rowRect.height * 0.5f);
             float elbowEnd = stopBeforeFoldout ? rowRect.x - IndentWidth : rowRect.x - 2f;
 
-            DrawHorizontalLine(GuideColumnX(leftEdge, depth - 1), elbowEnd, midY, color, style, thickness);
+            DrawHorizontalLine(ElbowStart(GuideColumnX(leftEdge, depth - 1), TreeLineThickness, style), elbowEnd, midY,
+                color, style, TreeLineThickness);
         }
 
-        public static void DrawVerticalLine(float x, float top, float bottom, Color color, LineStyle style, float thickness = 1f)
+        /// <param name="dashAnchorY">
+        /// A y a dash must start on, used to line the dashes up with an elbow. Without it the dash
+        /// phase runs from the top of the line and the corner lands in a gap as often as not, so the
+        /// elbow reads as two disconnected strokes.
+        /// </param>
+        public static void DrawVerticalLine(float x, float top, float bottom, Color color, LineStyle style, float thickness = 1f, float dashAnchorY = float.NaN)
         {
             if (bottom <= top) return;
 
-            thickness = Mathf.Max(1f, Mathf.Round(thickness));
+            float weight = LineThickness(thickness);
 
             if (style == LineStyle.Solid)
             {
-                EditorGUI.DrawRect(new Rect(x, top, thickness, bottom - top), color);
+                EditorGUI.DrawRect(new Rect(x, top, weight, bottom - top), color);
                 return;
             }
 
-            for (float y = top; y < bottom; y += DashSegment + DashGap)
+            float segment = DashSegment(weight);
+            float step = segment + DashGap;
+            float start = float.IsNaN(dashAnchorY) ? top : dashAnchorY + Mathf.Floor((top - dashAnchorY) / step) * step;
+
+            for (float y = start; y < bottom; y += step)
             {
-                EditorGUI.DrawRect(new Rect(x, y, thickness, Mathf.Min(DashSegment, bottom - y)), color);
+                float segmentTop = Mathf.Max(y, top);
+                float segmentBottom = Mathf.Min(y + segment, bottom);
+                if (segmentBottom > segmentTop) EditorGUI.DrawRect(new Rect(x, segmentTop, weight, segmentBottom - segmentTop), color);
             }
         }
 
@@ -133,18 +172,26 @@ namespace DNExtensions.HelpfulEditor
         {
             if (right <= left) return;
 
-            thickness = Mathf.Max(1f, Mathf.Round(thickness));
+            float weight = LineThickness(thickness);
 
             if (style == LineStyle.Solid)
             {
-                EditorGUI.DrawRect(new Rect(left, y, right - left, thickness), color);
+                EditorGUI.DrawRect(new Rect(left, y, right - left, weight), color);
                 return;
             }
 
-            for (float x = left; x < right; x += DashSegment + DashGap)
+            float segment = DashSegment(weight);
+
+            for (float x = left; x < right; x += segment + DashGap)
             {
-                EditorGUI.DrawRect(new Rect(x, y, Mathf.Min(DashSegment, right - x), thickness), color);
+                EditorGUI.DrawRect(new Rect(x, y, Mathf.Min(segment, right - x), weight), color);
             }
+        }
+
+        /// <summary>Dashes are never shorter than the line is thick, so a corner dash fills the join.</summary>
+        private static float DashSegment(float weight)
+        {
+            return Mathf.Max(BaseDashSegment, weight);
         }
 
         public static void DrawBorder(Rect rect, Color color, float thickness = 1f)

@@ -249,13 +249,89 @@ namespace DNExtensions.HelpfulEditor
                 List<object> keepExpanded = new List<object>();
                 foreach (object id in GetExpandedIds(data))
                 {
-                    if (!HelpfulEditorObjectId.Resolve(id)) keepExpanded.Add(id);
+                    if (ShouldStayExpanded(id)) keepExpanded.Add(id);
                 }
 
                 SetExpandedIds(data, keepExpanded);
             }
 
             EditorApplication.RepaintProjectWindow();
+        }
+
+        /// <summary>
+        /// Structural rows and the tree roots — Assets, Packages — survive a collapse-all. Folding
+        /// the roots away would empty the window rather than tidy it.
+        /// </summary>
+        private static bool ShouldStayExpanded(object id)
+        {
+            Object resolved = HelpfulEditorObjectId.Resolve(id);
+            if (!resolved) return true;
+
+            string path = AssetDatabase.GetAssetPath(resolved);
+            return string.IsNullOrEmpty(path) || path.IndexOf('/') < 0;
+        }
+
+        /// <summary>
+        /// Toggles the tree row at a given y. Rows like the Packages root have no asset behind them,
+        /// so they cannot be addressed by path — but they are ordinary tree rows, and the GUI can
+        /// say where each one sits.
+        /// </summary>
+        public static bool ToggleProjectExpandedAtRow(float rowY)
+        {
+            try
+            {
+                foreach (object treeView in GetProjectTreeViews())
+                {
+                    object data = DataOf(treeView);
+                    object gui = GetMemberValue(treeView, "gui");
+                    if (data == null || gui == null) continue;
+
+                    MethodInfo getRows = data.GetType().GetMethod("GetRows", AnyInstance, null, Type.EmptyTypes, null);
+                    if (getRows?.Invoke(data, null) is not IList rows) continue;
+
+                    MethodInfo getRowRect = gui.GetType().GetMethod("GetRowRect", AnyInstance, null,
+                        new[] { typeof(int), typeof(float) }, null);
+                    if (getRowRect == null) continue;
+
+                    for (int row = 0; row < rows.Count; row++)
+                    {
+                        if (getRowRect.Invoke(gui, new object[] { row, 1f }) is not Rect rect) continue;
+                        if (Mathf.Abs(rect.y - rowY) > 0.5f) continue;
+
+                        object id = GetMemberValue(rows[row], "id");
+                        if (id == null) return false;
+
+                        bool expanded = InvokeWithId(data, "IsExpanded", id) is bool current && current;
+                        InvokeWithId(data, "SetExpanded", id, !expanded);
+
+                        EditorApplication.RepaintProjectWindow();
+                        return true;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                WarnOnce(e);
+            }
+
+            return false;
+        }
+
+        /// <summary>Collapses every GameObject but leaves the scene headers open.</summary>
+        public static void CollapseAllHierarchy()
+        {
+            object data = DataOf(GetHierarchyTreeView());
+            if (data == null) return;
+
+            List<object> keepExpanded = new List<object>();
+            foreach (object id in GetExpandedIds(data))
+            {
+                // Scene headers are rows without an object behind them, so they are what survives.
+                if (!HelpfulEditorObjectId.Resolve(id)) keepExpanded.Add(id);
+            }
+
+            SetExpandedIds(data, keepExpanded);
+            EditorApplication.RepaintHierarchyWindow();
         }
 
         /// <summary>

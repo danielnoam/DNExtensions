@@ -81,21 +81,26 @@ namespace DNExtensions.HelpfulEditor.Project
             }
         }
 
-        public static void Draw(Rect rowRect, string assetPath, bool isListView, ProjectModuleSettings settings)
+        public static void Draw(Rect rowRect, string assetPath, bool isListView, bool isFolder, ProjectModuleSettings settings)
         {
             if (string.IsNullOrEmpty(assetPath)) return;
+
+            // Folders have no extension, and Path.GetExtension would happily invent one from a dot
+            // in the name — every package folder is reverse-DNS, so they would all sprout a fake
+            // ".textmeshpro" style suffix.
+            bool showExtension = settings.showFileExtensions && !isFolder;
 
             if (isListView)
             {
                 // List rows keep Unity's own label and get the extension appended after it, which
                 // avoids covering and redrawing a row that is only one line tall anyway.
-                if (settings.showFileExtensions) DrawListExtension(rowRect, assetPath);
+                if (showExtension) DrawListExtension(rowRect, assetPath);
                 return;
             }
 
-            if (!settings.twoLineNamesEnabled && !settings.showFileExtensions) return;
+            if (!settings.twoLineNamesEnabled && !showExtension) return;
 
-            DrawGridLabel(rowRect, assetPath, settings.twoLineNamesEnabled, settings.showFileExtensions);
+            DrawGridLabel(rowRect, assetPath, settings.twoLineNamesEnabled, showExtension);
         }
 
         private static (string name, string extension) Split(string assetPath)

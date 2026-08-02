@@ -25,6 +25,11 @@ namespace DNExtensions.HelpfulEditor
         public static bool MouseOverProject => IsMouseOver(ProjectWindowType);
         public static bool MouseOverInspector => IsMouseOver(InspectorWindowType);
 
+        public static bool IsInspector(EditorWindow window)
+        {
+            return window && InspectorWindowType != null && InspectorWindowType.IsInstanceOfType(window);
+        }
+
         /// <summary>
         /// Subclasses count. Exact identity looked safer but is wrong here: Unity's windows are
         /// routinely instances of a derived type, and a mismatch silently disables every keybind
