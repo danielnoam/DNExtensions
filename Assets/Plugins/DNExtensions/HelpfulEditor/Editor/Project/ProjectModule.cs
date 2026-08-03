@@ -29,6 +29,7 @@ namespace DNExtensions.HelpfulEditor.Project
         private static bool _hasListAreaRect;
         private static string _lastMainGuid;
         private static float _lastMainX;
+        private static float _lastRowY;
         private static float _treeBaseX;
         private static bool _hasTreeBaseX;
 
@@ -200,14 +201,21 @@ namespace DNExtensions.HelpfulEditor.Project
 
             if (!subAsset) ProjectNameOverlay.Draw(rowRect, path, isListView, isFolder, settings);
 
-            if (settings.folderContentIconsEnabled && isFolder && isListView && !subAsset)
+            // Tested by indent rather than by the list area rect: that rect and the row rects are not
+            // in the same coordinate space, so only some right-pane rows ever matched it — which is
+            // why turning the object view off left the icons showing.
+            bool treeRow = IsTreeRow(rowRect, pathDepth);
+
+            if (settings.folderContentIconsEnabled && isFolder && isListView && !subAsset &&
+                (treeRow || settings.folderContentIconsInObjectView))
             {
                 DrawFolderContentIcons(rowRect, path, settings);
             }
 
-            if (settings.dragConflictResolutionEnabled && isFolder)
+            if (isFolder && !subAsset)
             {
-                DragConflictResolver.HandleFolderRow(rowRect, path);
+                string linkedFolder = LinkedAssets.MatchFolder(path, settings);
+                if (linkedFolder != null) LinkedAssets.Draw(rowRect, linkedFolder, isListView);
             }
         }
 
@@ -231,7 +239,14 @@ namespace DNExtensions.HelpfulEditor.Project
         /// </summary>
         private static bool IsSubAssetRow(string guid, Rect rowRect)
         {
-            if (guid == _lastMainGuid && rowRect.x > _lastMainX) return true;
+            // Rows arrive top to bottom, so a row that is not below the previous one starts a new
+            // pass. Without this the first row of a pass is compared against the last row of the one
+            // before, and an expandable asset sitting at the top of the list reads as a sub-asset of
+            // whatever happened to be drawn last.
+            bool newPass = rowRect.y <= _lastRowY;
+            _lastRowY = rowRect.y;
+
+            if (!newPass && guid == _lastMainGuid && rowRect.x > _lastMainX) return true;
 
             _lastMainGuid = guid;
             _lastMainX = rowRect.x;

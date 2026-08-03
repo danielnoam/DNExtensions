@@ -11,7 +11,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
     [InitializeOnLoad]
     internal static class GraphicResetColorButton
     {
-        private const string ResetIcon = "🎨";
+        private static readonly string ResetIcon = HelpfulEditorPlatform.Glyph("🎨", "Color");
         private const string ColorProperty = "m_Color";
         private const string TextColorProperty = "m_fontColor";
         private const string GraphicType = "UnityEngine.UI.Graphic";

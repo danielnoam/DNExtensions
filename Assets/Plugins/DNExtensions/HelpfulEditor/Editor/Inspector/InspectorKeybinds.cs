@@ -45,6 +45,15 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 return;
             }
 
+            // Acts on the whole object, so unlike the per-component actions below it does not need
+            // anything under the cursor.
+            if (settings.collapseAllKey.Matches(evt))
+            {
+                ToggleExpandedAll();
+                evt.Use();
+                return;
+            }
+
             // The component under the cursor in the Inspector body wins; the header bar button is
             // the fallback for when the cursor is up in the bar itself.
             Component hovered = InspectorComponentHover.HoveredComponent
@@ -71,6 +80,35 @@ namespace DNExtensions.HelpfulEditor.Inspector
         {
             InternalEditorUtility.SetIsInspectorExpanded(component, !InternalEditorUtility.GetIsInspectorExpanded(component));
             ActiveEditorTracker.sharedTracker.ForceRebuild();
+        }
+
+        /// <summary>
+        /// Collapses every component, or expands them all when none is open. Anything expanded counts
+        /// as "not collapsed yet", so the first press always closes things — which is what the key is
+        /// usually reached for, and it matches how the Hierarchy and Project read the same chord.
+        /// </summary>
+        private static void ToggleExpandedAll()
+        {
+            ActiveEditorTracker tracker = ActiveEditorTracker.sharedTracker;
+
+            bool anyExpanded = false;
+            foreach (Editor editor in tracker.activeEditors)
+            {
+                if (!editor || !(editor.target is Component component)) continue;
+                if (!InternalEditorUtility.GetIsInspectorExpanded(component)) continue;
+
+                anyExpanded = true;
+                break;
+            }
+
+            foreach (Editor editor in tracker.activeEditors)
+            {
+                if (!editor || !(editor.target is Component component)) continue;
+
+                InternalEditorUtility.SetIsInspectorExpanded(component, !anyExpanded);
+            }
+
+            tracker.ForceRebuild();
         }
 
         /// <summary>

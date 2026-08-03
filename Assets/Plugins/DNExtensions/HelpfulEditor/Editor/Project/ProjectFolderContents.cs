@@ -85,11 +85,23 @@ namespace DNExtensions.HelpfulEditor.Project
 
             if (counts.Count == 0) return Empty;
 
-            return counts
-                .OrderByDescending(entry => entry.Value)
-                .Select(entry => IconFor(entry.Key, firstPath[entry.Key]))
-                .Where(icon => icon)
-                .ToArray();
+            // Deduplicated by icon rather than by type. Every ScriptableObject subclass is its own
+            // type but they nearly all resolve to the same icon, so grouping by type alone produced a
+            // strip of identical entries.
+            List<Texture> icons = new List<Texture>();
+
+            // Compared as objects rather than by instance id, which is a compile error from 6.4 on.
+            HashSet<Texture> seen = new HashSet<Texture>();
+
+            foreach (KeyValuePair<Type, int> entry in counts.OrderByDescending(entry => entry.Value))
+            {
+                Texture icon = IconFor(entry.Key, firstPath[entry.Key]);
+                if (!icon || !seen.Add(icon)) continue;
+
+                icons.Add(icon);
+            }
+
+            return icons.Count == 0 ? Empty : icons.ToArray();
         }
 
         private static bool IsUnderAssets(string folderPath)

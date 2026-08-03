@@ -36,6 +36,12 @@
         "alt": false,
         "shift": false
     },
+    "collapseAllKey": {
+        "key": 101,
+        "ctrl": true,
+        "alt": false,
+        "shift": true
+    },
     "toggleEnabledKey": {
         "key": 97,
         "ctrl": false,

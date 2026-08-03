@@ -173,10 +173,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             if (!settings.fieldSearchEnabled)
             {
-                // Bodies are collapsed while a search is running, so a leftover search must not
-                // outlive the bar that would let you clear it.
+                // A leftover search must not outlive the box that would let you clear it.
                 _search = string.Empty;
-                ComponentIsolation.SetHideAllBodies(false);
                 return;
             }
 
@@ -407,11 +405,6 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             _search = search;
 
-            // Re-asserted every frame rather than only on change: selecting a different object
-            // resets the hide state, which would otherwise leave a still-populated search box
-            // drawing its results on top of component bodies that had become visible again.
-            ComponentIsolation.SetHideAllBodies(!string.IsNullOrWhiteSpace(_search));
-
             if (string.IsNullOrWhiteSpace(_search)) return;
 
             EditorGUILayout.Space(2);
@@ -419,8 +412,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
         }
 
         /// <summary>
-        /// Component bodies are collapsed while a search is active, so the matching fields are
-        /// re-drawn here grouped by component. Non-matching fields are simply never drawn.
+        /// Matching fields, grouped by component, drawn in the bar itself. The components below are
+        /// left exactly as they were — searching used to collapse every one of them, which meant a
+        /// search rearranged the whole inspector and put it back differently when cleared.
         /// </summary>
         private static void DrawMatchingFields(GameObject gameObject, InspectorSettings settings, string search)
         {

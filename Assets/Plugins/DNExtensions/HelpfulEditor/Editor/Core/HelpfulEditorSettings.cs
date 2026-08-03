@@ -15,14 +15,17 @@ namespace DNExtensions.HelpfulEditor
         private const string HierarchyFile = "hierarchy.json";
         private const string InspectorFile = "inspector.json";
         private const string ProjectFile = "project.json";
+        private const string GameViewFile = "gameview.json";
 
         private static HierarchySettings _hierarchy;
         private static InspectorSettings _inspector;
         private static ProjectModuleSettings _project;
+        private static GameViewSettings _gameView;
 
         public static HierarchySettings Hierarchy => _hierarchy ??= Load<HierarchySettings>(HierarchyFile);
         public static InspectorSettings Inspector => _inspector ??= Load<InspectorSettings>(InspectorFile);
         public static ProjectModuleSettings Project => _project ??= Load<ProjectModuleSettings>(ProjectFile);
+        public static GameViewSettings GameView => _gameView ??= Load<GameViewSettings>(GameViewFile);
 
         public static void SaveHierarchy()
         {
@@ -42,6 +45,15 @@ namespace DNExtensions.HelpfulEditor
             NotifyChanged();
         }
 
+        /// <summary>
+        /// Guides are written here on every drag release, so this deliberately skips the window
+        /// repaints the other modules trigger — the Game View overlay repaints itself.
+        /// </summary>
+        public static void SaveGameView()
+        {
+            Save(GameView, GameViewFile);
+        }
+
         public static void ResetHierarchy()
         {
             _hierarchy = new HierarchySettings();
@@ -58,6 +70,12 @@ namespace DNExtensions.HelpfulEditor
         {
             _project = new ProjectModuleSettings();
             SaveProject();
+        }
+
+        public static void ResetGameView()
+        {
+            _gameView = new GameViewSettings();
+            SaveGameView();
         }
 
         private static void NotifyChanged()

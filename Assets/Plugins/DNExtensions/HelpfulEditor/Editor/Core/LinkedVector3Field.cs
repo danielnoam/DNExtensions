@@ -215,12 +215,16 @@ namespace DNExtensions.HelpfulEditor
             Event.current.Use();
         }
 
-        private static void CopyToClipboard(Vector3 value) =>
+        /// <summary>
+        /// Shared with the component header buttons so a value copied from a Transform row can be
+        /// pasted onto a RectTransform and back.
+        /// </summary>
+        public static void CopyToClipboard(Vector3 value) =>
             EditorGUIUtility.systemCopyBuffer = $"{value.x},{value.y},{value.z}";
 
-        private static bool CanPaste() => TryParseClipboard(out _);
+        public static bool CanPaste() => TryParseClipboard(out _);
 
-        private static bool TryParseClipboard(out Vector3 result)
+        public static bool TryParseClipboard(out Vector3 result)
         {
             result = Vector3.zero;
             string clipboard = EditorGUIUtility.systemCopyBuffer;

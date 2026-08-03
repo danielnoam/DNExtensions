@@ -138,9 +138,20 @@ namespace DNExtensions.HelpfulEditor.Project
                 return;
             }
 
-            if (!settings.quickObjectWindowKey.IsMouseButton) return;
             if (evt.clickCount != 1) return;
             if (!rowRect.Contains(evt.mousePosition)) return;
+            if (string.IsNullOrEmpty(path)) return;
+
+            // Folders only: opening a second Project window on a file would have nothing to show.
+            if (settings.openFolderInNewTabKey.IsMouseButton && settings.openFolderInNewTabKey.Matches(evt) &&
+                AssetDatabase.IsValidFolder(path))
+            {
+                ProjectFolderTab.Open(path);
+                evt.Use();
+                return;
+            }
+
+            if (!settings.quickObjectWindowKey.IsMouseButton) return;
             if (!settings.quickObjectWindowKey.Matches(evt)) return;
 
             _pendingQuickObjectPath = path;

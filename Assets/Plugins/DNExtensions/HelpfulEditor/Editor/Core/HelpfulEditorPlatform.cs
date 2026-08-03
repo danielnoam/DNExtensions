@@ -21,5 +21,21 @@ namespace DNExtensions.HelpfulEditor
 #else
         public const string CommandModifierName = "Ctrl";
 #endif
+
+        /// <summary>
+        /// Whether the editor font renders emoji here. The macOS editor draws nothing at all for
+        /// them, so anything that leans on one for meaning has to say it in words there instead.
+        /// </summary>
+#if UNITY_EDITOR_OSX
+        public const bool SupportsEmoji = false;
+#else
+        public const bool SupportsEmoji = true;
+#endif
+
+        /// <summary>Picks whichever of the two this platform can actually display.</summary>
+        public static string Glyph(string emoji, string fallback)
+        {
+            return SupportsEmoji ? emoji : fallback;
+        }
     }
 }

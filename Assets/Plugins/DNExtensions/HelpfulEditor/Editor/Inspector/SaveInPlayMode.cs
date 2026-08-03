@@ -13,7 +13,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
     [InitializeOnLoad]
     internal static class SaveInPlayMode
     {
-        private const string SaveIcon = "💾";
+        private static readonly string SaveIcon = HelpfulEditorPlatform.Glyph("💾", "Save");
 
         private static readonly Color MarkedTint = new Color(0.3f, 0.7f, 0.3f, 0.3f);
         private static readonly HashSet<string> MarkedForSave = new HashSet<string>();

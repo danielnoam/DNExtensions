@@ -13,32 +13,66 @@ namespace DNExtensions.HelpfulEditor.Project
     /// None of this is undoable: asset file operations are outside Unity's undo stack, so the
     /// confirmation dialog — which shows the full destination path — is the only safety net.
     /// </summary>
+    [InitializeOnLoad]
     internal static class DragConflictResolver
     {
-        public static void HandleFolderRow(Rect rowRect, string folderPath)
+        /// <summary>
+        /// The drop handler API gained a V2 form when object ids became EntityId in 6.4, and the
+        /// original became a compile error in 6.5. Only the id type differs, and this handler has no
+        /// use for it either way.
+        /// </summary>
+        static DragConflictResolver()
         {
-            Event evt = Event.current;
-            if (evt == null) return;
-            if (evt.type != EventType.DragUpdated && evt.type != EventType.DragPerform) return;
-            if (!rowRect.Contains(evt.mousePosition)) return;
-            if (string.IsNullOrEmpty(folderPath)) return;
+#if UNITY_6000_4_OR_NEWER
+            DragAndDrop.RemoveDropHandlerV2((DragAndDrop.ProjectBrowserDropHandlerV2)OnProjectDrop);
+            DragAndDrop.AddDropHandlerV2((DragAndDrop.ProjectBrowserDropHandlerV2)OnProjectDrop);
+#else
+            DragAndDrop.RemoveDropHandler(OnProjectDrop);
+            DragAndDrop.AddDropHandler(OnProjectDrop);
+#endif
+        }
 
-            List<string> sources = CollectDraggedAssetPaths(folderPath);
-            if (sources.Count == 0) return;
+        /// <summary>
+        /// Unity's own drop handler hook, rather than reading drag events out of the row callback.
+        /// The ProjectBrowser resolves drags in its tree view's drag controller, which claims the
+        /// event before any per-row GUI runs — so the row callback only ever saw drags that Unity had
+        /// already decided about. Returning anything but None here takes the drop.
+        /// </summary>
+#if UNITY_6000_4_OR_NEWER
+        private static DragAndDropVisualMode OnProjectDrop(EntityId dragInstanceId, string dropUponPath, bool perform)
+#else
+        private static DragAndDropVisualMode OnProjectDrop(int dragInstanceId, string dropUponPath, bool perform)
+#endif
+        {
+            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
+            if (!settings.moduleEnabled || !settings.dragConflictResolutionEnabled) return DragAndDropVisualMode.None;
 
-            if (!AnyConflicts(sources, folderPath)) return;
+            string folder = ResolveFolder(dropUponPath);
+            if (folder == null) return DragAndDropVisualMode.None;
 
-            if (evt.type == EventType.DragUpdated)
+            List<string> sources = CollectDraggedAssetPaths(folder);
+            if (sources.Count == 0 || !AnyConflicts(sources, folder)) return DragAndDropVisualMode.None;
+
+            if (perform)
             {
-                DragAndDrop.visualMode = DragAndDropVisualMode.Move;
-                evt.Use();
-                return;
+                DragAndDrop.AcceptDrag();
+                ResolveAll(sources, folder);
             }
 
-            DragAndDrop.AcceptDrag();
-            evt.Use();
+            return DragAndDropVisualMode.Move;
+        }
 
-            ResolveAll(sources, folderPath);
+        /// <summary>
+        /// The drop target as a folder. Dropping onto an asset row targets the folder holding it,
+        /// which is what the Project window itself does.
+        /// </summary>
+        private static string ResolveFolder(string dropUponPath)
+        {
+            if (string.IsNullOrEmpty(dropUponPath)) return null;
+            if (AssetDatabase.IsValidFolder(dropUponPath)) return dropUponPath;
+
+            string directory = Path.GetDirectoryName(dropUponPath)?.Replace('\\', '/');
+            return AssetDatabase.IsValidFolder(directory) ? directory : null;
         }
 
         /// <summary>

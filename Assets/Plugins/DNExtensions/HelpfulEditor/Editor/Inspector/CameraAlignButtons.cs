@@ -10,8 +10,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
     [InitializeOnLoad]
     internal static class CameraAlignButtons
     {
-        private const string AlignCameraIcon = "🎥";
-        private const string AlignViewIcon = "👁";
+        private static readonly string AlignCameraIcon = HelpfulEditorPlatform.Glyph("🎥", "Cam");
+        private static readonly string AlignViewIcon = HelpfulEditorPlatform.Glyph("👁", "View");
 
         static CameraAlignButtons()
         {

@@ -79,8 +79,34 @@ namespace DNExtensions.HelpfulEditor
 
         public KeyBind isolateKey = KeyBind.Of(KeyCode.E, ctrl: true);
         public KeyBind expandCollapseKey = KeyBind.Of(KeyCode.E);
+
+        /// <summary>Same chord the Hierarchy and Project use for the equivalent action.</summary>
+        public KeyBind collapseAllKey = KeyBind.Of(KeyCode.E, ctrl: true, shift: true);
+
         public KeyBind toggleEnabledKey = KeyBind.Of(KeyCode.A);
         public KeyBind focusSearchKey = KeyBind.None;
+    }
+
+    /// <summary>One Game View guide, stored as a fraction of the render target so it survives resizing and zoom.</summary>
+    [Serializable]
+    internal class GameViewGuide
+    {
+        public bool isHorizontal;
+        public float normalizedPosition = 0.5f;
+    }
+
+    [Serializable]
+    internal class GameViewSettings
+    {
+        // Off by default: the rulers take a bite out of the Game View, which is not something to
+        // impose on someone who never asked for guides.
+        public bool moduleEnabled;
+
+        public bool showGuides = true;
+        public Color guideColor = new Color(0f, 0.85f, 1f, 0.9f);
+        public float guideWidth = 2f;
+
+        public List<GameViewGuide> guides = new List<GameViewGuide>();
     }
 
     /// <summary>User-added "dependent follows dependency" pair, matched by component type name.</summary>
@@ -121,7 +147,15 @@ namespace DNExtensions.HelpfulEditor
         public float folderContentIconSize = 12f;
         public bool folderContentRecursive;
 
+        /// <summary>Off by default: in the right-hand pane the icons compete with the assets themselves.</summary>
+        public bool folderContentIconsInObjectView;
+
         public bool createFolderButtonEnabled = true;
+
+        public bool linkedAssetsEnabled = true;
+
+        /// <summary>Folder names directly under Assets/ that are expected to be symlinks.</summary>
+        public List<string> linkedAssetFolders = new List<string> { "LinkedAssets" };
 
         public bool dragConflictResolutionEnabled = true;
         public ConflictDefaultChoice conflictDefaultChoice = ConflictDefaultChoice.AlwaysAsk;
@@ -133,6 +167,10 @@ namespace DNExtensions.HelpfulEditor
         public KeyBind collapseAllKey = KeyBind.Of(KeyCode.E, ctrl: true, shift: true);
         public KeyBind revealInFinderKey = KeyBind.Of(KeyCode.R, ctrl: true);
         public KeyBind quickObjectWindowKey = KeyBind.Of(KeyCode.Mouse0, alt: true);
+        public KeyBind openFolderInNewTabKey = KeyBind.Of(KeyCode.Mouse2);
+
+        /// <summary>On: the new window becomes a tab beside the one clicked. Off: it floats.</summary>
+        public bool autoDock = true;
         public KeyBind closeWindowKey = KeyBind.Of(KeyCode.W, ctrl: true);
 
         /// <summary>Window types Close Focused Window refuses to act on, matched by type name.</summary>

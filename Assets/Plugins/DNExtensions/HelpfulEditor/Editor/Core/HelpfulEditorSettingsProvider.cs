@@ -16,6 +16,9 @@ namespace DNExtensions.HelpfulEditor
         private const string Hierarchy = "Hierarchy";
         private const string Inspector = "Inspector";
         private const string ProjectModule = "Project";
+        private const string GameViewModule = "GameView";
+
+        private static int _sectionIndent;
 
         [MenuItem("Tools/DNExtensions/Helpful Editor Settings", false, 1000)]
         public static void OpenSettings()
@@ -67,6 +70,72 @@ namespace DNExtensions.HelpfulEditor
             };
         }
 
+        [SettingsProvider]
+        public static SettingsProvider CreateGameViewProvider()
+        {
+            return new SettingsProvider($"{RootPath}/Game View", SettingsScope.Project)
+            {
+                label = "Game View",
+                guiHandler = _ => DrawGameView(),
+                keywords = new[] { "game view", "guides", "guidelines", "rulers", "safe area" }
+            };
+        }
+
+        /// <summary>Opened from the Game View ruler's own context menu.</summary>
+        public static void OpenGameViewSettings()
+        {
+            SettingsService.OpenProjectSettings($"{RootPath}/Game View");
+        }
+
+        private static void DrawGameView()
+        {
+            GameViewSettings settings = HelpfulEditorSettings.GameView;
+
+            EditorGUI.BeginChangeCheck();
+
+            settings.moduleEnabled = EditorGUILayout.ToggleLeft(
+                new GUIContent("Module Enabled", "Adds rulers to every Game View. Drag off a ruler to place a guide."),
+                settings.moduleEnabled, EditorStyles.boldLabel);
+
+            using (new EditorGUI.DisabledScope(!settings.moduleEnabled))
+            {
+                BeginSections();
+
+                if (Section(GameViewModule, "Guides"))
+                {
+                    settings.showGuides = EditorGUILayout.Toggle("Show Guides", settings.showGuides);
+                    settings.guideColor = EditorGUILayout.ColorField("Colour", settings.guideColor);
+                    settings.guideWidth = EditorGUILayout.Slider("Width", settings.guideWidth, 0.5f, 8f);
+
+                    EditorGUILayout.LabelField($"{settings.guides.Count} placed", EditorStyles.miniLabel);
+
+                    using (new EditorGUI.DisabledScope(settings.guides.Count == 0))
+                    {
+                        if (GUILayout.Button("Clear All Guides", GUILayout.Width(140f))) GameView.GameViewModule.ClearGuides();
+                    }
+
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.HelpBox(
+                        "Drag off the top ruler for a vertical guide, off the left ruler for a horizontal one.\n" +
+                        "Drag a guide back onto a ruler to delete it.\n" +
+                        "Hold Alt while dragging to snap to the centre, Shift to move in 10px steps.\n" +
+                        "Right-click a ruler for the guide menu.\n" +
+                        "Positions are held against the render target, so they survive resizing and zooming.",
+                        MessageType.Info);
+                }
+
+                EndSections();
+            }
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                HelpfulEditorSettings.SaveGameView();
+                GameView.GameViewModule.Sync();
+            }
+
+            DrawResetButton("Game View", HelpfulEditorSettings.ResetGameView);
+        }
+
         private static void DrawRoot()
         {
             EditorGUILayout.Space(6);
@@ -96,6 +165,8 @@ namespace DNExtensions.HelpfulEditor
 
             using (new EditorGUI.DisabledScope(!settings.moduleEnabled))
             {
+                BeginSections();
+
                 if (Section(Hierarchy, "Zebra Stripes"))
                 {
                     settings.zebraStripesEnabled = EditorGUILayout.Toggle("Enabled", settings.zebraStripesEnabled);
@@ -138,6 +209,8 @@ namespace DNExtensions.HelpfulEditor
                     settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);
                     settings.isolateKey = DrawKeyBind("Isolate", settings.isolateKey);
                 }
+
+                EndSections();
             }
 
             if (EditorGUI.EndChangeCheck()) HelpfulEditorSettings.SaveHierarchy();
@@ -155,6 +228,8 @@ namespace DNExtensions.HelpfulEditor
 
             using (new EditorGUI.DisabledScope(!settings.moduleEnabled))
             {
+                BeginSections();
+
                 if (Section(Inspector, "Object Header Bar"))
                 {
                     settings.headerBarEnabled = EditorGUILayout.Toggle("Enabled", settings.headerBarEnabled);
@@ -187,7 +262,7 @@ namespace DNExtensions.HelpfulEditor
                         new GUIContent("Camera Align", "Adds buttons to Camera headers that align the camera to the Scene View, or the Scene View to the camera."),
                         settings.cameraAlignButtonsEnabled);
                     settings.rectTransformResetButtonsEnabled = EditorGUILayout.Toggle(
-                        new GUIContent("RectTransform Resets", "Adds buttons to RectTransform headers that reset position, size, rotation, and scale individually."),
+                        new GUIContent("RectTransform Rows", "Adds buttons to RectTransform headers for position, size, rotation and scale. Left-click to copy or paste that value, right-click to reset it."),
                         settings.rectTransformResetButtonsEnabled);
                     settings.graphicResetColorEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Reset Color", "Adds a button to UI Graphic and TextMeshPro headers that resets the color to white."),
@@ -212,9 +287,12 @@ namespace DNExtensions.HelpfulEditor
                     EditorGUILayout.LabelField("Component actions apply to the header bar button under the cursor.", EditorStyles.miniLabel);
                     settings.isolateKey = DrawKeyBind("Isolate", settings.isolateKey);
                     settings.expandCollapseKey = DrawKeyBind("Expand / Collapse", settings.expandCollapseKey);
+                    settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);
                     settings.toggleEnabledKey = DrawKeyBind("Toggle Enabled", settings.toggleEnabledKey);
                     settings.focusSearchKey = DrawKeyBind("Focus Search", settings.focusSearchKey);
                 }
+
+                EndSections();
             }
 
             if (EditorGUI.EndChangeCheck()) HelpfulEditorSettings.SaveInspector();
@@ -232,6 +310,8 @@ namespace DNExtensions.HelpfulEditor
 
             using (new EditorGUI.DisabledScope(!settings.moduleEnabled))
             {
+                BeginSections();
+
                 if (Section(ProjectModule, "Hover Highlight"))
                 {
                     settings.hoverHighlightEnabled = EditorGUILayout.Toggle(
@@ -276,6 +356,9 @@ namespace DNExtensions.HelpfulEditor
                     settings.folderContentRecursive = EditorGUILayout.Toggle(
                         new GUIContent("Include Subfolders", "Off: only assets directly in the folder. On: everything beneath it."),
                         settings.folderContentRecursive);
+                    settings.folderContentIconsInObjectView = EditorGUILayout.Toggle(
+                        new GUIContent("Show In Object View", "Also draw the strip on folders in the right-hand pane, not just the folder tree."),
+                        settings.folderContentIconsInObjectView);
                 }
 
                 if (Section(ProjectModule, "New Folder Button"))
@@ -283,6 +366,21 @@ namespace DNExtensions.HelpfulEditor
                     settings.createFolderButtonEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Enabled", "A + button on the Project window's bottom status bar, creating a folder in the folder being browsed."),
                         settings.createFolderButtonEnabled);
+                }
+
+                if (Section(ProjectModule, "Linked Assets"))
+                {
+                    settings.linkedAssetsEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Enabled", "Badge folders that are meant to be symlinks with whether they still are."),
+                        settings.linkedAssetsEnabled);
+
+                    EditorGUILayout.LabelField($"{settings.linkedAssetFolders.Count} folders tracked. Manage them in the window.",
+                        EditorStyles.miniLabel);
+
+                    if (GUILayout.Button("Open Linked Assets", EditorStyles.miniButton, GUILayout.Width(140f)))
+                    {
+                        Project.LinkedAssetsWindow.ShowWindow();
+                    }
                 }
 
                 if (Section(ProjectModule, "Drag Conflicts"))
@@ -302,6 +400,10 @@ namespace DNExtensions.HelpfulEditor
                     settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);
                     settings.revealInFinderKey = DrawKeyBind($"Reveal In {HelpfulEditorPlatform.FileManagerName}", settings.revealInFinderKey);
                     settings.quickObjectWindowKey = DrawKeyBind("Quick Object Window", settings.quickObjectWindowKey);
+                    settings.openFolderInNewTabKey = DrawKeyBind("Open Folder In New Window", settings.openFolderInNewTabKey);
+                    settings.autoDock = EditorGUILayout.Toggle(
+                        new GUIContent("Auto Dock", "On: the new window docks beside the one clicked. Off: it opens floating."),
+                        settings.autoDock);
                     settings.navigateBackKey = DrawKeyBind("Navigate Back", settings.navigateBackKey);
                     settings.navigateForwardKey = DrawKeyBind("Navigate Forward", settings.navigateForwardKey);
                     settings.closeWindowKey = DrawKeyBind("Close Focused Window", settings.closeWindowKey);
@@ -310,6 +412,8 @@ namespace DNExtensions.HelpfulEditor
                         $"Mouse0 / Mouse1 / Mouse2 bind to left, right and middle click. Ctrl means {HelpfulEditorPlatform.CommandModifierName} on this platform.",
                         EditorStyles.miniLabel);
                 }
+
+                EndSections();
             }
 
             if (EditorGUI.EndChangeCheck()) HelpfulEditorSettings.SaveProject();
@@ -325,6 +429,9 @@ namespace DNExtensions.HelpfulEditor
         /// </summary>
         private static bool Section(string module, string title)
         {
+            // Back to the header's own level first: sections are drawn one after another, so this
+            // call is also what closes the indent the previous one opened.
+            EditorGUI.indentLevel = _sectionIndent;
             EditorGUILayout.Space(4);
 
             string key = $"{FoldoutPrefix}{module}.{title}";
@@ -333,7 +440,23 @@ namespace DNExtensions.HelpfulEditor
             bool current = EditorGUILayout.Foldout(expanded, title, true, EditorStyles.foldoutHeader);
             if (current != expanded) EditorPrefs.SetBool(key, current);
 
+            if (current) EditorGUI.indentLevel = _sectionIndent + 1;
+
             return current;
+        }
+
+        /// <summary>
+        /// Remembers the level sections sit at, so their contents can be indented one step without
+        /// every call site having to balance an increment against an early return.
+        /// </summary>
+        private static void BeginSections()
+        {
+            _sectionIndent = EditorGUI.indentLevel;
+        }
+
+        private static void EndSections()
+        {
+            EditorGUI.indentLevel = _sectionIndent;
         }
 
         private static KeyBind DrawKeyBind(string label, KeyBind value)
@@ -352,7 +475,7 @@ namespace DNExtensions.HelpfulEditor
             return new KeyBind { key = key, ctrl = ctrl, alt = alt, shift = shift };
         }
 
-        private static void DrawStringList(string label, List<string> values)
+        private static void DrawStringList(string label, List<string> values, string addLabel = "Add Type")
         {
             if (values == null) return;
 
@@ -370,7 +493,7 @@ namespace DNExtensions.HelpfulEditor
 
             if (removeAt >= 0) values.RemoveAt(removeAt);
 
-            if (GUILayout.Button("Add Type", EditorStyles.miniButton, GUILayout.Width(80f))) values.Add(string.Empty);
+            if (GUILayout.Button(addLabel, EditorStyles.miniButton, GUILayout.Width(80f))) values.Add(string.Empty);
 
             EditorGUI.indentLevel--;
         }

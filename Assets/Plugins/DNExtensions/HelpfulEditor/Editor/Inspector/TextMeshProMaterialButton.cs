@@ -14,7 +14,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
     [InitializeOnLoad]
     internal static class TextMeshProMaterialButton
     {
-        private const string DuplicateIcon = "📋";
+        private static readonly string DuplicateIcon = HelpfulEditorPlatform.Glyph("📋", "Mat");
         private const string FallbackFolder = "Assets";
         private const string TextType = "TMPro.TMP_Text";
         private const string SharedMaterialProperty = "fontSharedMaterial";

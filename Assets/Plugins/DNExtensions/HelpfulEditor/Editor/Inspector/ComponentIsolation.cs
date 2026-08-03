@@ -19,7 +19,6 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private static readonly List<Component> Hidden = new List<Component>();
 
         private static int _lastClickedIndex = -1;
-        private static bool _hideAllBodies;
 
         public static bool IsIsolating
         {
@@ -152,23 +151,10 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
         public static void Clear()
         {
-            if (Isolated.Count == 0 && !_hideAllBodies) return;
+            if (Isolated.Count == 0) return;
 
             Isolated.Clear();
-            _hideAllBodies = false;
             _lastClickedIndex = -1;
-            Apply();
-        }
-
-        /// <summary>
-        /// While a field search is running every component body is collapsed, because the matching
-        /// fields are drawn by the header bar instead.
-        /// </summary>
-        public static void SetHideAllBodies(bool hide)
-        {
-            if (_hideAllBodies == hide) return;
-
-            _hideAllBodies = hide;
             Apply();
         }
 
@@ -213,17 +199,6 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 }
 
                 tracker.ForceRebuild();
-            }
-
-            // A field search collapses bodies rather than hiding components: the headers still have
-            // to be there to show which component each matched field came from.
-            if (_hideAllBodies)
-            {
-                Editor[] editors = tracker.activeEditors;
-                for (int i = 0; i < editors.Length; i++)
-                {
-                    if (editors[i] && editors[i].target is Component) tracker.SetVisible(i, 0);
-                }
             }
 
             RepaintInspectors();
@@ -287,7 +262,6 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             Isolated.Clear();
             _lastClickedIndex = -1;
-            _hideAllBodies = false;
             Apply();
         }
     }

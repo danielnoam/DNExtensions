@@ -36,7 +36,10 @@
     "folderContentMaxIcons": 2,
     "folderContentIconSize": 12.0,
     "folderContentRecursive": false,
+    "folderContentIconsInObjectView": false,
     "createFolderButtonEnabled": true,
+    "linkedAssetsEnabled": true,
+    "linkedAssetFolders": [],
     "dragConflictResolutionEnabled": true,
     "conflictDefaultChoice": 0,
     "cancelIsDefaultOnEscape": true,
@@ -70,6 +73,13 @@
         "alt": true,
         "shift": false
     },
+    "openFolderInNewTabKey": {
+        "key": 325,
+        "ctrl": false,
+        "alt": false,
+        "shift": false
+    },
+    "openFolderInNewTabDocked": true,
     "closeWindowKey": {
         "key": 119,
         "ctrl": true,
@@ -79,7 +89,6 @@
     "closeWindowExcludedTypes": [
         "SceneView",
         "ConsoleWindow",
-        "ProjectBrowser",
         "InspectorWindow",
         "SceneHierarchyWindow"
     ],

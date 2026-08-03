@@ -1,0 +1,12 @@
+{
+    "moduleEnabled": false,
+    "showGuides": true,
+    "guideColor": {
+        "r": 0.0,
+        "g": 0.8500000238418579,
+        "b": 1.0,
+        "a": 0.8999999761581421
+    },
+    "guideWidth": 2.0,
+    "guides": []
+}
