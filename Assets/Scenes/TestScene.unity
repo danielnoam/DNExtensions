@@ -860,9 +860,41 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 505253833126219681, guid: bce79ebf0377e9d4d934082fabe40e33, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3619729040768234111, guid: bce79ebf0377e9d4d934082fabe40e33, type: 3}
       propertyPath: m_Name
       value: VFXManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 8639727119665796664, guid: bce79ebf0377e9d4d934082fabe40e33, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8639727119665796664, guid: bce79ebf0377e9d4d934082fabe40e33, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8639727119665796664, guid: bce79ebf0377e9d4d934082fabe40e33, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8639727119665796664, guid: bce79ebf0377e9d4d934082fabe40e33, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8639727119665796664, guid: bce79ebf0377e9d4d934082fabe40e33, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8639727119665796664, guid: bce79ebf0377e9d4d934082fabe40e33, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8639727119665796664, guid: bce79ebf0377e9d4d934082fabe40e33, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2879,162 +2911,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 552f8876cc78dbc459183ef952b3f7a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::DNExtensionsExample
-  readOnly: 0
-  inline: {fileID: 1526888421}
-  conditionalCheck: 0
-  conditionalFloat: 6.38
-  conditionalInt: 17
-  prefabSelector: {fileID: 8842675776293222798, guid: 385e2d0b9f979d14ca7b058fc6b2988c, type: 3}
-  soSelector: {fileID: 0}
-  sceneField:
-    sceneAsset: {fileID: 0}
-    sceneName: 
-    scenePath: 
-  sortingLayerField:
-    layerName: Default
-    layerID: 0
-  tagField:
-    tagName: Untagged
-  optionalField:
-    isSet: 1
-    hideWhenUnchecked: 0
-    value: 
-  animatorParameterField:
-    parameterType: 1
-    source: 1
-    componentAnimator: {fileID: 1526888422}
-    assetController: {fileID: 0}
-    parameterName: 
-    parameterHash: 0
-  animatorStateField:
-    animator: {fileID: 1526888422}
-    assetController: {fileID: 9100000, guid: e121b90c731a0ad408cf278f3785c092, type: 2}
-    source: 0
-    stateName: New State
-    stateHash: -499022955
-    assigned: 1
-  positionField:
-    positionTransform: {fileID: 0}
-    positionVector: {x: 0, y: -0.32, z: 0}
-  noteField:
-    note: Note Field Example
-    isEditable: 0
-  rangedInt:
-    minValue: -1
-    maxValue: 0
-  rangedFloat:
-    minValue: -0.06869149
-    maxValue: 1.5178561
-  testStrings:
-    internalItems:
-    - item: 
-      chance: 65
-      isLocked: 0
-    - item: 
-      chance: 24
-      isLocked: 0
-    - item: 
-      chance: 11
-      isLocked: 0
-  testInts:
-    internalItems: []
-  testEnums:
-    internalItems: []
-  testInterface:
-    underlyingValue: {fileID: 0}
-  interactableObject: {fileID: 0}
-  serializableSelectorNoFoldout:
-    rid: 6000861386448306265
-  serializableSelector:
-    rid: 6000861386448306260
-  serializableSelectorList:
-  - rid: 6000861377164738636
-  - rid: 6000861377164738637
-  - rid: 6000861377164738638
-  - rid: 6000861386448306176
-  - rid: 6000861386448306254
-  testImpulseSource: {fileID: 1526888421}
-  testImpulse:
-    impulseChannel: 1
-    impulseType: 0
-    impulseShape: 2
-    duration: 0.3
-    intensity: 1
-    velocity: {x: 1, y: 1, z: 1}
-    dissipationDistance: 100
-    dissipationRate: 0.25
-    propagationSpeed: 343
-  testEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  soAudioEvent: {fileID: 11400000, guid: 912340073a9c9b04caca4f1bb0af32eb, type: 2}
-  soFloat: {fileID: 11400000, guid: f5882c7bdfa00f24cb914ae5707b5e2c, type: 2}
-  soInt: {fileID: 11400000, guid: 4d95fdc19848d114c99212dc3aabc97f, type: 2}
-  soBool: {fileID: 11400000, guid: 1130ea7b48efaf74db82161e51c29bd5, type: 2}
-  soString: {fileID: 11400000, guid: bb1220a90881f6c4983ef07bef349720, type: 2}
-  soVector3: {fileID: 11400000, guid: d2bee4a775aaa714ea88fecb39f0bf7a, type: 2}
-  soColor: {fileID: 11400000, guid: 3dc8116aab59503469a4e7d932370651, type: 2}
-  soVector4: {fileID: 11400000, guid: 1300144eb97519b4ba29d107d807338a, type: 2}
-  soQuaternion: {fileID: 11400000, guid: 5e5c5d09fca23a1448c90d9e7e383d8c, type: 2}
-  soLayerMask: {fileID: 11400000, guid: 96fbcfbb71363524cbbe1adcd3d8301c, type: 2}
-  soAnimationCurve: {fileID: 11400000, guid: a7e17dced47b47e448d07683c930d6e0, type: 2}
-  soEvent: {fileID: 11400000, guid: 49b49b563de60294da9f038f50f57d25, type: 2}
-  optionalSoAnimationCurve:
-    soValue: {fileID: 0}
-    fallbackValue:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-  references:
-    version: 2
-    RefIds:
-    - rid: 6000861377164738636
-      type: {class: Behavior1, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
-      data:
-        varString: 
-    - rid: 6000861377164738637
-      type: {class: Behavior2, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
-      data:
-        varBool: 0
-    - rid: 6000861377164738638
-      type: {class: Behavior3, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
-      data:
-        varBool: 0
-    - rid: 6000861386448306176
-      type: {class: Behavior4, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
-      data:
-        varBool: 0
-    - rid: 6000861386448306254
-      type: {class: Behavior5, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
-      data: 
-    - rid: 6000861386448306260
-      type: {class: Behavior1, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
-      data:
-        varString: 
-    - rid: 6000861386448306265
-      type: {class: Behavior4, ns: DNExtensions, asm: Assembly-CSharp-firstpass}
-      data:
-        varBool: 0
 --- !u!114 &1526888421
 MonoBehaviour:
   m_ObjectHideFlags: 0

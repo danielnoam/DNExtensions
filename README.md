@@ -26,19 +26,17 @@ Adding `systems` to an empty project will fail. Add `utilities` first.
 ### URLs
 
 ```
-https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.helpfuleditor#v1.0.0
+https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.helpfuleditor
 ```
 ```
-https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.utilities#v1.0.0
+https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.utilities
 ```
 ```
-https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.components#v1.0.0
+https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.components
 ```
 ```
-https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.systems#v1.0.0
+https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.systems
 ```
-
-Drop the `#v1.0.0` to track `main` instead of a release.
 
 ### PrimeTween
 
