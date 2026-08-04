@@ -33,6 +33,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 Icon = DuplicateIcon,
                 Tooltip = "Duplicate the font material and assign the copy",
                 Priority = -870,
+                SupportsMultiSelect = true,
                 Callback = DuplicateMaterial
             };
         }
@@ -54,37 +55,65 @@ namespace DNExtensions.HelpfulEditor.Inspector
         /// Assigned through the property rather than the serialized field: TMP's setter is what
         /// rebuilds the text's material references, and a raw field write leaves them stale.
         /// </summary>
+        /// <summary>
+        /// Each selected text gets its own duplicate — the point of the button is to stop objects
+        /// sharing a material, so handing them one new shared material would achieve nothing. The
+        /// save location is asked for once and the rest are named uniquely beside it, rather than
+        /// putting a dialog in front of every object.
+        /// </summary>
         private static void DuplicateMaterial(Component component)
         {
-            PropertyInfo sharedMaterial = GetSharedMaterial(component);
-            if (sharedMaterial == null) return;
+            string chosenPath = null;
+            Material lastCopy = null;
 
-            if (!(sharedMaterial.GetValue(component) is Material source))
+            foreach (GameObject target in ComponentHeaderButtons.TargetObjects(component))
             {
-                Debug.LogWarning("[HelpfulEditor] No font material to duplicate.", component);
-                return;
+                if (!target) continue;
+
+                foreach (Component candidate in target.GetComponents<Component>())
+                {
+                    if (!candidate || !HelpfulEditorReflection.DerivesFrom(candidate.GetType(), TextType)) continue;
+
+                    PropertyInfo sharedMaterial = GetSharedMaterial(candidate);
+                    if (sharedMaterial == null) continue;
+
+                    if (!(sharedMaterial.GetValue(candidate) is Material source))
+                    {
+                        Debug.LogWarning("[HelpfulEditor] No font material to duplicate.", candidate);
+                        continue;
+                    }
+
+                    if (chosenPath == null)
+                    {
+                        chosenPath = PromptForCopyPath(source);
+                        if (string.IsNullOrEmpty(chosenPath)) return;
+                    }
+
+                    string path = AssetDatabase.GenerateUniqueAssetPath(chosenPath);
+
+                    // Writing the copy over its own source would destroy the material being
+                    // duplicated and leave the component pointing at the replacement.
+                    if (string.Equals(path, AssetDatabase.GetAssetPath(source), StringComparison.Ordinal))
+                    {
+                        Debug.LogWarning("[HelpfulEditor] Cannot duplicate a font material over itself.", candidate);
+                        continue;
+                    }
+
+                    Material copy = new Material(source) { name = Path.GetFileNameWithoutExtension(path) };
+                    AssetDatabase.CreateAsset(copy, path);
+
+                    Undo.RecordObject(candidate, "Duplicate Font Material");
+                    sharedMaterial.SetValue(candidate, copy);
+                    EditorUtility.SetDirty(candidate);
+
+                    lastCopy = copy;
+                }
             }
 
-            string path = PromptForCopyPath(source);
-            if (string.IsNullOrEmpty(path)) return;
+            if (!lastCopy) return;
 
-            // Writing the copy over its own source would destroy the material being duplicated and
-            // leave the component pointing at the replacement — never what the button is for.
-            if (string.Equals(path, AssetDatabase.GetAssetPath(source), StringComparison.Ordinal))
-            {
-                Debug.LogWarning("[HelpfulEditor] Cannot duplicate a font material over itself.", component);
-                return;
-            }
-
-            Material copy = new Material(source) { name = Path.GetFileNameWithoutExtension(path) };
-            AssetDatabase.CreateAsset(copy, path);
             AssetDatabase.SaveAssets();
-
-            Undo.RecordObject(component, "Duplicate Font Material");
-            sharedMaterial.SetValue(component, copy);
-            EditorUtility.SetDirty(component);
-
-            EditorGUIUtility.PingObject(copy);
+            EditorGUIUtility.PingObject(lastCopy);
         }
 
         /// <summary>

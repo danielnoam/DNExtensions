@@ -25,6 +25,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private const float IconGap = 2f;
         private const float ButtonSpacing = 3f;
         private const float RowSpacing = 2f;
+
+        /// <summary>Darken-only, so it reads the same whichever editor theme is in use.</summary>
+        private static readonly Color DisabledTint = new Color(0f, 0f, 0f, 0.2f);
         private const float IconInset = 5f;
         private const float EdgeGap = 3f;
 
@@ -328,6 +331,17 @@ namespace DNExtensions.HelpfulEditor.Inspector
             {
                 style.Draw(rect, ButtonContent, hovered, false, ComponentIsolation.Contains(component), false);
                 DrawIcon(rect, HelpfulEditorGUI.GetIcon(component), iconSize);
+
+                // The button's own background drawn again in black, rather than a filled rect: the
+                // style's texture carries the rounded corners, and tinting through GUI.color darkens
+                // only where that texture is opaque. A rect would square off the corners.
+                if (!HelpfulEditorGUI.IsEnabled(component))
+                {
+                    Color previous = GUI.color;
+                    GUI.color = DisabledTint;
+                    style.Draw(rect, GUIContent.none, hovered, false, ComponentIsolation.Contains(component), false);
+                    GUI.color = previous;
+                }
 
                 if (hovered) HoveredComponent = component;
             }

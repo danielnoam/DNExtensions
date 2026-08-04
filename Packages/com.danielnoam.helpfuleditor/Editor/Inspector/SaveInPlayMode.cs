@@ -55,6 +55,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 Icon = SaveIcon,
                 Tooltip = marked ? "Disable save on exit" : "Save on play mode exit",
                 Priority = -1000,
+                SupportsMultiSelect = true,
                 Callback = ToggleSave,
                 StyleCallback = button =>
                 {
@@ -78,17 +79,36 @@ namespace DNExtensions.HelpfulEditor.Inspector
             return true;
         }
 
+        /// <summary>
+        /// The component clicked decides the direction, and the rest of the selection follows it, so
+        /// a mixed selection ends up in one state rather than each entry flipping its own way.
+        /// </summary>
         private static void ToggleSave(Component component)
         {
             if (!component) return;
 
-            string key = GetKey(component);
+            bool mark = !MarkedForSave.Contains(GetKey(component));
+            Type type = component.GetType();
 
-            if (MarkedForSave.Add(key)) SavedData[key] = Capture(component);
-            else
+            foreach (GameObject target in ComponentHeaderButtons.TargetObjects(component))
             {
-                MarkedForSave.Remove(key);
-                SavedData.Remove(key);
+                if (!target) continue;
+
+                Component match = target.GetComponent(type);
+                if (!match) continue;
+
+                string key = GetKey(match);
+
+                if (mark)
+                {
+                    MarkedForSave.Add(key);
+                    SavedData[key] = Capture(match);
+                }
+                else
+                {
+                    MarkedForSave.Remove(key);
+                    SavedData.Remove(key);
+                }
             }
         }
 

@@ -31,6 +31,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 Icon = ResetIcon,
                 Tooltip = "Reset color to white",
                 Priority = -880,
+                SupportsMultiSelect = true,
                 Callback = ResetColor
             };
         }
@@ -64,18 +65,30 @@ namespace DNExtensions.HelpfulEditor.Inspector
         /// rather than the color property so the change records undo and marks a prefab override like
         /// any inspector edit would.
         /// </summary>
+        /// <summary>
+        /// Resolved per object rather than once: a selection can mix Images with TextMeshPro, and the
+        /// two keep their colour in different fields.
+        /// </summary>
         private static void ResetColor(Component component)
         {
-            string colorProperty = GetColorProperty(component);
-            if (colorProperty == null) return;
+            foreach (GameObject target in ComponentHeaderButtons.TargetObjects(component))
+            {
+                if (!target) continue;
 
-            SerializedObject serializedObject = new SerializedObject(component);
+                foreach (Component candidate in target.GetComponents<Component>())
+                {
+                    string colorProperty = candidate ? GetColorProperty(candidate) : null;
+                    if (colorProperty == null) continue;
 
-            SerializedProperty property = serializedObject.FindProperty(colorProperty);
-            if (property == null) return;
+                    SerializedObject serializedObject = new SerializedObject(candidate);
 
-            property.colorValue = Color.white;
-            serializedObject.ApplyModifiedProperties();
+                    SerializedProperty property = serializedObject.FindProperty(colorProperty);
+                    if (property == null) continue;
+
+                    property.colorValue = Color.white;
+                    serializedObject.ApplyModifiedProperties();
+                }
+            }
         }
     }
 }

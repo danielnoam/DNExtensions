@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -17,7 +18,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private const string RotationIcon = "R";
         private const string ScaleIcon = "S";
 
-        private static readonly Vector3 DefaultSize = new Vector3(100f, 100f, 0f);
+        /// <summary>The size Unity's own UI factory gives a new element.</summary>
+        private const float DefaultSize = 100f;
 
         static RectTransformButtons()
         {
@@ -37,17 +39,159 @@ namespace DNExtensions.HelpfulEditor.Inspector
         }
 
         /// <summary>
-        /// Carried as a Vector3 with an unused z so it shares one clipboard format with the other
-        /// rows: a size copied here pastes onto a scale, and a Transform's position pastes onto a size.
+        /// Sized by whichever numbers the inspector is actually showing. A stretched axis has no
+        /// width or height — it has two offsets from its anchors — so this row means something
+        /// different per axis, and copying sizeDelta on a stretched rect copies a number nobody is
+        /// looking at.
         /// </summary>
         private static ComponentHeaderButtons.ButtonData GetSizeButton(Component component)
         {
+            if (!ShouldShow(component)) return null;
+
+            return new ComponentHeaderButtons.ButtonData
+            {
+                Icon = SizeIcon,
+                Tooltip = "Size — copy and paste, right-click to reset",
+                Priority = -855,
+                SupportsMultiSelect = true,
+                Callback = ShowSizeValueMenu,
+                ContextCallback = ShowSizeResetMenu
+            };
+        }
+
+        private static bool IsStretched(RectTransform rectTransform, int axis)
+        {
+            return axis == 0
+                ? !Mathf.Approximately(rectTransform.anchorMin.x, rectTransform.anchorMax.x)
+                : !Mathf.Approximately(rectTransform.anchorMin.y, rectTransform.anchorMax.y);
+        }
+
+        /// <summary>Names the row the way the inspector labels it, so the menu says what it will act on.</summary>
+        private static string DescribeSize(RectTransform rectTransform)
+        {
+            bool x = IsStretched(rectTransform, 0);
+            bool y = IsStretched(rectTransform, 1);
+
+            if (x && y) return "offsets";
+            if (x) return "left/right and height";
+            if (y) return "width and top/bottom";
+
+            return "width and height";
+        }
+
+        private static void ShowSizeValueMenu(Component component)
+        {
+            if (!(component is RectTransform rectTransform)) return;
+
+            string name = DescribeSize(rectTransform);
+            GenericMenu menu = new GenericMenu();
+
+            menu.AddItem(new GUIContent($"Copy {name}"), false, () => CopySize(rectTransform));
+
+            if (CanPasteSize())
+            {
+                menu.AddItem(new GUIContent($"Paste {name}"), false, () => PasteSize(rectTransform));
+            }
+            else
+            {
+                menu.AddDisabledItem(new GUIContent($"Paste {name}"));
+            }
+
+            menu.ShowAsContext();
+        }
+
+        private static void ShowSizeResetMenu(Component component)
+        {
+            if (!(component is RectTransform rectTransform)) return;
+
+            GenericMenu menu = new GenericMenu();
+
             // No keep-children option: a size change moves anchored children by design, and putting
             // them back would fight the layout rather than preserve it.
-            return Build(component, SizeIcon, "width and height", -855, DefaultSize,
-                rectTransform => new Vector3(rectTransform.sizeDelta.x, rectTransform.sizeDelta.y, 0f),
-                (rectTransform, value) => rectTransform.sizeDelta = new Vector2(value.x, value.y),
-                canKeepChildren: false);
+            menu.AddItem(new GUIContent("Reset"), false, () => Apply(rectTransform, "Reset size", ResetSize));
+            menu.AddItem(new GUIContent("Reset Only Children"), false, () => ApplyToChildren(rectTransform, "Reset size", ResetSize));
+
+            menu.ShowAsContext();
+        }
+
+        /// <summary>
+        /// The offsets, which describe the rect against its anchors whatever the stretch mode is.
+        /// Four numbers rather than two, so a rect copied while stretched still pastes correctly.
+        /// </summary>
+        private static void CopySize(RectTransform rectTransform)
+        {
+            Vector2 min = rectTransform.offsetMin;
+            Vector2 max = rectTransform.offsetMax;
+
+            EditorGUIUtility.systemCopyBuffer = $"{min.x},{min.y},{max.x},{max.y}";
+        }
+
+        private static bool CanPasteSize()
+        {
+            return TryReadOffsets(out _) || LinkedVector3Field.CanPaste();
+        }
+
+        private static void PasteSize(RectTransform rectTransform)
+        {
+            if (TryReadOffsets(out Vector4 offsets))
+            {
+                Apply(rectTransform, "Paste size", target =>
+                {
+                    target.offsetMin = new Vector2(offsets.x, offsets.y);
+                    target.offsetMax = new Vector2(offsets.z, offsets.w);
+                });
+
+                return;
+            }
+
+            // Three numbers means it came from one of the other rows, which carry a plain size.
+            if (!LinkedVector3Field.TryParseClipboard(out Vector3 value)) return;
+
+            Apply(rectTransform, "Paste size", target => target.sizeDelta = new Vector2(value.x, value.y));
+        }
+
+        private static bool TryReadOffsets(out Vector4 offsets)
+        {
+            offsets = Vector4.zero;
+
+            string[] parts = (EditorGUIUtility.systemCopyBuffer ?? string.Empty).Split(',');
+            if (parts.Length != 4) return false;
+
+            if (!float.TryParse(parts[0], out float minX) || !float.TryParse(parts[1], out float minY) ||
+                !float.TryParse(parts[2], out float maxX) || !float.TryParse(parts[3], out float maxY)) return false;
+
+            offsets = new Vector4(minX, minY, maxX, maxY);
+            return true;
+        }
+
+        /// <summary>
+        /// A stretched axis resets to sitting on its anchors, an unstretched one to the default size.
+        /// Resetting a stretched axis to 100 would be meaningless — that axis has no width to set.
+        /// </summary>
+        private static void ResetSize(RectTransform rectTransform)
+        {
+            bool stretchedX = IsStretched(rectTransform, 0);
+            bool stretchedY = IsStretched(rectTransform, 1);
+
+            if (stretchedX || stretchedY)
+            {
+                Vector2 min = rectTransform.offsetMin;
+                Vector2 max = rectTransform.offsetMax;
+
+                if (stretchedX) { min.x = 0f; max.x = 0f; }
+                if (stretchedY) { min.y = 0f; max.y = 0f; }
+
+                rectTransform.offsetMin = min;
+                rectTransform.offsetMax = max;
+            }
+
+            if (stretchedX && stretchedY) return;
+
+            Vector2 size = rectTransform.sizeDelta;
+            if (!stretchedX) size.x = DefaultSize;
+            if (!stretchedY) size.y = DefaultSize;
+
+            rectTransform.sizeDelta = size;
         }
 
         private static ComponentHeaderButtons.ButtonData GetRotationButton(Component component)
@@ -65,7 +209,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
         }
 
         private static ComponentHeaderButtons.ButtonData Build(Component component, string icon, string name, int priority,
-            Vector3 resetValue, Func<RectTransform, Vector3> getter, Action<RectTransform, Vector3> setter, bool canKeepChildren = true)
+            Vector3 resetValue, Func<RectTransform, Vector3> getter, Action<RectTransform, Vector3> setter)
         {
             if (!ShouldShow(component)) return null;
 
@@ -74,8 +218,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 Icon = icon,
                 Tooltip = $"{char.ToUpperInvariant(name[0])}{name.Substring(1)} — copy and paste, right-click to reset",
                 Priority = priority,
+                SupportsMultiSelect = true,
                 Callback = target => ShowValueMenu(target, name, getter, setter),
-                ContextCallback = target => ShowResetMenu(target, name, resetValue, setter, canKeepChildren)
+                ContextCallback = target => ShowResetMenu(target, name, resetValue, setter)
             };
         }
 
@@ -115,7 +260,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
         }
 
         private static void ShowResetMenu(Component component, string name, Vector3 resetValue,
-            Action<RectTransform, Vector3> setter, bool canKeepChildren)
+            Action<RectTransform, Vector3> setter)
         {
             if (!(component is RectTransform rectTransform)) return;
 
@@ -124,11 +269,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             menu.AddItem(new GUIContent("Reset"), false, () => Apply(rectTransform, undoName, target => setter(target, resetValue)));
 
-            if (canKeepChildren)
-            {
-                menu.AddItem(new GUIContent("Reset Without Children"), false,
-                    () => ResetKeepingChildren(rectTransform, undoName, target => setter(target, resetValue)));
-            }
+            menu.AddItem(new GUIContent("Reset Without Children"), false,
+                () => ResetKeepingChildren(rectTransform, undoName, target => setter(target, resetValue)));
 
             menu.AddItem(new GUIContent("Reset Only Children"), false, () => ApplyToChildren(rectTransform, undoName, target => setter(target, resetValue)));
 
@@ -144,6 +286,14 @@ namespace DNExtensions.HelpfulEditor.Inspector
         /// own transform tools have the same limit, because a Transform has nowhere to store one.
         /// </summary>
         private static void ResetKeepingChildren(RectTransform rectTransform, string undoName, Action<RectTransform> action)
+        {
+            foreach (RectTransform target in Targets(rectTransform))
+            {
+                ResetOneKeepingChildren(target, undoName, action);
+            }
+        }
+
+        private static void ResetOneKeepingChildren(RectTransform rectTransform, string undoName, Action<RectTransform> action)
         {
             if (!rectTransform) return;
 
@@ -163,7 +313,10 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 Undo.RecordObject(child, undoName);
             }
 
-            Apply(rectTransform, undoName, action);
+            // Deliberately not Apply: that spans the whole selection, and this already runs once per
+            // selected object. Going through it here would reset every target N times over.
+            Undo.RecordObject(rectTransform, undoName);
+            action(rectTransform);
 
             Vector3 parentScale = rectTransform.lossyScale;
 
@@ -186,24 +339,49 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 Mathf.Approximately(parent.z, 0f) ? world.z : world.z / parent.z);
         }
 
+        /// <summary>
+        /// Every selected RectTransform, or just this one when it is not part of the selection.
+        /// Each target is read and written on its own, so rects with different stretch modes each
+        /// get the treatment their own anchoring calls for.
+        /// </summary>
+        private static List<RectTransform> Targets(RectTransform rectTransform)
+        {
+            List<RectTransform> targets = new List<RectTransform>();
+
+            foreach (GameObject target in ComponentHeaderButtons.TargetObjects(rectTransform))
+            {
+                if (target && target.transform is RectTransform rect) targets.Add(rect);
+            }
+
+            if (targets.Count == 0 && rectTransform) targets.Add(rectTransform);
+
+            return targets;
+        }
+
         private static void Apply(RectTransform rectTransform, string undoName, Action<RectTransform> action)
         {
-            if (!rectTransform) return;
+            List<RectTransform> targets = Targets(rectTransform);
+            if (targets.Count == 0) return;
 
-            Undo.RecordObject(rectTransform, undoName);
-            action(rectTransform);
+            Undo.RecordObjects(targets.ToArray(), undoName);
+
+            foreach (RectTransform target in targets)
+            {
+                action(target);
+            }
         }
 
         private static void ApplyToChildren(RectTransform rectTransform, string undoName, Action<RectTransform> action)
         {
-            if (!rectTransform) return;
-
-            for (int i = 0; i < rectTransform.childCount; i++)
+            foreach (RectTransform target in Targets(rectTransform))
             {
-                if (!(rectTransform.GetChild(i) is RectTransform child)) continue;
+                for (int i = 0; i < target.childCount; i++)
+                {
+                    if (!(target.GetChild(i) is RectTransform child)) continue;
 
-                Undo.RecordObject(child, undoName);
-                action(child);
+                    Undo.RecordObject(child, undoName);
+                    action(child);
+                }
             }
         }
     }

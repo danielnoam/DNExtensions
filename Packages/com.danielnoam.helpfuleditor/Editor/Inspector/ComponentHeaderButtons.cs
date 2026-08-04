@@ -20,6 +20,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private static readonly List<Func<Component, ButtonData>> Providers = new List<Func<Component, ButtonData>>();
         private static readonly List<ButtonData> Buffer = new List<ButtonData>();
         private static readonly List<VisualElement> Elements = new List<VisualElement>();
+        private static readonly List<VisualElement> Bars = new List<VisualElement>();
 
         private const double ScanInterval = 0.1;
 
@@ -75,8 +76,11 @@ namespace DNExtensions.HelpfulEditor.Inspector
             if (EditorApplication.timeSinceStartup - _lastScan < ScanInterval) return;
             _lastScan = EditorApplication.timeSinceStartup;
 
-            GameObject selected = Selection.activeGameObject;
-            if (!selected) return;
+            // The whole selection, not just the active object: with several selected, the editor's
+            // target is the first of them, which is not necessarily the active one — and gating on
+            // the active object meant the bar simply failed to appear.
+            GameObject[] selected = Selection.gameObjects;
+            if (selected == null || selected.Length == 0) return;
 
             foreach (VisualElement list in EnumerateEditorLists())
             {
@@ -84,39 +88,104 @@ namespace DNExtensions.HelpfulEditor.Inspector
             }
         }
 
-        private static void Inject(VisualElement editorList, GameObject selected)
+        /// <summary>
+        /// The objects a button should act on: the whole selection when the component belongs to it,
+        /// otherwise just its own object.
+        /// </summary>
+        public static GameObject[] TargetObjects(Component component)
+        {
+            if (!component) return Array.Empty<GameObject>();
+
+            GameObject[] selection = Selection.gameObjects;
+            return Array.IndexOf(selection, component.gameObject) >= 0 ? selection : new[] { component.gameObject };
+        }
+
+        private static void Inject(VisualElement editorList, GameObject[] selected)
         {
             Elements.Clear();
             CollectEditorElements(editorList, Elements);
+
+            Bars.Clear();
+            CollectBars(editorList, Bars);
 
             foreach (VisualElement matched in Elements)
             {
                 Editor editor = InspectorElementLookup.GetEditor(matched);
                 if (!editor || !(editor.target is Component component)) continue;
-                if (component.gameObject != selected) continue;
+                if (Array.IndexOf(selected, component.gameObject) < 0) continue;
 
-                CollectButtons(component);
+                CollectButtons(component, selected.Length > 1);
                 if (Buffer.Count == 0) continue;
 
                 if (!ResolveInsertion(matched, out VisualElement container, out VisualElement anchor)) continue;
 
-                VisualElement existing = FindExistingBar(container, anchor);
+                VisualElement existing = TakeBarFor(component);
                 int hash = GetButtonHash(Buffer);
 
-                // The bar is only rebuilt when its contents would actually differ, otherwise every
-                // editor tick would tear down and recreate a bar per component.
-                if (existing != null && existing.panel != null && existing.userData is int previous && previous == hash) continue;
+                int anchorIndex = container.IndexOf(anchor);
+                bool inPlace = existing != null && anchorIndex > 0 && container.ElementAt(anchorIndex - 1) == existing;
+
+                // Rebuilt only when the contents would differ or it has drifted from its component,
+                // otherwise every editor tick would tear down and recreate a bar per component.
+                if (inPlace && existing.panel != null && existing.userData is BarState state && state.Hash == hash) continue;
 
                 existing?.RemoveFromHierarchy();
 
                 VisualElement bar = CreateButtonBar(component, Buffer);
-                bar.userData = hash;
+                bar.userData = new BarState { Owner = component, Hash = hash };
 
                 // Index is read after the old bar is gone. Reading it beforehand counts the bar
                 // itself, so the replacement lands one slot late — below the component body.
                 int index = container.IndexOf(anchor);
                 container.Insert(Mathf.Clamp(index, 0, container.childCount), bar);
             }
+
+            // Whatever is left belongs to no component drawn this pass — a bar the Inspector moved
+            // away from its component, or one whose component is gone. Either way it is a duplicate
+            // waiting to happen, so it goes.
+            foreach (VisualElement stale in Bars)
+            {
+                stale.RemoveFromHierarchy();
+            }
+        }
+
+        /// <summary>
+        /// The bar belonging to this component, removed from the pending list so that anything still
+        /// in that list at the end of the pass is known to be orphaned.
+        /// </summary>
+        private static VisualElement TakeBarFor(Component component)
+        {
+            for (int i = 0; i < Bars.Count; i++)
+            {
+                if (!(Bars[i].userData is BarState state) || state.Owner != component) continue;
+
+                VisualElement bar = Bars[i];
+                Bars.RemoveAt(i);
+                return bar;
+            }
+
+            return null;
+        }
+
+        private static void CollectBars(VisualElement element, List<VisualElement> results)
+        {
+            if (element.name == ButtonBarName)
+            {
+                results.Add(element);
+                return;
+            }
+
+            foreach (VisualElement child in element.Children())
+            {
+                CollectBars(child, results);
+            }
+        }
+
+        /// <summary>What a bar is for, so it can be found by owner rather than by where it sits.</summary>
+        private class BarState
+        {
+            public Component Owner;
+            public int Hash;
         }
 
         /// <summary>
@@ -140,19 +209,6 @@ namespace DNExtensions.HelpfulEditor.Inspector
             container = matched.parent;
             anchor = matched;
             return container != null;
-        }
-
-        /// <summary>
-        /// Only the bar immediately in front of this component's body counts. A plain query would
-        /// also find other components' bars whenever the container is a shared parent.
-        /// </summary>
-        private static VisualElement FindExistingBar(VisualElement container, VisualElement anchor)
-        {
-            int anchorIndex = container.IndexOf(anchor);
-            if (anchorIndex <= 0) return null;
-
-            VisualElement candidate = container.ElementAt(anchorIndex - 1);
-            return candidate != null && candidate.name == ButtonBarName ? candidate : null;
         }
 
         /// <summary>
@@ -182,7 +238,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
             }
         }
 
-        private static void CollectButtons(Component component)
+        private static void CollectButtons(Component component, bool multiSelection)
         {
             Buffer.Clear();
 
@@ -191,7 +247,13 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 try
                 {
                     ButtonData data = provider(component);
-                    if (data != null) Buffer.Add(data);
+                    if (data == null) continue;
+
+                    // Hidden rather than shown-and-partial: a button that cannot act on the whole
+                    // selection would otherwise change one object and look like it changed all.
+                    if (multiSelection && !data.SupportsMultiSelect) continue;
+
+                    Buffer.Add(data);
                 }
                 catch (Exception e)
                 {
@@ -308,6 +370,13 @@ namespace DNExtensions.HelpfulEditor.Inspector
             public Action<Component> ContextCallback;
 
             public Action<Button> StyleCallback;
+
+            /// <summary>
+            /// Whether the action means something for several objects at once. Buttons that leave
+            /// this off are hidden while more than one object is selected, rather than appearing and
+            /// quietly acting on just one of them.
+            /// </summary>
+            public bool SupportsMultiSelect;
 
             public void Invoke(Component component)
             {

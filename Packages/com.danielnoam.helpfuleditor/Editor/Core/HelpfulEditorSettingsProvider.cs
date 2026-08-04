@@ -364,7 +364,7 @@ namespace DNExtensions.HelpfulEditor
                 if (Section(ProjectModule, "New Folder Button"))
                 {
                     settings.createFolderButtonEnabled = EditorGUILayout.Toggle(
-                        new GUIContent("Enabled", "A + button on the Project window's bottom status bar, creating a folder in the folder being browsed."),
+                        new GUIContent("Enabled", "A + button on the right of the Project window's breadcrumb header, creating a folder in the folder being browsed. Right-click it for other asset types."),
                         settings.createFolderButtonEnabled);
                 }
 
