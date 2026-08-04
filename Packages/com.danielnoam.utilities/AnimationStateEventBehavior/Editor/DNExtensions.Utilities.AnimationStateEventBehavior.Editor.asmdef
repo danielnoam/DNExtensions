@@ -1,0 +1,20 @@
+{
+    "name": "DNExtensions.Utilities.AnimationStateEventBehavior.Editor",
+    "rootNamespace": "DNExtensions.Utilities",
+    "references": [
+        "DNExtensions.Utilities.AnimationStateEventBehavior",
+        "DNExtensions.Utilities.Attributes",
+        "DNExtensions.Utilities.Extensions"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

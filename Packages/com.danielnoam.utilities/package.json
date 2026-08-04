@@ -1,0 +1,21 @@
+{
+  "name": "com.danielnoam.utilities",
+  "version": "1.0.0",
+  "displayName": "DNExtensions Utilities",
+  "description": "Inspector and workflow utilities: attribute drawers (AutoGet, Button, conditional display, previews, scene and asset pickers), custom serialized fields (ranged values, optional values, tag/layer/scene fields), a SerializeReference type selector, serialized interfaces, and a set of small editor tools.\n\nThe core of the suite — depends only on Mathematics and uGUI.",
+  "unity": "2022.3",
+  "keywords": [
+    "attributes",
+    "inspector",
+    "property drawer",
+    "serialization",
+    "editor"
+  ],
+  "dependencies": {
+    "com.unity.mathematics": "1.4.0",
+    "com.unity.ugui": "2.0.0"
+  },
+  "author": {
+    "name": "Daniel Noam"
+  }
+}

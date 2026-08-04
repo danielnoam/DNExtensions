@@ -1,0 +1,35 @@
+{
+  "name": "com.danielnoam.systems",
+  "version": "1.0.0",
+  "displayName": "DNExtensions Systems",
+  "description": "Gameplay systems, shaders and effects: audio library and tracks, first person controller, object pooling, menu system, scheduling, grid, radar, radial menu, SDF shapes, springs, damage numbers, controller rumble, and a fullscreen VFX and transition stack.\n\nThe largest and most opinionated package of the suite, and the only one that pulls in URP, Timeline and VFX Graph.\n\nRequires PrimeTween, which is a paid asset and cannot be resolved from a registry — install it into the project separately before adding this package.",
+  "unity": "2022.3",
+  "keywords": [
+    "systems",
+    "audio",
+    "pooling",
+    "controller",
+    "vfx",
+    "shaders"
+  ],
+  "dependencies": {
+    "com.danielnoam.utilities": "1.0.0",
+    "com.danielnoam.components": "1.0.0",
+    "com.unity.cinemachine": "3.1.7",
+    "com.unity.inputsystem": "1.19.0",
+    "com.unity.render-pipelines.universal": "17.5.0",
+    "com.unity.timeline": "1.8.12",
+    "com.unity.ugui": "2.0.0",
+    "com.unity.visualeffectgraph": "17.5.0"
+  },
+  "samples": [
+    {
+      "displayName": "DNExtensions Example",
+      "description": "A scene-ready component demonstrating the attributes, custom fields and selectors across the suite.",
+      "path": "Samples~"
+    }
+  ],
+  "author": {
+    "name": "Daniel Noam"
+  }
+}

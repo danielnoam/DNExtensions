@@ -1,0 +1,20 @@
+{
+    "name": "DNExtensions.Utilities.Components.UI.CarouselView.Editor",
+    "rootNamespace": "DNExtensions.Utilities",
+    "references": [
+        "DNExtensions.Utilities.Components",
+        "DNExtensions.Utilities.Extensions",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

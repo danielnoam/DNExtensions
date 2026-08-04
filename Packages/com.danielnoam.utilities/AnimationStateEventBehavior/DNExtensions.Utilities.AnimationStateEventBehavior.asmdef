@@ -1,0 +1,16 @@
+{
+    "name": "DNExtensions.Utilities.AnimationStateEventBehavior",
+    "rootNamespace": "DNExtensions.Utilities",
+    "references": [
+        "DNExtensions.Utilities.Extensions"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

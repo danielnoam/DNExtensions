@@ -1,0 +1,30 @@
+{
+    "name": "DNExtensions.Systems",
+    "rootNamespace": "",
+    "references": [
+        "DNExtensions.Utilities.Extensions",
+        "DNExtensions.Utilities.Attributes",
+        "DNExtensions.Utilities.Components",
+        "DNExtensions.Utilities.CustomFields",
+        "DNExtensions.Utilities.SerializableSelector",
+        "PrimeTween.Runtime",
+        "Unity.Cinemachine",
+        "Unity.Collections",
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.TextMeshPro",
+        "Unity.Timeline",
+        "Unity.VisualEffectGraph.Runtime",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

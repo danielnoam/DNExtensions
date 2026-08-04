@@ -1,0 +1,18 @@
+{
+  "name": "com.danielnoam.helpfuleditor",
+  "version": "1.0.0",
+  "displayName": "DNExtensions Helpful Editor",
+  "description": "Editor quality-of-life for the Hierarchy, Inspector, Project and Game View windows: zebra striping and tree guides, component strips, component isolation and drag reordering, per-component header buttons, symlinked folder badges, and Game View rulers with guides.\n\nEditor-only and self-contained. Settings live in ProjectSettings/HelpfulEditor/ and are tracked by source control.",
+  "unity": "2022.3",
+  "keywords": [
+    "editor",
+    "hierarchy",
+    "inspector",
+    "project",
+    "game view",
+    "tools"
+  ],
+  "author": {
+    "name": "Daniel Noam"
+  }
+}

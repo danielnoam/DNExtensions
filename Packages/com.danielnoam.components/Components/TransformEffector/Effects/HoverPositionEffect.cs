@@ -1,0 +1,49 @@
+using System;
+using DNExtensions.Utilities.SerializableSelector;
+using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
+using Random = UnityEngine.Random;
+
+namespace DNExtensions.Utilities
+{
+    /// <summary>
+    /// Oscillates the transform position along a direction using a sine wave.
+    /// </summary>
+    [Serializable]
+    [SerializableSelectorName("Hover", "Position")]
+    [SerializableSelectorTooltip("Oscillates the transform along a direction using a sine wave.")]
+    [MovedFrom(false, null, "Assembly-CSharp-firstpass", null)]
+    public class HoverPositionEffect : PositionEffect
+    {
+        [SerializeField] private float hoverSpeed = 1f;
+        [SerializeField] private float hoverAmount = 0.5f;
+        [SerializeField] private Vector3 hoverDirection = Vector3.up;
+
+        private Vector3 _startPosition;
+        private float _hoverTime;
+
+        public override void Initialize(Transform target, bool localSpace)
+        {
+            if (localSpace)
+            {
+                _startPosition = target.localPosition;
+            }
+            _hoverTime = Random.value * Mathf.PI * 2f;
+        }
+
+        public override void Tick(Transform target, bool localSpace)
+        {
+            _hoverTime += hoverSpeed * Time.deltaTime;
+            float offset = Mathf.Sin(_hoverTime) * hoverAmount;
+
+            if (localSpace)
+            {
+                target.localPosition = _startPosition + hoverDirection.normalized * offset;
+            }
+            else
+            {
+                target.position = _startPosition + hoverDirection.normalized * offset;
+            }
+        }
+    }
+}

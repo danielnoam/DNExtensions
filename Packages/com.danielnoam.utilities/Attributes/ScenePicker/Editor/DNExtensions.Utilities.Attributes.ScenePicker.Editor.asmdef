@@ -1,0 +1,21 @@
+{
+    "name": "DNExtensions.Utilities.Attributes.ScenePicker.Editor",
+    "rootNamespace": "DNExtensions.Utilities",
+    "references": [
+        "DNExtensions.Utilities.Attributes",
+        "DNExtensions.Utilities.Attributes.ChanceList.Editor",
+        "DNExtensions.Utilities.Extensions",
+        "Unity.Timeline.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

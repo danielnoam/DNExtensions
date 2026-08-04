@@ -1,0 +1,17 @@
+{
+    "name": "DNExtensions.Utilities.SerializableSelector",
+    "rootNamespace": "DNExtensions.Utilities",
+    "references": [
+        "DNExtensions.Utilities.Attributes",
+        "DNExtensions.Utilities.Extensions"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

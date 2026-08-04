@@ -1,0 +1,20 @@
+{
+    "name": "DNExtensions.Utilities.SerializedInterface.Editor",
+    "rootNamespace": "DNExtensions.Utilities",
+    "references": [
+        "DNExtensions.Utilities.Attributes",
+        "DNExtensions.Utilities.Extensions",
+        "DNExtensions.Utilities.SerializedInterface"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

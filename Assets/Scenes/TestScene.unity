@@ -1650,7 +1650,7 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 6000860726568943768
-      type: {class: LookAtRotationEffect, ns: DNExtensions.Utilities, asm: Assembly-CSharp-firstpass}
+      type: {class: LookAtRotationEffect, ns: DNExtensions.Utilities, asm: DNExtensions.Utilities.Components}
       data:
         target:
           positionTransform: {fileID: 1616073830}
@@ -1658,7 +1658,7 @@ MonoBehaviour:
         upVector: {x: 0, y: 1, z: 0}
         speed: 5
     - rid: 6000860726568943777
-      type: {class: OrbitPositionEffect, ns: DNExtensions.Utilities, asm: Assembly-CSharp-firstpass}
+      type: {class: OrbitPositionEffect, ns: DNExtensions.Utilities, asm: DNExtensions.Utilities.Components}
       data:
         center:
           positionTransform: {fileID: 1616073830}
@@ -1666,7 +1666,7 @@ MonoBehaviour:
         speed: 45
         axis: {x: 0, y: 1, z: 0}
     - rid: 6000860726568943778
-      type: {class: PulseScaleEffect, ns: DNExtensions.Utilities, asm: Assembly-CSharp-firstpass}
+      type: {class: PulseScaleEffect, ns: DNExtensions.Utilities, asm: DNExtensions.Utilities.Components}
       data:
         pulseCooldown: 1
         pulseAmount: {x: 0.2, y: 0.2, z: 0.2}
@@ -2137,7 +2137,7 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 6000860726568943776
-      type: {class: SquashStretchScaleEffect, ns: DNExtensions.Utilities, asm: Assembly-CSharp-firstpass}
+      type: {class: SquashStretchScaleEffect, ns: DNExtensions.Utilities, asm: DNExtensions.Utilities.Components}
       data:
         primaryAxis: 1
         stretchAmount: 0.3
@@ -2167,11 +2167,11 @@ MonoBehaviour:
           m_PostInfinity: 2
           m_RotationOrder: 4
     - rid: 6000861080652611829
-      type: {class: AxisRotationEffect, ns: DNExtensions.Utilities, asm: Assembly-CSharp-firstpass}
+      type: {class: AxisRotationEffect, ns: DNExtensions.Utilities, asm: DNExtensions.Utilities.Components}
       data:
         rotationSpeed: {x: 25, y: 0, z: 0}
     - rid: 6000861080652611832
-      type: {class: PingPongPositionEffect, ns: DNExtensions.Utilities, asm: Assembly-CSharp-firstpass}
+      type: {class: PingPongPositionEffect, ns: DNExtensions.Utilities, asm: DNExtensions.Utilities.Components}
       data:
         endPosition: {x: 1, y: 0, z: 0}
         speed: 2

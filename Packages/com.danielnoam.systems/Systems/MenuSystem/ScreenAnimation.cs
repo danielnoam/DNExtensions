@@ -1,0 +1,201 @@
+using System;
+using DNExtensions.Systems.Springs;
+using DNExtensions.Utilities;
+using DNExtensions.Utilities.Button;
+using DNExtensions.Utilities.SerializableSelector;
+using PrimeTween;
+using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
+
+namespace DNExtensions.Systems.MenuSystem
+{
+    /// <summary>
+    /// Base class for screen transition animations.
+    /// </summary>
+    [Serializable]
+    [MovedFrom(false, null, "Assembly-CSharp-firstpass", null)]
+    public abstract class ScreenAnimation
+    {
+        public float duration = 0.25f;
+
+        public abstract Sequence CreateSequence(Screen screen);
+    }
+
+    /// <summary>
+    /// Animates screen opacity with configurable start and end alpha values.
+    /// </summary>
+    [Serializable]
+    [SerializableSelectorAllowOnce]
+    [MovedFrom(false, null, "Assembly-CSharp-firstpass", null)]
+    public class FadeAnimation : ScreenAnimation
+    {
+        public bool startFromCurrentAlpha;
+        [Range(0f, 1f), HideIf("startFromCurrentAlpha")] public float startAlpha;
+        [Range(0f, 1f)] public float endAlpha = 1f;
+        public Ease ease = Ease.OutCubic;
+
+        public override Sequence CreateSequence(Screen screen)
+        {
+            float from = startFromCurrentAlpha ? screen.CanvasGroup.alpha : startAlpha;
+
+            return Sequence.Create()
+                .Group(Tween.Alpha(
+                    screen.CanvasGroup,
+                    from,
+                    endAlpha,
+                    duration,
+                    ease
+                ));
+        }
+    }
+
+    /// <summary>
+    /// Animates screen scale with configurable start and end values.
+    /// </summary>
+    [Serializable]
+    [SerializableSelectorAllowOnce]
+    [MovedFrom(false, null, "Assembly-CSharp-firstpass", null)]
+    public class ScaleAnimation : ScreenAnimation
+    {
+        public bool startFromCurrentScale;
+        public bool endInOriginalScale = true;
+        public Vector3 startScale = Vector3.zero;
+        public Vector3 endScale = Vector3.one;
+        public Ease ease = Ease.OutBack;
+
+        public override Sequence CreateSequence(Screen screen)
+        {
+            Vector3 from = startFromCurrentScale ? screen.RectTransform.localScale : startScale;
+            Vector3 to = endInOriginalScale ? screen.TransformOriginalScale : endScale;
+
+            return Sequence.Create()
+                .Group(Tween.Scale(screen.RectTransform, from, to, duration, ease));
+        }
+    }
+
+    /// <summary>
+    /// Animates screen position by sliding from a direction with configurable distance.
+    /// </summary>
+    [Serializable]
+    [SerializableSelectorAllowOnce]
+    [MovedFrom(false, null, "Assembly-CSharp-firstpass", null)]
+    public class SlideAnimation : ScreenAnimation
+    {
+        public SlideDirection direction = SlideDirection.Left;
+        public float distance = 500f;
+        public bool useOriginalPosition = true;
+        public Ease ease = Ease.OutCubic;
+
+        public enum SlideDirection
+        {
+            Left,
+            Right,
+            Up,
+            Down
+        }
+
+        public override Sequence CreateSequence(Screen screen)
+        {
+            Vector3 originalPos = screen.TransformOriginalAnchoredPosition;
+            Vector3 offset = direction switch
+            {
+                SlideDirection.Left => new Vector3(-distance, 0, 0),
+                SlideDirection.Right => new Vector3(distance, 0, 0),
+                SlideDirection.Up => new Vector3(0, distance, 0),
+                SlideDirection.Down => new Vector3(0, -distance, 0),
+                _ => Vector3.zero
+            };
+
+            Vector3 startPos = originalPos + offset;
+            Vector3 endPos = useOriginalPosition ? originalPos : screen.RectTransform.anchoredPosition3D;
+
+            screen.RectTransform.anchoredPosition3D = startPos;
+
+            return Sequence.Create()
+                .Group(Tween.Position(screen.RectTransform, endPos, duration, ease));
+        }
+    }
+
+    /// <summary>
+    /// Animates screen rotation from start to end angles.
+    /// </summary>
+    [Serializable]
+    [SerializableSelectorAllowOnce]
+    [MovedFrom(false, null, "Assembly-CSharp-firstpass", null)]
+    public class RotateAnimation : ScreenAnimation
+    {
+        public Vector3 startRotation = Vector3.zero;
+        public Vector3 endRotation = Vector3.zero;
+        public bool useOriginalRotation = true;
+        public Ease ease = Ease.OutCubic;
+
+        public override Sequence CreateSequence(Screen screen)
+        {
+            Vector3 to = useOriginalRotation
+                ? screen.RectTransform.localEulerAngles
+                : endRotation;
+
+            screen.RectTransform.localEulerAngles = startRotation;
+
+            return Sequence.Create()
+                .Group(Tween.Rotation(screen.RectTransform, to, duration, ease));
+        }
+    }
+
+    /// <summary>
+    /// Animates multiple springy UI elements sequentially with configurable delay between elements.
+    /// </summary>
+    [Serializable]
+    [SerializableSelectorAllowOnce]
+    [MovedFrom(false, null, "Assembly-CSharp-firstpass", null)]
+    public class SpringyUIAnimation : ScreenAnimation
+    {
+        public float delayBetweenElements = 0.1f;
+        public SpringAnimationMode animationMode = SpringAnimationMode.AnimateFromOffset;
+        public RectSpring[] springyUIElements = Array.Empty<RectSpring>();
+
+        [Button(ButtonPlayMode.OnlyWhenNotPlaying)]
+        public void FindAllSpringyUIElementsInChildren(Screen screen)
+        {
+            springyUIElements = screen.GetComponentsInChildren<RectSpring>(includeInactive: true);
+        }
+
+        public enum SpringAnimationMode
+        {
+            AnimateFromOffset,
+            AnimateToOffset
+        }
+
+        public override Sequence CreateSequence(Screen screen)
+        {
+            if (springyUIElements == null || springyUIElements.Length == 0) return Sequence.Create();
+
+            var sequence = Sequence.Create();
+
+            for (int i = 0; i < springyUIElements.Length; i++)
+            {
+                var element = springyUIElements[i];
+
+                sequence.ChainCallback(() =>
+                {
+                    if (animationMode == SpringAnimationMode.AnimateFromOffset)
+                    {
+                        element.AnimateFromOffset();
+                    }
+                    else
+                    {
+                        element.AnimateToOffset();
+                    }
+
+                });
+
+                if (i < springyUIElements.Length - 1)
+                {
+                    sequence.ChainDelay(delayBetweenElements);
+                }
+            }
+
+            return sequence;
+        }
+    }
+}

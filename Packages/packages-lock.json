@@ -1,5 +1,45 @@
 {
   "dependencies": {
+    "com.danielnoam.components": {
+      "version": "file:com.danielnoam.components",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.danielnoam.utilities": "1.0.0",
+        "com.unity.inputsystem": "1.19.0",
+        "com.unity.ugui": "2.0.0"
+      }
+    },
+    "com.danielnoam.helpfuleditor": {
+      "version": "file:com.danielnoam.helpfuleditor",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
+    "com.danielnoam.systems": {
+      "version": "file:com.danielnoam.systems",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.danielnoam.utilities": "1.0.0",
+        "com.danielnoam.components": "1.0.0",
+        "com.unity.cinemachine": "3.1.7",
+        "com.unity.inputsystem": "1.19.0",
+        "com.unity.render-pipelines.universal": "17.5.0",
+        "com.unity.timeline": "1.8.12",
+        "com.unity.ugui": "2.0.0",
+        "com.unity.visualeffectgraph": "17.5.0"
+      }
+    },
+    "com.danielnoam.utilities": {
+      "version": "file:com.danielnoam.utilities",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.mathematics": "1.4.0",
+        "com.unity.ugui": "2.0.0"
+      }
+    },
     "com.kyrylokuzyk.primetween": {
       "version": "file:../Assets/Plugins/PrimeTween/internal/com.kyrylokuzyk.primetween.tgz",
       "depth": 0,
@@ -112,7 +152,7 @@
     },
     "com.unity.mathematics": {
       "version": "1.4.0",
-      "depth": 2,
+      "depth": 1,
       "source": "builtin",
       "dependencies": {}
     },

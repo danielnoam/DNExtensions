@@ -1,0 +1,20 @@
+{
+    "name": "DNExtensions.Systems.Grid.Editor",
+    "rootNamespace": "",
+    "references": [
+        "DNExtensions.Utilities.Extensions",
+        "DNExtensions.Utilities.Attributes",
+        "DNExtensions.Systems"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

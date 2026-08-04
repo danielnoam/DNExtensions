@@ -1,0 +1,19 @@
+{
+    "name": "DNExtensions.Systems.Scriptables.Value.Editor",
+    "rootNamespace": "",
+    "references": [
+        "DNExtensions.Utilities.Extensions",
+        "DNExtensions.Systems"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

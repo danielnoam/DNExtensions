@@ -1,0 +1,21 @@
+{
+    "name": "DNExtensions.Systems.AudioLibrary.Editor",
+    "rootNamespace": "",
+    "references": [
+        "DNExtensions.Utilities.Extensions",
+        "DNExtensions.Utilities.Attributes",
+        "DNExtensions.Utilities.Components",
+        "DNExtensions.Systems"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

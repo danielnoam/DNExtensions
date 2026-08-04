@@ -1,0 +1,21 @@
+{
+  "name": "com.danielnoam.components",
+  "version": "1.0.0",
+  "displayName": "DNExtensions Components",
+  "description": "Runtime components built on DNExtensions Utilities: transform effectors, a simple animator, tube renderer, carousel view, fill bar, notes, and other gameplay and UI pieces.\n\nRequires PrimeTween, which is a paid asset and cannot be resolved from a registry — install it into the project separately before adding this package.",
+  "unity": "2022.3",
+  "keywords": [
+    "components",
+    "ui",
+    "animation",
+    "gameplay"
+  ],
+  "dependencies": {
+    "com.danielnoam.utilities": "1.0.0",
+    "com.unity.inputsystem": "1.19.0",
+    "com.unity.ugui": "2.0.0"
+  },
+  "author": {
+    "name": "Daniel Noam"
+  }
+}
