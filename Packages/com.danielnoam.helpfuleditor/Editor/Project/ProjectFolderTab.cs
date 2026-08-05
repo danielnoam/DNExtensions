@@ -1,5 +1,4 @@
 using System;
-using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -15,151 +14,75 @@ namespace DNExtensions.HelpfulEditor.Project
     {
         private static readonly Type ProjectBrowserType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ProjectBrowser");
 
-        private static MethodInfo _showFolderContents;
-        private static bool _resolved;
-
         public static void Open(string folderPath)
         {
-            if (ProjectBrowserType == null || string.IsNullOrEmpty(folderPath)) return;
-
-            Object folder = AssetDatabase.LoadAssetAtPath<Object>(folderPath);
-            if (!folder) return;
+            if (!IsFolder(folderPath)) return;
 
             // Captured now rather than in the deferred call: by then the mouse has moved on and the
             // window that was clicked is no longer the one under the cursor.
             EditorWindow source = EditorWindow.mouseOverWindow ? EditorWindow.mouseOverWindow : EditorWindow.focusedWindow;
+            Object dockArea = HelpfulEditorDockArea.Of(source);
 
             // Deferred: creating and focusing a window from inside the click that asked for it
             // reshuffles focus while the event is still being dispatched.
-            EditorApplication.delayCall += () => Create(folder, source);
+            EditorApplication.delayCall += () => Create(folderPath, dockArea, HelpfulEditorSettings.Project.autoDock);
         }
 
-        private static void Create(Object folder, EditorWindow source)
+        /// <summary>
+        /// Opens the folder as a tab of a particular dock area. Used by the drop handler, where the
+        /// dock area was chosen by the user rather than inferred — so it docks regardless of the
+        /// auto-dock preference, which is about where a middle-click should put things.
+        /// </summary>
+        public static void OpenInDockArea(string folderPath, Object dockArea)
         {
-            if (!(ScriptableObject.CreateInstance(ProjectBrowserType) is EditorWindow window)) return;
+            if (!IsFolder(folderPath)) return;
 
-            if (!HelpfulEditorSettings.Project.autoDock || !TryDockBeside(source, window)) window.Show();
+            EditorApplication.delayCall += () => Create(folderPath, dockArea, dock: true);
+        }
+
+        private static bool IsFolder(string folderPath)
+        {
+            return ProjectBrowserType != null && !string.IsNullOrEmpty(folderPath) && AssetDatabase.IsValidFolder(folderPath);
+        }
+
+        private static void Create(string folderPath, Object dockArea, bool dock)
+        {
+            if (ScriptableObject.CreateInstance(ProjectBrowserType) is not EditorWindow window) return;
+
+            if (!dock || !HelpfulEditorDockArea.AddTab(dockArea, window)) window.Show();
 
             window.Focus();
 
             // A second hop: the browser builds its trees on its first OnGUI, and asking it to show a
             // folder before that leaves it on whatever the last window was looking at.
-            EditorApplication.delayCall += () => ShowFolder(window, folder);
+            EditorApplication.delayCall += () => ShowFolder(window, folderPath);
         }
 
-        private static void ShowFolder(EditorWindow window, Object folder)
+        private static void ShowFolder(EditorWindow window, string folderPath)
         {
-            if (!window || !folder) return;
+            if (!window || string.IsNullOrEmpty(folderPath)) return;
 
-            MethodInfo method = ResolveShowFolderContents();
-
-            if (method == null)
+            if (!HelpfulEditorProjectWindow.ShowFolder(window, folderPath))
             {
                 // Without the internal call the folder can at least be selected, which lands the new
                 // window on it in one-column mode.
+                Object folder = AssetDatabase.LoadAssetAtPath<Object>(folderPath);
+                if (!folder) return;
+
                 Selection.activeObject = folder;
                 EditorGUIUtility.PingObject(folder);
                 return;
             }
 
-            try
-            {
-                ParameterInfo[] parameters = method.GetParameters();
+            // Locked, so the window stays the folder's window rather than drifting off with the next
+            // selection — which is also what lets it be named after the folder rather than reading
+            // "Project" like every other one.
+            if (HelpfulEditorSettings.Project.lockFolderWindows) HelpfulEditorProjectWindow.SetLocked(window, true);
 
-                // The id parameter is an int on older versions and an EntityId from 6.4 on.
-                object id = HelpfulEditorObjectId.ConvertTo(HelpfulEditorObjectId.Raw(folder), parameters[0].ParameterType);
-                if (id == null) return;
-
-                method.Invoke(window, parameters.Length > 1 ? new[] { id, (object)true } : new[] { id });
-                window.Repaint();
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning($"[HelpfulEditor] Could not open the folder in the new Project window: {e.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Adds the new window as a tab in the same dock as the one that was clicked, so it appears
-        /// beside its source rather than floating over the middle of the screen.
-        ///
-        /// A window's host is a DockArea only while it is docked — a floating Project window has a
-        /// plain HostView with no AddTab, and there the new window simply floats too.
-        /// </summary>
-        private static bool TryDockBeside(EditorWindow source, EditorWindow window)
-        {
-            if (!source || ProjectBrowserType == null || !ProjectBrowserType.IsInstanceOfType(source)) return false;
-
-            try
-            {
-                FieldInfo parentField = typeof(EditorWindow).GetField("m_Parent", BindingFlags.Instance | BindingFlags.NonPublic);
-
-                object host = parentField?.GetValue(source);
-                if (host == null) return false;
-
-                MethodInfo addTab = FindAddTab(host.GetType());
-                if (addTab == null) return false;
-
-                addTab.Invoke(host, BuildArguments(addTab, window));
-                return true;
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning($"[HelpfulEditor] Could not dock the new Project window, showing it floating instead: {e.Message}");
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Matched by shape rather than by an exact signature. AddTab carries trailing optional
-        /// parameters that differ between versions, and asking for the one-argument form finds
-        /// nothing at all — which looked exactly like the window not being docked anywhere.
-        /// The overload taking an index first is skipped by requiring the window to come first.
-        /// </summary>
-        private static MethodInfo FindAddTab(Type hostType)
-        {
-            foreach (MethodInfo candidate in hostType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
-            {
-                if (candidate.Name != "AddTab") continue;
-
-                ParameterInfo[] parameters = candidate.GetParameters();
-                if (parameters.Length == 0 || !parameters[0].ParameterType.IsAssignableFrom(typeof(EditorWindow))) continue;
-
-                return candidate;
-            }
-
-            return null;
-        }
-
-        /// <summary>Fills the trailing optional parameters with whatever the method itself defaults them to.</summary>
-        private static object[] BuildArguments(MethodInfo method, EditorWindow window)
-        {
-            ParameterInfo[] parameters = method.GetParameters();
-            object[] arguments = new object[parameters.Length];
-
-            arguments[0] = window;
-
-            for (int i = 1; i < parameters.Length; i++)
-            {
-                ParameterInfo parameter = parameters[i];
-
-                arguments[i] = parameter.HasDefaultValue
-                    ? parameter.DefaultValue
-                    : parameter.ParameterType.IsValueType ? Activator.CreateInstance(parameter.ParameterType) : null;
-            }
-
-            return arguments;
-        }
-
-        private static MethodInfo ResolveShowFolderContents()
-        {
-            if (_resolved) return _showFolderContents;
-            _resolved = true;
-
-            _showFolderContents = ProjectBrowserType?.GetMethod("ShowFolderContents",
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            return _showFolderContents;
+            // The title and the new-folder button are both driven by polling, and this is the moment
+            // they are both about to be wrong — so they are told rather than left to notice.
+            HelpfulEditorWindowTitles.RequestRefresh();
+            ProjectCreateFolderButton.RequestRefresh();
         }
     }
 }

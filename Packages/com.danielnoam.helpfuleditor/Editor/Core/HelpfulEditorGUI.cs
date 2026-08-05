@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -21,9 +22,31 @@ namespace DNExtensions.HelpfulEditor
 
         private const float BaseDashSegment = 2f;
         private const float DashGap = 2f;
+        private const BindingFlags AnyMember = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
         private static readonly Dictionary<Type, Texture> IconCache = new Dictionary<Type, Texture>();
         private static GUIStyle _badgeStyle;
+
+        private static PropertyInfo _guiViewCurrent;
+        private static MethodInfo _markHotRegion;
+        private static MethodInfo _unclipToWindow;
+        private static bool _hotRegionResolved;
+        private static bool _hotRegionAvailable;
+
+        /// <summary>
+        /// Whether rows can register themselves as interactive, which is what makes the editor
+        /// repaint the window on mouse move. Callers that draw a hover state need to know: without
+        /// it the window only repaints when something else happens to ask it to, and the hover has
+        /// to be driven by forcing repaints from the update loop instead.
+        /// </summary>
+        public static bool HotRegionAvailable
+        {
+            get
+            {
+                ResolveHotRegion();
+                return _hotRegionAvailable;
+            }
+        }
 
         public static GUIStyle BadgeStyle
         {
@@ -52,6 +75,59 @@ namespace DNExtensions.HelpfulEditor
         {
             float right = Mathf.Max(rowRect.xMax, EditorGUIUtility.currentViewWidth);
             return new Rect(0f, rowRect.y, right, rowRect.height);
+        }
+
+        /// <summary>
+        /// Registers a rect as interactive content so the editor repaints the window while the
+        /// cursor moves across it. IMGUI drawn from a row callback is invisible to that machinery
+        /// otherwise, which is what leaves a hover highlight lagging until something else forces a
+        /// repaint. Only meaningful during repaint, when the region list is being rebuilt.
+        /// </summary>
+        public static void MarkInteractive(Rect rect)
+        {
+            if (Event.current == null || Event.current.type != EventType.Repaint) return;
+
+            ResolveHotRegion();
+            if (!_hotRegionAvailable) return;
+
+            try
+            {
+                object view = _guiViewCurrent.GetValue(null);
+                if (view == null) return;
+
+                object unclipped = _unclipToWindow.Invoke(null, new object[] { rect });
+                _markHotRegion.Invoke(view, new[] { unclipped });
+            }
+            catch (Exception e)
+            {
+                // One failure means the internals moved, so the whole mechanism is abandoned rather
+                // than retried for every row of every repaint.
+                _hotRegionAvailable = false;
+                Debug.LogWarning($"[HelpfulEditor] Hover repaints fall back to polling on this Unity version. ({e.Message})");
+            }
+        }
+
+        private static void ResolveHotRegion()
+        {
+            if (_hotRegionResolved) return;
+            _hotRegionResolved = true;
+
+            try
+            {
+                Type guiViewType = typeof(EditorWindow).Assembly.GetType("UnityEditor.GUIView");
+                Type guiClipType = typeof(GUI).Assembly.GetType("UnityEngine.GUIClip");
+                if (guiViewType == null || guiClipType == null) return;
+
+                _guiViewCurrent = guiViewType.GetProperty("current", AnyMember);
+                _markHotRegion = guiViewType.GetMethod("MarkHotRegion", AnyMember, null, new[] { typeof(Rect) }, null);
+                _unclipToWindow = guiClipType.GetMethod("UnclipToWindow", AnyMember, null, new[] { typeof(Rect) }, null);
+
+                _hotRegionAvailable = _guiViewCurrent != null && _markHotRegion != null && _unclipToWindow != null;
+            }
+            catch (Exception)
+            {
+                _hotRegionAvailable = false;
+            }
         }
 
         private static int RowIndex(Rect rowRect)
@@ -114,14 +190,56 @@ namespace DNExtensions.HelpfulEditor
         }
 
         /// <summary>
-        /// Full-height guide per ancestor level plus an elbow into the row's icon. Used by the
-        /// Project window, which has no cheap way to know whether a row is its parent's last child;
-        /// the Hierarchy draws proper terminating elbows instead.
+        /// Classic tree connectors: one guide per ancestor level, drawn only while that ancestor
+        /// still has rows below it, and an elbow into the row's icon. A last child terminates its
+        /// guide at the elbow instead of running it to the bottom of the row.
         /// </summary>
+        /// <param name="lastOnPath">
+        /// One entry per level, holding whether the node the path passes through just below that
+        /// level is its parent's last child. The final entry describes the row itself. Its length is
+        /// the row's depth.
+        /// </param>
         /// <param name="stopBeforeFoldout">
         /// True for rows that draw their own foldout arrow, so the elbow ends short of the arrow's
         /// column instead of running underneath the glyph.
         /// </param>
+        public static void DrawTreeConnectors(Rect rowRect, float leftEdge, IReadOnlyList<bool> lastOnPath, Color color, LineStyle style, bool stopBeforeFoldout)
+        {
+            if (lastOnPath == null || color.a <= 0f) return;
+
+            int depth = lastOnPath.Count;
+            if (depth <= 0) return;
+
+            float midY = SnapToPixel(rowRect.y + rowRect.height * 0.5f);
+            float weight = LineThickness(TreeLineThickness);
+
+            for (int level = 0; level < depth; level++)
+            {
+                bool lastSibling = lastOnPath[level];
+                float x = GuideColumnX(leftEdge, level);
+
+                if (level < depth - 1)
+                {
+                    if (!lastSibling) DrawVerticalLine(x, rowRect.y, rowRect.yMax, color, style, TreeLineThickness, midY);
+                    continue;
+                }
+
+                // A terminating guide runs to the far side of the elbow so it owns the corner
+                // outright; the horizontal then starts past it. Overlapping the two would draw a
+                // translucent colour twice and leave a dark notch at the join.
+                float bottom = lastSibling ? midY + weight : rowRect.yMax;
+                DrawVerticalLine(x, rowRect.y, bottom, color, style, TreeLineThickness, midY);
+
+                float elbowEnd = stopBeforeFoldout ? rowRect.x - IndentWidth : rowRect.x - 2f;
+                DrawHorizontalLine(ElbowStart(x, TreeLineThickness, style), elbowEnd, midY, color, style, TreeLineThickness);
+            }
+        }
+
+        /// <summary>
+        /// Fallback for rows whose sibling position is unknown: a full-height guide per ancestor
+        /// level plus an elbow, with nothing terminating. Used when the tree's own row data cannot
+        /// be read, which is the only case that leaves the topology unavailable.
+        /// </summary>
         public static void DrawDepthLines(Rect rowRect, int depth, float leftEdge, Color color, LineStyle style, bool stopBeforeFoldout)
         {
             if (depth <= 0 || color.a <= 0f) return;
@@ -283,13 +401,36 @@ namespace DNExtensions.HelpfulEditor
         }
 
         /// <summary>
-        /// Lays out right-aligned icon slots. Returns the rect of each slot, plus an overflow rect
-        /// when the list is truncated.
+        /// Lays out right-aligned icon slots within the area, dropping any that would not fit.
+        /// Returns the rect of each slot, plus an overflow rect when the list is truncated.
         /// </summary>
         public static void LayoutIconStrip(Rect area, int count, float iconSize, int maxIcons, List<Rect> buffer, out int shown, out Rect overflowRect)
         {
             const float spacing = 1f;
-            shown = maxIcons > 0 ? Mathf.Min(count, maxIcons) : count;
+            int wanted = maxIcons > 0 ? Mathf.Min(count, maxIcons) : count;
+
+            // The area is the space the strip is allowed to occupy, so anything past its left edge
+            // is dropped rather than drawn over whatever owns that space — the row's own label, in
+            // the Project window's case. Walked down a slot at a time because dropping an icon for
+            // width is itself a truncation, and the badge that announces it needs room of its own.
+            shown = 0;
+            for (int limit = wanted; limit > 0; limit--)
+            {
+                float badge = limit < count ? iconSize + 6f : 0f;
+                if (limit * (iconSize + spacing) + badge > area.width) continue;
+
+                shown = limit;
+                break;
+            }
+
+            // A badge with no icons beside it reads as a stray number rather than a count.
+            if (shown == 0)
+            {
+                buffer.Clear();
+                overflowRect = Rect.zero;
+                return;
+            }
+
             bool truncated = shown < count;
 
             float overflowWidth = truncated ? iconSize + 6f : 0f;

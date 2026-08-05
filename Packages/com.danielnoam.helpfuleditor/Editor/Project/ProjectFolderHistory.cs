@@ -87,6 +87,10 @@ namespace DNExtensions.HelpfulEditor.Project
 
             _navigating = true;
 
+            // Recorded before the move, so the jump it causes can be replayed as a glide and the
+            // row it lands on can be flashed.
+            ProjectNavigationAnimator.CaptureJump(path);
+
             try
             {
                 return ShowFolder(path);

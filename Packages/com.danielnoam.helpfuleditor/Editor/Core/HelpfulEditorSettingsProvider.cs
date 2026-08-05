@@ -336,6 +336,13 @@ namespace DNExtensions.HelpfulEditor
                     settings.treeLineStyle = (LineStyle)EditorGUILayout.EnumPopup("Style", settings.treeLineStyle);
                 }
 
+                if (Section(ProjectModule, "Folding"))
+                {
+                    settings.animatedFoldsEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Animate", "Play multi-row folds one at a time, and glide to where back/forward lands instead of jumping there."),
+                        settings.animatedFoldsEnabled);
+                }
+
                 if (Section(ProjectModule, "Asset Names"))
                 {
                     settings.twoLineNamesEnabled = EditorGUILayout.Toggle(
@@ -359,6 +366,19 @@ namespace DNExtensions.HelpfulEditor
                     settings.folderContentIconsInObjectView = EditorGUILayout.Toggle(
                         new GUIContent("Show In Object View", "Also draw the strip on folders in the right-hand pane, not just the folder tree."),
                         settings.folderContentIconsInObjectView);
+                }
+
+                if (Section(ProjectModule, "Window Titles"))
+                {
+                    settings.windowTitlesEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Enabled", "Name windows pinned to something after what they show: a locked Project window takes its folder's name, a floating Properties window takes its object's."),
+                        settings.windowTitlesEnabled);
+
+                    if (HelpfulEditorPlugins.VTabsActive)
+                    {
+                        EditorGUILayout.HelpBox("vTabs is installed and already renames these windows, so this is standing down. Disable vTabs to use it.",
+                            MessageType.Info);
+                    }
                 }
 
                 if (Section(ProjectModule, "New Folder Button"))
@@ -398,16 +418,31 @@ namespace DNExtensions.HelpfulEditor
                     settings.expandCollapseKey = DrawKeyBind("Expand / Collapse", settings.expandCollapseKey);
                     settings.expandCollapseRecursiveKey = DrawKeyBind("Expand / Collapse All", settings.expandCollapseRecursiveKey);
                     settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);
+                    settings.isolateKey = DrawKeyBind("Isolate", settings.isolateKey);
                     settings.revealInFinderKey = DrawKeyBind($"Reveal In {HelpfulEditorPlatform.FileManagerName}", settings.revealInFinderKey);
                     settings.quickObjectWindowKey = DrawKeyBind("Quick Object Window", settings.quickObjectWindowKey);
                     settings.openFolderInNewTabKey = DrawKeyBind("Open Folder In New Window", settings.openFolderInNewTabKey);
                     settings.autoDock = EditorGUILayout.Toggle(
                         new GUIContent("Auto Dock", "On: the new window docks beside the one clicked. Off: it opens floating."),
                         settings.autoDock);
+                    settings.lockFolderWindows = EditorGUILayout.Toggle(
+                        new GUIContent("Lock To Folder", "Keep the new window on its folder instead of letting it follow the selection. Also what lets it be named after the folder."),
+                        settings.lockFolderWindows);
+                    settings.folderDropCreatesTabEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Drop Folder On Tabs", "Drag a folder onto any window's tab strip to open it there as its own Project tab."),
+                        settings.folderDropCreatesTabEnabled);
                     settings.navigateBackKey = DrawKeyBind("Navigate Back", settings.navigateBackKey);
                     settings.navigateForwardKey = DrawKeyBind("Navigate Forward", settings.navigateForwardKey);
                     settings.closeWindowKey = DrawKeyBind("Close Focused Window", settings.closeWindowKey);
+                    settings.reopenWindowKey = DrawKeyBind("Reopen Closed Window", settings.reopenWindowKey);
                     DrawStringList("Never Close These Windows", settings.closeWindowExcludedTypes);
+                    EditorGUILayout.LabelField("Closing is undoable, so this list is usually best left empty.", EditorStyles.miniLabel);
+
+                    if (HelpfulEditorPlugins.VTabsActive)
+                    {
+                        EditorGUILayout.HelpBox("vTabs binds the same defaults for close and reopen, acting on the tab rather than the window. Both will fire — rebind one side.",
+                            MessageType.Warning);
+                    }
                     EditorGUILayout.LabelField(
                         $"Mouse0 / Mouse1 / Mouse2 bind to left, right and middle click. Ctrl means {HelpfulEditorPlatform.CommandModifierName} on this platform.",
                         EditorStyles.miniLabel);
@@ -416,7 +451,14 @@ namespace DNExtensions.HelpfulEditor
                 EndSections();
             }
 
-            if (EditorGUI.EndChangeCheck()) HelpfulEditorSettings.SaveProject();
+            if (EditorGUI.EndChangeCheck())
+            {
+                HelpfulEditorSettings.SaveProject();
+
+                // Toggling either of these should show in the editor immediately, not on the next poll.
+                HelpfulEditorWindowTitles.RequestRefresh();
+                Project.ProjectCreateFolderButton.RequestRefresh();
+            }
 
             DrawResetButton("Project", HelpfulEditorSettings.ResetProject);
         }

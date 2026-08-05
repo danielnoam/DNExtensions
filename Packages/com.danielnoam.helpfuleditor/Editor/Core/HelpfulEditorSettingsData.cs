@@ -161,27 +161,38 @@ namespace DNExtensions.HelpfulEditor
         public ConflictDefaultChoice conflictDefaultChoice = ConflictDefaultChoice.AlwaysAsk;
         public bool cancelIsDefaultOnEscape = true;
 
+        /// <summary>Plays multi-row folds and navigation jumps as motion instead of applying them instantly.</summary>
+        public bool animatedFoldsEnabled = true;
+
         // Mirrors the Hierarchy so the same keys mean the same thing in both windows.
         public KeyBind expandCollapseKey = KeyBind.Of(KeyCode.E);
         public KeyBind expandCollapseRecursiveKey = KeyBind.Of(KeyCode.E, shift: true);
         public KeyBind collapseAllKey = KeyBind.Of(KeyCode.E, ctrl: true, shift: true);
+        public KeyBind isolateKey = KeyBind.Of(KeyCode.E, ctrl: true);
         public KeyBind revealInFinderKey = KeyBind.Of(KeyCode.R, ctrl: true);
         public KeyBind quickObjectWindowKey = KeyBind.Of(KeyCode.Mouse0, alt: true);
         public KeyBind openFolderInNewTabKey = KeyBind.Of(KeyCode.Mouse2);
 
         /// <summary>On: the new window becomes a tab beside the one clicked. Off: it floats.</summary>
         public bool autoDock = true;
-        public KeyBind closeWindowKey = KeyBind.Of(KeyCode.W, ctrl: true);
 
-        /// <summary>Window types Close Focused Window refuses to act on, matched by type name.</summary>
-        public List<string> closeWindowExcludedTypes = new List<string>
-        {
-            "SceneView",
-            "ConsoleWindow",
-            "ProjectBrowser",
-            "InspectorWindow",
-            "SceneHierarchyWindow"
-        };
+        /// <summary>Keeps the new window on its folder, which also lets it be named after it.</summary>
+        public bool lockFolderWindows = true;
+
+        /// <summary>Dropping a folder on a dock area's tab strip opens it there as its own tab.</summary>
+        public bool folderDropCreatesTabEnabled = true;
+
+        /// <summary>Names windows pinned to something after what they show, instead of their window type.</summary>
+        public bool windowTitlesEnabled = true;
+
+        public KeyBind closeWindowKey = KeyBind.Of(KeyCode.W, ctrl: true);
+        public KeyBind reopenWindowKey = KeyBind.Of(KeyCode.T, ctrl: true, shift: true);
+
+        /// <summary>
+        /// Window types Close Focused Window refuses to act on, matched by type name. Empty by
+        /// default: closing is undoable, so the core windows no longer need protecting from it.
+        /// </summary>
+        public List<string> closeWindowExcludedTypes = new List<string>();
         public KeyBind navigateBackKey = KeyBind.Of(KeyCode.Mouse3);
         public KeyBind navigateForwardKey = KeyBind.Of(KeyCode.Mouse4);
     }

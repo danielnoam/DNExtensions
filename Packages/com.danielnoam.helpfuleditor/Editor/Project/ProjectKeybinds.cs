@@ -29,7 +29,7 @@ namespace DNExtensions.HelpfulEditor.Project
             Event evt = Event.current;
             if (evt == null || evt.type != EventType.KeyDown) return;
 
-            // Closing a window targets whatever has focus, so it is handled before the
+            // Closing and reopening target whatever has focus, so they are handled before the
             // mouse-over-the-Project-window gate the row actions need.
             if (settings.closeWindowKey.Matches(evt))
             {
@@ -37,11 +37,17 @@ namespace DNExtensions.HelpfulEditor.Project
                 return;
             }
 
+            if (settings.reopenWindowKey.Matches(evt))
+            {
+                if (HelpfulEditorWindowHistory.ReopenLast()) evt.Use();
+                return;
+            }
+
             if (!HelpfulEditorWindows.MouseOverProject) return;
 
             if (settings.collapseAllKey.Matches(evt))
             {
-                HelpfulEditorTreeReflection.CollapseAllProjectFolders();
+                ProjectExpandQueue.CollapseAll();
                 evt.Use();
                 return;
             }
@@ -57,6 +63,16 @@ namespace DNExtensions.HelpfulEditor.Project
                 bool expandPressed = settings.expandCollapseKey.Matches(evt) || settings.expandCollapseRecursiveKey.Matches(evt);
                 if (expandPressed && HelpfulEditorTreeReflection.ToggleProjectExpandedAtRow(ProjectModule.HoveredRowY)) evt.Use();
 
+                return;
+            }
+
+            // Closes every branch that is not on the way to the hovered row. Unlike Collapse
+            // Everything, what it closes keeps its expanded state, so reopening a branch later finds
+            // it as it was left.
+            if (settings.isolateKey.Matches(evt))
+            {
+                ProjectExpandQueue.Isolate(path);
+                evt.Use();
                 return;
             }
 
@@ -91,8 +107,10 @@ namespace DNExtensions.HelpfulEditor.Project
         }
 
         /// <summary>
-        /// Closing an editor window cannot be undone, so the core workspace windows are protected.
-        /// The excluded list is editable in settings.
+        /// The window is snapshotted before it goes, so Reopen Closed Window can bring it back where
+        /// it was. That is what makes the exclusion list optional rather than a safety net — it now
+        /// defaults to empty, and exists only for anyone who would rather a given window never
+        /// respond to the shortcut at all.
         /// </summary>
         private static bool CloseFocusedWindow()
         {
@@ -104,6 +122,8 @@ namespace DNExtensions.HelpfulEditor.Project
             {
                 if (string.Equals(typeName, excluded, StringComparison.OrdinalIgnoreCase)) return false;
             }
+
+            HelpfulEditorWindowHistory.Remember(window);
 
             window.Close();
             return true;

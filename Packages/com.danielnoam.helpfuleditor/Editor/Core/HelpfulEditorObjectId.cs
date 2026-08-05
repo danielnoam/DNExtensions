@@ -1,3 +1,5 @@
+using System;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -24,30 +26,59 @@ namespace DNExtensions.HelpfulEditor
         }
 
         /// <summary>Bridges whichever id type this Unity version produces onto a reflected signature.</summary>
-        public static object ConvertTo(object rawId, System.Type targetType)
+        public static object ConvertTo(object rawId, Type targetType)
         {
             if (rawId == null || targetType == null) return null;
             if (targetType.IsInstanceOfType(rawId)) return rawId;
 
-            System.Reflection.MethodInfo implicitCast = targetType.GetMethod("op_Implicit",
-                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public, null, new[] { rawId.GetType() }, null);
-            if (implicitCast != null) return implicitCast.Invoke(null, new[] { rawId });
+            Type sourceType = rawId.GetType();
 
-            System.Reflection.ConstructorInfo constructor = targetType.GetConstructor(new[] { rawId.GetType() });
+            // A conversion operator can be declared on either side of the conversion, and Unity puts
+            // EntityId's on EntityId itself — so looking only at the target type finds the way in
+            // but not the way back out.
+            object converted = InvokeConversion(targetType, sourceType, targetType, rawId)
+                               ?? InvokeConversion(sourceType, sourceType, targetType, rawId);
+            if (converted != null) return converted;
+
+            ConstructorInfo constructor = targetType.GetConstructor(new[] { sourceType });
             return constructor?.Invoke(new[] { rawId });
+        }
+
+        private static object InvokeConversion(Type declaringType, Type sourceType, Type targetType, object value)
+        {
+            foreach (MethodInfo method in declaringType.GetMethods(BindingFlags.Static | BindingFlags.Public))
+            {
+                if (method.Name != "op_Implicit" && method.Name != "op_Explicit") continue;
+                if (method.ReturnType != targetType) continue;
+
+                ParameterInfo[] parameters = method.GetParameters();
+                if (parameters.Length != 1 || !parameters[0].ParameterType.IsAssignableFrom(sourceType)) continue;
+
+                return method.Invoke(null, new[] { value });
+            }
+
+            return null;
         }
 
         /// <summary>
         /// Resolves an id back to its object. Returns null for ids that are not objects at all —
         /// hierarchy scene headers are tree rows with their own ids, and callers rely on that null
         /// to tell them apart from GameObjects.
+        ///
+        /// Ids read off tree rows are not always the type this Unity version's editor APIs take:
+        /// the tree switched to EntityId a version before EditorUtility did, so an id from a row
+        /// gets converted rather than rejected.
         /// </summary>
         public static Object Resolve(object rawId)
         {
 #if UNITY_6000_4_OR_NEWER
-            return rawId is EntityId entityId ? EditorUtility.EntityIdToObject(entityId) : null;
+            if (rawId is EntityId entityId) return EditorUtility.EntityIdToObject(entityId);
+
+            return ConvertTo(rawId, typeof(EntityId)) is EntityId converted ? EditorUtility.EntityIdToObject(converted) : null;
 #else
-            return rawId is int instanceId ? EditorUtility.InstanceIDToObject(instanceId) : null;
+            if (rawId is int instanceId) return EditorUtility.InstanceIDToObject(instanceId);
+
+            return ConvertTo(rawId, typeof(int)) is int converted ? EditorUtility.InstanceIDToObject(converted) : null;
 #endif
         }
     }

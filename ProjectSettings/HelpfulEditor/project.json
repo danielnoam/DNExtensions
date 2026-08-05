@@ -36,13 +36,14 @@
     "folderContentMaxIcons": 2,
     "folderContentIconSize": 12.0,
     "folderContentRecursive": false,
-    "folderContentIconsInObjectView": false,
+    "folderContentIconsInObjectView": true,
     "createFolderButtonEnabled": true,
     "linkedAssetsEnabled": true,
     "linkedAssetFolders": [],
     "dragConflictResolutionEnabled": true,
     "conflictDefaultChoice": 0,
     "cancelIsDefaultOnEscape": true,
+    "animatedFoldsEnabled": true,
     "expandCollapseKey": {
         "key": 101,
         "ctrl": false,
@@ -60,6 +61,12 @@
         "ctrl": true,
         "alt": false,
         "shift": true
+    },
+    "isolateKey": {
+        "key": 101,
+        "ctrl": true,
+        "alt": false,
+        "shift": false
     },
     "revealInFinderKey": {
         "key": 114,
@@ -79,12 +86,20 @@
         "alt": false,
         "shift": false
     },
-    "openFolderInNewTabDocked": true,
+    "autoDock": true,
+    "lockFolderWindows": true,
+    "windowTitlesEnabled": true,
     "closeWindowKey": {
         "key": 119,
         "ctrl": true,
         "alt": false,
         "shift": false
+    },
+    "reopenWindowKey": {
+        "key": 116,
+        "ctrl": true,
+        "alt": false,
+        "shift": true
     },
     "closeWindowExcludedTypes": [
         "SceneView",

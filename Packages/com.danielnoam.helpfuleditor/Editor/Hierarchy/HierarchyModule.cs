@@ -18,6 +18,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
         // All reused: these run for every visible row on every repaint.
         private static readonly List<Transform> AncestorBuffer = new List<Transform>();
+        private static readonly List<bool> LastOnPathBuffer = new List<bool>();
         private static readonly GUIContent BadgeContent = new GUIContent();
         private static readonly GUIContent MeasureContent = new GUIContent();
         private static readonly string[] CachedCounts = BuildCountLabels();
@@ -103,9 +104,8 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         }
 
         /// <summary>
-        /// Classic tree connectors: one vertical guide per ancestor level, drawn only while that
-        /// ancestor still has rows below it, and an elbow into each row's icon. A last child
-        /// terminates its guide at the elbow instead of running it to the bottom of the row.
+        /// Fills in which node the path passes through at each level and hands the drawing to the
+        /// shared connector routine, which the Project window feeds from its own tree rows.
         /// </summary>
         private static void DrawTreeLines(Rect rowRect, Transform transform, HierarchySettings settings)
         {
@@ -118,46 +118,22 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                 AncestorBuffer.Add(parent);
             }
 
-            List<Transform> ancestors = AncestorBuffer;
-            int depth = ancestors.Count;
+            int depth = AncestorBuffer.Count;
             if (depth == 0) return;
 
-            ancestors.Reverse();
+            AncestorBuffer.Reverse();
 
-            float leftEdge = rowRect.x - HelpfulEditorGUI.IndentWidth * depth;
-            float midY = HelpfulEditorGUI.SnapToPixel(rowRect.y + rowRect.height * 0.5f);
-
+            LastOnPathBuffer.Clear();
             for (int level = 0; level < depth; level++)
             {
-                Transform onPath = level + 1 < depth ? ancestors[level + 1] : transform;
-                bool lastSibling = IsLastSibling(onPath);
-                float x = HelpfulEditorGUI.GuideColumnX(leftEdge, level);
-
-                const float thickness = HelpfulEditorGUI.TreeLineThickness;
-                float weight = HelpfulEditorGUI.LineThickness(thickness);
-
-                if (level < depth - 1)
-                {
-                    if (!lastSibling) HelpfulEditorGUI.DrawVerticalLine(x, rowRect.y, rowRect.yMax, color, settings.treeDepthLineStyle, thickness, midY);
-                    continue;
-                }
-
-                // A terminating guide runs to the far side of the elbow so it owns the corner
-                // outright; the horizontal then starts past it. Overlapping the two would draw a
-                // translucent colour twice and leave a dark notch at the join.
-                float bottom = lastSibling ? midY + weight : rowRect.yMax;
-                HelpfulEditorGUI.DrawVerticalLine(x, rowRect.y, bottom, color, settings.treeDepthLineStyle, thickness, midY);
-
-                // A row with children owns the indent step left of its icon — that is where Unity
-                // draws the foldout arrow — so the elbow stops at the arrow's edge rather than
-                // running underneath the glyph.
-                float elbowEnd = transform.childCount > 0
-                    ? rowRect.x - HelpfulEditorGUI.IndentWidth
-                    : rowRect.x - 2f;
-
-                float elbowStart = HelpfulEditorGUI.ElbowStart(x, thickness, settings.treeDepthLineStyle);
-                HelpfulEditorGUI.DrawHorizontalLine(elbowStart, elbowEnd, midY, color, settings.treeDepthLineStyle, thickness);
+                LastOnPathBuffer.Add(IsLastSibling(level + 1 < depth ? AncestorBuffer[level + 1] : transform));
             }
+
+            // A row with children owns the indent step left of its icon — that is where Unity draws
+            // the foldout arrow — so the elbow stops at the arrow's edge rather than running
+            // underneath the glyph.
+            HelpfulEditorGUI.DrawTreeConnectors(rowRect, rowRect.x - HelpfulEditorGUI.IndentWidth * depth,
+                LastOnPathBuffer, color, settings.treeDepthLineStyle, transform.childCount > 0);
         }
 
         private static bool IsLastSibling(Transform transform)

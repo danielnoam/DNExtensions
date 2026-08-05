@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
+using UnityEngine;
 
 namespace DNExtensions.HelpfulEditor
 {
@@ -28,6 +30,28 @@ namespace DNExtensions.HelpfulEditor
         public static bool IsInspector(EditorWindow window)
         {
             return window && InspectorWindowType != null && InspectorWindowType.IsInstanceOfType(window);
+        }
+
+        public static bool IsProjectBrowser(EditorWindow window)
+        {
+            return window && ProjectWindowType != null && ProjectWindowType.IsInstanceOfType(window);
+        }
+
+        public static IEnumerable<EditorWindow> AllProjectBrowsers() => AllOfType(ProjectWindowType);
+
+        public static IEnumerable<EditorWindow> AllInspectors() => AllOfType(InspectorWindowType);
+
+        private static IEnumerable<EditorWindow> AllOfType(Type windowType)
+        {
+            List<EditorWindow> windows = new List<EditorWindow>();
+            if (windowType == null) return windows;
+
+            foreach (UnityEngine.Object candidate in Resources.FindObjectsOfTypeAll(windowType))
+            {
+                if (candidate is EditorWindow window) windows.Add(window);
+            }
+
+            return windows;
         }
 
         /// <summary>

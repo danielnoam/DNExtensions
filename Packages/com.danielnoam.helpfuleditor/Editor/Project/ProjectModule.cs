@@ -15,14 +15,12 @@ namespace DNExtensions.HelpfulEditor.Project
     {
         private const float ListViewRowHeightLimit = 20f;
         private const double HoverTimeout = 0.25;
-
-        // Rebuilt whenever assets change. These lookups allocate and touch disk, and this runs per
-        // row per repaint, so results are kept until the project changes.
-        private static readonly Dictionary<string, (bool subfolders, bool children)> FoldoutCache =
-            new Dictionary<string, (bool, bool)>();
+        private const float LabelIconGap = 2f;
+        private const float LabelPadding = 6f;
 
         private static readonly List<Rect> IconRects = new List<Rect>();
         private static readonly GUIContent OverflowContent = new GUIContent();
+        private static readonly GUIContent MeasureContent = new GUIContent();
 
         private static double _lastHoverTime;
         private static Rect _listAreaRect;
@@ -48,17 +46,15 @@ namespace DNExtensions.HelpfulEditor.Project
 
             EditorApplication.update -= OnUpdate;
             EditorApplication.update += OnUpdate;
-
-            EditorApplication.projectChanged -= OnProjectChanged;
-            EditorApplication.projectChanged += OnProjectChanged;
         }
 
         /// <summary>
-        /// Unity only repaints the Project window when it has a reason to, and it has no hover state
-        /// of its own to trigger one — so the hover cache would only refresh whenever something else
-        /// happened to redraw, which is the lag. Driving a repaint while the cursor is inside the
-        /// window keeps the highlight immediate, and dropping a hover that has gone stale keeps
-        /// keybinds from acting on a row the cursor has already left.
+        /// Keeps the cached hover honest. Rows register themselves as interactive content while they
+        /// draw, which is what gets the window repainted as the cursor moves across it — but nothing
+        /// draws once the cursor has left, so leaving is noticed here. Where that registration is
+        /// unavailable the repaints have to be driven from here instead, and a hover that stops
+        /// being refreshed is then treated as stale rather than left latched on a row the cursor has
+        /// long since left.
         /// </summary>
         private static void OnUpdate()
         {
@@ -81,6 +77,8 @@ namespace DNExtensions.HelpfulEditor.Project
 
             _hasListAreaRect = HelpfulEditorTreeReflection.TryGetProjectListAreaRect(out _listAreaRect);
 
+            if (HelpfulEditorGUI.HotRegionAvailable) return;
+
             if (EditorApplication.timeSinceStartup - _lastHoverTime > HoverTimeout) ClearHover();
 
             if (settings.hoverHighlightEnabled) window.Repaint();
@@ -90,24 +88,31 @@ namespace DNExtensions.HelpfulEditor.Project
         /// Only rows that actually draw a foldout arrow need the elbow to stop short — an empty
         /// folder has nothing in that column, so its line should run to the icon like any other row.
         /// Assets count too: an FBX or prefab with sub-assets is an expandable row.
+        ///
+        /// Only reached when the tree's own rows could not be read; otherwise the tree is asked
+        /// directly, which is both cheaper and exactly what it draws.
         /// </summary>
         private static bool HasFoldout(string path, bool isFolder)
         {
-            if (!FoldoutCache.TryGetValue(path, out (bool subfolders, bool children) info))
+            ProjectCache.FolderEntry entry = ProjectCache.instance.GetOrCreate(path);
+
+            if (!entry.foldoutKnown)
             {
                 bool subfolders = isFolder && AssetDatabase.GetSubFolders(path).Length > 0;
 
-                info = isFolder
-                    ? (subfolders, subfolders || FolderHasFiles(path))
-                    : (false, AssetDatabase.LoadAllAssetRepresentationsAtPath(path).Length > 0);
+                entry.hasSubfolders = subfolders;
+                entry.hasChildren = isFolder
+                    ? subfolders || FolderHasFiles(path)
+                    : AssetDatabase.LoadAllAssetRepresentationsAtPath(path).Length > 0;
+                entry.foldoutKnown = true;
 
-                FoldoutCache[path] = info;
+                ProjectCache.instance.MarkDirty();
             }
 
             // The two-column folder tree lists nothing but folders, so only a subfolder puts an
             // arrow on a row there. The one-column tree lists assets as well, so a folder holding
             // only files gets one too — which is why the elbow was running into some arrows.
-            return _hasListAreaRect ? info.subfolders : info.children;
+            return _hasListAreaRect ? entry.hasSubfolders : entry.hasChildren;
         }
 
         private static bool FolderHasFiles(string path)
@@ -133,8 +138,6 @@ namespace DNExtensions.HelpfulEditor.Project
             return false;
         }
 
-        private static void OnProjectChanged() => FoldoutCache.Clear();
-
         private static void ClearHover()
         {
             if (HoveredPath == null) return;
@@ -148,6 +151,8 @@ namespace DNExtensions.HelpfulEditor.Project
             ProjectModuleSettings settings = HelpfulEditorSettings.Project;
             if (!settings.moduleEnabled) return;
 
+            bool newPass = BeginRow(rowRect, settings.treeLinesEnabled);
+
             // Structural rows such as the Packages root have no asset behind them. They still need
             // hover tracking and a highlight, so the path check gates only the overlays below.
             string path = AssetDatabase.GUIDToAssetPath(guid);
@@ -156,6 +161,10 @@ namespace DNExtensions.HelpfulEditor.Project
             bool isListView = rowRect.height <= ListViewRowHeightLimit;
             bool inListArea = IsInListArea(rowRect);
             bool hovered = TrackHover(path, rowRect, inListArea);
+
+            // Registers the row as interactive so the editor repaints on mouse move by itself,
+            // rather than the module having to repaint the window on a timer to keep up.
+            if (settings.hoverHighlightEnabled) HelpfulEditorGUI.MarkInteractive(rowRect);
 
             ProjectKeybinds.HandleRowInput(path, rowRect);
 
@@ -179,6 +188,8 @@ namespace DNExtensions.HelpfulEditor.Project
 
             if (!hasAsset) return;
 
+            DrawNavigationHighlight(rowRect, path);
+
             bool isFolder = AssetDatabase.IsValidFolder(path);
 
             int pathDepth = GetPathDepth(path);
@@ -186,25 +197,15 @@ namespace DNExtensions.HelpfulEditor.Project
 
             // Only the folder tree is a real tree. Right-pane rows are laid out by the browsed
             // folder's contents, not by nesting, so guides there would invent levels.
-            if (settings.treeLinesEnabled && isListView && IsTreeRow(rowRect, pathDepth))
-            {
-                // The extra step drops the guide for the Assets root itself: its direct children sit
-                // at the top level and get no line, exactly as the Hierarchy's scene roots do.
-                int depth = Mathf.Max(0, pathDepth - 1);
-                HelpfulEditorGUI.DrawDepthLines(rowRect, depth, rowRect.x - HelpfulEditorGUI.IndentWidth * depth,
-                    settings.treeLineColor, settings.treeLineStyle, HasFoldout(path, isFolder));
-            }
+            bool treeRow = IsTreeRow(rowRect, pathDepth);
+
+            if (settings.treeLinesEnabled && isListView && treeRow) DrawTreeLines(rowRect, path, isFolder, pathDepth, settings);
 
             // Sub-asset rows report their parent's guid, so the path here is the parent file's. The
             // overlay would draw the FBX's name and extension over a mesh or material row.
-            bool subAsset = IsSubAssetRow(guid, rowRect);
+            bool subAsset = IsSubAssetRow(guid, rowRect, newPass);
 
             if (!subAsset) ProjectNameOverlay.Draw(rowRect, path, isListView, isFolder, settings);
-
-            // Tested by indent rather than by the list area rect: that rect and the row rects are not
-            // in the same coordinate space, so only some right-pane rows ever matched it — which is
-            // why turning the object view off left the icons showing.
-            bool treeRow = IsTreeRow(rowRect, pathDepth);
 
             if (settings.folderContentIconsEnabled && isFolder && isListView && !subAsset &&
                 (treeRow || settings.folderContentIconsInObjectView))
@@ -217,6 +218,31 @@ namespace DNExtensions.HelpfulEditor.Project
                 string linkedFolder = LinkedAssets.MatchFolder(path, settings);
                 if (linkedFolder != null) LinkedAssets.Draw(rowRect, linkedFolder, isListView);
             }
+        }
+
+        /// <summary>
+        /// Rows arrive top to bottom, so a row that is not below the previous one starts a new pass.
+        /// Both the sub-asset test and the tree topology are stateful across a pass and need to know
+        /// where one begins.
+        /// </summary>
+        private static bool BeginRow(Rect rowRect, bool needsTopology)
+        {
+            bool newPass = rowRect.y <= _lastRowY;
+            _lastRowY = rowRect.y;
+
+            if (!newPass) return false;
+
+            // Reading the tree means finding the window, so it is skipped entirely when nothing is
+            // going to ask for the answer.
+            if (needsTopology) ProjectTreeTopology.BeginPass();
+
+            // Queued folds are released from here because starting one reaches into the tree's GUI
+            // state, which only exists while the window is drawing. Layout rather than repaint: it
+            // is the phase the tree expects its row set to change in, and the one a click on a
+            // foldout arrow effectively uses.
+            if (Event.current != null && Event.current.type == EventType.Layout) ProjectExpandQueue.Pump();
+
+            return true;
         }
 
         private static bool TrackHover(string path, Rect rowRect, bool inListArea)
@@ -235,17 +261,11 @@ namespace DNExtensions.HelpfulEditor.Project
         /// Unity hands the callback a guid, and every sub-asset of a file reports the file's own
         /// guid — an expanded FBX draws one row per mesh, all claiming to be the FBX. Sub-asset rows
         /// always follow their parent and sit one indent step deeper, which is enough to tell them
-        /// apart without needing to know where a repaint pass begins.
+        /// apart. The pass flag is what stops an expandable asset at the top of the list being
+        /// compared against whatever was drawn last on the previous sweep.
         /// </summary>
-        private static bool IsSubAssetRow(string guid, Rect rowRect)
+        private static bool IsSubAssetRow(string guid, Rect rowRect, bool newPass)
         {
-            // Rows arrive top to bottom, so a row that is not below the previous one starts a new
-            // pass. Without this the first row of a pass is compared against the last row of the one
-            // before, and an expandable asset sitting at the top of the list reads as a sub-asset of
-            // whatever happened to be drawn last.
-            bool newPass = rowRect.y <= _lastRowY;
-            _lastRowY = rowRect.y;
-
             if (!newPass && guid == _lastMainGuid && rowRect.x > _lastMainX) return true;
 
             _lastMainGuid = guid;
@@ -254,24 +274,60 @@ namespace DNExtensions.HelpfulEditor.Project
         }
 
         /// <summary>
-        /// Right-aligned strip showing which asset types the folder holds, most common first.
+        /// Proper tree connectors where the tree's own rows can be read, which is what makes a last
+        /// child terminate its guide instead of running it past the end of the branch. The depth-only
+        /// fallback keeps the guides drawn, just without the terminating elbows.
+        /// </summary>
+        private static void DrawTreeLines(Rect rowRect, string path, bool isFolder, int pathDepth, ProjectModuleSettings settings)
+        {
+            // The extra step drops the guide for the Assets root itself: its direct children sit at
+            // the top level and get no line, exactly as the Hierarchy's scene roots do.
+            int depth = Mathf.Max(0, pathDepth - 1);
+            float leftEdge = rowRect.x - HelpfulEditorGUI.IndentWidth * depth;
+
+            if (ProjectTreeTopology.TryGet(path, out IReadOnlyList<bool> lastOnPath, out bool hasChildren))
+            {
+                HelpfulEditorGUI.DrawTreeConnectors(rowRect, leftEdge, lastOnPath, settings.treeLineColor,
+                    settings.treeLineStyle, hasChildren);
+                return;
+            }
+
+            HelpfulEditorGUI.DrawDepthLines(rowRect, depth, leftEdge, settings.treeLineColor, settings.treeLineStyle,
+                HasFoldout(path, isFolder));
+        }
+
+        /// <summary>Brief flash on the row a back/forward jump landed on, so the move is visible.</summary>
+        private static void DrawNavigationHighlight(Rect rowRect, string path)
+        {
+            if (ProjectNavigationAnimator.HighlightPath != path) return;
+
+            float amount = ProjectNavigationAnimator.HighlightAmount;
+            if (amount <= 0f) return;
+
+            float brightness = EditorGUIUtility.isProSkin ? 0.16f : 0.35f;
+
+            EditorGUI.DrawRect(rowRect, new Color(1f, 1f, 1f, brightness * amount));
+        }
+
+        /// <summary>
+        /// Right-aligned strip showing which asset types the folder holds, most common first. It is
+        /// only allowed the space to the right of the row's own label — aligning it against the row
+        /// alone puts icons on top of long folder names.
         /// </summary>
         private static void DrawFolderContentIcons(Rect rowRect, string path, ProjectModuleSettings settings)
         {
             Texture[] icons = ProjectFolderContents.Get(path, settings.folderContentRecursive);
             if (icons.Length == 0) return;
 
-            float size = settings.folderContentIconSize;
-            int visible = settings.folderContentMaxIcons > 0
-                ? Mathf.Min(icons.Length, settings.folderContentMaxIcons)
-                : icons.Length;
+            float labelEnd = rowRect.x + rowRect.height + LabelIconGap + LabelWidth(path) + LabelPadding;
+            if (labelEnd >= rowRect.xMax) return;
 
-            float width = visible * (size + 1f);
-            if (visible < icons.Length) width += size + 6f;
+            Rect area = Rect.MinMaxRect(labelEnd, rowRect.y, rowRect.xMax, rowRect.yMax);
 
-            Rect area = new Rect(rowRect.xMax - width, rowRect.y, width, rowRect.height);
-            HelpfulEditorGUI.LayoutIconStrip(area, icons.Length, size, settings.folderContentMaxIcons,
-                IconRects, out int shown, out Rect overflowRect);
+            HelpfulEditorGUI.LayoutIconStrip(area, icons.Length, settings.folderContentIconSize,
+                settings.folderContentMaxIcons, IconRects, out int shown, out Rect overflowRect);
+
+            if (shown == 0) return;
 
             Color previous = GUI.color;
             GUI.color = new Color(previous.r, previous.g, previous.b, previous.a * HelpfulEditorGUI.IconStripOpacity);
@@ -288,6 +344,14 @@ namespace DNExtensions.HelpfulEditor.Project
             }
 
             GUI.color = previous;
+        }
+
+        private static float LabelWidth(string path)
+        {
+            int slash = path.LastIndexOf('/');
+            MeasureContent.text = slash >= 0 ? path.Substring(slash + 1) : path;
+
+            return EditorStyles.label.CalcSize(MeasureContent).x;
         }
 
         /// <summary>

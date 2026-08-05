@@ -4,7 +4,6 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Object = UnityEngine.Object;
 
 namespace DNExtensions.HelpfulEditor.Project
 {
@@ -21,7 +20,11 @@ namespace DNExtensions.HelpfulEditor.Project
     internal static class ProjectCreateFolderButton
     {
         private const string ElementName = "helpfuleditor-new-folder";
-        private const double RefreshInterval = 1.0;
+
+        // Fast enough that a newly opened Project window comes up with its button already there.
+        // A poll that finds nothing to do is a query per window and a lookup by name.
+        private const double RefreshInterval = 0.1;
+
         private const string CreateMenuRoot = "Assets/Create";
 
         /// <summary>
@@ -49,6 +52,12 @@ namespace DNExtensions.HelpfulEditor.Project
             EditorApplication.update += Refresh;
         }
 
+        /// <summary>
+        /// Skips the wait before the next poll, for the paths that have just created a window and
+        /// know it needs a button.
+        /// </summary>
+        public static void RequestRefresh() => _lastRefresh = 0.0;
+
         private static void Refresh()
         {
             if (EditorApplication.timeSinceStartup - _lastRefresh < RefreshInterval) return;
@@ -56,24 +65,17 @@ namespace DNExtensions.HelpfulEditor.Project
 
             bool wanted = HelpfulEditorSettings.Project.moduleEnabled && HelpfulEditorSettings.Project.createFolderButtonEnabled;
 
-            Type browserType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ProjectBrowser");
-            if (browserType == null) return;
-
-            foreach (Object candidate in Resources.FindObjectsOfTypeAll(browserType))
+            foreach (EditorWindow window in HelpfulEditorWindows.AllProjectBrowsers())
             {
-                if (candidate is not EditorWindow window || window.rootVisualElement == null) continue;
+                if (!window || window.rootVisualElement == null) continue;
 
                 VisualElement existing = window.rootVisualElement.Q(ElementName);
 
-                if (!wanted)
-                {
-                    existing?.RemoveFromHierarchy();
-                    continue;
-                }
-
-                // The breadcrumb only exists in the two-column layout; in one column the top strip
-                // is the search bar and a button there would sit on top of Unity's own controls.
-                if (!HelpfulEditorTreeReflection.IsProjectTwoColumnLayout())
+                // The breadcrumb only exists in the two-column layout; in one column the top strip is
+                // the search bar and a button there would sit on top of Unity's own controls. Asked
+                // of this window rather than of the Project window in general — two of them can be in
+                // different layouts, and the old global check answered for whichever was found first.
+                if (!wanted || !HelpfulEditorTreeReflection.IsTwoColumnLayout(window))
                 {
                     existing?.RemoveFromHierarchy();
                     continue;

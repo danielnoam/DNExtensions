@@ -19,6 +19,9 @@ namespace DNExtensions.HelpfulEditor
         private const BindingFlags AnyInstance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
         private static bool _warned;
+        private static bool _foldAnimationWarned;
+        private static bool _foldAnimationResolved;
+        private static bool _foldAnimationAvailable;
 
         /// <summary>
         /// Works on any hierarchy row id, not just GameObjects — scene headers are rows in the same
@@ -141,14 +144,18 @@ namespace DNExtensions.HelpfulEditor
             return false;
         }
 
-        public static bool IsProjectTwoColumnLayout()
+        /// <summary>
+        /// Whether this particular window is in the two-column layout. The window has to be named:
+        /// two Project windows can be in different layouts, and answering for whichever one happened
+        /// to be found first gets the other one wrong.
+        /// </summary>
+        public static bool IsTwoColumnLayout(EditorWindow window)
         {
+            if (!window) return false;
+
             try
             {
-                Type browserType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ProjectBrowser");
-                EditorWindow window = FindWindow(browserType);
-
-                return window && IsTwoColumnLayout(browserType, window);
+                return IsTwoColumnLayout(window.GetType(), window);
             }
             catch (Exception e)
             {
@@ -156,6 +163,7 @@ namespace DNExtensions.HelpfulEditor
                 return false;
             }
         }
+
 
         /// <summary>
         /// Decided by which tree the window built rather than by reading m_ViewMode: the enum member
@@ -380,36 +388,124 @@ namespace DNExtensions.HelpfulEditor
             return InvokeWithId(data, "IsExpanded", rawId) is bool expanded && expanded;
         }
 
+        /// <summary>
+        /// Plays a single fold with the tree's own slide animation.
+        ///
+        /// ChangeFoldingForSingleItem is preferred over UserInputChangedExpandedState, which is the
+        /// call a click on the arrow makes. That one reads Event.current to see whether Alt is held,
+        /// so it throws outright when a queued fold is released from the update loop where there is
+        /// no event — and on the occasions it did have one, holding Alt for something unrelated
+        /// would silently turn a queued fold into an expand-the-whole-subtree.
+        /// </summary>
         private static bool TryAnimatedExpand(object treeView, object data, object rawId, bool expanded)
         {
             if (treeView == null) return false;
 
+            // Once the animated path has failed there is no point paying for the exception again on
+            // every remaining fold; the instant path still applies them.
+            if (_foldAnimationResolved && !_foldAnimationAvailable) return false;
+
             try
             {
+                if (TryChangeFolding(treeView, rawId, expanded)) return true;
+
+                // Only reached on a version without that call, and only usable mid-event.
+                if (Event.current == null) return false;
+
                 object item = InvokeWithId(data, "FindItem", rawId);
                 if (item == null) return false;
 
                 if (!(InvokeWithId(data, "GetRow", rawId) is int row) || row < 0) return false;
 
-                foreach (MethodInfo method in treeView.GetType().GetMethods(AnyInstance))
-                {
-                    if (method.Name != "UserInputChangedExpandedState") continue;
+                MethodInfo method = FindUserInputChangedExpandedState(treeView.GetType(), item);
+                if (method == null) return false;
 
-                    ParameterInfo[] parameters = method.GetParameters();
-                    if (parameters.Length != 3) continue;
-                    if (!parameters[0].ParameterType.IsInstanceOfType(item)) continue;
-                    if (parameters[1].ParameterType != typeof(int) || parameters[2].ParameterType != typeof(bool)) continue;
-
-                    method.Invoke(treeView, new[] { item, (object)row, expanded });
-                    return true;
-                }
+                method.Invoke(treeView, new[] { item, (object)row, expanded });
+                return true;
             }
             catch (Exception e)
             {
-                WarnOnce(e);
+                _foldAnimationResolved = true;
+                _foldAnimationAvailable = false;
+
+                WarnFoldAnimation(e);
             }
 
             return false;
+        }
+
+        private static bool TryChangeFolding(object treeView, object rawId, bool expanded)
+        {
+            MethodInfo method = FindChangeFolding(treeView.GetType());
+            if (method == null) return false;
+
+            object id = ConvertId(rawId, method.GetParameters()[0].ParameterType);
+            if (id == null) return false;
+
+            method.Invoke(treeView, new[] { id, (object)expanded });
+            return true;
+        }
+
+        private static MethodInfo FindChangeFolding(Type treeViewType)
+        {
+            foreach (MethodInfo method in treeViewType.GetMethods(AnyInstance))
+            {
+                if (method.Name != "ChangeFoldingForSingleItem") continue;
+
+                ParameterInfo[] parameters = method.GetParameters();
+                if (parameters.Length != 2 || parameters[1].ParameterType != typeof(bool)) continue;
+
+                return method;
+            }
+
+            return null;
+        }
+
+        /// <param name="item">
+        /// The row the call is for, so the overload is matched against the tree's own item type.
+        /// Null probes for the method's existence without one to hand.
+        /// </param>
+        private static MethodInfo FindUserInputChangedExpandedState(Type treeViewType, object item)
+        {
+            foreach (MethodInfo method in treeViewType.GetMethods(AnyInstance))
+            {
+                if (method.Name != "UserInputChangedExpandedState") continue;
+
+                ParameterInfo[] parameters = method.GetParameters();
+                if (parameters.Length != 3) continue;
+                if (item != null && !parameters[0].ParameterType.IsInstanceOfType(item)) continue;
+                if (parameters[1].ParameterType != typeof(int) || parameters[2].ParameterType != typeof(bool)) continue;
+
+                return method;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Whether folds can be played rather than applied instantly. Resolved from a live tree, so
+        /// the answer is deferred rather than cached negative while no Project window is open.
+        /// </summary>
+        public static bool CanAnimateProjectFolds()
+        {
+            if (_foldAnimationResolved) return _foldAnimationAvailable;
+
+            object treeView = GetActiveProjectTreeView();
+            if (treeView == null) return false;
+
+            _foldAnimationResolved = true;
+            _foldAnimationAvailable = GetMemberValue(treeView, "m_ExpansionAnimator") != null
+                                      && (FindChangeFolding(treeView.GetType()) != null
+                                          || FindUserInputChangedExpandedState(treeView.GetType(), null) != null);
+
+            return _foldAnimationAvailable;
+        }
+
+        /// <summary>Whether the tree is running its own scroll-to-row animation, which ours must not fight.</summary>
+        public static bool IsProjectTreeFraming()
+        {
+            object framing = GetMemberValue(GetActiveProjectTreeView(), "m_FramingAnimFloat");
+            return GetMemberValue(framing, "isAnimating") is bool animating && animating;
         }
 
         private static object GetHierarchyTreeView()
@@ -430,6 +526,128 @@ namespace DNExtensions.HelpfulEditor
             {
                 WarnOnce(e);
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// The tree the Project window is actually showing rows in: the folder tree in the
+        /// two-column layout, the asset tree in one column. Both fields can outlive a layout switch,
+        /// and acting on the one that is no longer on screen silently does nothing.
+        /// </summary>
+        private static object GetActiveProjectTreeView()
+        {
+            try
+            {
+                Type browserType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ProjectBrowser");
+                EditorWindow window = FindWindow(browserType);
+                if (!window) return null;
+
+                string fieldName = IsTwoColumnLayout(browserType, window) ? "m_FolderTree" : "m_AssetTree";
+                return browserType.GetField(fieldName, AnyInstance)?.GetValue(window);
+            }
+            catch (Exception e)
+            {
+                WarnOnce(e);
+                return null;
+            }
+        }
+
+        /// <summary>Every row the active tree is currently showing, top to bottom. Null when unavailable.</summary>
+        public static IList GetProjectRows()
+        {
+            object data = DataOf(GetActiveProjectTreeView());
+            if (data == null) return null;
+
+            try
+            {
+                MethodInfo getRows = data.GetType().GetMethod("GetRows", AnyInstance, null, Type.EmptyTypes, null);
+                return getRows?.Invoke(data, null) as IList;
+            }
+            catch (Exception e)
+            {
+                WarnOnce(e);
+                return null;
+            }
+        }
+
+        public static object GetItemId(object item) => GetMemberValue(item, "id");
+
+        public static object GetItemParent(object item) => GetMemberValue(item, "parent");
+
+        public static IList GetItemChildren(object item) => GetMemberValue(item, "children") as IList;
+
+        /// <summary>
+        /// Whether the tree is mid-fold. Only one row can animate at a time, so a queued fold has to
+        /// wait for this to go quiet or it replaces the one already running and the rest snap.
+        /// </summary>
+        public static bool IsProjectTreeAnimating()
+        {
+            object animator = GetMemberValue(GetActiveProjectTreeView(), "m_ExpansionAnimator");
+            return GetMemberValue(animator, "isAnimating") is bool animating && animating;
+        }
+
+        public static object[] GetProjectExpandedIds()
+        {
+            return GetExpandedIds(DataOf(GetActiveProjectTreeView()));
+        }
+
+        public static int GetProjectRowIndex(object rawId)
+        {
+            return InvokeWithId(DataOf(GetActiveProjectTreeView()), "GetRow", rawId) is int row ? row : -1;
+        }
+
+        /// <summary>Folds a single row with the tree's own slide animation, falling back to an instant change.</summary>
+        public static bool SetProjectExpandedAnimated(object rawId, bool expanded)
+        {
+            object treeView = GetActiveProjectTreeView();
+            object data = DataOf(treeView);
+            if (data == null || rawId == null) return false;
+
+            object item = InvokeWithId(data, "FindItem", rawId);
+            if (item == null || !HasChildren(item)) return false;
+            if (IsExpandedOn(data, rawId) == expanded) return false;
+
+            if (!TryAnimatedExpand(treeView, data, rawId, expanded)) InvokeWithId(data, "SetExpanded", rawId, expanded);
+
+            return true;
+        }
+
+        public static void SetProjectExpandedImmediate(object rawId, bool expanded)
+        {
+            object data = DataOf(GetActiveProjectTreeView());
+            if (data == null || rawId == null) return;
+
+            InvokeWithId(data, "SetExpanded", rawId, expanded);
+        }
+
+        public static bool TryGetProjectScroll(out float scroll)
+        {
+            scroll = 0f;
+
+            object state = GetMemberValue(GetActiveProjectTreeView(), "state");
+            if (GetMemberValue(state, "scrollPos") is not Vector2 position) return false;
+
+            scroll = position.y;
+            return true;
+        }
+
+        public static bool SetProjectScroll(float scroll)
+        {
+            object state = GetMemberValue(GetActiveProjectTreeView(), "state");
+            if (state == null) return false;
+
+            try
+            {
+                FieldInfo field = state.GetType().GetField("scrollPos", AnyInstance);
+                if (field == null || field.FieldType != typeof(Vector2)) return false;
+
+                field.SetValue(state, new Vector2(0f, scroll));
+                return true;
+            }
+            catch (Exception e)
+            {
+                WarnOnce(e);
+                return false;
             }
         }
 
@@ -583,7 +801,36 @@ namespace DNExtensions.HelpfulEditor
             if (_warned) return;
 
             _warned = true;
-            Debug.LogWarning($"[HelpfulEditor] Tree expand/collapse is unavailable on this Unity version — those actions will do nothing. ({e.Message})");
+            Debug.LogWarning($"[HelpfulEditor] Tree expand/collapse is unavailable on this Unity version — those actions will do nothing. ({Describe(e)})");
+        }
+
+        /// <summary>
+        /// Losing the animation is not losing the action, so it says so rather than reusing the
+        /// warning for a tree that cannot be folded at all.
+        /// </summary>
+        private static void WarnFoldAnimation(Exception e)
+        {
+            if (_foldAnimationWarned) return;
+
+            _foldAnimationWarned = true;
+            Debug.LogWarning($"[HelpfulEditor] Project folds will apply instantly rather than animating on this Unity version. ({Describe(e)})");
+        }
+
+        /// <summary>
+        /// A reflected call reports every failure as the same invocation wrapper, whose message says
+        /// nothing about what actually went wrong.
+        /// </summary>
+        private static string Describe(Exception e)
+        {
+            Exception cause = e is TargetInvocationException && e.InnerException != null ? e.InnerException : e;
+
+            // The top frame names the internal method that actually failed, which is the only part
+            // that says anything useful about an editor-version mismatch.
+            string frame = cause.StackTrace?.Split('\n')[0].Trim();
+
+            return string.IsNullOrEmpty(frame)
+                ? $"{cause.GetType().Name}: {cause.Message}"
+                : $"{cause.GetType().Name}: {cause.Message} — at {frame}";
         }
     }
 }
