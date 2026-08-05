@@ -1,25 +1,29 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace DNExtensions.HelpfulEditor.Hierarchy
 {
     /// <summary>
     /// Right-aligned strip of component icons on each Hierarchy row. Alt+Click opens the shared
-    /// quick-edit popup for that component; dragging an icon feeds the same component drag and drop
-    /// system the Inspector module owns (see DNExtensions.HelpfulEditor.Inspector.ComponentDragger).
+    /// quick-edit popup for that component, and the strip brightens while Alt is held so that is
+    /// discoverable rather than something you have to be told about.
+    ///
+    /// Icons here are deliberately not draggable: moving and copying components is an Inspector
+    /// gesture (see DNExtensions.HelpfulEditor.Inspector.ComponentDragger), and a row that starts a
+    /// component drag competes with the Hierarchy's own reparenting drag.
     /// </summary>
     internal static class HierarchyComponentStrip
     {
-        private const float Spacing = 1f;
-        private const float OverflowPadding = 6f;
+        /// <summary>Gap kept between the end of the row's name and the first icon.</summary>
+        private const float LabelPadding = 6f;
 
         private const double PendingTimeout = 1.0;
 
         private static readonly List<Component> Buffer = new List<Component>();
         private static readonly List<Rect> IconRects = new List<Rect>();
         private static readonly GUIContent OverflowContent = new GUIContent();
+        private static readonly GUIContent MeasureContent = new GUIContent();
 
         private static Component _pendingQuickEdit;
         private static Vector2 _pendingScreenPosition;
@@ -57,8 +61,11 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
         /// <summary>
         /// Draws the strip right-aligned inside the row and returns the width it consumed, so the
-        /// caller can place things to its left. Returning the width avoids a second pass over the
-        /// component list purely to measure it.
+        /// caller can place things to its left.
+        ///
+        /// The strip gives way to the row's own name: it is only allowed the space to the right of
+        /// the label, and drops icons rather than covering it. The width returned is therefore what
+        /// was actually drawn, not what was wanted.
         /// </summary>
         public static float Draw(Rect rowRect, GameObject gameObject, HierarchySettings settings)
         {
@@ -66,21 +73,23 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             HelpfulEditorGUI.GetDisplayComponents(gameObject, settings.excludedComponentTypes, components);
             if (components.Count == 0) return 0f;
 
-            int visible = settings.componentStripMaxIcons > 0
-                ? Mathf.Min(components.Count, settings.componentStripMaxIcons)
-                : components.Count;
+            float labelEnd = rowRect.x + HierarchyModule.IconWidth + LabelWidth(gameObject.name) + LabelPadding;
+            if (labelEnd >= rowRect.xMax) return 0f;
 
-            float width = visible * (settings.componentIconSize + Spacing);
-            if (visible < components.Count) width += settings.componentIconSize + OverflowPadding;
-
-            Rect area = new Rect(rowRect.xMax - width, rowRect.y, width, rowRect.height);
+            Rect area = Rect.MinMaxRect(labelEnd, rowRect.y, rowRect.xMax, rowRect.yMax);
 
             HelpfulEditorGUI.LayoutIconStrip(area, components.Count, settings.componentIconSize,
                 settings.componentStripMaxIcons, IconRects, out int shown, out Rect overflowRect);
 
+            if (shown == 0) return 0f;
+
+            // Full strength while Alt is held: the strip sits back from the row by default, and
+            // lifting it is what says these icons are about to become buttons.
+            bool armed = settings.componentQuickEditEnabled && Event.current != null && Event.current.alt;
+            float opacity = armed ? 1f : HelpfulEditorGUI.IconStripOpacity;
+
             Color previousColor = GUI.color;
-            GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b,
-                previousColor.a * HelpfulEditorGUI.IconStripOpacity);
+            GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, previousColor.a * opacity);
 
             for (int i = 0; i < shown; i++)
             {
@@ -107,7 +116,15 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
             GUI.color = previousColor;
 
-            return width;
+            // Measured from the leftmost icon that survived rather than from the intended width, so
+            // the child count badge sits against the strip that is really there.
+            return area.xMax - IconRects[0].x;
+        }
+
+        private static float LabelWidth(string name)
+        {
+            MeasureContent.text = name;
+            return EditorStyles.label.CalcSize(MeasureContent).x;
         }
 
         /// <summary>
@@ -137,13 +154,11 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                 return;
             }
 
-            if (evt.type == EventType.MouseDrag && evt.button == 0 && component is not Transform)
-            {
-                DragAndDrop.PrepareStartDrag();
-                DragAndDrop.objectReferences = new Object[] { component };
-                DragAndDrop.StartDrag(component.GetType().Name);
-                evt.Use();
-            }
+            // Unity starts its own drag from anywhere on the row, so removing the component drag
+            // just handed the icons over to the GameObject drag instead. The strip is a control
+            // surface rather than a grab handle: swallowing the drag keeps a slipped cursor from
+            // picking the object up while aiming at an icon.
+            if (evt.type == EventType.MouseDrag && evt.button == 0) evt.Use();
         }
 
         /// <summary>
@@ -160,8 +175,17 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             if (!settings.componentQuickEditEnabled) return;
 
             Event evt = Event.current;
-            if (evt == null || evt.type != EventType.MouseDown || evt.button != 0) return;
-            if (!overflowRect.Contains(evt.mousePosition) || !CanClaimClick(evt)) return;
+            if (evt == null || evt.button != 0) return;
+            if (!overflowRect.Contains(evt.mousePosition)) return;
+
+            // Same as the icons: the badge is part of the strip, not somewhere to grab the row.
+            if (evt.type == EventType.MouseDrag)
+            {
+                evt.Use();
+                return;
+            }
+
+            if (evt.type != EventType.MouseDown || !CanClaimClick(evt)) return;
 
             Vector2 screenPosition = HelpfulEditorQuickEditWindow.MouseScreenPosition();
             GenericMenu menu = new GenericMenu();

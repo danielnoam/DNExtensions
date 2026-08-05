@@ -12,7 +12,8 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
     [InitializeOnLoad]
     internal static class HierarchyModule
     {
-        private const float IconWidth = 18f;
+        /// <summary>Width of the row's own object icon, which is where its label starts.</summary>
+        internal const float IconWidth = 18f;
         private const float BadgeWidth = 26f;
         private const float IconBadgeSize = 11f;
 
@@ -22,6 +23,8 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         private static readonly GUIContent BadgeContent = new GUIContent();
         private static readonly GUIContent MeasureContent = new GUIContent();
         private static readonly string[] CachedCounts = BuildCountLabels();
+
+        private static float _lastRowY;
 
         public static GameObject HoveredObject { get; private set; }
 
@@ -67,6 +70,8 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         {
             HierarchySettings settings = HelpfulEditorSettings.Hierarchy;
             if (!settings.moduleEnabled) return;
+
+            BeginRow(rowRect);
 
             HierarchyComponentStrip.ProcessPendingQuickEdit();
 
@@ -134,6 +139,23 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             // underneath the glyph.
             HelpfulEditorGUI.DrawTreeConnectors(rowRect, rowRect.x - HelpfulEditorGUI.IndentWidth * depth,
                 LastOnPathBuffer, color, settings.treeDepthLineStyle, transform.childCount > 0);
+        }
+
+        /// <summary>
+        /// Rows arrive top to bottom, so a row that is not below the previous one starts a new pass.
+        /// Queued folds are released here because starting one reaches into the tree's GUI state,
+        /// which only exists while the window is drawing — and on layout rather than repaint, since
+        /// that is the phase the tree expects its row set to change in.
+        /// </summary>
+        private static void BeginRow(Rect rowRect)
+        {
+            bool newPass = rowRect.y <= _lastRowY;
+            _lastRowY = rowRect.y;
+
+            if (!newPass) return;
+            if (Event.current == null || Event.current.type != EventType.Layout) return;
+
+            HierarchyExpandQueue.Pump();
         }
 
         private static bool IsLastSibling(Transform transform)

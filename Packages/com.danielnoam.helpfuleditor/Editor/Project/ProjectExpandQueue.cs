@@ -6,85 +6,48 @@ using Object = UnityEngine.Object;
 namespace DNExtensions.HelpfulEditor.Project
 {
     /// <summary>
-    /// Plays multi-row folds one at a time so collapsing everything, or isolating a folder, slides
-    /// shut rather than snapping. The tree can only animate one row at a time — starting a second
-    /// fold replaces the one already running — so the folds are queued and released as the tree goes
-    /// idle.
-    ///
-    /// Rows that are only hidden as a side effect of an ancestor closing are collapsed afterwards
-    /// without animation, since animating something already out of sight costs a frame each and
-    /// shows nothing.
+    /// Decides which Project rows to fold for Collapse Everything and Isolate, and hands the sequence
+    /// to the shared queue to play. Ancestry here is asset paths, which is the only part of this that
+    /// differs from the Hierarchy's equivalent.
     /// </summary>
-    [InitializeOnLoad]
     internal static class ProjectExpandQueue
     {
-        private struct Entry
-        {
-            public object id;
-            public string path;
-            public bool expand;
-        }
+        private static readonly HelpfulEditorFoldQueue Queue = new HelpfulEditorFoldQueue(TreeKind.Project);
 
-        /// <summary>
-        /// How long the queue waits for the window to draw before giving up and applying the rest
-        /// instantly. Nothing should ever reach this — it exists so a window that stops drawing
-        /// leaves folds applied and the queue empty, rather than pending forever behind a repaint
-        /// request that is itself asking the window to draw.
-        /// </summary>
-        private const double StallSeconds = 0.5;
+        private static bool AnimationEnabled => HelpfulEditorSettings.Project.animatedFoldsEnabled && Queue.CanAnimate;
 
-        private static readonly List<Entry> Animated = new List<Entry>();
-        private static readonly List<object> Deferred = new List<object>();
-
-        private static double _lastProgressTime;
-
-        static ProjectExpandQueue()
-        {
-            EditorApplication.update -= OnUpdate;
-            EditorApplication.update += OnUpdate;
-        }
-
-        private static bool Pending => Animated.Count > 0 || Deferred.Count > 0;
-
-        private static bool AnimationEnabled =>
-            HelpfulEditorSettings.Project.animatedFoldsEnabled && HelpfulEditorTreeReflection.CanAnimateProjectFolds();
-
-        public static void Cancel()
-        {
-            Animated.Clear();
-            Deferred.Clear();
-        }
+        public static void Pump() => Queue.Pump();
 
         /// <summary>
         /// Collapses every asset folder, leaving the tree roots and any structural rows open. Nested
-        /// folders lose their expanded state too, so re-opening a root does not unfold the whole
-        /// tree again — this is "collapse everything", not "hide everything".
+        /// folders lose their expanded state too, so re-opening a root does not unfold the whole tree
+        /// again — this is "collapse everything", not "hide everything".
         /// </summary>
         public static void CollapseAll()
         {
-            if (!AnimationEnabled)
-            {
-                HelpfulEditorTreeReflection.CollapseAllProjectFolders();
-                return;
-            }
+            List<HelpfulEditorFoldQueue.Fold> folds = new List<HelpfulEditorFoldQueue.Fold>();
+            List<object> deferred = new List<object>();
 
-            Cancel();
-
-            foreach (object id in HelpfulEditorTreeReflection.GetProjectExpandedIds())
+            foreach (object id in HelpfulEditorTreeReflection.GetExpandedIds(TreeKind.Project))
             {
                 string path = CollapsablePathOf(id);
                 if (path == null) continue;
 
                 // A folder directly under a root closes everything beneath it in one fold, so it is
                 // the only one worth animating on that branch.
-                if (IsTopLevel(path)) Animated.Add(new Entry { id = id, path = path, expand = false });
-                else Deferred.Add(id);
+                if (IsTopLevel(path)) folds.Add(new HelpfulEditorFoldQueue.Fold(id, false));
+                else deferred.Add(id);
             }
 
-            SortByRow(Animated);
+            if (!AnimationEnabled)
+            {
+                Queue.ApplyInstantly(folds, deferred);
+                return;
+            }
+
+            Queue.Begin(folds, deferred);
 
             ProjectNavigationAnimator.ScrollTo(0f);
-            Begin();
         }
 
         /// <summary>
@@ -99,130 +62,40 @@ namespace DNExtensions.HelpfulEditor.Project
             object targetId = RawIdOf(assetPath);
             if (targetId == null) return;
 
-            Cancel();
-
-            List<Entry> folds = new List<Entry>();
+            List<HelpfulEditorFoldQueue.Fold> folds = new List<HelpfulEditorFoldQueue.Fold>();
             List<string> closing = new List<string>();
+            List<string> foldPaths = new List<string>();
 
-            foreach (object id in HelpfulEditorTreeReflection.GetProjectExpandedIds())
+            foreach (object id in HelpfulEditorTreeReflection.GetExpandedIds(TreeKind.Project))
             {
                 string path = CollapsablePathOf(id);
                 if (path == null) continue;
                 if (IsAncestorOrSelf(path, assetPath)) continue;
 
                 closing.Add(path);
-                folds.Add(new Entry { id = id, path = path, expand = false });
+                folds.Add(new HelpfulEditorFoldQueue.Fold(id, false));
+                foldPaths.Add(path);
             }
 
-            // Closing an ancestor already hides what is inside it, so only the outermost fold of
-            // each branch is worth playing.
-            folds.RemoveAll(fold => HasClosingAncestor(fold.path, closing));
+            // Closing an ancestor already hides what is inside it, so only the outermost fold of each
+            // branch is worth playing.
+            for (int i = folds.Count - 1; i >= 0; i--)
+            {
+                if (!HasClosingAncestor(foldPaths[i], closing)) continue;
 
-            folds.Add(new Entry { id = targetId, path = assetPath, expand = true });
+                folds.RemoveAt(i);
+                foldPaths.RemoveAt(i);
+            }
+
+            folds.Add(new HelpfulEditorFoldQueue.Fold(targetId, true));
 
             if (!AnimationEnabled)
             {
-                foreach (Entry fold in folds)
-                {
-                    HelpfulEditorTreeReflection.SetProjectExpandedImmediate(fold.id, fold.expand);
-                }
-
-                EditorApplication.RepaintProjectWindow();
+                Queue.ApplyInstantly(folds);
                 return;
             }
 
-            SortByRow(folds);
-            Animated.AddRange(folds);
-
-            Begin();
-        }
-
-        /// <summary>Starts the clock the stall guard measures against, and asks for the first frame.</summary>
-        private static void Begin()
-        {
-            _lastProgressTime = EditorApplication.timeSinceStartup;
-
-            EditorApplication.RepaintProjectWindow();
-        }
-
-        /// <summary>
-        /// Releases the next fold. Driven from the Project window's own row callback rather than
-        /// from the update loop, because starting a fold reaches into the tree's GUI state and the
-        /// editor only has that while the window is drawing — called outside it, the tree throws
-        /// rather than animating.
-        /// </summary>
-        public static void Pump()
-        {
-            if (!Pending) return;
-
-            _lastProgressTime = EditorApplication.timeSinceStartup;
-
-            // Releasing the next fold while one is still playing replaces it mid-slide, which is
-            // exactly the snap the queue exists to avoid.
-            if (HelpfulEditorTreeReflection.IsProjectTreeAnimating()) return;
-
-            if (Animated.Count > 0)
-            {
-                Entry next = Animated[0];
-                Animated.RemoveAt(0);
-
-                HelpfulEditorTreeReflection.SetProjectExpandedAnimated(next.id, next.expand);
-            }
-            else
-            {
-                foreach (object id in Deferred)
-                {
-                    HelpfulEditorTreeReflection.SetProjectExpandedImmediate(id, false);
-                }
-
-                Deferred.Clear();
-            }
-
-            EditorApplication.RepaintProjectWindow();
-        }
-
-        /// <summary>
-        /// Drives the frames the folds play in. The window has no reason of its own to redraw
-        /// between them, and the pump only runs while it is drawing, so without this the queue
-        /// stops after its first fold.
-        /// </summary>
-        private static void OnUpdate()
-        {
-            if (!Pending) return;
-
-            if (EditorApplication.timeSinceStartup - _lastProgressTime > StallSeconds)
-            {
-                DrainInstantly();
-                return;
-            }
-
-            EditorApplication.RepaintProjectWindow();
-        }
-
-        private static void DrainInstantly()
-        {
-            foreach (Entry fold in Animated)
-            {
-                HelpfulEditorTreeReflection.SetProjectExpandedImmediate(fold.id, fold.expand);
-            }
-
-            foreach (object id in Deferred)
-            {
-                HelpfulEditorTreeReflection.SetProjectExpandedImmediate(id, false);
-            }
-
-            Cancel();
-
-            EditorApplication.RepaintProjectWindow();
-        }
-
-        private static void SortByRow(List<Entry> entries)
-        {
-            // Top to bottom, so a sweep of folds reads as one motion down the window rather than
-            // jumping about in whatever order the expanded set happened to be stored in.
-            entries.Sort((left, right) =>
-                HelpfulEditorTreeReflection.GetProjectRowIndex(left.id)
-                    .CompareTo(HelpfulEditorTreeReflection.GetProjectRowIndex(right.id)));
+            Queue.Begin(folds);
         }
 
         /// <summary>

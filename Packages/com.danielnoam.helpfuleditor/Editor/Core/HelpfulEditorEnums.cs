@@ -20,4 +20,11 @@ namespace DNExtensions.HelpfulEditor
         KeepBoth
     }
 
+    /// <summary>Which of the editor's two IMGUI trees an operation targets.</summary>
+    internal enum TreeKind
+    {
+        Project,
+        Hierarchy
+    }
+
 }

@@ -445,7 +445,11 @@ namespace DNExtensions.HelpfulEditor.Inspector
                     enterChildren = false;
 
                     if (property.propertyPath == "m_Script") continue;
-                    if (property.displayName.IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0) continue;
+
+                    // Matched as a subsequence rather than a substring, so initials work: "mvspd"
+                    // finds "Move Speed". Fields keep their declared order — a search that also
+                    // reordered them would move the thing you were aiming at as you typed.
+                    if (!HelpfulEditorFuzzySearch.TryMatch(property.displayName, search, out float _)) continue;
 
                     if (!drewHeader)
                     {

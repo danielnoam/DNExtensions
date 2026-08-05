@@ -30,7 +30,14 @@ namespace DNExtensions.HelpfulEditor
         public BadgePosition childCountPosition = BadgePosition.RightAligned;
         public bool childCountHideWhenOneOrZero;
 
+        /// <summary>Plays multi-row folds as motion instead of applying them instantly.</summary>
+        public bool animatedFoldsEnabled = true;
+
         public KeyBind toggleActiveKey = KeyBind.Of(KeyCode.A);
+
+        /// <summary>Frames the hovered object in the Scene View, without needing it selected or that window focused.</summary>
+        public KeyBind focusKey = KeyBind.Of(KeyCode.F);
+
         public KeyBind expandCollapseKey = KeyBind.Of(KeyCode.E);
         public KeyBind expandCollapseRecursiveKey = KeyBind.Of(KeyCode.E, shift: true);
         public KeyBind collapseAllKey = KeyBind.Of(KeyCode.E, ctrl: true, shift: true);

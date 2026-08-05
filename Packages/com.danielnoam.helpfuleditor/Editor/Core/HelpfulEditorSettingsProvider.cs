@@ -200,10 +200,18 @@ namespace DNExtensions.HelpfulEditor
                     settings.childCountHideWhenOneOrZero = EditorGUILayout.Toggle("Hide When ≤ 1", settings.childCountHideWhenOneOrZero);
                 }
 
+                if (Section(Hierarchy, "Folding"))
+                {
+                    settings.animatedFoldsEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Animate", "Play Collapse Everything and Isolate one fold at a time instead of applying them instantly."),
+                        settings.animatedFoldsEnabled);
+                }
+
                 if (Section(Hierarchy, "Keybinds"))
                 {
                     EditorGUILayout.LabelField("Set a key to None to disable that action.", EditorStyles.miniLabel);
                     settings.toggleActiveKey = DrawKeyBind("Toggle Active", settings.toggleActiveKey);
+                    settings.focusKey = DrawKeyBind("Focus In Scene View", settings.focusKey);
                     settings.expandCollapseKey = DrawKeyBind("Expand / Collapse", settings.expandCollapseKey);
                     settings.expandCollapseRecursiveKey = DrawKeyBind("Expand / Collapse All", settings.expandCollapseRecursiveKey);
                     settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);

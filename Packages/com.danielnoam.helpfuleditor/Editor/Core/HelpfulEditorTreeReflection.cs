@@ -486,11 +486,16 @@ namespace DNExtensions.HelpfulEditor
         /// Whether folds can be played rather than applied instantly. Resolved from a live tree, so
         /// the answer is deferred rather than cached negative while no Project window is open.
         /// </summary>
-        public static bool CanAnimateProjectFolds()
+        /// <param name="kind">
+        /// Only used to find a live tree to probe. The answer is shared between the two: both are the
+        /// same TreeViewController type, so what one supports the other does, and a failure in one
+        /// predicts the other.
+        /// </param>
+        public static bool CanAnimateFolds(TreeKind kind)
         {
             if (_foldAnimationResolved) return _foldAnimationAvailable;
 
-            object treeView = GetActiveProjectTreeView();
+            object treeView = TreeViewOf(kind);
             if (treeView == null) return false;
 
             _foldAnimationResolved = true;
@@ -576,30 +581,93 @@ namespace DNExtensions.HelpfulEditor
 
         public static IList GetItemChildren(object item) => GetMemberValue(item, "children") as IList;
 
+        private static object TreeViewOf(TreeKind kind)
+        {
+            return kind == TreeKind.Project ? GetActiveProjectTreeView() : GetHierarchyTreeView();
+        }
+
         /// <summary>
         /// Whether the tree is mid-fold. Only one row can animate at a time, so a queued fold has to
         /// wait for this to go quiet or it replaces the one already running and the rest snap.
         /// </summary>
-        public static bool IsProjectTreeAnimating()
+        public static bool IsTreeAnimating(TreeKind kind)
         {
-            object animator = GetMemberValue(GetActiveProjectTreeView(), "m_ExpansionAnimator");
+            object animator = GetMemberValue(TreeViewOf(kind), "m_ExpansionAnimator");
             return GetMemberValue(animator, "isAnimating") is bool animating && animating;
         }
 
-        public static object[] GetProjectExpandedIds()
+        public static object[] GetExpandedIds(TreeKind kind)
         {
-            return GetExpandedIds(DataOf(GetActiveProjectTreeView()));
+            return GetExpandedIds(DataOf(TreeViewOf(kind)));
         }
 
-        public static int GetProjectRowIndex(object rawId)
+        public static int GetRowIndex(TreeKind kind, object rawId)
         {
-            return InvokeWithId(DataOf(GetActiveProjectTreeView()), "GetRow", rawId) is int row ? row : -1;
+            return InvokeWithId(DataOf(TreeViewOf(kind)), "GetRow", rawId) is int row ? row : -1;
+        }
+
+        /// <summary>
+        /// Whether the tree's row lookup currently disagrees with its own row list — GetRow reports
+        /// an index whose row is a different item. It happens while collapsing long trees, and acting
+        /// on the answer folds the wrong row. The cure is to let the tree rebuild and ask again.
+        /// </summary>
+        public static bool IsRowStale(TreeKind kind, object rawId)
+        {
+            try
+            {
+                object treeView = TreeViewOf(kind);
+                object data = DataOf(treeView);
+                if (data == null || rawId == null) return false;
+
+                MethodInfo getRows = data.GetType().GetMethod("GetRows", AnyInstance, null, Type.EmptyTypes, null);
+                if (getRows?.Invoke(data, null) is not IList rows) return false;
+
+                if (InvokeWithId(data, "GetRow", rawId) is not int row) return false;
+                if (row < 0 || row >= rows.Count) return false;
+
+                object rowId = GetMemberValue(rows[row], "id");
+                if (rowId == null) return false;
+
+                object wanted = ConvertId(rawId, rowId.GetType());
+
+                return wanted != null && !wanted.Equals(rowId);
+            }
+            catch (Exception e)
+            {
+                WarnOnce(e);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Pokes the window with an event that does nothing, which is enough to make it rebuild its
+        /// rows. Used to shake a tree out of the stale-row state above.
+        /// </summary>
+        public static void NudgeTree(TreeKind kind)
+        {
+            try
+            {
+                string typeName = kind == TreeKind.Project ? "UnityEditor.ProjectBrowser" : "UnityEditor.SceneHierarchyWindow";
+
+                FindWindow(typeof(EditorWindow).Assembly.GetType(typeName))
+                    ?.SendEvent(new Event { type = EventType.KeyDown, keyCode = KeyCode.None });
+            }
+            catch (Exception e)
+            {
+                WarnOnce(e);
+            }
+        }
+
+        public static void RepaintTree(TreeKind kind)
+        {
+            if (kind == TreeKind.Project) EditorApplication.RepaintProjectWindow();
+            else EditorApplication.RepaintHierarchyWindow();
         }
 
         /// <summary>Folds a single row with the tree's own slide animation, falling back to an instant change.</summary>
-        public static bool SetProjectExpandedAnimated(object rawId, bool expanded)
+        public static bool SetExpandedAnimated(TreeKind kind, object rawId, bool expanded)
         {
-            object treeView = GetActiveProjectTreeView();
+            object treeView = TreeViewOf(kind);
             object data = DataOf(treeView);
             if (data == null || rawId == null) return false;
 
@@ -612,9 +680,9 @@ namespace DNExtensions.HelpfulEditor
             return true;
         }
 
-        public static void SetProjectExpandedImmediate(object rawId, bool expanded)
+        public static void SetExpandedImmediate(TreeKind kind, object rawId, bool expanded)
         {
-            object data = DataOf(GetActiveProjectTreeView());
+            object data = DataOf(TreeViewOf(kind));
             if (data == null || rawId == null) return;
 
             InvokeWithId(data, "SetExpanded", rawId, expanded);

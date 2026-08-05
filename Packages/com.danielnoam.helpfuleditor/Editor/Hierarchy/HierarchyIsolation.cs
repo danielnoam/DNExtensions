@@ -40,7 +40,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             _expandedBefore = HelpfulEditorTreeReflection.GetHierarchyExpandedIds();
             Target = target;
 
-            HelpfulEditorTreeReflection.SetHierarchyExpandedIds(BuildIsolatedExpansion(target, _expandedBefore));
+            HierarchyExpandQueue.AnimateTo(BuildIsolatedExpansion(target, _expandedBefore));
 
             Selection.activeGameObject = target;
 
@@ -85,7 +85,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
             if (_expandedBefore != null)
             {
-                HelpfulEditorTreeReflection.SetHierarchyExpandedIds(_expandedBefore);
+                HierarchyExpandQueue.AnimateTo(_expandedBefore);
                 _expandedBefore = null;
             }
 
