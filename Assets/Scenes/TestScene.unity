@@ -632,10 +632,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: MrPotatoHead
       objectReference: {fileID: 0}
-    - target: {fileID: 1846569428771234182, guid: 9d1fedc890bcaec4b98e2aeb4e242bad, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3439,7 +3435,7 @@ Transform:
   m_GameObject: {fileID: 2306503693013514609}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.0000041324483, y: 0.5970039, z: -7.5200005}
+  m_LocalPosition: {x: 0, y: 0.597, z: -7.52}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

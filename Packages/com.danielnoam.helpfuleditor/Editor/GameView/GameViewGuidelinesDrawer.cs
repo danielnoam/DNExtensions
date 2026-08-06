@@ -33,7 +33,6 @@ namespace DNExtensions.HelpfulEditor.GameView
         private readonly VisualElement _topRuler;
         private readonly VisualElement _leftRuler;
         private readonly VisualElement _grabLayer;
-        private readonly GameViewRulerToggle _rulerToggle;
 
         /// <summary>
         /// Pooled rather than rebuilt. These elements carry the pointer capture that drives a drag,
@@ -87,10 +86,6 @@ namespace DNExtensions.HelpfulEditor.GameView
             Stretch(_drawLayer);
             Add(_drawLayer);
 
-            // Sits in the Game View's own toolbar, above everything the overlay draws over the game.
-            _rulerToggle = new GameViewRulerToggle(ShowMenu);
-            Add(_rulerToggle);
-
             RegisterCallback<GeometryChangedEvent>(_ => RefreshLayout());
             RefreshLayout();
         }
@@ -115,8 +110,6 @@ namespace DNExtensions.HelpfulEditor.GameView
                 SetRect(_topRuler, new Rect(ruler.x + RulerSize, ruler.y, Mathf.Max(0f, ruler.width - RulerSize), RulerSize));
                 SetRect(_leftRuler, new Rect(ruler.x, ruler.y + RulerSize, RulerSize, Mathf.Max(0f, ruler.height - RulerSize)));
             }
-
-            _rulerToggle.Layout(_geometry.ContentRect.y, WindowRect.width);
 
             LayoutGrabTargets(settings);
 
@@ -262,7 +255,7 @@ namespace DNExtensions.HelpfulEditor.GameView
         {
             if (evt.button == 1)
             {
-                ShowMenu();
+                GameViewModule.ShowGuideMenu();
                 evt.StopPropagation();
                 return;
             }
@@ -282,7 +275,7 @@ namespace DNExtensions.HelpfulEditor.GameView
         {
             if (evt.button == 1)
             {
-                ShowMenu();
+                GameViewModule.ShowGuideMenu();
                 evt.StopPropagation();
                 return;
             }
@@ -394,41 +387,6 @@ namespace DNExtensions.HelpfulEditor.GameView
             }
 
             _dragNormalized = Mathf.Clamp01(normalized);
-        }
-
-        private void ShowMenu()
-        {
-            GameViewSettings settings = HelpfulEditorSettings.GameView;
-            GenericMenu menu = new GenericMenu();
-
-            // Adding while the rulers are off would drop a guide nobody can see, so the menu says no
-            // rather than looking broken. Clearing stays available either way.
-            if (settings.showRulers)
-            {
-                menu.AddItem(new GUIContent("Add Vertical Guide"), false, () => AddCentred(false));
-                menu.AddItem(new GUIContent("Add Horizontal Guide"), false, () => AddCentred(true));
-            }
-            else
-            {
-                menu.AddDisabledItem(new GUIContent("Add Vertical Guide"));
-                menu.AddDisabledItem(new GUIContent("Add Horizontal Guide"));
-            }
-
-            if (settings.guides.Count > 0) menu.AddItem(new GUIContent("Clear All Guides"), false, GameViewModule.ClearGuides);
-            else menu.AddDisabledItem(new GUIContent("Clear All Guides"));
-
-            menu.AddSeparator(string.Empty);
-            menu.AddItem(new GUIContent("Settings…"), false, HelpfulEditorSettingsProvider.OpenGameViewSettings);
-
-            menu.ShowAsContext();
-        }
-
-        private void AddCentred(bool horizontal)
-        {
-            HelpfulEditorSettings.GameView.guides.Add(new GameViewGuide { isHorizontal = horizontal, normalizedPosition = 0.5f });
-            HelpfulEditorSettings.SaveGameView();
-
-            RefreshLayout();
         }
 
         private void OnDrawGUI()

@@ -8,6 +8,7 @@
     "betterTransformEnabled": true,
     "scaleLockDefaultOn": false,
     "resetMenuItemsEnabled": true,
+    "worldFieldsEnabled": true,
     "saveInPlayModeEnabled": true,
     "saveInPlayModeBlacklist": [
         "UnityEngine.Canvas",
@@ -17,19 +18,12 @@
         "UnityEngine.SignalReceiver"
     ],
     "cameraAlignButtonsEnabled": true,
-    "rectTransformResetButtonsEnabled": true,
     "graphicResetColorEnabled": true,
     "textMeshProDuplicateMaterialEnabled": true,
     "componentDraggerEnabled": true,
     "altInvertsMoveCopyDefault": false,
     "transferDependencies": true,
     "dependencyWhitelist": [],
-    "isolateKey": {
-        "key": 101,
-        "ctrl": true,
-        "alt": false,
-        "shift": false
-    },
     "expandCollapseKey": {
         "key": 101,
         "ctrl": false,

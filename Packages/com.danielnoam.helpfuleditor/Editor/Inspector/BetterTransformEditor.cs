@@ -20,19 +20,13 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private Editor _nativeEditor;
         private Vector3 _lastScale;
 
-        private Vector3 _worldEulerDisplay;
-        private Quaternion _worldEulerSource;
-        private bool _worldEulerValid;
+        private readonly TransformWorldFields _worldFields = new TransformWorldFields();
 
         private void OnEnable()
         {
             if (target is Transform transform) _lastScale = transform.localScale;
 
-            // Editors are pooled and handed a new target, and the cached angles are keyed only on the
-            // rotation they produced — so without this, typing 370 on one object and then selecting
-            // another at the same world rotation shows 370 for that one too. Identity makes it easy
-            // to hit: every object that has never been rotated shares it.
-            _worldEulerValid = false;
+            _worldFields.Forget();
 
             // The lock is deliberately shared across inspectors and kept across selections, so it is
             // only seeded from the setting once. Comparing against the last seeded value is what
@@ -63,16 +57,13 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             serializedObject.Update();
 
-            // The Local header only earns its place once there is a World group to tell it apart
-            // from. On a root object it would label the only three rows there are.
             bool showWorld = ShowWorldFields(settings);
-            if (showWorld) EditorGUILayout.LabelField("Local", EditorStyles.miniBoldLabel);
 
             DrawPosition(settings);
             DrawRotation(settings);
             DrawScale(settings);
 
-            if (showWorld) DrawWorld();
+            if (showWorld) _worldFields.Draw(serializedObject, target as Transform, targets);
 
             if (serializedObject.ApplyModifiedProperties())
             {
@@ -93,7 +84,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
         private void DrawPosition(InspectorSettings settings)
         {
-            if (serializedObject.FindProperty("m_LocalPosition") == null) return;
+            SerializedProperty property = serializedObject.FindProperty("m_LocalPosition");
+            if (property == null) return;
 
             Vector3 displayValue = GetCommonValue(t => t.localPosition, out bool mixed);
             bool unusedLock = false;
@@ -104,7 +96,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
             Vector3 newValue = LinkedVector3Field.Draw("Position", displayValue, Vector3.zero, false, ref unusedLock,
                 extraResetItems: settings.resetMenuItemsEnabled
                     ? menu => BuildResetMenu(menu, (t, v) => t.localPosition = v, Vector3.zero)
-                    : null);
+                    : null,
+                property: property);
 
             EditorGUI.showMixedValue = false;
 
@@ -160,7 +153,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
                     EditorGUIUtility.systemCopyBuffer = $"{quaternion.x},{quaternion.y},{quaternion.z},{quaternion.w}"),
                 extraResetItems: settings.resetMenuItemsEnabled
                     ? menu => BuildResetMenu(menu, (t, v) => t.localEulerAngles = v, Vector3.zero)
-                    : null);
+                    : null,
+                property: serializedObject.FindProperty("m_LocalRotation"));
 
             EditorGUI.showMixedValue = false;
 
@@ -187,7 +181,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
         private void DrawScale(InspectorSettings settings)
         {
-            if (serializedObject.FindProperty("m_LocalScale") == null) return;
+            SerializedProperty property = serializedObject.FindProperty("m_LocalScale");
+            if (property == null) return;
 
             Vector3 displayValue = GetCommonValue(t => t.localScale, out bool mixed);
 
@@ -197,7 +192,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
             Vector3 newValue = LinkedVector3Field.Draw("Scale", displayValue, Vector3.one, true, ref _scaleLocked,
                 extraResetItems: settings.resetMenuItemsEnabled
                     ? menu => BuildResetMenu(menu, (t, v) => t.localScale = v, Vector3.one)
-                    : null);
+                    : null,
+                property: property);
 
             EditorGUI.showMixedValue = false;
 
@@ -218,204 +214,15 @@ namespace DNExtensions.HelpfulEditor.Inspector
         }
 
         /// <summary>
-        /// The same three values in world space, below the local ones. Only drawn under a parent:
-        /// a root object's local values already are its world values, so the second set would be an
-        /// exact copy of the first sitting directly beneath it.
-        ///
-        /// Plain Vector3 rows rather than the linked field the local ones use. These are a read-out
-        /// with editing attached, not the object's primary controls, and giving them the same
-        /// copy/paste/reset chrome would make the two sets look interchangeable.
+        /// The world block is only drawn under a parent: a root object's local values already are its
+        /// world values, so the second set would be an exact copy of the first sitting beneath it.
         /// </summary>
-        private void DrawWorld()
-        {
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField("World", EditorStyles.miniBoldLabel);
-
-            DrawWorldPosition();
-            DrawWorldRotation();
-            DrawWorldScale();
-        }
-
-        private bool ShowWorldFields(InspectorSettings settings) => settings.worldFieldsEnabled && HasParent();
-
-        /// <summary>Any target, not every one — a mixed selection still has world values worth showing.</summary>
-        private bool HasParent()
-        {
-            foreach (Object obj in targets)
-            {
-                if (obj is Transform transform && transform.parent) return true;
-            }
-
-            return false;
-        }
-
-        private void DrawWorldPosition()
-        {
-            Vector3 displayValue = GetCommonValue(t => t.position, out bool mixed);
-
-            EditorGUI.BeginChangeCheck();
-            EditorGUI.showMixedValue = mixed;
-
-            Vector3 newValue = EditorGUILayout.Vector3Field("Position", displayValue);
-
-            EditorGUI.showMixedValue = false;
-
-            if (!EditorGUI.EndChangeCheck()) return;
-
-            Vector3 delta = newValue - displayValue;
-            Undo.RecordObjects(targets, "World Position Changed");
-
-            foreach (Object obj in targets)
-            {
-                if (obj is Transform transform) transform.position = mixed ? transform.position + delta : newValue;
-            }
-
-            serializedObject.Update();
-        }
-
-        /// <summary>
-        /// Carries the same trap the local rotation does, without a serialized hint to lean on: world
-        /// euler is read back off the quaternion, so typing 370 would return 10 and the numbers would
-        /// jump about while editing. The angles last typed here are kept and redisplayed for as long
-        /// as the rotation they produced is still the one on the object, which is what
-        /// m_LocalEulerAnglesHint does for the local field.
-        /// </summary>
-        private void DrawWorldRotation()
-        {
-            if (!(target is Transform main)) return;
-
-            Vector3 displayEuler = GetCommonValue(t => t.eulerAngles, out bool mixed);
-
-            if (!mixed && _worldEulerValid && main.rotation == _worldEulerSource) displayEuler = _worldEulerDisplay;
-
-            EditorGUI.BeginChangeCheck();
-            EditorGUI.showMixedValue = mixed;
-
-            Vector3 newEuler = EditorGUILayout.Vector3Field("Rotation", displayEuler);
-
-            EditorGUI.showMixedValue = false;
-
-            if (!EditorGUI.EndChangeCheck()) return;
-
-            Vector3 delta = newEuler - displayEuler;
-            Undo.RecordObjects(targets, "World Rotation Changed");
-
-            foreach (Object obj in targets)
-            {
-                if (obj is Transform transform) transform.eulerAngles = mixed ? transform.eulerAngles + delta : newEuler;
-            }
-
-            serializedObject.Update();
-
-            if (mixed) return;
-
-            _worldEulerDisplay = newEuler;
-            _worldEulerSource = main.rotation;
-            _worldEulerValid = true;
-        }
-
-        /// <summary>
-        /// Read-only, because lossyScale has no setter and cannot be given a correct one: under a
-        /// rotated parent the world scale is a sheared matrix that no single local scale reproduces,
-        /// so a writable field would quietly store something other than what was typed. Shown anyway
-        /// — knowing what an object ended up at is most of why the world values are wanted.
-        /// </summary>
-        private void DrawWorldScale()
-        {
-            Vector3 displayValue = GetCommonValue(t => t.lossyScale, out bool mixed);
-
-            EditorGUI.showMixedValue = mixed;
-
-            using (new EditorGUI.DisabledScope(true))
-            {
-                EditorGUILayout.Vector3Field("Scale", displayValue);
-            }
-
-            EditorGUI.showMixedValue = false;
-        }
+        private bool ShowWorldFields(InspectorSettings settings) =>
+            settings.worldFieldsEnabled && TransformWorldFields.AnyParented(targets);
 
         private void BuildResetMenu(GenericMenu menu, Action<Transform, Vector3> setter, Vector3 resetValue)
         {
-            menu.AddItem(new GUIContent("Reset"), false, () =>
-            {
-                foreach (Object obj in targets)
-                {
-                    if (!(obj is Transform transform)) continue;
-
-                    Undo.RecordObject(transform, "Reset");
-                    setter(transform, resetValue);
-                }
-            });
-
-            menu.AddItem(new GUIContent("Reset Without Children"), false, () =>
-            {
-                foreach (Object obj in targets)
-                {
-                    if (obj is Transform transform) ResetWithoutChildren(transform, setter, resetValue);
-                }
-            });
-
-            menu.AddItem(new GUIContent("Reset Only Children"), false, () =>
-            {
-                foreach (Object obj in targets)
-                {
-                    if (obj is Transform transform) ResetOnlyChildren(transform, setter, resetValue);
-                }
-            });
-        }
-
-        private static void ResetWithoutChildren(Transform transform, Action<Transform, Vector3> setter, Vector3 resetValue)
-        {
-            int childCount = transform.childCount;
-            Vector3[] worldPositions = new Vector3[childCount];
-            Quaternion[] worldRotations = new Quaternion[childCount];
-            Vector3[] worldScales = new Vector3[childCount];
-
-            for (int i = 0; i < childCount; i++)
-            {
-                Transform child = transform.GetChild(i);
-                worldPositions[i] = child.position;
-                worldRotations[i] = child.rotation;
-                worldScales[i] = child.lossyScale;
-            }
-
-            Undo.RecordObject(transform, "Reset Without Children");
-            for (int i = 0; i < childCount; i++)
-            {
-                Undo.RecordObject(transform.GetChild(i), "Reset Without Children");
-            }
-
-            setter(transform, resetValue);
-
-            for (int i = 0; i < childCount; i++)
-            {
-                Transform child = transform.GetChild(i);
-                child.position = worldPositions[i];
-                child.rotation = worldRotations[i];
-                SetLossyScale(child, worldScales[i]);
-            }
-        }
-
-        private static void ResetOnlyChildren(Transform transform, Action<Transform, Vector3> setter, Vector3 resetValue)
-        {
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                Transform child = transform.GetChild(i);
-                Undo.RecordObject(child, "Reset Only Children");
-                setter(child, resetValue);
-            }
-        }
-
-        private static void SetLossyScale(Transform transform, Vector3 targetLossyScale)
-        {
-            Transform parent = transform.parent;
-            Vector3 parentScale = parent ? parent.lossyScale : Vector3.one;
-
-            transform.localScale = new Vector3(
-                parentScale.x != 0f ? targetLossyScale.x / parentScale.x : 1f,
-                parentScale.y != 0f ? targetLossyScale.y / parentScale.y : 1f,
-                parentScale.z != 0f ? targetLossyScale.z / parentScale.z : 1f
-            );
+            TransformResetMenu.Build(menu, targets, setter, resetValue);
         }
 
         private Vector3 GetCommonValue(Func<Transform, Vector3> selector, out bool mixed)

@@ -359,8 +359,12 @@ namespace DNExtensions.HelpfulEditor.Inspector
             public int Priority;
             public Action<Component> Callback;
 
-            /// <summary>Runs on right-click. Providers that want a menu open one from here.</summary>
-            public Action<Component> ContextCallback;
+            /// <summary>
+            /// Runs on right-click. Providers that want a menu open one from here. Initialised rather
+            /// than left to its default so it does not warn while no provider happens to use it — the
+            /// right-click plumbing above stays available for the next one that does.
+            /// </summary>
+            public Action<Component> ContextCallback = null;
 
             public Action<Button> StyleCallback;
 

@@ -78,7 +78,6 @@ namespace DNExtensions.HelpfulEditor
         };
 
         public bool cameraAlignButtonsEnabled = true;
-        public bool rectTransformResetButtonsEnabled = true;
         public bool graphicResetColorEnabled = true;
         public bool textMeshProDuplicateMaterialEnabled = true;
 

@@ -19,8 +19,14 @@ namespace DNExtensions.HelpfulEditor
         /// <param name="locked">Current lock state. Passed by ref — updated when toggled.</param>
         /// <param name="extraContextItems">Extra items appended to the label/field right-click menu.</param>
         /// <param name="extraResetItems">Extra items shown when right-clicking the reset button.</param>
+        /// <param name="property">
+        /// The row's backing property, if it has one. Only used to mark the row as a property, which is
+        /// what puts the prefab override bar beside it, bolds the label and offers Revert on right-click
+        /// — the value itself is still read and written by the caller.
+        /// </param>
         public static Vector3 Draw(string label, Vector3 value, Vector3 resetValue, bool showLock, ref bool locked,
-            Action<GenericMenu> extraContextItems = null, Action<GenericMenu> extraResetItems = null)
+            Action<GenericMenu> extraContextItems = null, Action<GenericMenu> extraResetItems = null,
+            SerializedProperty property = null)
         {
             Vector3 newValue;
             float lockW = showLock ? LockWidth : 0f;
@@ -28,7 +34,10 @@ namespace DNExtensions.HelpfulEditor
             if (EditorGUIUtility.wideMode)
             {
                 Rect rowRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+
+                if (property != null) EditorGUI.BeginProperty(rowRect, GUIContent.none, property);
                 newValue = DrawRow(rowRect, label, value, resetValue, showLock, lockW, ref locked, extraContextItems, extraResetItems);
+                if (property != null) EditorGUI.EndProperty();
             }
             else
             {
@@ -54,6 +63,10 @@ namespace DNExtensions.HelpfulEditor
                 Rect fieldRect = new Rect(fieldRow.x, fieldRow.y, fieldRow.width - ButtonsTotal - Spacing, fieldRow.height);
                 Rect buttonsRect = new Rect(fieldRect.xMax + Spacing, fieldRow.y, ButtonsTotal, fieldRow.height);
 
+                // Opened around the fields rather than the label above them: stacked, the label has
+                // already been drawn by the time there is a rect to hang the override bar on.
+                if (property != null) EditorGUI.BeginProperty(fieldRect, GUIContent.none, property);
+
                 HandleContextClick(fieldRect, value, extraContextItems);
 
                 bool prevWide = EditorGUIUtility.wideMode;
@@ -74,9 +87,46 @@ namespace DNExtensions.HelpfulEditor
                     onReset: () => buttonResult = resetValue,
                     extraResetItems: extraResetItems);
                 newValue = buttonResult;
+
+                if (property != null) EditorGUI.EndProperty();
             }
 
             return newValue;
+        }
+
+        /// <summary>
+        /// A row that can be read but not written: the value greyed out, with a copy button standing
+        /// where the copy button of an editable row would, so the two line up down the inspector. Copy
+        /// is left live — the button is about the number, not about editing it.
+        /// </summary>
+        public static void DrawReadOnly(string label, Vector3 value)
+        {
+            Rect rowRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+
+            float fieldW = rowRect.width - EditorGUIUtility.labelWidth - ButtonsTotal - Spacing;
+            Rect labelRect = new Rect(rowRect.x, rowRect.y, EditorGUIUtility.labelWidth, rowRect.height);
+            Rect fieldRect = new Rect(rowRect.x + EditorGUIUtility.labelWidth, rowRect.y, fieldW, rowRect.height);
+            Rect copyRect = new Rect(fieldRect.xMax + Spacing, rowRect.y, ButtonWidth, rowRect.height);
+
+            HandleContextClick(labelRect, value, null);
+            HandleContextClick(fieldRect, value, null);
+
+            EditorGUI.LabelField(labelRect, label);
+
+            using (new EditorGUI.DisabledScope(true))
+            {
+                bool prevWide = EditorGUIUtility.wideMode;
+                EditorGUIUtility.wideMode = true;
+                int oldIndent = EditorGUI.indentLevel;
+                EditorGUI.indentLevel = 0;
+
+                EditorGUI.Vector3Field(fieldRect, GUIContent.none, value);
+
+                EditorGUI.indentLevel = oldIndent;
+                EditorGUIUtility.wideMode = prevWide;
+            }
+
+            if (GUI.Button(copyRect, new GUIContent("C", "Copy"), EditorStyles.miniButton)) CopyToClipboard(value);
         }
 
         /// <summary>Layout-free variant for Rect-based drawers. Always renders as a single line.</summary>

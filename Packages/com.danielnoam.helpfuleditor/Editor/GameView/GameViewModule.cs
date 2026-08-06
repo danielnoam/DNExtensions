@@ -24,6 +24,48 @@ namespace DNExtensions.HelpfulEditor.GameView
             EditorApplication.update += OnUpdate;
 
             EditorApplication.delayCall += Sync;
+
+            GameViewToolbar.RegisterProvider(_ => new GameViewRulerToggle());
+        }
+
+        /// <summary>
+        /// The guide menu, reached by right-clicking either a ruler or the toolbar's Rulers button. It
+        /// lives here rather than on the overlay because the button is not the overlay's to own — the
+        /// toolbar strip holds it, and it outlives any one Game View's guidelines drawer.
+        /// </summary>
+        public static void ShowGuideMenu()
+        {
+            GameViewSettings settings = HelpfulEditorSettings.GameView;
+            GenericMenu menu = new GenericMenu();
+
+            // Adding while the rulers are off would drop a guide nobody can see, so the menu says no
+            // rather than looking broken. Clearing stays available either way.
+            if (settings.showRulers)
+            {
+                menu.AddItem(new GUIContent("Add Vertical Guide"), false, () => AddCentred(false));
+                menu.AddItem(new GUIContent("Add Horizontal Guide"), false, () => AddCentred(true));
+            }
+            else
+            {
+                menu.AddDisabledItem(new GUIContent("Add Vertical Guide"));
+                menu.AddDisabledItem(new GUIContent("Add Horizontal Guide"));
+            }
+
+            if (settings.guides.Count > 0) menu.AddItem(new GUIContent("Clear All Guides"), false, ClearGuides);
+            else menu.AddDisabledItem(new GUIContent("Clear All Guides"));
+
+            menu.AddSeparator(string.Empty);
+            menu.AddItem(new GUIContent("Settings…"), false, HelpfulEditorSettingsProvider.OpenGameViewSettings);
+
+            menu.ShowAsContext();
+        }
+
+        private static void AddCentred(bool horizontal)
+        {
+            HelpfulEditorSettings.GameView.guides.Add(new GameViewGuide { isHorizontal = horizontal, normalizedPosition = 0.5f });
+            HelpfulEditorSettings.SaveGameView();
+
+            Sync();
         }
 
         private static IEnumerable<EditorWindow> EnumerateGameViews()
@@ -74,6 +116,10 @@ namespace DNExtensions.HelpfulEditor.GameView
                 if (existing == null) root.Add(new GameViewGuidelinesDrawer(gameView));
                 else if (refreshExisting) existing.RefreshLayout();
             }
+
+            // The toolbar strip is not part of the overlay and stays put when the feature is off — its
+            // items report no width and it reserves nothing, which is what makes the button come back.
+            GameViewToolbar.Refresh();
         }
 
         public static void ClearGuides()

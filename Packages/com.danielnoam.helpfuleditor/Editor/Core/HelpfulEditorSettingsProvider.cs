@@ -274,9 +274,6 @@ namespace DNExtensions.HelpfulEditor
                     settings.cameraAlignButtonsEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Camera Align", "Adds buttons to Camera headers that align the camera to the Scene View, or the Scene View to the camera."),
                         settings.cameraAlignButtonsEnabled);
-                    settings.rectTransformResetButtonsEnabled = EditorGUILayout.Toggle(
-                        new GUIContent("RectTransform Rows", "Adds buttons to RectTransform headers for position, size, rotation and scale. Left-click to copy or paste that value, right-click to reset it."),
-                        settings.rectTransformResetButtonsEnabled);
                     settings.graphicResetColorEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Reset Color", "Adds a button to UI Graphic and TextMeshPro headers that resets the color to white."),
                         settings.graphicResetColorEnabled);
