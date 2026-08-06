@@ -23,7 +23,7 @@ namespace DNExtensions.HelpfulEditor.Project
         /// </summary>
         static DragConflictResolver()
         {
-#if UNITY_6000_4_OR_NEWER
+#if UNITY_6000_3_OR_NEWER
             DragAndDrop.RemoveDropHandlerV2((DragAndDrop.ProjectBrowserDropHandlerV2)OnProjectDrop);
             DragAndDrop.AddDropHandlerV2((DragAndDrop.ProjectBrowserDropHandlerV2)OnProjectDrop);
 #else
@@ -38,7 +38,7 @@ namespace DNExtensions.HelpfulEditor.Project
         /// event before any per-row GUI runs — so the row callback only ever saw drags that Unity had
         /// already decided about. Returning anything but None here takes the drop.
         /// </summary>
-#if UNITY_6000_4_OR_NEWER
+#if UNITY_6000_3_OR_NEWER
         private static DragAndDropVisualMode OnProjectDrop(EntityId dragInstanceId, string dropUponPath, bool perform)
 #else
         private static DragAndDropVisualMode OnProjectDrop(int dragInstanceId, string dropUponPath, bool perform)

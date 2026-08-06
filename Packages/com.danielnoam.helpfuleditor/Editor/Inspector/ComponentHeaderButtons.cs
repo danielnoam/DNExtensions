@@ -53,15 +53,18 @@ namespace DNExtensions.HelpfulEditor.Inspector
         }
 
         /// <summary>
-        /// Roots of every open Inspector. Deliberately re-resolved rather than cached:
-        /// FindObjectsOfTypeAll turns up inspector windows that are not showing anything, and
-        /// latching onto one of those leaves the buttons permanently missing.
+        /// Roots of every open Inspector. Deliberately re-resolved rather than cached: the lookup
+        /// turns up inspector windows that are not showing anything, and latching onto one of those
+        /// leaves the buttons permanently missing.
+        ///
+        /// Asked for by type rather than fetching every EditorWindow in the editor and filtering
+        /// afterwards, which is what this used to do ten times a second.
         /// </summary>
         private static IEnumerable<VisualElement> EnumerateEditorLists()
         {
-            foreach (EditorWindow window in Resources.FindObjectsOfTypeAll<EditorWindow>())
+            foreach (EditorWindow window in HelpfulEditorWindows.AllInspectors())
             {
-                if (!HelpfulEditorWindows.IsInspector(window)) continue;
+                if (!window) continue;
 
                 VisualElement root = window.rootVisualElement;
                 if (root != null) yield return root;
@@ -76,15 +79,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
             if (EditorApplication.timeSinceStartup - _lastScan < ScanInterval) return;
             _lastScan = EditorApplication.timeSinceStartup;
 
-            // The whole selection, not just the active object: with several selected, the editor's
-            // target is the first of them, which is not necessarily the active one — and gating on
-            // the active object meant the bar simply failed to appear.
-            GameObject[] selected = Selection.gameObjects;
-            if (selected == null || selected.Length == 0) return;
-
             foreach (VisualElement list in EnumerateEditorLists())
             {
-                Inject(list, selected);
+                Inject(list);
             }
         }
 
@@ -100,21 +97,28 @@ namespace DNExtensions.HelpfulEditor.Inspector
             return Array.IndexOf(selection, component.gameObject) >= 0 ? selection : new[] { component.gameObject };
         }
 
-        private static void Inject(VisualElement editorList, GameObject[] selected)
+        /// <summary>
+        /// Driven entirely by the editors this window is showing, never by the selection. The two
+        /// agree for an ordinary Inspector and do not for a locked one, which goes on showing an
+        /// object after the selection has moved elsewhere — gating on the selection meant a locked
+        /// Inspector got no buttons at all.
+        /// </summary>
+        private static void Inject(VisualElement editorList)
         {
             Elements.Clear();
-            CollectEditorElements(editorList, Elements);
+            InspectorElementLookup.CollectComponentEditors(editorList, Elements);
 
             Bars.Clear();
-            CollectBars(editorList, Bars);
+            CollectBars(Elements, Bars);
 
             foreach (VisualElement matched in Elements)
             {
                 Editor editor = InspectorElementLookup.GetEditor(matched);
                 if (!editor || !(editor.target is Component component)) continue;
-                if (Array.IndexOf(selected, component.gameObject) < 0) continue;
 
-                CollectButtons(component, selected.Length > 1);
+                // The editor knows how many objects it is editing, which is the question actually
+                // being asked. Selection.gameObjects is only the same answer by coincidence.
+                CollectButtons(component, editor.targets != null && editor.targets.Length > 1);
                 if (Buffer.Count == 0) continue;
 
                 if (!ResolveInsertion(matched, out VisualElement container, out VisualElement anchor)) continue;
@@ -167,17 +171,33 @@ namespace DNExtensions.HelpfulEditor.Inspector
             return null;
         }
 
-        private static void CollectBars(VisualElement element, List<VisualElement> results)
+        /// <summary>
+        /// Every bar currently in this Inspector. A bar is always a direct child of a component
+        /// editor's element or of that element's parent — those are the only two containers
+        /// ResolveInsertion hands back — so nothing deeper is worth looking at. Walking the whole
+        /// tree instead meant descending through every component body on every tick, which was the
+        /// bulk of what this module cost while sitting idle.
+        ///
+        /// A bar left behind by a component that has since gone is still found, because it stays a
+        /// child of the container its surviving siblings share.
+        /// </summary>
+        private static void CollectBars(List<VisualElement> editors, List<VisualElement> results)
         {
-            if (element.name == ButtonBarName)
+            foreach (VisualElement matched in editors)
             {
-                results.Add(element);
-                return;
+                AddBars(matched, results);
+                AddBars(matched.parent, results);
             }
+        }
 
-            foreach (VisualElement child in element.Children())
+        /// <summary>Direct children only, and de-duplicated: sibling editors share a parent.</summary>
+        private static void AddBars(VisualElement container, List<VisualElement> results)
+        {
+            if (container == null) return;
+
+            foreach (VisualElement child in container.Children())
             {
-                CollectBars(child, results);
+                if (child.name == ButtonBarName && !results.Contains(child)) results.Add(child);
             }
         }
 
@@ -209,33 +229,6 @@ namespace DNExtensions.HelpfulEditor.Inspector
             container = matched.parent;
             anchor = matched;
             return container != null;
-        }
-
-        /// <summary>
-        /// Elements that own an Editor, found by walking the tree. The Inspector's editor list used
-        /// to be reachable by its USS class, but that class no longer exists in Unity 6 — and the
-        /// element type names are internal — so the editor itself is the only dependable landmark.
-        /// Recursion stops at each match, so component bodies are never walked into.
-        /// </summary>
-        private static void CollectEditorElements(VisualElement element, List<VisualElement> results)
-        {
-            if (element.name == ButtonBarName) return;
-
-            Editor editor = InspectorElementLookup.GetEditor(element);
-
-            // Only a component editor ends the walk. The GameObject's own editor sits above the
-            // component ones, so stopping there found exactly one element — which is why a single
-            // bar appeared under the object header instead of one per component.
-            if (editor && editor.target is Component)
-            {
-                results.Add(element);
-                return;
-            }
-
-            foreach (VisualElement child in element.Children())
-            {
-                CollectEditorElements(child, results);
-            }
         }
 
         private static void CollectButtons(Component component, bool multiSelection)

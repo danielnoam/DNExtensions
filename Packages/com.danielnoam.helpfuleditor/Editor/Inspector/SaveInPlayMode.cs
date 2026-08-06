@@ -76,7 +76,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 if (string.Equals(typeName, blacklisted, StringComparison.Ordinal)) return false;
             }
 
-            return true;
+            // Nothing spawned at runtime has an edit-mode counterpart to restore onto, so the button
+            // is withheld rather than offered and then quietly doing nothing.
+            return !string.IsNullOrEmpty(GetKey(component));
         }
 
         /// <summary>
@@ -98,6 +100,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 if (!match) continue;
 
                 string key = GetKey(match);
+                if (string.IsNullOrEmpty(key)) continue;
 
                 if (mark)
                 {
@@ -207,42 +210,32 @@ namespace DNExtensions.HelpfulEditor.Inspector
             EditorUtility.SetDirty(component);
         }
 
+        /// <summary>
+        /// Identifies the component itself rather than the path to it.
+        ///
+        /// A scene-plus-path-plus-type key looked reasonable and lost data three ways: GameObject.Find
+        /// never returns inactive objects, so marking a component on a disabled object restored
+        /// nothing and said nothing; it matches the first path across all loaded scenes; and two
+        /// components of the same type on one object shared a key, so the second saved over the
+        /// first. A GlobalObjectId has none of those problems, and this file already trusts it for
+        /// object references.
+        ///
+        /// Returns empty for anything with no stable identity — a component on an object created at
+        /// runtime, which has no edit-mode counterpart to restore onto.
+        /// </summary>
         private static string GetKey(Component component)
         {
-            return $"{component.gameObject.scene.name}::{GetPath(component.gameObject)}::{component.GetType().FullName}";
-        }
+            GlobalObjectId id = GlobalObjectId.GetGlobalObjectIdSlow(component);
 
-        private static string GetPath(GameObject gameObject)
-        {
-            string path = gameObject.name;
-
-            for (Transform parent = gameObject.transform.parent; parent; parent = parent.parent)
-            {
-                path = parent.name + "/" + path;
-            }
-
-            return path;
+            return id.identifierType == 0 ? string.Empty : id.ToString();
         }
 
         private static Component Resolve(string key)
         {
-            string[] parts = key.Split(new[] { "::" }, 3, StringSplitOptions.None);
-            if (parts.Length != 3) return null;
+            if (string.IsNullOrEmpty(key)) return null;
+            if (!GlobalObjectId.TryParse(key, out GlobalObjectId id)) return null;
 
-            GameObject gameObject = GameObject.Find(parts[1]);
-            if (!gameObject || gameObject.scene.name != parts[0]) return null;
-
-            Type type = Type.GetType(parts[2]);
-            if (type == null)
-            {
-                foreach (System.Reflection.Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    type = assembly.GetType(parts[2]);
-                    if (type != null) break;
-                }
-            }
-
-            return type == null ? null : gameObject.GetComponent(type);
+            return GlobalObjectId.GlobalObjectIdentifierToObjectSlow(id) as Component;
         }
 
         private static void ClearAll()

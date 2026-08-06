@@ -56,7 +56,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
         private static void AlignCameraToView(Component component)
         {
-            SceneView view = SceneView.lastActiveSceneView;
+            SceneView view = HelpfulEditorWindows.ResolveSceneView(out bool _);
             if (!view || !view.camera) return;
 
             Transform target = component.transform;
@@ -68,8 +68,12 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
         private static void AlignViewToCamera(Component component)
         {
-            SceneView view = SceneView.lastActiveSceneView;
+            SceneView view = HelpfulEditorWindows.ResolveSceneView(out bool needsFocus);
             if (!view) return;
+
+            // Brought to front when nothing was looking at it, since a Scene View that moved behind
+            // the Game tab is indistinguishable from a button that did nothing.
+            if (needsFocus) view.Focus();
 
             Transform source = component.transform;
 
@@ -77,6 +81,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
             // far forward to leave the viewpoint itself exactly on the camera. Size is passed through
             // unchanged to keep the distance — and therefore the alignment — stable.
             view.LookAt(source.position + source.forward * view.cameraDistance, source.rotation, view.size);
+            view.Repaint();
         }
     }
 }

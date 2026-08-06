@@ -9,6 +9,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
     /// Holds one or more copied components. Unity's own clipboard only ever holds a single
     /// component, so copying a multi-selection needs a buffer of its own — a single copy is still
     /// mirrored into Unity's clipboard so its native Paste Component entries keep working.
+    ///
+    /// Pasting a type the target already has overwrites that component rather than adding another.
     /// </summary>
     internal static class ComponentClipboard
     {
@@ -48,9 +50,21 @@ namespace DNExtensions.HelpfulEditor.Inspector
             {
                 if (!source) continue;
 
+                ComponentUtility.CopyComponent(source);
+
+                // Pasted onto the one already there rather than beside it. Most things worth copying
+                // are DisallowMultipleComponent — a Rigidbody, a Collider — and PasteComponentAsNew
+                // simply fails on those, so the old behaviour was not a second component but no
+                // component and no error.
+                if (target.TryGetComponent(source.GetType(), out Component existing))
+                {
+                    Undo.RecordObject(existing, undoName);
+                    ComponentUtility.PasteComponentValues(existing);
+                    continue;
+                }
+
                 Component[] before = target.GetComponents<Component>();
 
-                ComponentUtility.CopyComponent(source);
                 if (!ComponentUtility.PasteComponentAsNew(target)) continue;
 
                 // Without this the pasted component is invisible to the undo stack and a single

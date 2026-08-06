@@ -40,6 +40,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private static GUIStyle _eyeStyle;
         private static string _search = string.Empty;
         private static double _lastRepaint;
+        private static EditorWindow _repaintTarget;
+        private static bool _repaintPending;
 
         private static Color SeparatorColor => EditorGUIUtility.isProSkin
             ? new Color(0.14f, 0.14f, 0.14f)
@@ -119,6 +121,12 @@ namespace DNExtensions.HelpfulEditor.Inspector
             Editor.finishedDefaultHeaderGUI -= OnFinishedHeaderGUI;
             Editor.finishedDefaultHeaderGUI += OnFinishedHeaderGUI;
 
+            InspectorComponentHover.PointerMoved -= OnPointerMoved;
+            InspectorComponentHover.PointerMoved += OnPointerMoved;
+
+            InspectorComponentHover.PointerLeft -= OnPointerLeft;
+            InspectorComponentHover.PointerLeft += OnPointerLeft;
+
             EditorApplication.update -= OnUpdate;
             EditorApplication.update += OnUpdate;
         }
@@ -126,28 +134,65 @@ namespace DNExtensions.HelpfulEditor.Inspector
         /// <summary>
         /// The Inspector does not repaint on mouse move, so the hover cache would only refresh when
         /// something else happened to redraw — leaving the keybinds acting on whichever button was
-        /// under the cursor at the last repaint. Driving a repaint while the cursor is inside the
-        /// window keeps it current, and leaving the window drops the hover entirely.
+        /// under the cursor at the last repaint. The repaints are asked for by the cursor actually
+        /// moving rather than by a timer: a stationary cursor cannot change which button it is over,
+        /// and the Inspector is the most expensive window in the editor to redraw.
         /// </summary>
-        private static void OnUpdate()
+        private static void OnPointerMoved(EditorWindow window)
         {
-            if (!HelpfulEditorSettings.Inspector.moduleEnabled) return;
+            RequestRepaint(window);
+        }
 
-            // A null mouseOverWindow means the editor cannot say where the cursor is, not that it
-            // left — clearing on that would drop the hover between ticks.
-            EditorWindow window = EditorWindow.mouseOverWindow;
+        /// <summary>
+        /// Leaving drops the hover outright, and takes one last repaint with it so the button the
+        /// cursor was on stops being drawn hovered.
+        /// </summary>
+        private static void OnPointerLeft(EditorWindow window)
+        {
+            HoveredComponent = null;
+            RequestRepaint(window);
+        }
+
+        private static void RequestRepaint(EditorWindow window)
+        {
             if (!window) return;
 
-            if (!HelpfulEditorWindows.MouseOverInspector)
+            _repaintTarget = window;
+            _repaintPending = true;
+
+            Flush();
+        }
+
+        private static void OnUpdate()
+        {
+            // PointerLeave is not guaranteed — a window closing or the cursor jumping straight out
+            // can skip it — so a hover still naming a button the cursor has left is dropped here as
+            // a backstop. Only on positive evidence though: a null mouseOverWindow means the editor
+            // cannot say where the cursor is, not that it left the Inspector.
+            if (HoveredComponent && EditorWindow.mouseOverWindow && !HelpfulEditorWindows.MouseOverInspector)
             {
                 HoveredComponent = null;
+            }
+
+            // Moves arrive far faster than the Inspector is worth redrawing, so they are throttled.
+            // This is what guarantees the last one still lands once the cursor comes to rest, rather
+            // than being dropped by the throttle and leaving the hover a step behind.
+            if (_repaintPending) Flush();
+        }
+
+        private static void Flush()
+        {
+            if (!HelpfulEditorSettings.Inspector.moduleEnabled || !_repaintTarget)
+            {
+                _repaintPending = false;
                 return;
             }
 
             if (EditorApplication.timeSinceStartup - _lastRepaint < RepaintInterval) return;
 
+            _repaintPending = false;
             _lastRepaint = EditorApplication.timeSinceStartup;
-            window.Repaint();
+            _repaintTarget.Repaint();
         }
 
         public static void FocusSearchField()
@@ -220,7 +265,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 ButtonContent.tooltip = component.GetType().FullName;
 
                 // The icon's width is already reserved as the style's left padding, so measuring
-                // the label alone covers the whole button.
+                // the label alone covers the whole button. The content is deliberately left without
+                // an image: CalcSize measures one at its native resolution, and component icons are
+                // often 32px or larger, so it would return a button far wider than the drawn one.
                 float width = style.CalcSize(ButtonContent).x;
 
                 if (used > 0f && used + width > available)
@@ -283,24 +330,6 @@ namespace DNExtensions.HelpfulEditor.Inspector
             evt.Use();
         }
 
-        /// <summary>
-        /// Sized from the label plus a square icon matched to the button's content height.
-        /// GUIStyle.CalcSize measures the icon at its own resolution, and component icons are often
-        /// 32px or larger, so it returns a button far wider than the one actually drawn.
-        /// </summary>
-        private static float MeasureButton(GUIStyle style)
-        {
-            Texture icon = ButtonContent.image;
-
-            ButtonContent.image = null;
-            float width = style.CalcSize(ButtonContent).x;
-            ButtonContent.image = icon;
-
-            if (icon) width += style.fixedHeight - style.padding.vertical + IconGap;
-
-            return width;
-        }
-
         private static void BeginPaddedRow()
         {
             EditorGUILayout.BeginHorizontal();
@@ -335,7 +364,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 // The button's own background drawn again in black, rather than a filled rect: the
                 // style's texture carries the rounded corners, and tinting through GUI.color darkens
                 // only where that texture is opaque. A rect would square off the corners.
-                if (!HelpfulEditorGUI.IsEnabled(component))
+                if (!HelpfulEditorComponents.IsEnabled(component))
                 {
                     Color previous = GUI.color;
                     GUI.color = DisabledTint;
@@ -422,50 +451,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
             if (string.IsNullOrWhiteSpace(_search)) return;
 
             EditorGUILayout.Space(2);
-            DrawMatchingFields(gameObject, settings, _search);
-        }
-
-        /// <summary>
-        /// Matching fields, grouped by component, drawn in the bar itself. The components below are
-        /// left exactly as they were — searching used to collapse every one of them, which meant a
-        /// search rearranged the whole inspector and put it back differently when cleared.
-        /// </summary>
-        private static void DrawMatchingFields(GameObject gameObject, InspectorSettings settings, string search)
-        {
-            foreach (Component component in HelpfulEditorGUI.GetDisplayComponents(gameObject, settings.excludedComponentTypes))
-            {
-                SerializedObject serializedObject = new SerializedObject(component);
-                SerializedProperty property = serializedObject.GetIterator();
-
-                bool drewHeader = false;
-                bool enterChildren = true;
-
-                while (property.NextVisible(enterChildren))
-                {
-                    enterChildren = false;
-
-                    if (property.propertyPath == "m_Script") continue;
-
-                    // Matched as a subsequence rather than a substring, so initials work: "mvspd"
-                    // finds "Move Speed". Fields keep their declared order — a search that also
-                    // reordered them would move the thing you were aiming at as you typed.
-                    if (!HelpfulEditorFuzzySearch.TryMatch(property.displayName, search, out float _)) continue;
-
-                    if (!drewHeader)
-                    {
-                        EditorGUILayout.LabelField(ObjectNames.NicifyVariableName(component.GetType().Name), EditorStyles.miniBoldLabel);
-                        drewHeader = true;
-                    }
-
-                    EditorGUILayout.PropertyField(property, true);
-                }
-
-                if (drewHeader)
-                {
-                    serializedObject.ApplyModifiedProperties();
-                    EditorGUILayout.Space(2);
-                }
-            }
+            InspectorFieldSearch.Draw(gameObject, settings, _search);
         }
 
     }

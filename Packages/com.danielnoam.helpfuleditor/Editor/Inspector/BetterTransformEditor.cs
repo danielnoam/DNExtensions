@@ -9,23 +9,41 @@ namespace DNExtensions.HelpfulEditor.Inspector
     [CanEditMultipleObjects]
     internal class BetterTransformEditor : Editor
     {
+        private const string EulerHintProperty = "m_LocalEulerAnglesHint";
+
         private static readonly Type NativeEditorType = typeof(Editor).Assembly.GetType("UnityEditor.TransformInspector");
 
         private static bool _scaleLocked;
         private static bool _scaleLockInitialized;
+        private static bool _scaleLockDefault;
 
         private Editor _nativeEditor;
         private Vector3 _lastScale;
+
+        private Vector3 _worldEulerDisplay;
+        private Quaternion _worldEulerSource;
+        private bool _worldEulerValid;
 
         private void OnEnable()
         {
             if (target is Transform transform) _lastScale = transform.localScale;
 
-            if (!_scaleLockInitialized)
-            {
-                _scaleLocked = HelpfulEditorSettings.Inspector.scaleLockDefaultOn;
-                _scaleLockInitialized = true;
-            }
+            // Editors are pooled and handed a new target, and the cached angles are keyed only on the
+            // rotation they produced — so without this, typing 370 on one object and then selecting
+            // another at the same world rotation shows 370 for that one too. Identity makes it easy
+            // to hit: every object that has never been rotated shares it.
+            _worldEulerValid = false;
+
+            // The lock is deliberately shared across inspectors and kept across selections, so it is
+            // only seeded from the setting once. Comparing against the last seeded value is what
+            // makes changing that setting take effect without waiting for a recompile.
+            bool setting = HelpfulEditorSettings.Inspector.scaleLockDefaultOn;
+
+            if (_scaleLockInitialized && setting == _scaleLockDefault) return;
+
+            _scaleLocked = setting;
+            _scaleLockDefault = setting;
+            _scaleLockInitialized = true;
         }
 
         private void OnDisable()
@@ -45,9 +63,16 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             serializedObject.Update();
 
+            // The Local header only earns its place once there is a World group to tell it apart
+            // from. On a root object it would label the only three rows there are.
+            bool showWorld = ShowWorldFields(settings);
+            if (showWorld) EditorGUILayout.LabelField("Local", EditorStyles.miniBoldLabel);
+
             DrawPosition(settings);
             DrawRotation(settings);
             DrawScale(settings);
+
+            if (showWorld) DrawWorld();
 
             if (serializedObject.ApplyModifiedProperties())
             {
@@ -96,11 +121,34 @@ namespace DNExtensions.HelpfulEditor.Inspector
             serializedObject.Update();
         }
 
+        /// <summary>
+        /// Rotation is shown from Unity's own euler hint rather than from localEulerAngles.
+        ///
+        /// localEulerAngles is derived from the quaternion, so it is one of several equivalent
+        /// answers — type 370 and it reads back 10, and values jump about while editing near gimbal
+        /// configurations. Unity's Transform inspector keeps m_LocalEulerAnglesHint for exactly this
+        /// reason, and replacing that inspector without carrying the hint forward loses the property
+        /// most people would notice first.
+        /// </summary>
         private void DrawRotation(InspectorSettings settings)
         {
             if (!(target is Transform main)) return;
 
-            Vector3 displayEuler = GetCommonValue(t => t.localEulerAngles, out bool mixed);
+            SerializedProperty hint = serializedObject.FindProperty(EulerHintProperty);
+
+            Vector3 displayEuler;
+            bool mixed;
+
+            if (hint != null)
+            {
+                displayEuler = hint.vector3Value;
+                mixed = hint.hasMultipleDifferentValues;
+            }
+            else
+            {
+                displayEuler = GetCommonValue(t => t.localEulerAngles, out mixed);
+            }
+
             Quaternion quaternion = main.localRotation;
             bool unusedLock = false;
 
@@ -124,6 +172,16 @@ namespace DNExtensions.HelpfulEditor.Inspector
             foreach (Object obj in targets)
             {
                 if (obj is Transform transform) transform.localEulerAngles = mixed ? transform.localEulerAngles + delta : newEuler;
+            }
+
+            serializedObject.Update();
+
+            // Written back explicitly rather than trusting the setter to have maintained it, so the
+            // number just typed is the number that reads back on the next repaint.
+            if (hint != null && !mixed)
+            {
+                hint.vector3Value = newEuler;
+                serializedObject.ApplyModifiedProperties();
             }
         }
 
@@ -157,6 +215,123 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             _lastScale = newValue;
             serializedObject.Update();
+        }
+
+        /// <summary>
+        /// The same three values in world space, below the local ones. Only drawn under a parent:
+        /// a root object's local values already are its world values, so the second set would be an
+        /// exact copy of the first sitting directly beneath it.
+        ///
+        /// Plain Vector3 rows rather than the linked field the local ones use. These are a read-out
+        /// with editing attached, not the object's primary controls, and giving them the same
+        /// copy/paste/reset chrome would make the two sets look interchangeable.
+        /// </summary>
+        private void DrawWorld()
+        {
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField("World", EditorStyles.miniBoldLabel);
+
+            DrawWorldPosition();
+            DrawWorldRotation();
+            DrawWorldScale();
+        }
+
+        private bool ShowWorldFields(InspectorSettings settings) => settings.worldFieldsEnabled && HasParent();
+
+        /// <summary>Any target, not every one — a mixed selection still has world values worth showing.</summary>
+        private bool HasParent()
+        {
+            foreach (Object obj in targets)
+            {
+                if (obj is Transform transform && transform.parent) return true;
+            }
+
+            return false;
+        }
+
+        private void DrawWorldPosition()
+        {
+            Vector3 displayValue = GetCommonValue(t => t.position, out bool mixed);
+
+            EditorGUI.BeginChangeCheck();
+            EditorGUI.showMixedValue = mixed;
+
+            Vector3 newValue = EditorGUILayout.Vector3Field("Position", displayValue);
+
+            EditorGUI.showMixedValue = false;
+
+            if (!EditorGUI.EndChangeCheck()) return;
+
+            Vector3 delta = newValue - displayValue;
+            Undo.RecordObjects(targets, "World Position Changed");
+
+            foreach (Object obj in targets)
+            {
+                if (obj is Transform transform) transform.position = mixed ? transform.position + delta : newValue;
+            }
+
+            serializedObject.Update();
+        }
+
+        /// <summary>
+        /// Carries the same trap the local rotation does, without a serialized hint to lean on: world
+        /// euler is read back off the quaternion, so typing 370 would return 10 and the numbers would
+        /// jump about while editing. The angles last typed here are kept and redisplayed for as long
+        /// as the rotation they produced is still the one on the object, which is what
+        /// m_LocalEulerAnglesHint does for the local field.
+        /// </summary>
+        private void DrawWorldRotation()
+        {
+            if (!(target is Transform main)) return;
+
+            Vector3 displayEuler = GetCommonValue(t => t.eulerAngles, out bool mixed);
+
+            if (!mixed && _worldEulerValid && main.rotation == _worldEulerSource) displayEuler = _worldEulerDisplay;
+
+            EditorGUI.BeginChangeCheck();
+            EditorGUI.showMixedValue = mixed;
+
+            Vector3 newEuler = EditorGUILayout.Vector3Field("Rotation", displayEuler);
+
+            EditorGUI.showMixedValue = false;
+
+            if (!EditorGUI.EndChangeCheck()) return;
+
+            Vector3 delta = newEuler - displayEuler;
+            Undo.RecordObjects(targets, "World Rotation Changed");
+
+            foreach (Object obj in targets)
+            {
+                if (obj is Transform transform) transform.eulerAngles = mixed ? transform.eulerAngles + delta : newEuler;
+            }
+
+            serializedObject.Update();
+
+            if (mixed) return;
+
+            _worldEulerDisplay = newEuler;
+            _worldEulerSource = main.rotation;
+            _worldEulerValid = true;
+        }
+
+        /// <summary>
+        /// Read-only, because lossyScale has no setter and cannot be given a correct one: under a
+        /// rotated parent the world scale is a sheared matrix that no single local scale reproduces,
+        /// so a writable field would quietly store something other than what was typed. Shown anyway
+        /// — knowing what an object ended up at is most of why the world values are wanted.
+        /// </summary>
+        private void DrawWorldScale()
+        {
+            Vector3 displayValue = GetCommonValue(t => t.lossyScale, out bool mixed);
+
+            EditorGUI.showMixedValue = mixed;
+
+            using (new EditorGUI.DisabledScope(true))
+            {
+                EditorGUILayout.Vector3Field("Scale", displayValue);
+            }
+
+            EditorGUI.showMixedValue = false;
         }
 
         private void BuildResetMenu(GenericMenu menu, Action<Transform, Vector3> setter, Vector3 resetValue)

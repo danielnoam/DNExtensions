@@ -46,9 +46,14 @@ namespace DNExtensions.HelpfulEditor.Inspector
             return HelpfulEditorReflection.DerivesFrom(component.GetType(), TextType) && GetSharedMaterial(component) != null;
         }
 
+        /// <summary>
+        /// Cached per type: this is asked of every component on the selection several times a second
+        /// while the header buttons are being rebuilt, and the answer is almost always no.
+        /// </summary>
         private static PropertyInfo GetSharedMaterial(Component component)
         {
-            return component.GetType().GetProperty(SharedMaterialProperty, BindingFlags.Public | BindingFlags.Instance);
+            return HelpfulEditorMembers.Property(component.GetType(), SharedMaterialProperty,
+                BindingFlags.Public | BindingFlags.Instance);
         }
 
         /// <summary>

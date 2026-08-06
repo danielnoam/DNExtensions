@@ -320,31 +320,6 @@ namespace DNExtensions.HelpfulEditor
             EditorGUI.DrawRect(new Rect(rect.xMax - thickness, rect.y, thickness, rect.height), color);
         }
 
-        /// <summary>
-        /// Whether the component is currently enabled. Found by reflection rather than by casting:
-        /// Behaviour, Renderer and Collider each declare their own 'enabled' with no shared base that
-        /// has one. Anything without the property — Transform being the obvious case — counts as
-        /// enabled, because it has no off state to show.
-        /// </summary>
-        public static bool IsEnabled(Component component)
-        {
-            if (!component) return false;
-
-            System.Reflection.PropertyInfo property = component.GetType().GetProperty("enabled",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.FlattenHierarchy);
-
-            if (property == null || property.PropertyType != typeof(bool) || !property.CanRead) return true;
-
-            try
-            {
-                return (bool)property.GetValue(component);
-            }
-            catch (Exception)
-            {
-                return true;
-            }
-        }
-
         public static Texture GetIcon(Component component)
         {
             if (!component) return null;

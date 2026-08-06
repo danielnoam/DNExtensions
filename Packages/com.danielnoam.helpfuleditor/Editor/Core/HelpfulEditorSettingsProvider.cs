@@ -254,6 +254,9 @@ namespace DNExtensions.HelpfulEditor
                     settings.betterTransformEnabled = EditorGUILayout.Toggle("Better Transform", settings.betterTransformEnabled);
                     settings.scaleLockDefaultOn = EditorGUILayout.Toggle("Scale Lock Default On", settings.scaleLockDefaultOn);
                     settings.resetMenuItemsEnabled = EditorGUILayout.Toggle("Show Reset Menu Items", settings.resetMenuItemsEnabled);
+                    settings.worldFieldsEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("World Fields", "Adds world position, rotation and scale below the local rows. Only shown on objects with a parent, since a root object's local values already are its world values."),
+                        settings.worldFieldsEnabled);
                 }
 
                 if (Section(Inspector, "Save In Play Mode"))
@@ -293,7 +296,6 @@ namespace DNExtensions.HelpfulEditor
                 if (Section(Inspector, "Keybinds"))
                 {
                     EditorGUILayout.LabelField("Component actions apply to the header bar button under the cursor.", EditorStyles.miniLabel);
-                    settings.isolateKey = DrawKeyBind("Isolate", settings.isolateKey);
                     settings.expandCollapseKey = DrawKeyBind("Expand / Collapse", settings.expandCollapseKey);
                     settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);
                     settings.toggleEnabledKey = DrawKeyBind("Toggle Enabled", settings.toggleEnabledKey);

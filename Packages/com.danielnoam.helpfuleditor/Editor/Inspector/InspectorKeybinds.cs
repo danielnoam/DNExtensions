@@ -1,5 +1,3 @@
-using System;
-using System.Reflection;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -37,13 +35,6 @@ namespace DNExtensions.HelpfulEditor.Inspector
             }
 
             if (EditorGUIUtility.editingTextField) return;
-
-            if (settings.isolateKey.Matches(evt))
-            {
-                ComponentIsolation.ToggleActive();
-                evt.Use();
-                return;
-            }
 
             // Acts on the whole object, so unlike the per-component actions below it does not need
             // anything under the cursor.
@@ -111,30 +102,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
             tracker.ForceRebuild();
         }
 
-        /// <summary>
-        /// Located by reflection rather than by casting: Behaviour, Renderer and Collider each
-        /// declare their own 'enabled' with no shared base that has it. Components without one —
-        /// Transform being the obvious case — are left alone.
-        /// </summary>
         private static void ToggleEnabled(Component component)
         {
-            PropertyInfo property = component.GetType().GetProperty("enabled",
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy);
-
-            if (property == null || property.PropertyType != typeof(bool) || !property.CanRead || !property.CanWrite) return;
-
-            try
-            {
-                bool enabled = (bool)property.GetValue(component);
-
-                Undo.RecordObject(component, "Toggle Component Enabled");
-                property.SetValue(component, !enabled);
-                EditorUtility.SetDirty(component);
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning($"[HelpfulEditor] Could not toggle {component.GetType().Name}.enabled: {e.Message}");
-            }
+            HelpfulEditorComponents.Toggle(component);
         }
     }
 }

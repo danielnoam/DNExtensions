@@ -6,7 +6,8 @@ using UnityEngine;
 namespace DNExtensions.HelpfulEditor
 {
     /// <summary>
-    /// Which editor window the mouse is currently over. Used to qualify the cached hover state
+    /// Finding editor windows: which one the mouse is currently over, every open window of a kind,
+    /// and the Scene View an action should act on. The mouse checks qualify a cached hover state
     /// before a global keybind acts on it, so a stale hover from another window can't be targeted.
     /// Types are resolved once and compared by identity rather than by name, so a same-named type
     /// from another assembly cannot masquerade as one of Unity's windows.
@@ -40,6 +41,32 @@ namespace DNExtensions.HelpfulEditor
         public static IEnumerable<EditorWindow> AllProjectBrowsers() => AllOfType(ProjectWindowType);
 
         public static IEnumerable<EditorWindow> AllInspectors() => AllOfType(InspectorWindowType);
+
+        /// <summary>
+        /// The Scene View an action should act on. SceneView.lastActiveSceneView on its own is null
+        /// until one has been focused at least once in the session, so anything reaching for it
+        /// bare does nothing at all on a freshly opened layout.
+        /// </summary>
+        /// <param name="needsFocus">True when no Scene View currently holds focus.</param>
+        public static SceneView ResolveSceneView(out bool needsFocus)
+        {
+            needsFocus = false;
+
+            if (SceneView.sceneViews == null || SceneView.sceneViews.Count == 0) return null;
+
+            // One that already has focus is the one being looked at, and it needs nothing doing.
+            SceneView active = SceneView.lastActiveSceneView;
+            if (active && active.hasFocus) return active;
+
+            foreach (object candidate in SceneView.sceneViews)
+            {
+                if (candidate is SceneView view && view.hasFocus) return view;
+            }
+
+            needsFocus = true;
+
+            return active ? active : SceneView.sceneViews[0] as SceneView;
+        }
 
         private static IEnumerable<EditorWindow> AllOfType(Type windowType)
         {

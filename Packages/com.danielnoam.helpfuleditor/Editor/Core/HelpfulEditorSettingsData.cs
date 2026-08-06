@@ -62,6 +62,9 @@ namespace DNExtensions.HelpfulEditor
         public bool scaleLockDefaultOn;
         public bool resetMenuItemsEnabled = true;
 
+        /// <summary>Adds world position, rotation and scale below the local rows on parented objects.</summary>
+        public bool worldFieldsEnabled = true;
+
         public bool saveInPlayModeEnabled = true;
 
         /// <summary>Component types that get no save button — ones whose state does not survive a restore usefully.</summary>
@@ -84,7 +87,6 @@ namespace DNExtensions.HelpfulEditor
         public bool transferDependencies = true;
         public List<ComponentDependencyPair> dependencyWhitelist = new List<ComponentDependencyPair>();
 
-        public KeyBind isolateKey = KeyBind.Of(KeyCode.E, ctrl: true);
         public KeyBind expandCollapseKey = KeyBind.Of(KeyCode.E);
 
         /// <summary>Same chord the Hierarchy and Project use for the equivalent action.</summary>

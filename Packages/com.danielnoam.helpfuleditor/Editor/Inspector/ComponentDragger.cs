@@ -10,114 +10,111 @@ namespace DNExtensions.HelpfulEditor.Inspector
 {
     /// <summary>
     /// Drag a component onto another GameObject in the Hierarchy to move it there; hold Alt to copy
-    /// instead. Dependent components are carried along. Dropping on empty Hierarchy space creates a
-    /// new GameObject carrying the dragged components.
+    /// instead. Dependent components are carried along. Dropping between rows, or past the end of
+    /// the list, creates a new GameObject carrying the dragged components.
     /// </summary>
     [InitializeOnLoad]
     internal static class ComponentDragger
     {
-        private static float _passMaxBottom;
-        private static float _lastPassMaxBottom;
-        private static float _previousRowY = float.MaxValue;
-        private static int _rowIndexInPass;
-        private static bool _handledThisFrame;
-
         static ComponentDragger()
         {
-            HelpfulEditorHooks.HierarchyItem -= OnHierarchyItem;
-            HelpfulEditorHooks.HierarchyItem += OnHierarchyItem;
-
-            EditorApplication.update -= OnUpdate;
-            EditorApplication.update += OnUpdate;
+#if UNITY_6000_3_OR_NEWER
+            DragAndDrop.RemoveDropHandlerV2((DragAndDrop.HierarchyDropHandlerV2)OnHierarchyDrop);
+            DragAndDrop.AddDropHandlerV2((DragAndDrop.HierarchyDropHandlerV2)OnHierarchyDrop);
+#else
+            DragAndDrop.RemoveDropHandler(OnHierarchyDrop);
+            DragAndDrop.AddDropHandler(OnHierarchyDrop);
+#endif
         }
 
-        private static void OnUpdate()
+        // The V2 handlers arrive in 6000.3, a version before EditorUtility's id APIs change over —
+        // so this splits at 6.3 while HelpfulEditorObjectId, which resolves the id, splits at 6.4.
+#if UNITY_6000_3_OR_NEWER
+        private static DragAndDropVisualMode OnHierarchyDrop(EntityId dropTargetId, HierarchyDropFlags dropMode, Transform parentForDraggedObjects, bool perform)
         {
-            _handledThisFrame = false;
+            return HandleDrop(dropTargetId, dropMode, perform);
         }
+#else
+        private static DragAndDropVisualMode OnHierarchyDrop(int dropTargetInstanceId, HierarchyDropFlags dropMode, Transform parentForDraggedObjects, bool perform)
+        {
+            return HandleDrop(dropTargetInstanceId, dropMode, perform);
+        }
+#endif
 
-        private static void OnHierarchyItem(object rawId, Object item, Rect rowRect)
+        /// <summary>
+        /// The Hierarchy says where the cursor is rather than it having to be worked out: DropUpon is
+        /// a drop onto a row, anything else is between two rows or past the end of the list. The row
+        /// callback this replaced never fired for the empty space below the last row at all, so the
+        /// bottom of the lowest row had to be carried across passes and compared against the cursor.
+        ///
+        /// Registered for the whole session rather than only while dragging. None is the answer for
+        /// any drag that is not carrying components, which leaves the Hierarchy's own handling alone.
+        /// </summary>
+        private static DragAndDropVisualMode HandleDrop(object rawTargetId, HierarchyDropFlags dropMode, bool perform)
         {
             InspectorSettings settings = HelpfulEditorSettings.Inspector;
-            if (!settings.moduleEnabled || !settings.componentDraggerEnabled) return;
-
-            TrackRowBounds(rowRect);
-
-            Event evt = Event.current;
-            if (evt == null) return;
-            if (evt.type != EventType.DragUpdated && evt.type != EventType.DragPerform) return;
-            if (_handledThisFrame) return;
+            if (!settings.moduleEnabled || !settings.componentDraggerEnabled) return DragAndDropVisualMode.None;
 
             Component[] components = CollectDraggedComponents();
-            if (components.Length == 0) return;
+            if (components.Length == 0) return DragAndDropVisualMode.None;
 
-            bool copyMode = settings.altInvertsMoveCopyDefault ? !evt.alt : evt.alt;
+            // The handler runs outside the row callback, so there is no guarantee of an event to read
+            // the modifier from; no event means no Alt rather than a failed drop.
+            Event evt = Event.current;
+            bool alt = evt != null && evt.alt;
+            bool copyMode = settings.altInvertsMoveCopyDefault ? !alt : alt;
 
-            if (rowRect.Contains(evt.mousePosition))
+            if (dropMode.HasFlag(HierarchyDropFlags.DropUpon))
             {
-                _handledThisFrame = true;
-                HandleDropOnRow(item as GameObject, components, copyMode, evt);
-                return;
+                return DropOnObject(HelpfulEditorObjectId.Resolve(rawTargetId) as GameObject, components, copyMode, perform);
             }
 
-            if (IsFirstRowOfPass() && evt.mousePosition.y > _lastPassMaxBottom)
-            {
-                _handledThisFrame = true;
-                HandleDropOnEmptySpace(components, copyMode, evt);
-            }
+            return DropAsNewObject(components, copyMode, perform);
         }
 
-        private static void HandleDropOnRow(GameObject target, Component[] components, bool copyMode, Event evt)
+        private static DragAndDropVisualMode DropOnObject(GameObject target, Component[] components, bool copyMode, bool perform)
         {
-            if (!target) return;
+            if (!target) return DragAndDropVisualMode.None;
 
-            bool sameObject = components.Any(c => c && c.gameObject == target);
+            // Moving a component onto the object it already lives on does nothing; copying onto it
+            // duplicates it, which is a reasonable thing to have asked for.
+            if (components.Any(c => c && c.gameObject == target) && !copyMode) return DragAndDropVisualMode.Rejected;
 
-            if (evt.type == EventType.DragUpdated)
+            // The whole drop is refused rather than transferring the parts that fit — a drop that
+            // moved three of four components would read as having worked.
+            if (components.Any(c => !CanAdd(c, target))) return DragAndDropVisualMode.Rejected;
+
+            if (perform)
             {
-                DragAndDrop.visualMode = sameObject && !copyMode
-                    ? DragAndDropVisualMode.Rejected
-                    : copyMode ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Move;
-
-                evt.Use();
-                return;
+                DragAndDrop.AcceptDrag();
+                TransferComponents(components, target, copyMode);
             }
 
-            if (sameObject && !copyMode)
-            {
-                DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
-                evt.Use();
-                return;
-            }
-
-            DragAndDrop.AcceptDrag();
-            TransferComponents(components, target, copyMode);
-            evt.Use();
+            return copyMode ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Move;
         }
 
-        private static void HandleDropOnEmptySpace(Component[] components, bool copyMode, Event evt)
+        private static DragAndDropVisualMode DropAsNewObject(Component[] components, bool copyMode, bool perform)
         {
-            if (evt.type == EventType.DragUpdated)
+            if (perform)
             {
-                DragAndDrop.visualMode = copyMode ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Move;
-                evt.Use();
-                return;
+                DragAndDrop.AcceptDrag();
+
+                string undoName = copyMode ? "Copy Components To New GameObject" : "Move Components To New GameObject";
+                Undo.SetCurrentGroupName(undoName);
+                int undoGroup = Undo.GetCurrentGroup();
+
+                // Named like Unity's own Create Empty. Naming it after the object the components came
+                // from reads as a copy of that object, which is not what was made.
+                GameObject created = new GameObject("GameObject");
+                Undo.RegisterCreatedObjectUndo(created, undoName);
+
+                TransferComponents(components, created, copyMode, undoGroup);
+
+                Selection.activeGameObject = created;
+                Undo.CollapseUndoOperations(undoGroup);
             }
 
-            DragAndDrop.AcceptDrag();
-
-            string undoName = copyMode ? "Copy Components To New GameObject" : "Move Components To New GameObject";
-            Undo.SetCurrentGroupName(undoName);
-            int undoGroup = Undo.GetCurrentGroup();
-
-            GameObject created = new GameObject(components[0] ? components[0].gameObject.name : "GameObject");
-            Undo.RegisterCreatedObjectUndo(created, undoName);
-
-            TransferComponents(components, created, copyMode, undoGroup);
-
-            Selection.activeGameObject = created;
-            Undo.CollapseUndoOperations(undoGroup);
-            evt.Use();
+            return copyMode ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Move;
         }
 
         private static Component[] CollectDraggedComponents()
@@ -178,9 +175,43 @@ namespace DNExtensions.HelpfulEditor.Inspector
             if (!existingUndoGroup.HasValue) Undo.CollapseUndoOperations(undoGroup);
         }
 
+        /// <summary>
+        /// Whether Unity will actually take this component. The case that matters is one requiring a
+        /// RectTransform landing on an object with a plain Transform: normally Unity swaps the
+        /// Transform out to satisfy that, but a prefab instance's Transform cannot be replaced, so it
+        /// logs an error and refuses. Asking first is what keeps a refused drop out of the console.
+        /// </summary>
+        private static bool CanAdd(Component component, GameObject target)
+        {
+            if (!component || !target) return false;
+            if (!RequiresRectTransform(component.GetType())) return true;
+            if (target.transform is RectTransform) return true;
+
+            return !PrefabUtility.IsPartOfPrefabInstance(target);
+        }
+
+        private static bool RequiresRectTransform(Type type)
+        {
+            foreach (RequireComponent required in HelpfulEditorMembers.AttributesOf<RequireComponent>(type))
+            {
+                if (IsRectTransform(required.m_Type0) || IsRectTransform(required.m_Type1) || IsRectTransform(required.m_Type2)) return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsRectTransform(Type type)
+        {
+            return type != null && typeof(RectTransform).IsAssignableFrom(type);
+        }
+
         private static void TransferSingleComponent(Component component, GameObject target, bool copyMode, string undoName)
         {
             if (!component || !target) return;
+
+            // Dependents are collected after the drop was accepted, so they get the same check here
+            // rather than being handed to Unity to reject noisily.
+            if (!CanAdd(component, target)) return;
 
             Component[] before = target.GetComponents<Component>();
 
@@ -228,7 +259,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             Type dependencyType = dependency.GetType();
 
-            foreach (RequireComponent required in dependent.GetType().GetCustomAttributes(typeof(RequireComponent), true))
+            foreach (RequireComponent required in HelpfulEditorMembers.AttributesOf<RequireComponent>(dependent.GetType()))
             {
                 if (required.m_Type0 == dependencyType || required.m_Type1 == dependencyType || required.m_Type2 == dependencyType) return true;
             }
@@ -268,27 +299,5 @@ namespace DNExtensions.HelpfulEditor.Inspector
             return false;
         }
 
-        /// <summary>
-        /// The per-row callback never fires for empty space below the last row, so the bottom of the
-        /// lowest row is remembered across passes and used to recognise an empty-space drop.
-        /// </summary>
-        private static void TrackRowBounds(Rect rowRect)
-        {
-            if (rowRect.y <= _previousRowY)
-            {
-                if (_passMaxBottom > 0f) _lastPassMaxBottom = _passMaxBottom;
-                _passMaxBottom = 0f;
-                _rowIndexInPass = 0;
-            }
-
-            _previousRowY = rowRect.y;
-            _passMaxBottom = Mathf.Max(_passMaxBottom, rowRect.yMax);
-            _rowIndexInPass++;
-        }
-
-        private static bool IsFirstRowOfPass()
-        {
-            return _rowIndexInPass == 1 && _lastPassMaxBottom > 0f;
-        }
     }
 }

@@ -142,7 +142,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
             _hasPendingFocus = false;
 
-            SceneView view = ResolveSceneView(out bool needsFocus);
+            SceneView view = HelpfulEditorWindows.ResolveSceneView(out bool needsFocus);
             if (!view) return;
 
             // Brought to front and given the keyboard when it did not already have it, so the camera
@@ -152,27 +152,6 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
             view.Frame(_pendingFocus, false);
             view.Repaint();
-        }
-
-        /// <param name="needsFocus">True when no Scene View currently holds focus.</param>
-        private static SceneView ResolveSceneView(out bool needsFocus)
-        {
-            needsFocus = false;
-
-            if (SceneView.sceneViews == null || SceneView.sceneViews.Count == 0) return null;
-
-            // One that already has focus is the one being looked at, and it needs nothing doing.
-            SceneView active = SceneView.lastActiveSceneView;
-            if (active && active.hasFocus) return active;
-
-            foreach (object candidate in SceneView.sceneViews)
-            {
-                if (candidate is SceneView view && view.hasFocus) return view;
-            }
-
-            needsFocus = true;
-
-            return active ? active : SceneView.sceneViews[0] as SceneView;
         }
 
         private static bool TryGetBounds(GameObject[] targets, out Bounds bounds)
