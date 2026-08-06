@@ -111,7 +111,11 @@ namespace DNExtensions.HelpfulEditor
         // impose on someone who never asked for guides.
         public bool moduleEnabled;
 
-        public bool showGuides = true;
+        /// <summary>Owned by the Rulers button in the Game View toolbar, which is the only thing that sets it.</summary>
+        public bool showRulers = true;
+
+        public bool guidesEnabled = true;
+
         public Color guideColor = new Color(0f, 0.85f, 1f, 0.9f);
         public float guideWidth = 2f;
 

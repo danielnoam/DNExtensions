@@ -52,7 +52,11 @@ namespace DNExtensions.HelpfulEditor.GameView
 
         private static void Sync(bool refreshExisting)
         {
-            bool attach = HelpfulEditorSettings.GameView.moduleEnabled;
+            GameViewSettings settings = HelpfulEditorSettings.GameView;
+
+            // Rulers and the toolbar button come with the guides — turning the feature off takes the
+            // whole overlay away rather than leaving furniture behind with nothing to place.
+            bool attach = settings.moduleEnabled && settings.guidesEnabled;
 
             foreach (EditorWindow gameView in EnumerateGameViews())
             {

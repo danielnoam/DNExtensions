@@ -101,9 +101,11 @@ namespace DNExtensions.HelpfulEditor
             {
                 BeginSections();
 
-                if (Section(GameViewModule, "Guides"))
+                if (Section(GameViewModule, "Guides & Rulers"))
                 {
-                    settings.showGuides = EditorGUILayout.Toggle("Show Guides", settings.showGuides);
+                    settings.guidesEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Enabled", "The rulers, the toolbar's Rulers button and the guides are one feature — this takes the overlay off the Game View entirely."),
+                        settings.guidesEnabled);
                     settings.guideColor = EditorGUILayout.ColorField("Colour", settings.guideColor);
                     settings.guideWidth = EditorGUILayout.Slider("Width", settings.guideWidth, 0.5f, 8f);
 
@@ -119,7 +121,7 @@ namespace DNExtensions.HelpfulEditor
                         "Drag off the top ruler for a vertical guide, off the left ruler for a horizontal one.\n" +
                         "Drag a guide back onto a ruler to delete it.\n" +
                         "Hold Alt while dragging to snap to the centre, Shift to move in 10px steps.\n" +
-                        "Right-click a ruler for the guide menu.\n" +
+                        "The toolbar's Rulers button shows and hides the rulers and the guides together; right-click it, or a ruler, for the guide menu.\n" +
                         "Positions are held against the render target, so they survive resizing and zooming.",
                         MessageType.Info);
                 }

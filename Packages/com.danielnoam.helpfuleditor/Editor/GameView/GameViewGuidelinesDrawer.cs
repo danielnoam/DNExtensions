@@ -12,7 +12,8 @@ namespace DNExtensions.HelpfulEditor.GameView
     /// The rulers are pinned to the window under the toolbar and do cover the first 18 pixels of the
     /// game. That is deliberate: the Game View draws edge to edge and cannot be asked to keep clear,
     /// and every attempt to tuck the rulers into the surround around the render target only worked in
-    /// Fixed Resolution — Free Aspect has no surround at all.
+    /// Fixed Resolution — Free Aspect has no surround at all. The Rulers button in the toolbar hides
+    /// them for the times that bite matters; the guides stay, and take the reclaimed strip.
     /// </summary>
     internal class GameViewGuidelinesDrawer : VisualElement
     {
@@ -32,6 +33,7 @@ namespace DNExtensions.HelpfulEditor.GameView
         private readonly VisualElement _topRuler;
         private readonly VisualElement _leftRuler;
         private readonly VisualElement _grabLayer;
+        private readonly GameViewRulerToggle _rulerToggle;
 
         /// <summary>
         /// Pooled rather than rebuilt. These elements carry the pointer capture that drives a drag,
@@ -85,6 +87,10 @@ namespace DNExtensions.HelpfulEditor.GameView
             Stretch(_drawLayer);
             Add(_drawLayer);
 
+            // Sits in the Game View's own toolbar, above everything the overlay draws over the game.
+            _rulerToggle = new GameViewRulerToggle(ShowMenu);
+            Add(_rulerToggle);
+
             RegisterCallback<GeometryChangedEvent>(_ => RefreshLayout());
             RefreshLayout();
         }
@@ -95,12 +101,13 @@ namespace DNExtensions.HelpfulEditor.GameView
 
             _geometry.Update(_gameView, WindowRect);
 
-            DisplayStyle display = settings.moduleEnabled ? DisplayStyle.Flex : DisplayStyle.None;
+            bool rulers = settings.showRulers;
+            DisplayStyle display = rulers ? DisplayStyle.Flex : DisplayStyle.None;
             _corner.style.display = display;
             _topRuler.style.display = display;
             _leftRuler.style.display = display;
 
-            if (settings.moduleEnabled)
+            if (rulers)
             {
                 Rect ruler = RulerArea;
 
@@ -108,6 +115,8 @@ namespace DNExtensions.HelpfulEditor.GameView
                 SetRect(_topRuler, new Rect(ruler.x + RulerSize, ruler.y, Mathf.Max(0f, ruler.width - RulerSize), RulerSize));
                 SetRect(_leftRuler, new Rect(ruler.x, ruler.y + RulerSize, RulerSize, Mathf.Max(0f, ruler.height - RulerSize)));
             }
+
+            _rulerToggle.Layout(_geometry.ContentRect.y, WindowRect.width);
 
             LayoutGrabTargets(settings);
 
@@ -141,13 +150,18 @@ namespace DNExtensions.HelpfulEditor.GameView
             }
         }
 
+        /// <summary>Zero while the rulers are hidden, which hands their strip of the window back to the game.</summary>
+        private static float RulerThickness => HelpfulEditorSettings.GameView.showRulers ? RulerSize : 0f;
+
         private Rect GuideArea
         {
             get
             {
                 Rect ruler = RulerArea;
-                return new Rect(ruler.x + RulerSize, ruler.y + RulerSize,
-                    Mathf.Max(0f, ruler.width - RulerSize), Mathf.Max(0f, ruler.height - RulerSize));
+                float thickness = RulerThickness;
+
+                return new Rect(ruler.x + thickness, ruler.y + thickness,
+                    Mathf.Max(0f, ruler.width - thickness), Mathf.Max(0f, ruler.height - thickness));
             }
         }
 
@@ -173,7 +187,7 @@ namespace DNExtensions.HelpfulEditor.GameView
 
         private void LayoutGrabTargets(GameViewSettings settings)
         {
-            bool active = settings.moduleEnabled && settings.showGuides && _geometry.HasUsableRect;
+            bool active = settings.showRulers && _geometry.HasUsableRect;
             Rect game = VisibleGameRect;
 
             for (int i = 0; i < settings.guides.Count; i++)
@@ -255,8 +269,7 @@ namespace DNExtensions.HelpfulEditor.GameView
 
             if (evt.button != 0 || horizontal == null) return;
 
-            GameViewSettings settings = HelpfulEditorSettings.GameView;
-            if (!settings.moduleEnabled || !settings.showGuides || !_geometry.HasUsableRect) return;
+            if (!_geometry.HasUsableRect) return;
 
             _dragMode = DragMode.Create;
             _dragIndex = -1;
@@ -388,16 +401,18 @@ namespace DNExtensions.HelpfulEditor.GameView
             GameViewSettings settings = HelpfulEditorSettings.GameView;
             GenericMenu menu = new GenericMenu();
 
-            menu.AddItem(new GUIContent("Show Guides"), settings.showGuides, () =>
+            // Adding while the rulers are off would drop a guide nobody can see, so the menu says no
+            // rather than looking broken. Clearing stays available either way.
+            if (settings.showRulers)
             {
-                settings.showGuides = !settings.showGuides;
-                HelpfulEditorSettings.SaveGameView();
-                GameViewModule.Sync();
-            });
-
-            menu.AddSeparator(string.Empty);
-            menu.AddItem(new GUIContent("Add Vertical Guide"), false, () => AddCentred(false));
-            menu.AddItem(new GUIContent("Add Horizontal Guide"), false, () => AddCentred(true));
+                menu.AddItem(new GUIContent("Add Vertical Guide"), false, () => AddCentred(false));
+                menu.AddItem(new GUIContent("Add Horizontal Guide"), false, () => AddCentred(true));
+            }
+            else
+            {
+                menu.AddDisabledItem(new GUIContent("Add Vertical Guide"));
+                menu.AddDisabledItem(new GUIContent("Add Horizontal Guide"));
+            }
 
             if (settings.guides.Count > 0) menu.AddItem(new GUIContent("Clear All Guides"), false, GameViewModule.ClearGuides);
             else menu.AddDisabledItem(new GUIContent("Clear All Guides"));
@@ -419,7 +434,10 @@ namespace DNExtensions.HelpfulEditor.GameView
         private void OnDrawGUI()
         {
             GameViewSettings settings = HelpfulEditorSettings.GameView;
-            if (!settings.moduleEnabled) return;
+
+            // The toolbar button takes the guides with it: rulers off is the way to get an unobstructed
+            // look at the game, which a set of guides left drawn over it would rather defeat.
+            if (!settings.showRulers) return;
 
             _geometry.Update(_gameView, WindowRect);
             if (!_geometry.HasUsableRect) return;
@@ -429,18 +447,14 @@ namespace DNExtensions.HelpfulEditor.GameView
             Handles.BeginGUI();
 
             DrawRulers();
+            DrawGuides(settings);
+            ApplyCursors(settings);
 
-            if (settings.showGuides)
+            if (_dragMode != DragMode.None)
             {
-                DrawGuides(settings);
-                ApplyCursors(settings);
-
-                if (_dragMode != DragMode.None)
-                {
-                    float width = Mathf.Max(0.5f, settings.guideWidth);
-                    DrawGuide(_dragHorizontal, _dragNormalized, settings.guideColor, Mathf.Max(width * DragThicknessMultiplier, width + 2f));
-                    DrawReadout();
-                }
+                float width = Mathf.Max(0.5f, settings.guideWidth);
+                DrawGuide(_dragHorizontal, _dragNormalized, settings.guideColor, Mathf.Max(width * DragThicknessMultiplier, width + 2f));
+                DrawReadout();
             }
 
             Handles.EndGUI();

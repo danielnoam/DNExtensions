@@ -1,6 +1,7 @@
 {
-    "moduleEnabled": false,
-    "showGuides": true,
+    "moduleEnabled": true,
+    "showRulers": false,
+    "guidesEnabled": true,
     "guideColor": {
         "r": 0.0,
         "g": 0.8500000238418579,
