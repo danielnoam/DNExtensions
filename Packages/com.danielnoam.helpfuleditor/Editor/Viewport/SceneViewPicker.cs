@@ -45,7 +45,7 @@ namespace DNExtensions.HelpfulEditor.Viewport
             if (evt == null) return;
 
             if (_swallowClick && ConsumeSwallowed(evt)) return;
-            if (!settings.pickerKey.Matches(evt)) return;
+            if (!MatchesTrigger(settings.pickerKey, evt)) return;
 
             SceneViewPicking.Gather(evt.mousePosition, settings.pickerMaxResults, Candidates);
             if (Candidates.Count == 0) return;
@@ -64,6 +64,25 @@ namespace DNExtensions.HelpfulEditor.Viewport
             // ShowAsDropDown tears down and rebuilds focus, which is not safe to do from inside the
             // Scene View's own GUI pass — the same reason the Hierarchy's quick edit defers.
             EditorApplication.delayCall += () => SceneViewPickerWindow.Open(picked, screenPosition, sceneView);
+        }
+
+        /// <summary>
+        /// The bound chord, tolerating a Shift that the chord did not ask for.
+        ///
+        /// Shift is the picker window's own add-to-selection modifier, so reaching for it before
+        /// opening the picker is a natural thing to do — and under exact matching that missed the
+        /// chord and handed the click to the editor's context menu instead, which reads as the
+        /// binding having failed. Alt is deliberately not tolerated the same way: Alt with a mouse
+        /// button is how the Scene View navigates, and swallowing that would cost more than it gives.
+        /// </summary>
+        private static bool MatchesTrigger(KeyBind bind, Event evt)
+        {
+            if (bind.Matches(evt)) return true;
+
+            // A chord that asks for Shift means it, so there is nothing to be lenient about.
+            if (bind.shift || !evt.shift) return false;
+
+            return KeyBind.Of(bind.key, bind.ctrl, bind.alt, shift: true).Matches(evt);
         }
 
         /// <summary>
