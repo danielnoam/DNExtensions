@@ -5,9 +5,6 @@ using UnityEngine;
 
 namespace DNExtensions.Utilities
 {
-    /// <summary>
-    /// Utility functions for Transform operations that extend MonoBehaviour
-    /// </summary>
     public static class TransformExtensions
     {
         /// <summary>
@@ -35,25 +32,25 @@ namespace DNExtensions.Utilities
         }
 
         /// <summary>
-        /// Gets the full hierarchy path of a transform from root to the transform
+        /// Gets the hierarchy path of the transform's parents, from root down to the direct parent
+        /// </summary>
+        /// <param name="transform">The transform to get the path for</param>
+        /// <returns>A string representing the parent hierarchy path</returns>
+        public static string GetPath(this Transform transform)
+        {
+            if (!transform) return string.Empty;
+            return transform.gameObject.GetPath();
+        }
+
+        /// <summary>
+        /// Gets the hierarchy path of the transform, from root down to and including itself
         /// </summary>
         /// <param name="transform">The transform to get the path for</param>
         /// <returns>A string representing the full hierarchy path</returns>
-        public static string GetHierarchyPath(this Transform transform)
+        public static string GetFullPath(this Transform transform)
         {
-            if (!transform) return "";
-
-            // Build the full path from root to this transform
-            string path = transform.name;
-            Transform parent = transform.parent;
-
-            while (parent)
-            {
-                path = parent.name + "/" + path;
-                parent = parent.parent;
-            }
-
-            return path;
+            if (!transform) return string.Empty;
+            return transform.gameObject.GetFullPath();
         }
 
         /// <summary>
@@ -313,6 +310,31 @@ namespace DNExtensions.Utilities
             {
                 transform.ResetTransform(true);
             }
+        }
+
+        /// <summary>
+        /// Sets the transform's world position and rotation from a Pose
+        /// </summary>
+        /// <param name="transform">The transform to modify</param>
+        /// <param name="pose">The world position and rotation to apply</param>
+        public static void SetPose(this Transform transform, in Pose pose)
+        {
+            if (!transform) return;
+
+            transform.SetPositionAndRotation(pose.position, pose.rotation);
+        }
+
+        /// <summary>
+        /// Gets the transform's world position and rotation as a Pose
+        /// </summary>
+        /// <param name="transform">The transform to query</param>
+        /// <returns>A Pose holding the world position and rotation</returns>
+        public static Pose GetPose(this Transform transform)
+        {
+            if (!transform) return Pose.identity;
+
+            transform.GetPositionAndRotation(out Vector3 position, out Quaternion rotation);
+            return new Pose(position, rotation);
         }
     }
 }

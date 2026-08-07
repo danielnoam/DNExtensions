@@ -16,26 +16,19 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
     /// </summary>
     internal static class HierarchySceneMenu
     {
-        /// <summary>
-        /// Room around the icon and name. Deliberately uneven: the icon carries its own transparent
-        /// margin on the left while the text ends where it ends, so equal numbers do not look equal.
-        /// </summary>
-        private const float LeftPadding = 2f;
-        private const float RightPadding = 6f;
-
-        /// <summary>Keeps the button off the row's edges, and sits it a shade high rather than centred.</summary>
-        private const float TopInset = 1f;
-        private const float BottomInset = 2f;
-
-        /// <summary>The row icon's own size — this one stands in for it, so it matches.</summary>
-        private const float IconSize = 16f;
+        /// <summary>Gap between the end of the name and the arrow, and the arrow's own box.</summary>
+        private const float ArrowGap = 3f;
+        private const float ArrowWidth = 14f;
+        private const int ArrowFontSize = 14;
 
         /// <summary>Rebuilt on demand rather than cached: scenes are added and deleted rarely, and a stale list is worse than a scan.</summary>
         private static readonly List<string> PathBuffer = new List<string>();
 
         private static GUIStyle _labelStyle;
-        private static Texture _sceneIcon;
-        private static bool _iconResolved;
+        private static GUIStyle _arrowStyle;
+
+        /// <summary>Which header is being pressed, so only that one's arrow lights up. Cleared on release.</summary>
+        private static object _pressedId;
 
         /// <summary>Called for rows that resolved to no object, which in the Hierarchy means a scene header.</summary>
         public static void Draw(object rawId, Rect rowRect, bool hovered)
@@ -45,27 +38,43 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             Event evt = Event.current;
             if (evt == null) return;
 
-            Rect hit = ButtonRect(rowRect, scene);
+            Rect hit = HitRect(rowRect, scene);
+            bool pressed = _pressedId != null && _pressedId.Equals(rawId);
 
-            if (evt.type == EventType.Repaint)
+            switch (evt.type)
             {
-                // Claimed whether or not the cursor is on it: without this the window only repaints
-                // when the hovered row changes, so moving along a row and onto the name would light
-                // nothing up until something else happened to ask for a repaint.
-                HelpfulEditorGUI.MarkInteractive(hit);
+                case EventType.Repaint:
+                    // Claimed whether or not the cursor is on it: without this the window only repaints
+                    // when the hovered row changes, so moving along a row and onto the name would show
+                    // nothing until something else happened to ask for a repaint.
+                    HelpfulEditorGUI.MarkInteractive(hit);
 
-                // Lit only under the cursor rather than for the whole row, which is what says the name
-                // is the part that does something and the rest of the header is still the header.
-                if (hovered && hit.Contains(evt.mousePosition)) DrawButton(rowRect, hit, scene);
+                    // Nothing is drawn over the row itself — only the arrow, past the end of the name,
+                    // which is why the icon and label need no standing in for any more.
+                    if (pressed || (hovered && hit.Contains(evt.mousePosition))) DrawArrow(hit, pressed);
 
-                return;
+                    return;
+
+                // The menu waits for the release so the press has somewhere to show: taken on the way
+                // down it would open under the cursor before the arrow ever changed colour.
+                case EventType.MouseDown when evt.button == 0 && hit.Contains(evt.mousePosition):
+                    _pressedId = rawId;
+
+                    evt.Use();
+                    EditorApplication.RepaintHierarchyWindow();
+
+                    return;
+
+                case EventType.MouseUp when pressed:
+                    _pressedId = null;
+
+                    if (hit.Contains(evt.mousePosition)) Show(hit);
+
+                    evt.Use();
+                    EditorApplication.RepaintHierarchyWindow();
+
+                    return;
             }
-
-            if (evt.type != EventType.MouseDown || evt.button != 0) return;
-            if (!hit.Contains(evt.mousePosition)) return;
-
-            Show(hit);
-            evt.Use();
         }
 
         /// <summary>
@@ -89,66 +98,46 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         }
 
         /// <summary>
-        /// The icon and the name, and nothing past them. Measured rather than assumed so a long scene
-        /// name stays clickable and a short one does not claim half an empty row.
-        /// </summary>
-        /// <summary>
-        /// The button's box: Unity's icon and name with the same room either side. The content itself is
-        /// left exactly where the row already drew it and the button grows around it, so nothing shifts
-        /// when it appears under the cursor.
+        /// The name, and the arrow that follows it. Measured rather than assumed so a long scene name
+        /// stays clickable and a short one does not claim half an empty row.
         ///
         /// The text is measured without the label style's own padding and then placed with it, because
-        /// CalcSize hands back padding on both sides — counting that as text is what left the button
-        /// running well past the name while sitting flush against the icon.
+        /// CalcSize hands back padding on both sides — counting that as text puts the arrow adrift of
+        /// the name it belongs to.
         /// </summary>
-        private static Rect ButtonRect(Rect rowRect, Scene scene)
+        private static Rect HitRect(Rect rowRect, Scene scene)
         {
             EnsureLabelStyle();
 
             float text = _labelStyle.CalcSize(new GUIContent(Label(scene))).x - _labelStyle.padding.horizontal;
             float contentEnd = rowRect.x + HierarchyModule.IconWidth + _labelStyle.padding.left + text;
+            float right = Mathf.Min(contentEnd + ArrowGap + ArrowWidth, rowRect.xMax);
 
-            float left = Mathf.Max(0f, rowRect.x - LeftPadding);
-            float right = Mathf.Min(contentEnd + RightPadding, rowRect.xMax);
-
-            return new Rect(left, rowRect.y, Mathf.Max(0f, right - left), rowRect.height);
+            return new Rect(rowRect.x, rowRect.y, Mathf.Max(0f, right - rowRect.x), rowRect.height);
         }
 
         /// <summary>
-        /// A row is fully drawn by the time this callback runs, so there is no getting underneath it —
-        /// the button covers Unity's icon and name, and both are put back on top of it. That is also why
-        /// the label is drawn in the tree's own bold line style rather than a lookalike: it is standing
-        /// in for the one underneath, and any difference in font or spacing would read as a jump.
-        ///
-        /// The background is the editor's own mini button drawn in its hover state, rather than a fill
-        /// and an outline of our own — the rounding, the shading and both skins come with it, and it is
-        /// the shape everything else in the editor uses to say "this is a button".
+        /// Only the arrow, at the end of the name. Nothing covers the row's own icon or label any more,
+        /// so there is nothing left to line up with what is underneath — which is the whole appeal.
         /// </summary>
-        private static void DrawButton(Rect rowRect, Rect buttonRect, Scene scene)
+        private static void DrawArrow(Rect hitRect, bool pressed)
         {
-            Rect background = new Rect(buttonRect.x, buttonRect.y + TopInset,
-                buttonRect.width, Mathf.Max(0f, buttonRect.height - TopInset - BottomInset));
+            EnsureArrowStyle();
 
-            // Drawn in its hover state, which is the state it is in — it only exists under the cursor.
-            EditorStyles.miniButton.Draw(background, true, false, false, false);
+            Rect arrow = new Rect(hitRect.xMax - ArrowWidth, hitRect.y, ArrowWidth, hitRect.height);
+            Color previous = GUI.color;
 
-            Texture icon = SceneIcon();
+            bool pro = EditorGUIUtility.isProSkin;
 
-            if (icon)
-            {
-                // Where the row's own icon is, not where the button would centre it, so the two line up.
-                Rect iconRect = new Rect(rowRect.x, rowRect.y + (rowRect.height - IconSize) * 0.5f, IconSize, IconSize);
-                GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
-            }
+            GUI.color = pressed
+                ? (pro ? Color.white : Color.black)
+                : new Color(pro ? 1f : 0f, pro ? 1f : 0f, pro ? 1f : 0f, 0.55f);
 
-            Rect labelRect = new Rect(rowRect.x + HierarchyModule.IconWidth, rowRect.y,
-                Mathf.Max(0f, buttonRect.xMax - (rowRect.x + HierarchyModule.IconWidth)), rowRect.height);
-
-            EnsureLabelStyle();
-            _labelStyle.Draw(labelRect, Label(scene), false, false, false, false);
+            GUI.Label(arrow, "▾", _arrowStyle);
+            GUI.color = previous;
         }
 
-        /// <summary>The name as the Hierarchy writes it, suffixes and all, so the redraw says the same thing.</summary>
+        /// <summary>The name as the Hierarchy writes it, suffixes and all, so the arrow lands past all of it.</summary>
         private static string Label(Scene scene)
         {
             if (!scene.isLoaded) return $"{scene.name} (not loaded)";
@@ -158,7 +147,8 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
         /// <summary>
         /// The tree's own line style, bold because that is what the Hierarchy uses for a scene header.
-        /// Looked up by skin name rather than rebuilt: the metrics have to match the label being covered.
+        /// Looked up by skin name rather than rebuilt: it is measuring the label Unity drew, so the
+        /// metrics have to be that label's.
         /// </summary>
         private static void EnsureLabelStyle()
         {
@@ -169,21 +159,19 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             _labelStyle = skinStyle != null ? new GUIStyle(skinStyle) : new GUIStyle(EditorStyles.boldLabel);
         }
 
-        private static Texture SceneIcon()
+        private static void EnsureArrowStyle()
         {
-            if (_iconResolved) return _sceneIcon;
-            _iconResolved = true;
+            if (_arrowStyle != null) return;
 
-            foreach (string name in new[] { "SceneAsset Icon", "UnityLogo" })
+            _arrowStyle = new GUIStyle(EditorStyles.label)
             {
-                GUIContent content = EditorGUIUtility.IconContent(name);
-                if (!content?.image) continue;
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = ArrowFontSize,
+                padding = new RectOffset(0, 0, 0, 0)
+            };
 
-                _sceneIcon = content.image;
-                break;
-            }
-
-            return _sceneIcon;
+            // Tinted through GUI.color rather than the style, so one style covers both states.
+            _arrowStyle.normal.textColor = Color.white;
         }
 
         private static void Show(Rect nameRect)

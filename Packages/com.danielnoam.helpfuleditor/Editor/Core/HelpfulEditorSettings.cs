@@ -16,16 +16,19 @@ namespace DNExtensions.HelpfulEditor
         private const string InspectorFile = "inspector.json";
         private const string ProjectFile = "project.json";
         private const string GameViewFile = "gameview.json";
+        private const string SceneViewFile = "sceneview.json";
 
         private static HierarchySettings _hierarchy;
         private static InspectorSettings _inspector;
         private static ProjectModuleSettings _project;
         private static GameViewSettings _gameView;
+        private static SceneViewSettings _sceneView;
 
         public static HierarchySettings Hierarchy => _hierarchy ??= Load<HierarchySettings>(HierarchyFile);
         public static InspectorSettings Inspector => _inspector ??= Load<InspectorSettings>(InspectorFile);
         public static ProjectModuleSettings Project => _project ??= Load<ProjectModuleSettings>(ProjectFile);
         public static GameViewSettings GameView => _gameView ??= Load<GameViewSettings>(GameViewFile);
+        public static SceneViewSettings SceneView => _sceneView ??= Load<SceneViewSettings>(SceneViewFile);
 
         public static void SaveHierarchy()
         {
@@ -54,6 +57,17 @@ namespace DNExtensions.HelpfulEditor
             Save(GameView, GameViewFile);
         }
 
+        /// <summary>
+        /// Repaints the Scene Views rather than the row-based windows the other modules notify, since
+        /// those are the only surfaces these settings reach. Qualified because the property above
+        /// shadows the type name inside this class.
+        /// </summary>
+        public static void SaveSceneView()
+        {
+            Save(SceneView, SceneViewFile);
+            UnityEditor.SceneView.RepaintAll();
+        }
+
         public static void ResetHierarchy()
         {
             _hierarchy = new HierarchySettings();
@@ -76,6 +90,12 @@ namespace DNExtensions.HelpfulEditor
         {
             _gameView = new GameViewSettings();
             SaveGameView();
+        }
+
+        public static void ResetSceneView()
+        {
+            _sceneView = new SceneViewSettings();
+            SaveSceneView();
         }
 
         private static void NotifyChanged()

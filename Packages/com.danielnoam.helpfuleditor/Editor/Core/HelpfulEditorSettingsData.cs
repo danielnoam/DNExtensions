@@ -98,6 +98,26 @@ namespace DNExtensions.HelpfulEditor
         public KeyBind focusSearchKey = KeyBind.None;
     }
 
+    [Serializable]
+    internal class SceneViewSettings
+    {
+        public bool moduleEnabled = true;
+
+        /// <summary>Lists every object under the cursor to choose from, in place of Unity 6's own menu.</summary>
+        public bool pickerEnabled = true;
+
+        public KeyBind pickerKey = KeyBind.Of(KeyCode.Mouse1, ctrl: true);
+
+        public int pickerMaxResults = 30;
+        public int pickerMaxIcons = 6;
+        public List<string> pickerExcludedComponentTypes = new List<string> { "Transform", "RectTransform" };
+
+        /// <summary>Outlines the row under the cursor in the Scene View, which is the point of a window over a menu.</summary>
+        public bool pickerHighlightEnabled = true;
+
+        public Color pickerHighlightColor = new Color(1f, 0.6f, 0.1f, 0.9f);
+    }
+
     /// <summary>One Game View guide, stored as a fraction of the render target so it survives resizing and zoom.</summary>
     [Serializable]
     internal class GameViewGuide

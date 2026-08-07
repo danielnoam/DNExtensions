@@ -17,6 +17,7 @@ namespace DNExtensions.HelpfulEditor
         private const string Inspector = "Inspector";
         private const string ProjectModule = "Project";
         private const string GameViewModule = "GameView";
+        private const string SceneViewModule = "SceneView";
 
         private static int _sectionIndent;
 
@@ -33,7 +34,7 @@ namespace DNExtensions.HelpfulEditor
             {
                 label = "Helpful Editor",
                 guiHandler = _ => DrawRoot(),
-                keywords = new[] { "helpful editor", "hierarchy", "inspector", "project", "folder", "tabs" }
+                keywords = new[] { "helpful editor", "hierarchy", "inspector", "project", "scene view", "folder", "tabs" }
             };
         }
 
@@ -79,6 +80,71 @@ namespace DNExtensions.HelpfulEditor
                 guiHandler = _ => DrawGameView(),
                 keywords = new[] { "game view", "guides", "guidelines", "rulers", "safe area" }
             };
+        }
+
+        [SettingsProvider]
+        public static SettingsProvider CreateSceneViewProvider()
+        {
+            return new SettingsProvider($"{RootPath}/Scene View", SettingsScope.Project)
+            {
+                label = "Scene View",
+                guiHandler = _ => DrawSceneView(),
+                keywords = new[] { "scene view", "viewport", "overlay", "picker", "select", "overlapping" }
+            };
+        }
+
+        private static void DrawSceneView()
+        {
+            SceneViewSettings settings = HelpfulEditorSettings.SceneView;
+
+            EditorGUI.BeginChangeCheck();
+
+            settings.moduleEnabled = EditorGUILayout.ToggleLeft(
+                new GUIContent("Module Enabled", "Adds the suite's overlays to every Scene View."),
+                settings.moduleEnabled, EditorStyles.boldLabel);
+
+            using (new EditorGUI.DisabledScope(!settings.moduleEnabled))
+            {
+                BeginSections();
+
+                if (Section(SceneViewModule, "Selection Picker"))
+                {
+                    settings.pickerEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Enabled", "Lists every object under the cursor in a window to choose from."),
+                        settings.pickerEnabled);
+
+                    settings.pickerKey = DrawKeyBind("Open Picker", settings.pickerKey);
+
+                    settings.pickerMaxResults = EditorGUILayout.IntSlider("Max Results", settings.pickerMaxResults, 1, 100);
+
+                    settings.pickerHighlightEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Highlight On Hover", "Outline the hovered row's object in the Scene View, drawn through anything in front of it."),
+                        settings.pickerHighlightEnabled);
+
+                    using (new EditorGUI.DisabledScope(!settings.pickerHighlightEnabled))
+                    {
+                        settings.pickerHighlightColor = EditorGUILayout.ColorField("Highlight Colour", settings.pickerHighlightColor);
+                    }
+
+                    settings.pickerMaxIcons = EditorGUILayout.IntSlider("Max Icons", settings.pickerMaxIcons, 1, 20);
+                    DrawStringList("Excluded Types", settings.pickerExcludedComponentTypes);
+
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.HelpBox(
+                        "Click a row to select it, Shift+Click to add it to the selection without closing.\n" +
+                        "Up and Down move through the list, Return selects, Escape closes.\n" +
+                        "While enabled, the bound click is taken outright — the editor's own menu for that gesture does not open.\n" +
+                        "Unity 6000.3 and newer pick through the editor's own PickAllObjects; older versions rebuild the same list by picking repeatedly.\n" +
+                        "If a built-in menu still appears alongside this one, rebind or remove its entry in Edit → Shortcuts.",
+                        MessageType.Info);
+                }
+
+                EndSections();
+            }
+
+            if (EditorGUI.EndChangeCheck()) HelpfulEditorSettings.SaveSceneView();
+
+            DrawResetButton("Scene View", HelpfulEditorSettings.ResetSceneView);
         }
 
         /// <summary>Opened from the Game View ruler's own context menu.</summary>
@@ -191,7 +257,7 @@ namespace DNExtensions.HelpfulEditor
         {
             EditorGUILayout.Space(6);
             EditorGUILayout.LabelField("Helpful Editor", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField("Editor toolkit for the Hierarchy, Inspector and Project windows.", EditorStyles.wordWrappedLabel);
+            EditorGUILayout.LabelField("Editor toolkit for the Hierarchy, Inspector, Project, Game View and Scene View windows.", EditorStyles.wordWrappedLabel);
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Settings are stored as JSON under ProjectSettings/HelpfulEditor/ and are tracked by source control.",
