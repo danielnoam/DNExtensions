@@ -34,6 +34,7 @@
     "childCountPosition": 2,
     "childCountHideWhenOneOrZero": false,
     "animatedFoldsEnabled": true,
+    "sceneMenuEnabled": true,
     "toggleActiveKey": {
         "key": 97,
         "ctrl": false,
