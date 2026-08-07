@@ -87,7 +87,13 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                 HelpfulEditorGUI.DrawZebra(rowRect, settings.zebraColorEven, settings.zebraColorOdd, settings.zebraOpacity);
             }
 
-            if (!gameObject) return;
+            if (!gameObject)
+            {
+                // Rows with no object are scene headers, which is the one place the scene menu belongs.
+                if (settings.sceneMenuEnabled) HierarchySceneMenu.Draw(rawId, rowRect, hovered);
+
+                return;
+            }
 
             if (settings.treeDepthLinesEnabled)
             {

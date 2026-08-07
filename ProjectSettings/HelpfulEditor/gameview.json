@@ -2,6 +2,13 @@
     "moduleEnabled": true,
     "showRulers": false,
     "guidesEnabled": true,
+    "screenshotEnabled": true,
+    "screenshotForceResolution": true,
+    "screenshotResolution": {
+        "x": 1920,
+        "y": 1080
+    },
+    "screenshotFolder": "C:/Users/danie/OneDrive/Desktop",
     "guideColor": {
         "r": 0.0,
         "g": 0.8500000238418579,

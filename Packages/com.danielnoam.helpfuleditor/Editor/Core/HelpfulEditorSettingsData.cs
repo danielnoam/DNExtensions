@@ -33,6 +33,9 @@ namespace DNExtensions.HelpfulEditor
         /// <summary>Plays multi-row folds as motion instead of applying them instantly.</summary>
         public bool animatedFoldsEnabled = true;
 
+        /// <summary>Clicking a scene header's name drops down every scene in the project.</summary>
+        public bool sceneMenuEnabled = true;
+
         public KeyBind toggleActiveKey = KeyBind.Of(KeyCode.A);
 
         /// <summary>Frames the hovered object in the Scene View, without needing it selected or that window focused.</summary>
@@ -114,6 +117,19 @@ namespace DNExtensions.HelpfulEditor
         public bool showRulers = true;
 
         public bool guidesEnabled = true;
+
+        public bool screenshotEnabled = true;
+
+        /// <summary>
+        /// Sizes the Game View to this for the capture and puts it back afterwards, so the shot is the
+        /// resolution asked for rather than whatever the window happens to be.
+        /// </summary>
+        public bool screenshotForceResolution;
+
+        public Vector2Int screenshotResolution = new Vector2Int(1920, 1080);
+
+        /// <summary>Relative paths are taken from the project root, so the default travels with the project.</summary>
+        public string screenshotFolder = "Screenshots";
 
         public Color guideColor = new Color(0f, 0.85f, 1f, 0.9f);
         public float guideWidth = 2f;

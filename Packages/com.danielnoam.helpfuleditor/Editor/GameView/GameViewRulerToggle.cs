@@ -44,8 +44,10 @@ namespace DNExtensions.HelpfulEditor.GameView
             RegisterCallback<PointerLeaveEvent>(_ => _drawer.MarkDirtyRepaint());
 
             // Taken here rather than as an IMGUI ContextClick: the container never sees one, because
-            // UI Toolkit keeps the right button for itself and only forwards the left to IMGUI.
-            RegisterCallback<PointerDownEvent>(OnPointerDown);
+            // UI Toolkit keeps the right button for itself and only forwards the left to IMGUI. It has
+            // to be the trickling phase — the press lands on the container inside this element, which
+            // swallows it, so a callback waiting for the way back up never runs.
+            RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
         }
 
         /// <summary>Nothing to show while the feature is off, and nothing to reserve for it either.</summary>
@@ -77,10 +79,7 @@ namespace DNExtensions.HelpfulEditor.GameView
             GameViewSettings settings = HelpfulEditorSettings.GameView;
             if (!settings.moduleEnabled || !settings.guidesEnabled) return;
 
-            // Self-correcting, for the floating fallback where nothing else is measuring: comparing this
-            // way rather than with a difference test also catches the unresolved width, which is NaN.
-            float width = MeasureWidth();
-            if (width > 0f && !(Mathf.Abs(resolvedStyle.width - width) <= 0.5f)) style.width = width;
+            ApplyMeasuredWidth(MeasureWidth());
 
             Rect rect = new Rect(0f, 0f, _drawer.contentRect.width, _drawer.contentRect.height);
             if (rect.width < 1f || rect.height < 1f) return;

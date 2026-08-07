@@ -94,7 +94,7 @@ namespace DNExtensions.HelpfulEditor
             EditorGUI.BeginChangeCheck();
 
             settings.moduleEnabled = EditorGUILayout.ToggleLeft(
-                new GUIContent("Module Enabled", "Adds rulers to every Game View. Drag off a ruler to place a guide."),
+                new GUIContent("Module Enabled", "Adds the guide rulers and the toolbar buttons to every Game View."),
                 settings.moduleEnabled, EditorStyles.boldLabel);
 
             using (new EditorGUI.DisabledScope(!settings.moduleEnabled))
@@ -109,13 +109,6 @@ namespace DNExtensions.HelpfulEditor
                     settings.guideColor = EditorGUILayout.ColorField("Colour", settings.guideColor);
                     settings.guideWidth = EditorGUILayout.Slider("Width", settings.guideWidth, 0.5f, 8f);
 
-                    EditorGUILayout.LabelField($"{settings.guides.Count} placed", EditorStyles.miniLabel);
-
-                    using (new EditorGUI.DisabledScope(settings.guides.Count == 0))
-                    {
-                        if (GUILayout.Button("Clear All Guides", GUILayout.Width(140f))) GameView.GameViewModule.ClearGuides();
-                    }
-
                     EditorGUILayout.Space(4);
                     EditorGUILayout.HelpBox(
                         "Drag off the top ruler for a vertical guide, off the left ruler for a horizontal one.\n" +
@@ -123,6 +116,36 @@ namespace DNExtensions.HelpfulEditor
                         "Hold Alt while dragging to snap to the centre, Shift to move in 10px steps.\n" +
                         "The toolbar's Rulers button shows and hides the rulers and the guides together; right-click it, or a ruler, for the guide menu.\n" +
                         "Positions are held against the render target, so they survive resizing and zooming.",
+                        MessageType.Info);
+                }
+
+                if (Section(GameViewModule, "Screenshot"))
+                {
+                    settings.screenshotEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Enabled", "Adds a camera button to the Game View toolbar that saves a PNG on the spot."),
+                        settings.screenshotEnabled);
+
+                    DrawScreenshotFolder(settings);
+
+                    settings.screenshotForceResolution = EditorGUILayout.Toggle(
+                        new GUIContent("Force Resolution", "Sizes the Game View to a set resolution for the capture and puts it back afterwards."),
+                        settings.screenshotForceResolution);
+
+                    using (new EditorGUI.DisabledScope(!settings.screenshotForceResolution))
+                    {
+                        Vector2Int resolution = EditorGUILayout.Vector2IntField("Resolution", settings.screenshotResolution);
+
+                        settings.screenshotResolution = new Vector2Int(
+                            Mathf.Clamp(resolution.x, 1, 8192),
+                            Mathf.Clamp(resolution.y, 1, 8192));
+                    }
+
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.HelpBox(
+                        "Files are named GameView <date> <time> <width>x<height>.png, at the game's own resolution rather than the window's.\n" +
+                        "A relative folder is taken from the project root, so it travels with the project.\n" +
+                        "Forcing a resolution resizes the Game View for a moment — it will visibly flick to that size and back.\n" +
+                        "Right-click the button to open the folder.",
                         MessageType.Info);
                 }
 
@@ -136,6 +159,32 @@ namespace DNExtensions.HelpfulEditor
             }
 
             DrawResetButton("Game View", HelpfulEditorSettings.ResetGameView);
+        }
+
+        /// <summary>
+        /// Typed or browsed to. What comes back from the panel is absolute, and is written back
+        /// project-relative when it lands inside the project so the setting is worth committing.
+        /// </summary>
+        private static void DrawScreenshotFolder(GameViewSettings settings)
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            settings.screenshotFolder = EditorGUILayout.TextField(
+                new GUIContent("Folder", "Where screenshots are saved. Relative paths are taken from the project root."),
+                settings.screenshotFolder);
+
+            if (GUILayout.Button("Browse…", GUILayout.Width(70f)))
+            {
+                string picked = EditorUtility.OpenFolderPanel("Screenshot Folder", GameView.GameViewScreenshot.ResolveFolder(), string.Empty);
+
+                if (!string.IsNullOrEmpty(picked))
+                {
+                    settings.screenshotFolder = GameView.GameViewScreenshot.ToSettingPath(picked);
+                    GUI.changed = true;
+                }
+            }
+
+            EditorGUILayout.EndHorizontal();
         }
 
         private static void DrawRoot()
@@ -207,6 +256,20 @@ namespace DNExtensions.HelpfulEditor
                     settings.animatedFoldsEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Animate", "Play Collapse Everything and Isolate one fold at a time instead of applying them instantly."),
                         settings.animatedFoldsEnabled);
+                }
+
+                if (Section(Hierarchy, "Scene Menu"))
+                {
+                    settings.sceneMenuEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Enabled", "Clicking a scene header's name in the Hierarchy drops down every scene in the project."),
+                        settings.sceneMenuEnabled);
+
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.HelpBox(
+                        "Scenes are grouped into submenus by the folders they sit in, and the open ones are ticked.\n" +
+                        "Choosing one opens it, asking to save first if anything is unsaved; Open Additive loads it alongside.\n" +
+                        "Only the name is clickable — it lights up under the cursor, and the rest of the header still selects the scene while right-click still opens Unity's own menu.",
+                        MessageType.Info);
                 }
 
                 if (Section(Hierarchy, "Keybinds"))

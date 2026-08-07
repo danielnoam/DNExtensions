@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 namespace DNExtensions.HelpfulEditor
@@ -23,6 +24,44 @@ namespace DNExtensions.HelpfulEditor
 #else
             return unityObject.GetInstanceID();
 #endif
+        }
+
+        /// <summary>
+        /// Whether a row id is this scene's, which is how a Hierarchy scene header says which scene it
+        /// belongs to — the row resolves to no object, so the handle is the only thing to go on.
+        ///
+        /// The handle moved with everything else: an int through 2022, then a SceneHandle wrapping an
+        /// EntityId. Compared through the raw values on the versions that have both — SceneHandle only
+        /// unwraps to its EntityId internally, and its conversion to int is deprecated in 6.5.
+        /// </summary>
+#if UNITY_6000_4_OR_NEWER
+        public static bool MatchesScene(object rawId, Scene scene)
+        {
+            return rawId is EntityId entityId && scene.handle.GetRawData() == EntityId.ToULong(entityId);
+        }
+#else
+        public static bool MatchesScene(object rawId, Scene scene)
+        {
+            return TryGetInt(rawId, out int handle) && (int)scene.handle == handle;
+        }
+#endif
+
+        private static bool TryGetInt(object rawId, out int value)
+        {
+            if (rawId is int direct)
+            {
+                value = direct;
+                return true;
+            }
+
+            if (ConvertTo(rawId, typeof(int)) is int converted)
+            {
+                value = converted;
+                return true;
+            }
+
+            value = 0;
+            return false;
         }
 
         /// <summary>Bridges whichever id type this Unity version produces onto a reflected signature.</summary>

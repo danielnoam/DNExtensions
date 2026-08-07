@@ -26,6 +26,7 @@ namespace DNExtensions.HelpfulEditor.GameView
             EditorApplication.delayCall += Sync;
 
             GameViewToolbar.RegisterProvider(_ => new GameViewRulerToggle());
+            GameViewToolbar.RegisterProvider(gameView => new GameViewScreenshotButton(gameView), priority: 10);
         }
 
         /// <summary>

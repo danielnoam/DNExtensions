@@ -55,6 +55,7 @@ namespace DNExtensions.HelpfulEditor.GameView
         private static FieldInfo _entryMaxWidthField;
         private static FieldInfo _entryRectField;
         private static FieldInfo _entryStretchWidthField;
+        private static FieldInfo _entryConsideredForMarginField;
         private static PropertyInfo _entryStyleProperty;
         private static Type _groupType;
         private static bool _resolved;
@@ -163,6 +164,7 @@ namespace DNExtensions.HelpfulEditor.GameView
             _entryMaxWidthField = entryType?.GetField("maxWidth", InstanceAny);
             _entryRectField = entryType?.GetField("rect", InstanceAny);
             _entryStretchWidthField = entryType?.GetField("stretchWidth", InstanceAny);
+            _entryConsideredForMarginField = entryType?.GetField("consideredForMargin", InstanceAny);
             _entryStyleProperty = entryType?.GetProperty("style", InstanceAny);
         }
 
@@ -171,7 +173,7 @@ namespace DNExtensions.HelpfulEditor.GameView
             _windowParentField != null && _hostViewOnGuiField != null && _topLevelProperty != null &&
             _groupType != null && _groupEntriesField != null && _entryMinWidthField != null &&
             _entryMaxWidthField != null && _entryRectField != null && _entryStretchWidthField != null &&
-            _entryStyleProperty != null;
+            _entryConsideredForMarginField != null && _entryStyleProperty != null;
 
         /// <summary>
         /// The gap to sit in: the last stretchable entry after the play mode dropdown, which is the
@@ -200,12 +202,9 @@ namespace DNExtensions.HelpfulEditor.GameView
 
                 for (int j = entries.Count - 1; j > i; j--)
                 {
-                    object entry = entries[j];
+                    if (!IsFlexibleSpace(entries[j])) continue;
 
-                    if (_groupType.IsInstanceOfType(entry)) continue;
-                    if ((int)_entryStretchWidthField.GetValue(entry) == 0) continue;
-
-                    gapEntry = entry;
+                    gapEntry = entries[j];
                     groupRect = (Rect)_entryRectField.GetValue(group);
 
                     return true;
@@ -220,6 +219,23 @@ namespace DNExtensions.HelpfulEditor.GameView
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// A flexible space, and not merely something that happens to stretch. Unity's toolbar buttons
+        /// stretch too — taking the last stretchable entry found the gizmos dropdown, pinned its width
+        /// and parked the strip on top of it. A flexible space is the one that also carries no style and
+        /// is kept out of margin calculations, which no real control is.
+        /// </summary>
+        private static bool IsFlexibleSpace(object entry)
+        {
+            if (_groupType.IsInstanceOfType(entry)) return false;
+            if ((int)_entryStretchWidthField.GetValue(entry) == 0) return false;
+            if ((bool)_entryConsideredForMarginField.GetValue(entry)) return false;
+
+            GUIStyle style = _entryStyleProperty.GetValue(entry) as GUIStyle;
+
+            return style == null || string.IsNullOrEmpty(style.name);
         }
 
         private static bool IsPlayModeDropdown(object entry)
@@ -501,6 +517,16 @@ namespace DNExtensions.HelpfulEditor.GameView
         /// An item with no width is never drawn, so it would have no chance to correct itself.
         /// </summary>
         public virtual float FallbackWidth => 24f;
+
+        /// <summary>
+        /// Applied by an item from its own draw, for the floating fallback where nothing else is
+        /// measuring. Comparing this way rather than with a difference test also catches the width
+        /// before layout has resolved it, which is NaN.
+        /// </summary>
+        protected void ApplyMeasuredWidth(float measured)
+        {
+            if (measured > 0f && !(Mathf.Abs(resolvedStyle.width - measured) <= 0.5f)) style.width = measured;
+        }
 
         public virtual void Dispose()
         {
