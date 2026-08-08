@@ -51,7 +51,18 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             // Only acts on positive evidence: mouseOverWindow is null whenever the editor cannot
             // say where the cursor is, and treating that as "left the window" would clear the hover
             // between ticks and leave the keybinds with nothing to act on.
-            if (!EditorWindow.mouseOverWindow || HelpfulEditorWindows.MouseOverHierarchy) return;
+            if (!EditorWindow.mouseOverWindow) return;
+
+            if (HelpfulEditorWindows.MouseOverHierarchy)
+            {
+                // The component strip's hover lift and its link cursor are both only established
+                // while a row is being drawn, and the Hierarchy does not repaint as the pointer
+                // moves across it. Marking rows interactive asks the editor to, but that reaches
+                // into internals that are not on every version — so the repaint is driven from here
+                // too, which is the polling fallback HelpfulEditorGUI.MarkInteractive describes.
+                EditorApplication.RepaintHierarchyWindow();
+                return;
+            }
 
             HierarchyComponentStrip.DiscardPendingQuickEdit();
             ClearHover();

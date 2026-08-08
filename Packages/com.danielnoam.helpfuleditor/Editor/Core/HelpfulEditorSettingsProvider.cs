@@ -139,6 +139,29 @@ namespace DNExtensions.HelpfulEditor
                         MessageType.Info);
                 }
 
+                if (Section(SceneViewModule, "Snap Menu"))
+                {
+                    settings.snapMenuEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Enabled", "Adds a Snap submenu to the Scene View's right-click menu."),
+                        settings.snapMenuEnabled);
+
+                    settings.snapMaxDistance = Mathf.Max(0.01f, EditorGUILayout.FloatField(
+                        new GUIContent("Max Distance", "How far a snap looks for a surface before giving up."),
+                        settings.snapMaxDistance));
+
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.HelpBox(
+                        "Right-click a selected object in the Scene View and choose Snap → Floor, Ceiling or Nearest Wall.\n" +
+                        "Nearest Wall casts the four world horizontals and takes whichever needs the least movement.\n" +
+                        "The object lands with the leading face of its bounds on the surface, so an off-centre pivot still sits correctly.\n" +
+                        "The (Pivot) variants land the object's origin on the surface instead, for pivots deliberately placed at a contact point.\n" +
+                        "Snapping needs a collider to land on — triggers and the object's own colliders are ignored, and renderer bounds are what get measured.\n" +
+                        "Each selected object snaps separately, and every snap is undoable.\n" +
+                        "Snap sits at the top of the menu alongside Grid and Isolate, and shows under Unity's default GameObject tool context.\n" +
+                        "Unity 6000.2 and older have no Scene View context menu, so there the same entries appear in the Transform's gear menu instead.",
+                        MessageType.Info);
+                }
+
                 EndSections();
             }
 
@@ -550,16 +573,8 @@ namespace DNExtensions.HelpfulEditor
                         MessageType.Warning);
                 }
 
-                if (Section(ProjectModule, "Keybinds"))
+                if (Section(ProjectModule, "Tabs"))
                 {
-                    EditorGUILayout.LabelField("Set a key to None to disable that action.", EditorStyles.miniLabel);
-                    settings.expandCollapseKey = DrawKeyBind("Expand / Collapse", settings.expandCollapseKey);
-                    settings.expandCollapseRecursiveKey = DrawKeyBind("Expand / Collapse All", settings.expandCollapseRecursiveKey);
-                    settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);
-                    settings.isolateKey = DrawKeyBind("Isolate", settings.isolateKey);
-                    settings.revealInFinderKey = DrawKeyBind($"Reveal In {HelpfulEditorPlatform.FileManagerName}", settings.revealInFinderKey);
-                    settings.quickObjectWindowKey = DrawKeyBind("Quick Object Window", settings.quickObjectWindowKey);
-                    settings.openFolderInNewTabKey = DrawKeyBind("Open Folder In New Window", settings.openFolderInNewTabKey);
                     settings.autoDock = EditorGUILayout.Toggle(
                         new GUIContent("Auto Dock", "On: the new window docks beside the one clicked. Off: it opens floating."),
                         settings.autoDock);
@@ -569,6 +584,29 @@ namespace DNExtensions.HelpfulEditor
                     settings.folderDropCreatesTabEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Drop Folder On Tabs", "Drag a folder onto any window's tab strip to open it there as its own Project tab."),
                         settings.folderDropCreatesTabEnabled);
+                    settings.objectDropOpensPropertiesEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Drop Object On Tabs", "Drag anything that is not a folder onto a tab strip to open its Properties window there. Works for scene objects as well as assets."),
+                        settings.objectDropOpensPropertiesEnabled);
+
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.HelpBox(
+                        "These govern where new tabs land. The chord that opens one is Open In New Tab, under Keybinds.\n" +
+                        "Either way it acts on whatever is under the cursor: a folder opens as a second Project window, anything else opens its Properties window.\n" +
+                        "Dropping onto a tab strip docks into the strip it was dropped on, regardless of Auto Dock.\n" +
+                        "Scene objects work as well as assets — they have no folder to show, so they always take the Properties route.",
+                        MessageType.Info);
+                }
+
+                if (Section(ProjectModule, "Keybinds"))
+                {
+                    EditorGUILayout.LabelField("Set a key to None to disable that action.", EditorStyles.miniLabel);
+                    settings.expandCollapseKey = DrawKeyBind("Expand / Collapse", settings.expandCollapseKey);
+                    settings.expandCollapseRecursiveKey = DrawKeyBind("Expand / Collapse All", settings.expandCollapseRecursiveKey);
+                    settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);
+                    settings.isolateKey = DrawKeyBind("Isolate", settings.isolateKey);
+                    settings.revealInFinderKey = DrawKeyBind($"Reveal In {HelpfulEditorPlatform.FileManagerName}", settings.revealInFinderKey);
+                    settings.quickObjectWindowKey = DrawKeyBind("Quick Object Window", settings.quickObjectWindowKey);
+                    settings.openInNewTabKey = DrawKeyBind("Open In New Tab", settings.openInNewTabKey);
                     settings.navigateBackKey = DrawKeyBind("Navigate Back", settings.navigateBackKey);
                     settings.navigateForwardKey = DrawKeyBind("Navigate Forward", settings.navigateForwardKey);
                     settings.closeWindowKey = DrawKeyBind("Close Focused Window", settings.closeWindowKey);

@@ -70,6 +70,18 @@ namespace DNExtensions.HelpfulEditor
             ? new Color(0.22f, 0.22f, 0.22f)
             : new Color(0.76f, 0.76f, 0.76f);
 
+        public static Color PanelOuterBorder => EditorGUIUtility.isProSkin
+            ? new Color(0.08f, 0.08f, 0.08f)
+            : new Color(0.35f, 0.35f, 0.35f);
+
+        public static Color PanelInnerBorder => EditorGUIUtility.isProSkin
+            ? new Color(0.42f, 0.42f, 0.42f)
+            : new Color(0.72f, 0.72f, 0.72f);
+
+        public static Color PanelSeparator => EditorGUIUtility.isProSkin
+            ? new Color(0.25f, 0.25f, 0.25f)
+            : new Color(0.65f, 0.65f, 0.65f);
+
         /// <summary>Expands a row's selection rect to span the full window width so backgrounds cover the whole row.</summary>
         public static Rect FullRowRect(Rect rowRect)
         {
@@ -312,12 +324,70 @@ namespace DNExtensions.HelpfulEditor
             return Mathf.Max(BaseDashSegment, weight);
         }
 
+        /// <summary>
+        /// A border whose strokes are a whole number of device pixels, with its edges snapped to the
+        /// device grid.
+        ///
+        /// The obvious version — four rects one point thick — is only crisp at 100% scaling. At 125%
+        /// or 150% a one-point stroke covers a fractional number of device pixels, and whether it
+        /// resolves to one or two of them depends on where that particular edge happens to land. That
+        /// is what leaves a panel looking like its verticals are a different weight from its
+        /// horizontals: nothing about the drawing is asymmetric, only where the four edges fall.
+        /// </summary>
         public static void DrawBorder(Rect rect, Color color, float thickness = 1f)
         {
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, thickness), color);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - thickness, rect.width, thickness), color);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, thickness, rect.height), color);
-            EditorGUI.DrawRect(new Rect(rect.xMax - thickness, rect.y, thickness, rect.height), color);
+            float scale = DeviceScale;
+            float weight = BorderWeight(thickness);
+
+            float left = SnapToDevice(rect.x, scale);
+            float top = SnapToDevice(rect.y, scale);
+            float right = SnapToDevice(rect.xMax, scale);
+            float bottom = SnapToDevice(rect.yMax, scale);
+
+            float width = right - left;
+            float height = bottom - top;
+            if (width <= 0f || height <= 0f) return;
+
+            EditorGUI.DrawRect(new Rect(left, top, width, weight), color);
+            EditorGUI.DrawRect(new Rect(left, bottom - weight, width, weight), color);
+            EditorGUI.DrawRect(new Rect(left, top, weight, height), color);
+            EditorGUI.DrawRect(new Rect(right - weight, top, weight, height), color);
+        }
+
+        /// <summary>What a stroke of this many points really measures once rounded to whole device pixels.</summary>
+        public static float BorderWeight(float thickness = 1f)
+        {
+            float scale = DeviceScale;
+            return Mathf.Max(1f, Mathf.Round(thickness * scale)) / scale;
+        }
+
+        /// <summary>
+        /// The background and edge of a dropdown panel, which Unity gives no chrome of its own: a
+        /// dark outer stroke to separate it from whatever is behind, and a lighter inner one so the
+        /// edge stays visible against a dark background too. The inset is the outer stroke's real
+        /// width rather than a flat point, so the two stay touching at any display scale.
+        /// </summary>
+        public static void DrawPanelFrame(Rect rect)
+        {
+            EditorGUI.DrawRect(rect, WindowBackground);
+            DrawBorder(rect, PanelOuterBorder);
+
+            float inset = BorderWeight();
+            DrawBorder(new Rect(rect.x + inset, rect.y + inset, rect.width - inset * 2f, rect.height - inset * 2f), PanelInnerBorder);
+        }
+
+        private static float DeviceScale
+        {
+            get
+            {
+                float scale = EditorGUIUtility.pixelsPerPoint;
+                return scale > 0f ? scale : 1f;
+            }
+        }
+
+        private static float SnapToDevice(float value, float scale)
+        {
+            return Mathf.Round(value * scale) / scale;
         }
 
         public static Texture GetIcon(Component component)

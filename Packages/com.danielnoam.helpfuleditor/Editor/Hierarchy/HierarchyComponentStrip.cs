@@ -83,18 +83,22 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
             if (shown == 0) return 0f;
 
-            // Full strength while Alt is held: the strip sits back from the row by default, and
-            // lifting it is what says these icons are about to become buttons.
-            bool armed = settings.componentQuickEditEnabled && Event.current != null && Event.current.alt;
-            float opacity = armed ? 1f : HelpfulEditorGUI.IconStripOpacity;
+            Event evt = Event.current;
+
+            // Without this the Hierarchy only repaints when something asks it to, so both the lift
+            // below and the link cursor lag behind the pointer by however long that takes.
+            HelpfulEditorGUI.MarkInteractive(Rect.MinMaxRect(IconRects[0].x, rowRect.y, area.xMax, rowRect.yMax));
+
+            bool armed = settings.componentQuickEditEnabled && evt != null && evt.alt;
 
             Color previousColor = GUI.color;
-            GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, previousColor.a * opacity);
 
             for (int i = 0; i < shown; i++)
             {
                 Component component = components[i];
                 Rect iconRect = IconRects[i];
+
+                SetTint(previousColor, armed && Hovered(iconRect, evt));
 
                 Texture icon = HelpfulEditorGUI.GetIcon(component);
                 if (icon) GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
@@ -104,11 +108,12 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
             if (shown < components.Count)
             {
-                Event evt = Event.current;
-                bool overflowHovered = evt != null && overflowRect.Contains(evt.mousePosition);
+                bool overflowHovered = Hovered(overflowRect, evt);
 
                 OverflowContent.text = $"+{components.Count - shown}";
                 OverflowContent.tooltip = overflowHovered ? BuildOverflowTooltip(components, shown) : string.Empty;
+
+                SetTint(previousColor, armed && overflowHovered);
 
                 GUI.Label(overflowRect, OverflowContent, HelpfulEditorGUI.BadgeStyle);
                 HandleOverflowInput(overflowRect, components, shown, settings);
@@ -119,6 +124,22 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             // Measured from the leftmost icon that survived rather than from the intended width, so
             // the child count badge sits against the strip that is really there.
             return area.xMax - IconRects[0].x;
+        }
+
+        /// <summary>
+        /// Only the icon under the cursor comes up to full strength while the modifier is held.
+        /// Lifting the whole strip said every icon was about to become a button, when the click can
+        /// only ever land on one of them.
+        /// </summary>
+        private static void SetTint(Color baseColor, bool lifted)
+        {
+            float opacity = lifted ? 1f : HelpfulEditorGUI.IconStripOpacity;
+            GUI.color = new Color(baseColor.r, baseColor.g, baseColor.b, baseColor.a * opacity);
+        }
+
+        private static bool Hovered(Rect rect, Event evt)
+        {
+            return evt != null && rect.Contains(evt.mousePosition);
         }
 
         private static float LabelWidth(string name)
@@ -143,7 +164,9 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             if (evt == null || !iconRect.Contains(evt.mousePosition)) return;
             if (EditorGUIUtility.editingTextField) return;
 
-            EditorGUIUtility.AddCursorRect(iconRect, MouseCursor.Link);
+            // Only while the click would actually do something. Offering the link cursor whenever the
+            // pointer crosses an icon promises a button that is not there until the modifier is held.
+            if (settings.componentQuickEditEnabled && evt.alt) EditorGUIUtility.AddCursorRect(iconRect, MouseCursor.Link);
 
             if (settings.componentQuickEditEnabled && evt.type == EventType.MouseDown && evt.button == 0 && evt.alt && CanClaimClick(evt))
             {

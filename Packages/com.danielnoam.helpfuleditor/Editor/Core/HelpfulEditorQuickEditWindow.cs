@@ -6,32 +6,39 @@ using Object = UnityEngine.Object;
 namespace DNExtensions.HelpfulEditor
 {
     /// <summary>
-    /// Floating, non-resizable mini inspector used by the Hierarchy component strip (Alt+Click an
-    /// icon) and the Project window's quick object window keybind. Draws the target through
-    /// Editor.CreateEditor so it behaves like the real Inspector without leaving the window.
+    /// Floating mini inspector used by the Hierarchy component strip (Alt+Click an icon) and the
+    /// Project window's quick object window keybind. Draws the target through Editor.CreateEditor so
+    /// it behaves like the real Inspector without leaving the window.
+    ///
+    /// The one panel in the suite that carries a full header: it is the only one meant to stay put
+    /// while you work in it, so it gets a title, a close button and somewhere to drag it by.
     /// </summary>
-    internal class HelpfulEditorQuickEditWindow : EditorWindow
+    internal class HelpfulEditorQuickEditWindow : HelpfulEditorDropdownWindow
     {
         private const float DefaultWidth = 340f;
-        private const float DefaultHeight = 420f;
 
-        private const float FramePadding = 6f;
+        // Only a starting guess. An IMGUI inspector's height cannot be known before it is drawn, so
+        // the window opens at this and settles onto the real height on the first repaint.
+        private const float InitialHeight = 240f;
 
-        private static Color OuterBorderColor => EditorGUIUtility.isProSkin
-            ? new Color(0.08f, 0.08f, 0.08f)
-            : new Color(0.35f, 0.35f, 0.35f);
+        // Bounds on the measured height. The cap is what keeps a heavy object — a dozen components,
+        // or one with a long array — from opening a panel the size of the screen; past it the
+        // content scrolls as before.
+        private const float MinHeight = 80f;
+        private const float MaxHeight = 560f;
 
-        private static Color InnerBorderColor => EditorGUIUtility.isProSkin
-            ? new Color(0.42f, 0.42f, 0.42f)
-            : new Color(0.72f, 0.72f, 0.72f);
-
-        private static Color SeparatorColor => EditorGUIUtility.isProSkin
-            ? new Color(0.25f, 0.25f, 0.25f)
-            : new Color(0.65f, 0.65f, 0.65f);
+        // Breathing room under the measured content. A layout group's rect stops at its last
+        // element, taking in neither that element's bottom margin nor the scroll view's own inset,
+        // so sizing to it exactly leaves the last field against the frame — and close enough to the
+        // edge that a scrollbar appears over a couple of pixels that were never really missing.
+        private const float ContentPadding = 8f;
 
         private readonly List<Editor> _editors = new List<Editor>();
         private Object _target;
         private Vector2 _scroll;
+
+        protected override string HeaderTitle => _target ? _target.name : string.Empty;
+        protected override bool IsValid => _target;
 
         public static void Open(Object target, Vector2 screenPosition)
         {
@@ -40,8 +47,8 @@ namespace DNExtensions.HelpfulEditor
             HelpfulEditorQuickEditWindow window = CreateInstance<HelpfulEditorQuickEditWindow>();
             window.Initialize(target);
 
-            Rect activator = new Rect(screenPosition.x, screenPosition.y, 1f, 1f);
-            window.ShowAsDropDown(activator, new Vector2(DefaultWidth, DefaultHeight));
+            window.ShowAnchored(new Rect(screenPosition.x, screenPosition.y, 1f, 1f),
+                new Vector2(DefaultWidth, InitialHeight));
         }
 
         public static Vector2 MouseScreenPosition()
@@ -68,33 +75,13 @@ namespace DNExtensions.HelpfulEditor
             }
         }
 
-        private void OnGUI()
+        protected override void DrawContent(Rect content, Event evt)
         {
-            if (!_target)
-            {
-                Close();
-                return;
-            }
-
-            Event evt = Event.current;
-            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.Escape)
-            {
-                Close();
-                evt.Use();
-                return;
-            }
-
-            DrawFrame();
-
-            GUILayout.BeginArea(new Rect(FramePadding, FramePadding,
-                position.width - FramePadding * 2f, position.height - FramePadding * 2f));
-
-            EditorGUILayout.LabelField(_target.name, EditorStyles.boldLabel);
-            HelpfulEditorGUI.DrawHorizontalLine(0f, position.width - FramePadding * 2f,
-                GUILayoutUtility.GetLastRect().yMax + 2f, SeparatorColor, LineStyle.Solid);
-            EditorGUILayout.Space(5);
+            GUILayout.BeginArea(content);
 
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
+
+            EditorGUILayout.BeginVertical();
 
             bool multiple = _editors.Count > 1;
             foreach (Editor editor in _editors)
@@ -111,25 +98,32 @@ namespace DNExtensions.HelpfulEditor
                 if (multiple) EditorGUILayout.Space(4);
             }
 
+            EditorGUILayout.EndVertical();
+
+            // Read here but applied after the layout groups are closed: the group's rect is the
+            // content's natural height even when the scroll view is showing less of it, and only
+            // repaint has real numbers in it.
+            float contentHeight = evt.type == EventType.Repaint ? GUILayoutUtility.GetLastRect().height : 0f;
+
             EditorGUILayout.EndScrollView();
 
             GUILayout.EndArea();
+
+            if (evt.type == EventType.Repaint) ApplyContentHeight(contentHeight);
         }
 
         /// <summary>
-        /// A dropdown window gets no chrome from Unity, so the panel edge is drawn here: a dark
-        /// outer stroke to separate it from whatever is behind, and a lighter inner stroke so the
-        /// edge stays visible against a dark background too.
+        /// Resizes to fit what was just drawn. Re-measured every repaint rather than once, so
+        /// expanding a foldout or an array grows the window with it. Resize ignores sub-pixel
+        /// changes, which is what stops that turning into a resize-repaint-resize loop.
         /// </summary>
-        private void DrawFrame()
+        private void ApplyContentHeight(float contentHeight)
         {
-            if (Event.current.type != EventType.Repaint) return;
+            if (contentHeight <= 0f) return;
 
-            Rect frame = new Rect(0f, 0f, position.width, position.height);
+            float wanted = Mathf.Clamp(contentHeight + ChromeHeight + ContentPadding, MinHeight, MaxHeight);
 
-            EditorGUI.DrawRect(frame, HelpfulEditorGUI.WindowBackground);
-            HelpfulEditorGUI.DrawBorder(frame, OuterBorderColor);
-            HelpfulEditorGUI.DrawBorder(new Rect(frame.x + 1f, frame.y + 1f, frame.width - 2f, frame.height - 2f), InnerBorderColor);
+            Resize(new Vector2(DefaultWidth, wanted));
         }
 
         private void OnDisable()

@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,7 +6,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 {
     /// <summary>
     /// Turns the Hierarchy's scene headers into a scene switcher: click the name and every scene in
-    /// the project drops down, foldered as it is on disk, with the open ones ticked.
+    /// the project drops down, listed by name with the open ones ticked.
     ///
     /// Only the name is clickable, not the whole row. The rest of the header still selects the scene
     /// the way it always did, and right-click still belongs to Unity — which is where Set Active,
@@ -20,9 +18,6 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         private const float ArrowGap = 3f;
         private const float ArrowWidth = 14f;
         private const int ArrowFontSize = 14;
-
-        /// <summary>Rebuilt on demand rather than cached: scenes are added and deleted rarely, and a stale list is worse than a scan.</summary>
-        private static readonly List<string> PathBuffer = new List<string>();
 
         private static GUIStyle _labelStyle;
         private static GUIStyle _arrowStyle;
@@ -174,87 +169,16 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             _arrowStyle.normal.textColor = Color.white;
         }
 
+        /// <summary>
+        /// Handed the name's rect in screen space, so the list drops from the name rather than from
+        /// wherever the cursor happened to be. Deferred because ShowAsDropDown rebuilds focus, which
+        /// is not safe from inside the Hierarchy's own GUI pass.
+        /// </summary>
         private static void Show(Rect nameRect)
         {
-            GenericMenu menu = new GenericMenu();
+            Rect activator = GUIUtility.GUIToScreenRect(nameRect);
 
-            CollectScenePaths();
-
-            // Opening a scene tears the running one down, so play mode gets the list to look at and
-            // nothing to click — the same as Unity refusing the call, but said before the fact.
-            bool playing = EditorApplication.isPlayingOrWillChangePlaymode;
-
-            foreach (string path in PathBuffer)
-            {
-                GUIContent label = new GUIContent(MenuPath(path));
-                bool open = IsOpen(path);
-                string captured = path;
-
-                if (playing) menu.AddDisabledItem(label, open);
-                else menu.AddItem(label, open, () => Open(captured, OpenSceneMode.Single));
-            }
-
-            menu.AddSeparator(string.Empty);
-
-            foreach (string path in PathBuffer)
-            {
-                GUIContent label = new GUIContent($"Open Additive/{MenuPath(path)}");
-                bool open = IsOpen(path);
-                string captured = path;
-
-                // An already loaded scene has nothing to add, and asking for it again would only
-                // reload it — shown ticked and disabled rather than left out, so the list stays put.
-                if (playing || open) menu.AddDisabledItem(label, open);
-                else menu.AddItem(label, false, () => Open(captured, OpenSceneMode.Additive));
-            }
-
-            menu.DropDown(nameRect);
-        }
-
-        private static void CollectScenePaths()
-        {
-            PathBuffer.Clear();
-
-            foreach (string guid in AssetDatabase.FindAssets("t:Scene"))
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                if (!string.IsNullOrEmpty(path)) PathBuffer.Add(path);
-            }
-
-            PathBuffer.Sort(System.StringComparer.OrdinalIgnoreCase);
-        }
-
-        /// <summary>
-        /// The asset path as a menu path: the folders become submenus because that is what a slash
-        /// means to a GenericMenu, which is the whole reason the grouping is free.
-        /// </summary>
-        private static string MenuPath(string assetPath)
-        {
-            string path = assetPath;
-
-            if (path.StartsWith("Assets/", System.StringComparison.Ordinal)) path = path.Substring("Assets/".Length);
-
-            return path.EndsWith(".unity", System.StringComparison.OrdinalIgnoreCase)
-                ? path.Substring(0, path.Length - ".unity".Length)
-                : path;
-        }
-
-        private static bool IsOpen(string path)
-        {
-            for (int i = 0; i < SceneManager.sceneCount; i++)
-            {
-                if (SceneManager.GetSceneAt(i).path == path) return true;
-            }
-
-            return false;
-        }
-
-        private static void Open(string path, OpenSceneMode mode)
-        {
-            // Only the single open replaces what is loaded, so only that one has anything to save first.
-            if (mode == OpenSceneMode.Single && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
-
-            EditorSceneManager.OpenScene(path, mode);
+            EditorApplication.delayCall += () => HierarchySceneMenuWindow.Open(activator);
         }
     }
 }

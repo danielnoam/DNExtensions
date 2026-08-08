@@ -80,7 +80,7 @@
         "alt": true,
         "shift": false
     },
-    "openFolderInNewTabKey": {
+    "openInNewTabKey": {
         "key": 325,
         "ctrl": false,
         "alt": false,
@@ -88,6 +88,8 @@
     },
     "autoDock": true,
     "lockFolderWindows": true,
+    "folderDropCreatesTabEnabled": true,
+    "objectDropOpensPropertiesEnabled": true,
     "windowTitlesEnabled": true,
     "closeWindowKey": {
         "key": 119,

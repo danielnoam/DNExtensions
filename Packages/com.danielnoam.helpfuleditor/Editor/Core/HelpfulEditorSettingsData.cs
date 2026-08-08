@@ -116,6 +116,12 @@ namespace DNExtensions.HelpfulEditor
         public bool pickerHighlightEnabled = true;
 
         public Color pickerHighlightColor = new Color(1f, 0.6f, 0.1f, 0.9f);
+
+        /// <summary>Adds a Snap submenu to the Scene View's right-click menu, and to the Transform's gear menu.</summary>
+        public bool snapMenuEnabled = true;
+
+        /// <summary>How far a snap will look for a surface before giving up.</summary>
+        public float snapMaxDistance = 1000f;
     }
 
     /// <summary>One Game View guide, stored as a fraction of the render target so it survives resizing and zoom.</summary>
@@ -219,7 +225,11 @@ namespace DNExtensions.HelpfulEditor
         public KeyBind isolateKey = KeyBind.Of(KeyCode.E, ctrl: true);
         public KeyBind revealInFinderKey = KeyBind.Of(KeyCode.R, ctrl: true);
         public KeyBind quickObjectWindowKey = KeyBind.Of(KeyCode.Mouse0, alt: true);
-        public KeyBind openFolderInNewTabKey = KeyBind.Of(KeyCode.Mouse2);
+        /// <summary>
+        /// Opens whatever is under the cursor in a new tab: a folder as a second Project window,
+        /// anything else as its Properties window.
+        /// </summary>
+        public KeyBind openInNewTabKey = KeyBind.Of(KeyCode.Mouse2);
 
         /// <summary>On: the new window becomes a tab beside the one clicked. Off: it floats.</summary>
         public bool autoDock = true;
@@ -229,6 +239,9 @@ namespace DNExtensions.HelpfulEditor
 
         /// <summary>Dropping a folder on a dock area's tab strip opens it there as its own tab.</summary>
         public bool folderDropCreatesTabEnabled = true;
+
+        /// <summary>Dropping anything else on a tab strip opens its Properties window there instead.</summary>
+        public bool objectDropOpensPropertiesEnabled = true;
 
         /// <summary>Names windows pinned to something after what they show, instead of their window type.</summary>
         public bool windowTitlesEnabled = true;

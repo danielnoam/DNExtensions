@@ -8,15 +8,16 @@ using Object = UnityEngine.Object;
 namespace DNExtensions.HelpfulEditor.Project
 {
     /// <summary>
-    /// Dropping a folder on a dock area's tab strip opens it there as its own Project tab, the way
-    /// dragging a file onto a browser's tab bar opens it in a new tab.
+    /// Dropping something on a dock area's tab strip opens it there as its own tab, the way dragging
+    /// a file onto a browser's tab bar opens it in a new tab. A folder becomes a Project window
+    /// showing it; anything else becomes a Properties window for it.
     ///
     /// The tab strip is drawn by the dock area itself and has no IMGUI callback to hook, so the drag
     /// is caught on the host's visual tree and filtered by position. Handlers are registered once per
     /// dock area — every tab in one shares a panel — and re-registered as dock areas come and go.
     /// </summary>
     [InitializeOnLoad]
-    internal static class ProjectFolderDrop
+    internal static class ProjectTabDrop
     {
         /// <summary>Extra reach below the tabs, so the drop does not demand pixel accuracy.</summary>
         private const float DropZonePadding = 6f;
@@ -28,7 +29,7 @@ namespace DNExtensions.HelpfulEditor.Project
         private static double _lastRefresh;
         private static bool _warned;
 
-        static ProjectFolderDrop()
+        static ProjectTabDrop()
         {
             EditorApplication.update -= Refresh;
             EditorApplication.update += Refresh;
@@ -41,8 +42,7 @@ namespace DNExtensions.HelpfulEditor.Project
 
             PruneDeadDockAreas();
 
-            if (!HelpfulEditorSettings.Project.moduleEnabled) return;
-            if (!HelpfulEditorSettings.Project.folderDropCreatesTabEnabled) return;
+            if (!AnyDropEnabled()) return;
 
             foreach (EditorWindow window in Resources.FindObjectsOfTypeAll<EditorWindow>())
             {
@@ -101,7 +101,7 @@ namespace DNExtensions.HelpfulEditor.Project
 
         private static void OnDragUpdated(DragUpdatedEvent evt)
         {
-            if (!IsFolderDrop(evt.currentTarget as VisualElement, evt.mousePosition)) return;
+            if (!IsTabStripDrop(evt.currentTarget as VisualElement, evt.mousePosition)) return;
 
             DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
         }
@@ -109,28 +109,34 @@ namespace DNExtensions.HelpfulEditor.Project
         private static void OnDragPerform(DragPerformEvent evt)
         {
             VisualElement tree = evt.currentTarget as VisualElement;
-            if (!IsFolderDrop(tree, evt.mousePosition)) return;
+            if (!IsTabStripDrop(tree, evt.mousePosition)) return;
 
             Object dockArea = DockAreaOf(tree);
             if (!dockArea) return;
+
+            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
 
             DragAndDrop.AcceptDrag();
             evt.StopPropagation();
 
             foreach (Object dragged in DragAndDrop.objectReferences)
             {
-                string path = AssetDatabase.GetAssetPath(dragged);
-                if (string.IsNullOrEmpty(path) || !AssetDatabase.IsValidFolder(path)) continue;
+                if (!dragged) continue;
 
-                ProjectFolderTab.OpenInDockArea(path, dockArea);
+                if (TryGetFolderPath(dragged, out string folderPath))
+                {
+                    if (settings.folderDropCreatesTabEnabled) ProjectFolderTab.OpenInDockArea(folderPath, dockArea);
+                    continue;
+                }
+
+                if (settings.objectDropOpensPropertiesEnabled) ProjectPropertiesTab.OpenInDockArea(dragged, dockArea);
             }
         }
 
-        private static bool IsFolderDrop(VisualElement tree, Vector2 mousePosition)
+        private static bool IsTabStripDrop(VisualElement tree, Vector2 mousePosition)
         {
             if (tree == null) return false;
-            if (!HelpfulEditorSettings.Project.moduleEnabled) return false;
-            if (!HelpfulEditorSettings.Project.folderDropCreatesTabEnabled) return false;
+            if (!AnyDropEnabled()) return false;
 
             Object dockArea = DockAreaOf(tree);
             if (!dockArea) return false;
@@ -139,18 +145,46 @@ namespace DNExtensions.HelpfulEditor.Project
             // its origin down.
             if (mousePosition.y > HelpfulEditorDockArea.TabStripHeight(dockArea) + DropZonePadding) return false;
 
-            return HasFolder();
+            return HasHandledObject();
         }
 
-        private static bool HasFolder()
+        private static bool AnyDropEnabled()
         {
+            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
+
+            return settings.moduleEnabled && (settings.folderDropCreatesTabEnabled || settings.objectDropOpensPropertiesEnabled);
+        }
+
+        /// <summary>
+        /// Whether the drag holds something this would act on, so a drag of only folders with folder
+        /// drops turned off still passes through to whatever is underneath.
+        /// </summary>
+        private static bool HasHandledObject()
+        {
+            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
+
             foreach (Object dragged in DragAndDrop.objectReferences)
             {
-                string path = AssetDatabase.GetAssetPath(dragged);
-                if (!string.IsNullOrEmpty(path) && AssetDatabase.IsValidFolder(path)) return true;
+                if (!dragged) continue;
+
+                bool folder = TryGetFolderPath(dragged, out string _);
+
+                if (folder && settings.folderDropCreatesTabEnabled) return true;
+                if (!folder && settings.objectDropOpensPropertiesEnabled) return true;
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// False for anything that is not a project folder, which includes scene objects — they have
+        /// no asset path at all, and a Properties window is exactly what they want.
+        /// </summary>
+        private static bool TryGetFolderPath(Object dragged, out string path)
+        {
+            path = AssetDatabase.GetAssetPath(dragged);
+
+            return !string.IsNullOrEmpty(path) && AssetDatabase.IsValidFolder(path);
         }
 
         private static Object DockAreaOf(VisualElement tree)
@@ -168,7 +202,7 @@ namespace DNExtensions.HelpfulEditor.Project
             if (_warned) return;
 
             _warned = true;
-            Debug.LogWarning($"[HelpfulEditor] Dropping folders onto tab strips is unavailable on this Unity version. ({e.Message})");
+            Debug.LogWarning($"[HelpfulEditor] Dropping onto tab strips is unavailable on this Unity version. ({e.Message})");
         }
     }
 }

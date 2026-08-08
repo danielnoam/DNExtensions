@@ -162,11 +162,14 @@ namespace DNExtensions.HelpfulEditor.Project
             if (!rowRect.Contains(evt.mousePosition)) return;
             if (string.IsNullOrEmpty(path)) return;
 
-            // Folders only: opening a second Project window on a file would have nothing to show.
-            if (settings.openFolderInNewTabKey.IsMouseButton && settings.openFolderInNewTabKey.Matches(evt) &&
-                AssetDatabase.IsValidFolder(path))
+            // A folder gets a second Project window showing it; anything else has nothing to show
+            // that way, so it gets its Properties window instead — the same split the tab strip drop
+            // makes, reached with the wheel button rather than a drag.
+            if (settings.openInNewTabKey.IsMouseButton && settings.openInNewTabKey.Matches(evt))
             {
-                ProjectFolderTab.Open(path);
+                if (AssetDatabase.IsValidFolder(path)) ProjectFolderTab.Open(path);
+                else ProjectPropertiesTab.Open(AssetDatabase.LoadAssetAtPath<Object>(path));
+
                 evt.Use();
                 return;
             }
