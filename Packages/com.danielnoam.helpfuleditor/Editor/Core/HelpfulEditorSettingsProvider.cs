@@ -216,6 +216,19 @@ namespace DNExtensions.HelpfulEditor
 
                     DrawScreenshotFolder(settings);
 
+                    settings.screenshotFormat = (ScreenshotFormat)EditorGUILayout.EnumPopup(
+                        new GUIContent("Format", "PNG keeps alpha and is lossless. JPG is smaller but cannot store transparency."),
+                        settings.screenshotFormat);
+
+                    using (new EditorGUI.DisabledScope(settings.screenshotFormat != ScreenshotFormat.Jpg))
+                    {
+                        settings.screenshotJpgQuality = EditorGUILayout.IntSlider("JPG Quality", settings.screenshotJpgQuality, 1, 100);
+                    }
+
+                    settings.screenshotExcludeUi = EditorGUILayout.Toggle(
+                        new GUIContent("Exclude UI", "Leave the UI out of the capture: overlay canvases are skipped entirely and the UI layer is culled."),
+                        settings.screenshotExcludeUi);
+
                     settings.screenshotForceResolution = EditorGUILayout.Toggle(
                         new GUIContent("Force Resolution", "Sizes the Game View to a set resolution for the capture and puts it back afterwards."),
                         settings.screenshotForceResolution);
@@ -231,9 +244,10 @@ namespace DNExtensions.HelpfulEditor
 
                     EditorGUILayout.Space(4);
                     EditorGUILayout.HelpBox(
-                        "Files are named GameView <date> <time> <width>x<height>.png, at the game's own resolution rather than the window's.\n" +
+                        "Files are named GameView <date> <time> <width>x<height>, at the game's own resolution rather than the window's.\n" +
                         "A relative folder is taken from the project root, so it travels with the project.\n" +
                         "Forcing a resolution resizes the Game View for a moment — it will visibly flick to that size and back.\n" +
+                        "Excluding the UI switches to rendering the cameras directly instead of saving the Game View's own image: no resize flicker, but what lands on disk is no longer guaranteed to match the window pixel for pixel.\n" +
                         "Right-click the button to open the folder.",
                         MessageType.Info);
                 }

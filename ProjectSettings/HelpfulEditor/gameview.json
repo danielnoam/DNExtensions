@@ -8,6 +8,9 @@
         "x": 1920,
         "y": 1080
     },
+    "screenshotFormat": 0,
+    "screenshotJpgQuality": 90,
+    "screenshotExcludeUi": false,
     "screenshotFolder": "C:/Users/danie/OneDrive/Desktop",
     "guideColor": {
         "r": 0.0,

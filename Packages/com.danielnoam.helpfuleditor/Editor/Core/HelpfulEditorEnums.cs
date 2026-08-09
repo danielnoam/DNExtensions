@@ -27,4 +27,11 @@ namespace DNExtensions.HelpfulEditor
         Hierarchy
     }
 
+    /// <summary>PNG keeps alpha, which is the only reason a transparent capture is worth taking.</summary>
+    internal enum ScreenshotFormat
+    {
+        Png,
+        Jpg
+    }
+
 }

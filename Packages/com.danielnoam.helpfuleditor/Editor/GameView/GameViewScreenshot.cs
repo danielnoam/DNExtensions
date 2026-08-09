@@ -63,6 +63,12 @@ namespace DNExtensions.HelpfulEditor.GameView
 
             GameViewSettings settings = HelpfulEditorSettings.GameView;
 
+            if (settings.screenshotExcludeUi)
+            {
+                CaptureExcluding(gameView, settings);
+                return;
+            }
+
             if (!settings.screenshotForceResolution)
             {
                 CaptureNow(gameView);
@@ -84,6 +90,38 @@ namespace DNExtensions.HelpfulEditor.GameView
             BeginForced(gameView, width, height);
         }
 
+        /// <summary>
+        /// The excluding path renders the cameras itself, so it can be handed any size directly and
+        /// needs none of the resize-and-wait the ordinary capture goes through to reach one.
+        /// </summary>
+        private static void CaptureExcluding(EditorWindow gameView, GameViewSettings settings)
+        {
+            RenderTexture current = GetRenderTexture(gameView);
+
+            int width = settings.screenshotForceResolution ? settings.screenshotResolution.x : current ? current.width : 0;
+            int height = settings.screenshotForceResolution ? settings.screenshotResolution.y : current ? current.height : 0;
+
+            width = Mathf.Clamp(width, MinResolution, MaxResolution);
+            height = Mathf.Clamp(height, MinResolution, MaxResolution);
+
+            RenderTexture target = GameViewCameraCapture.Capture(width, height, settings.screenshotExcludeUi);
+
+            if (!target)
+            {
+                Debug.LogWarning("[HelpfulEditor] No active camera renders to the Game View, so there is nothing to capture.");
+                return;
+            }
+
+            try
+            {
+                Save(target, flipVertically: false);
+            }
+            finally
+            {
+                RenderTexture.ReleaseTemporary(target);
+            }
+        }
+
         private static void CaptureNow(EditorWindow gameView)
         {
             RenderTexture target = GetRenderTexture(gameView);
@@ -94,10 +132,15 @@ namespace DNExtensions.HelpfulEditor.GameView
                 return;
             }
 
-            Save(target);
+            Save(target, flipVertically: true);
         }
 
-        private static void Save(RenderTexture target)
+        /// <param name="flipVertically">
+        /// True for the Game View's own target, which is held bottom up. False for one we rendered
+        /// ourselves, which already comes back the right way round — flipping it as well is what put
+        /// the excluded captures upside down.
+        /// </param>
+        private static void Save(RenderTexture target, bool flipVertically)
         {
             string folder = ResolveFolder();
 
@@ -127,14 +170,13 @@ namespace DNExtensions.HelpfulEditor.GameView
 
                 image.ReadPixels(new Rect(0f, 0f, target.width, target.height), 0, 0, false);
 
-                // The target is read bottom up while a PNG is written top down.
-                FlipVertically(image);
+                if (flipVertically) FlipVertically(image);
                 image.Apply(false, false);
 
-                byte[] png = image.EncodeToPNG();
-                if (png == null) return;
+                byte[] encoded = Encode(image);
+                if (encoded == null) return;
 
-                File.WriteAllBytes(path, png);
+                File.WriteAllBytes(path, encoded);
             }
             catch (Exception e)
             {
@@ -229,7 +271,7 @@ namespace DNExtensions.HelpfulEditor.GameView
                 // Restored first: saving reads pixels back and writes a file, and the view has no reason
                 // to sit at the wrong size while that happens.
                 Restore();
-                Save(captured);
+                Save(captured, flipVertically: true);
 
                 return;
             }
@@ -312,8 +354,13 @@ namespace DNExtensions.HelpfulEditor.GameView
                 string newest = null;
                 DateTime newestTime = DateTime.MinValue;
 
-                foreach (string file in Directory.GetFiles(folder, "*.png"))
+                // Both extensions, not just the one currently selected — the newest shot in the folder
+                // is the one worth landing on whichever format it was taken in.
+                foreach (string file in Directory.GetFiles(folder))
                 {
+                    if (!file.EndsWith(".png", StringComparison.OrdinalIgnoreCase) &&
+                        !file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)) continue;
+
                     DateTime written = File.GetLastWriteTimeUtc(file);
                     if (written <= newestTime) continue;
 
@@ -364,15 +411,30 @@ namespace DNExtensions.HelpfulEditor.GameView
         {
             string stamp = DateTime.Now.ToString("yyyy-MM-dd HH-mm-ss");
             string name = $"GameView {stamp} {width}x{height}";
+            string extension = Extension();
 
-            string path = Path.Combine(folder, $"{name}.png");
+            string path = Path.Combine(folder, $"{name}{extension}");
 
             for (int i = 2; File.Exists(path); i++)
             {
-                path = Path.Combine(folder, $"{name} ({i}).png");
+                path = Path.Combine(folder, $"{name} ({i}){extension}");
             }
 
             return path;
+        }
+
+        private static byte[] Encode(Texture2D image)
+        {
+            GameViewSettings settings = HelpfulEditorSettings.GameView;
+
+            if (settings.screenshotFormat != ScreenshotFormat.Jpg) return image.EncodeToPNG();
+
+            return image.EncodeToJPG(Mathf.Clamp(settings.screenshotJpgQuality, 1, 100));
+        }
+
+        private static string Extension()
+        {
+            return HelpfulEditorSettings.GameView.screenshotFormat == ScreenshotFormat.Jpg ? ".jpg" : ".png";
         }
 
         /// <summary>Imported and pinged when it lands inside the project, so it shows up without a manual refresh.</summary>

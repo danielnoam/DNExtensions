@@ -187,8 +187,43 @@ namespace DNExtensions.HelpfulEditor.GameView
             groupRect = default;
 
             object topLevel = SafeGet(_topLevelProperty);
+            if (topLevel == null) return false;
 
-            return topLevel != null && TryFindGapIn(topLevel, ref gapEntry, ref groupRect);
+            if (TryFindGapIn(topLevel, ref gapEntry, ref groupRect)) return true;
+
+            // Editors from before the play mode dropdown existed give the anchored search nothing to
+            // anchor on, and it would otherwise report no gap at all — which hides the strip rather
+            // than misplacing it, so the buttons simply never appear. Their toolbars have a single
+            // flexible space in the same place, so falling back to finding one directly is enough.
+            return TryFindLooseGapIn(topLevel, ref gapEntry, ref groupRect);
+        }
+
+        /// <summary>
+        /// The flexible space of the innermost group that has one. Children are searched first because
+        /// the toolbar is a row nested inside the window's layout, so the gap wanted is always deeper
+        /// than the group handed in.
+        /// </summary>
+        private static bool TryFindLooseGapIn(object group, ref object gapEntry, ref Rect groupRect)
+        {
+            if (!_groupType.IsInstanceOfType(group)) return false;
+            if (!(_groupEntriesField.GetValue(group) is IList entries)) return false;
+
+            foreach (object child in entries)
+            {
+                if (TryFindLooseGapIn(child, ref gapEntry, ref groupRect)) return true;
+            }
+
+            for (int i = entries.Count - 1; i >= 0; i--)
+            {
+                if (!IsFlexibleSpace(entries[i])) continue;
+
+                gapEntry = entries[i];
+                groupRect = (Rect)_entryRectField.GetValue(group);
+
+                return true;
+            }
+
+            return false;
         }
 
         private static bool TryFindGapIn(object group, ref object gapEntry, ref Rect groupRect)
@@ -422,9 +457,19 @@ namespace DNExtensions.HelpfulEditor.GameView
 
                 if (Event.current.type != EventType.Repaint) return;
 
-                if (_width <= 0f || !TryFindGap(out object gap, out Rect groupRect))
+                // Nothing to show: every item measured zero, which is what a disabled feature does.
+                if (_width <= 0f)
                 {
                     _root.style.display = DisplayStyle.None;
+                    return;
+                }
+
+                if (!TryFindGap(out object gap, out Rect groupRect))
+                {
+                    // Guessed at rather than hidden. A strip a few pixels out of place is something
+                    // to complain about; one that vanishes leaves no way to tell whether the feature
+                    // is off, broken, or unsupported on this editor.
+                    ApplyFloatingPlacement();
                     return;
                 }
 
@@ -436,6 +481,21 @@ namespace DNExtensions.HelpfulEditor.GameView
                 _root.style.width = _width;
                 _root.style.top = groupRect.y;
                 _root.style.height = groupRect.height > 1f ? groupRect.height : FallbackToolbarHeight;
+            }
+
+            /// <summary>
+            /// Anchored to the right edge at the cluster's usual width, for when the toolbar's layout
+            /// could not be read. The same placement the strip uses when it never managed to hook the
+            /// toolbar at all.
+            /// </summary>
+            private void ApplyFloatingPlacement()
+            {
+                _root.style.display = DisplayStyle.Flex;
+                _root.style.left = StyleKeyword.Auto;
+                _root.style.right = FallbackClusterWidth;
+                _root.style.width = _width;
+                _root.style.top = 0f;
+                _root.style.height = FallbackToolbarHeight;
             }
 
             private float MeasureItems()

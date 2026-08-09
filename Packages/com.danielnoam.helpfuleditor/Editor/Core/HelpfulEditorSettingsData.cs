@@ -154,6 +154,18 @@ namespace DNExtensions.HelpfulEditor
 
         public Vector2Int screenshotResolution = new Vector2Int(1920, 1080);
 
+        public ScreenshotFormat screenshotFormat = ScreenshotFormat.Png;
+
+        /// <summary>JPG only. Unity's own default is 75, which is visibly soft on UI and text.</summary>
+        public int screenshotJpgQuality = 90;
+
+        /// <summary>
+        /// Leaves the UI layer out and skips the overlay canvases entirely, which are not drawn by a
+        /// camera at all. Takes the capture off the Game View's own image and onto a render of its
+        /// cameras, so what is saved is no longer quite what the window is showing.
+        /// </summary>
+        public bool screenshotExcludeUi;
+
         /// <summary>Relative paths are taken from the project root, so the default travels with the project.</summary>
         public string screenshotFolder = "Screenshots";
 
