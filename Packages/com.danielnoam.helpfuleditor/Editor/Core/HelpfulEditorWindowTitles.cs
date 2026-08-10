@@ -42,6 +42,33 @@ namespace DNExtensions.HelpfulEditor
         {
             EditorApplication.update -= OnUpdate;
             EditorApplication.update += OnUpdate;
+
+            // The two points the dictionary is about to be lost. Everything it holds has to go with
+            // it, because nothing else will ever collect it — see ReleaseScaledIcons.
+            AssemblyReloadEvents.beforeAssemblyReload -= ReleaseScaledIcons;
+            AssemblyReloadEvents.beforeAssemblyReload += ReleaseScaledIcons;
+
+            EditorApplication.quitting -= ReleaseScaledIcons;
+            EditorApplication.quitting += ReleaseScaledIcons;
+        }
+
+        /// <summary>
+        /// Destroys the rebuilt icons.
+        ///
+        /// They carry DontSave so Unity will not collect them on a scene change, which is what keeps
+        /// a tab icon alive between scenes — and is also what stops Unity collecting them on a domain
+        /// reload. The dictionary comes back empty after one, so without this every texture it held
+        /// stays in memory with nothing left pointing at it, and a session of recompiles accumulates
+        /// one set per reload.
+        /// </summary>
+        private static void ReleaseScaledIcons()
+        {
+            foreach (Texture2D icon in ScaledIcons.Values)
+            {
+                if (icon) Object.DestroyImmediate(icon);
+            }
+
+            ScaledIcons.Clear();
         }
 
         /// <summary>
@@ -176,9 +203,12 @@ namespace DNExtensions.HelpfulEditor
                 PropertyInfo pixelsPerPoint = typeof(Texture2D).GetProperty("pixelsPerPoint", AnyInstance);
                 if (pixelsPerPoint == null || !pixelsPerPoint.CanWrite) return source;
 
+                // Hidden as well as unsaved: these are an implementation detail of a tab label, and
+                // have no business turning up in an object picker or a search. Destroyed explicitly
+                // by ReleaseScaledIcons, since neither flag makes Unity collect them.
                 Texture2D scaled = new Texture2D(source.width, source.height, source.format, source.mipmapCount, false)
                 {
-                    hideFlags = HideFlags.DontSave
+                    hideFlags = HideFlags.HideAndDontSave
                 };
 
                 Graphics.CopyTexture(source, scaled);

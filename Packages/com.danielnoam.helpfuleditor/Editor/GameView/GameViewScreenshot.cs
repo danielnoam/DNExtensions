@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using UnityEditor;
@@ -344,7 +345,17 @@ namespace DNExtensions.HelpfulEditor.GameView
                 return;
             }
 
-            Application.OpenURL("file:///" + folder.Replace('\\', '/'));
+            // Built through Uri rather than by prefixing "file:///". A Windows path starts with a
+            // drive letter and needs the third slash; a POSIX one already starts with a slash of its
+            // own, so the same prefix produced file://// and a URL no file manager would open.
+            try
+            {
+                Application.OpenURL(new Uri(folder).AbsoluteUri);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[HelpfulEditor] Could not open the screenshot folder at {folder}: {e.Message}");
+            }
         }
 
         private static string NewestScreenshot(string folder)
@@ -409,7 +420,10 @@ namespace DNExtensions.HelpfulEditor.GameView
         /// </summary>
         private static string NextFreePath(string folder, int width, int height)
         {
-            string stamp = DateTime.Now.ToString("yyyy-MM-dd HH-mm-ss");
+            // Invariant so the name is the Gregorian date on every machine. The current culture
+            // decides the calendar as well as the separators, and a Thai or Hijri one would file
+            // this year's captures under 2569 or 1448.
+            string stamp = DateTime.Now.ToString("yyyy-MM-dd HH-mm-ss", CultureInfo.InvariantCulture);
             string name = $"GameView {stamp} {width}x{height}";
             string extension = Extension();
 

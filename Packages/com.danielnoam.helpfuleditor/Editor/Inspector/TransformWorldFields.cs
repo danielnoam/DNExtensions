@@ -9,9 +9,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
     /// The world position, rotation and scale block drawn under the local values, shared by the
     /// Transform and RectTransform inspectors.
     ///
-    /// Plain Vector3 rows rather than the linked field the local ones use. These are a read-out with
-    /// editing attached, not the object's primary controls, and giving them the same copy/paste/reset
-    /// chrome would make the two sets look interchangeable.
+    /// All three rows are editable and carry the same chrome the local rows do — copy, paste, reset,
+    /// and a proportional lock on the scale row — so a value can be moved between the two sets and
+    /// either set can be dragged the same way.
     ///
     /// Held per inspector rather than statically: the rotation row remembers the angles last typed
     /// into it, and that memory belongs to the object being looked at.
@@ -22,13 +22,23 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private Quaternion _eulerSource;
         private bool _eulerValid;
 
+        private Vector3 _lastScale;
+        private bool _lastScaleValid;
+
         /// <summary>
-        /// Drops the remembered angles. Editors are pooled and handed a new target, and the angles are
-        /// keyed only on the rotation that produced them — so without this, typing 370 on one object and
-        /// then selecting another at the same world rotation shows 370 for that one too. Identity makes
-        /// it easy to hit: every object that has never been rotated shares it.
+        /// Drops what the rows remember about the object they were last drawn for.
+        ///
+        /// The angles are the reason this exists: editors are pooled and handed a new target, and the
+        /// angles are keyed only on the rotation that produced them — so without this, typing 370 on
+        /// one object and then selecting another at the same world rotation shows 370 for that one
+        /// too. Identity makes it easy to hit, since every object that has never been rotated shares
+        /// it. The scale row's lock reference goes for the same reason.
         /// </summary>
-        public void Forget() => _eulerValid = false;
+        public void Forget()
+        {
+            _eulerValid = false;
+            _lastScaleValid = false;
+        }
 
         /// <summary>
         /// Whether the block is worth drawing at all. Any target, not every one — a mixed selection
@@ -52,7 +62,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             DrawPosition(serializedObject, targets);
             DrawRotation(serializedObject, main, targets);
-            DrawScale(targets);
+            DrawScale(serializedObject, targets);
         }
 
         private static void DrawPosition(SerializedObject serializedObject, Object[] targets)
@@ -106,7 +116,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             Vector3 newEuler = LinkedVector3Field.Draw("Rotation", displayEuler, Vector3.zero, false, ref unusedLock,
                 extraContextItems: menu => menu.AddItem(new GUIContent("Copy Quaternion"), false, () =>
-                    EditorGUIUtility.systemCopyBuffer = $"{quaternion.x},{quaternion.y},{quaternion.z},{quaternion.w}"),
+                    EditorGUIUtility.systemCopyBuffer = LinkedVector3Field.FormatQuaternion(quaternion)),
                 extraResetItems: HelpfulEditorSettings.Inspector.resetMenuItemsEnabled
                     ? menu => TransformResetMenu.Build(menu, targets, (t, v) => t.eulerAngles = v, Vector3.zero)
                     : null);
@@ -133,19 +143,82 @@ namespace DNExtensions.HelpfulEditor.Inspector
         }
 
         /// <summary>
-        /// Read-only, because lossyScale has no setter and cannot be given a correct one: under a parent
-        /// that is both rotated and unevenly scaled the world scale is a sheared matrix that no single
-        /// local scale reproduces, so a writable field would quietly store something other than what was
-        /// typed. Shown anyway — knowing what an object ended up at is most of why the world values are
-        /// wanted — and copyable, which is the part that was actually being asked of it.
+        /// Written by dividing the parent's scale out of what was typed — see <see cref="SetLossyScale"/>
+        /// for the one case that cannot be expressed exactly.
+        ///
+        /// Carries a proportional lock of its own, which holds the object's proportions as they are
+        /// seen in the world rather than as they are stored. Under a non-uniformly scaled parent the
+        /// two are different shapes, so holding one is not holding the other — and a locked drag here
+        /// deliberately produces an unlocked-looking change in the local row below, because that is
+        /// what keeping the world shape costs.
         /// </summary>
-        private static void DrawScale(Object[] targets)
+        private void DrawScale(SerializedObject serializedObject, Object[] targets)
         {
             Vector3 displayValue = GetCommonValue(targets, t => t.lossyScale, out bool mixed);
 
+            // The lock scales against the row's own last committed value, which is what lets a
+            // continuous drag compound step by step instead of every frame restarting from the
+            // shape the object began the drag at. There is no such value on the first draw for a
+            // target, so it starts from what is already on screen.
+            if (!_lastScaleValid)
+            {
+                _lastScale = displayValue;
+                _lastScaleValid = true;
+            }
+
+            EditorGUI.BeginChangeCheck();
             EditorGUI.showMixedValue = mixed;
-            LinkedVector3Field.DrawReadOnly("Scale", displayValue);
+
+            Vector3 newValue = LinkedVector3Field.Draw("Scale", displayValue, Vector3.one, true, ref ScaleLock.World.locked,
+                extraResetItems: HelpfulEditorSettings.Inspector.resetMenuItemsEnabled
+                    ? menu => TransformResetMenu.Build(menu, targets, SetLossyScale, Vector3.one)
+                    : null);
+
             EditorGUI.showMixedValue = false;
+
+            if (!EditorGUI.EndChangeCheck()) return;
+
+            if (ScaleLock.World.locked) newValue = LinkedVector3Field.ApplyLock(displayValue, newValue, _lastScale);
+
+            Vector3 delta = newValue - displayValue;
+            Undo.RecordObjects(targets, "World Scale Changed");
+
+            foreach (Object obj in targets)
+            {
+                if (obj is Transform transform) SetLossyScale(transform, mixed ? transform.lossyScale + delta : newValue);
+            }
+
+            _lastScale = newValue;
+
+            serializedObject.Update();
+        }
+
+        /// <summary>
+        /// Puts a transform at a world scale by dividing out its parent's.
+        ///
+        /// Exact wherever lossyScale is itself exact, which is everywhere no ancestor combines a
+        /// rotation with a non-uniform scale. Under one that does, the true world scale is a sheared
+        /// matrix that no single local scale reproduces — Unity's lossyScale is already an
+        /// approximation of it there, and what reads back after a write is the nearest thing the
+        /// object can actually hold rather than the number typed. That is the reason this row was
+        /// read-only until it was asked for; the field is honest about the common case and lossy in
+        /// exactly the case lossyScale is named for.
+        ///
+        /// An axis whose parent scale is zero keeps the local value it had: every world scale on that
+        /// axis is zero regardless, so there is nothing to solve for and no reason to disturb it.
+        /// </summary>
+        public static void SetLossyScale(Transform transform, Vector3 lossyScale)
+        {
+            if (!transform) return;
+
+            Transform parent = transform.parent;
+            Vector3 parentScale = parent ? parent.lossyScale : Vector3.one;
+            Vector3 local = transform.localScale;
+
+            transform.localScale = new Vector3(
+                Mathf.Approximately(parentScale.x, 0f) ? local.x : lossyScale.x / parentScale.x,
+                Mathf.Approximately(parentScale.y, 0f) ? local.y : lossyScale.y / parentScale.y,
+                Mathf.Approximately(parentScale.z, 0f) ? local.z : lossyScale.z / parentScale.z);
         }
 
         private static Vector3 GetCommonValue(Object[] targets, Func<Transform, Vector3> selector, out bool mixed)

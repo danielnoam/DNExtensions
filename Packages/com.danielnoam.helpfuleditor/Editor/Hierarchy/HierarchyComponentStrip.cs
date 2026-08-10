@@ -208,6 +208,13 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                 return;
             }
 
+            // Alt, exactly as the icons demand it. The badge only brightens while Alt is held — so
+            // opening its menu on a plain click made the strip's one affordance a lie, and put a
+            // menu in front of anyone who clicked a row slightly too far right.
+            if (!evt.alt) return;
+
+            EditorGUIUtility.AddCursorRect(overflowRect, MouseCursor.Link);
+
             if (evt.type != EventType.MouseDown || !CanClaimClick(evt)) return;
 
             Vector2 screenPosition = HelpfulEditorQuickEditWindow.MouseScreenPosition();

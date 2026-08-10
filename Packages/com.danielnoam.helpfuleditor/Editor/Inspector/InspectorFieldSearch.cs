@@ -163,6 +163,22 @@ namespace DNExtensions.HelpfulEditor.Inspector
             Rebuild();
         }
 
+        /// <summary>
+        /// Drops the previous results, disposing the SerializedObjects they hold. Each one owns
+        /// native memory that survives the managed object being dropped, and a rebuild runs once per
+        /// debounced keystroke across every component on the object — so simply clearing the list
+        /// leaks a set of them per character typed.
+        /// </summary>
+        private static void DiscardResults()
+        {
+            foreach (ComponentMatches entry in Results)
+            {
+                entry.SerializedObject?.Dispose();
+            }
+
+            Results.Clear();
+        }
+
         private static bool IsStale()
         {
             foreach (ComponentMatches entry in Results)
@@ -179,7 +195,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
             _target = _pendingTarget;
             _query = _pendingQuery;
 
-            Results.Clear();
+            DiscardResults();
 
             if (!_target || string.IsNullOrWhiteSpace(_query))
             {
@@ -194,7 +210,11 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 SerializedObject serializedObject = new SerializedObject(component);
 
                 SerializedProperty iterator = serializedObject.GetIterator();
-                if (!iterator.NextVisible(true)) continue;
+                if (!iterator.NextVisible(true))
+                {
+                    serializedObject.Dispose();
+                    continue;
+                }
 
                 Buffer.Clear();
 
@@ -206,7 +226,11 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 }
                 while (iterator.NextVisible(false));
 
-                if (Buffer.Count == 0) continue;
+                if (Buffer.Count == 0)
+                {
+                    serializedObject.Dispose();
+                    continue;
+                }
 
                 ComponentMatches entry = new ComponentMatches
                 {

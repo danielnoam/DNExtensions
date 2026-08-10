@@ -80,7 +80,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
                     string colorProperty = candidate ? GetColorProperty(candidate) : null;
                     if (colorProperty == null) continue;
 
-                    SerializedObject serializedObject = new SerializedObject(candidate);
+                    using SerializedObject serializedObject = new SerializedObject(candidate);
 
                     SerializedProperty property = serializedObject.FindProperty(colorProperty);
                     if (property == null) continue;

@@ -6,6 +6,7 @@
     "excludedComponentTypes": [],
     "isolationPersistsAcrossSelection": false,
     "betterTransformEnabled": true,
+    "betterRectTransformEnabled": true,
     "scaleLockDefaultOn": false,
     "resetMenuItemsEnabled": true,
     "worldFieldsEnabled": true,

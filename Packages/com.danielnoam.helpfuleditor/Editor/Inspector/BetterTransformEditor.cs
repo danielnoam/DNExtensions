@@ -13,10 +13,6 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
         private static readonly Type NativeEditorType = typeof(Editor).Assembly.GetType("UnityEditor.TransformInspector");
 
-        private static bool _scaleLocked;
-        private static bool _scaleLockInitialized;
-        private static bool _scaleLockDefault;
-
         private Editor _nativeEditor;
         private Vector3 _lastScale;
 
@@ -28,16 +24,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             _worldFields.Forget();
 
-            // The lock is deliberately shared across inspectors and kept across selections, so it is
-            // only seeded from the setting once. Comparing against the last seeded value is what
-            // makes changing that setting take effect without waiting for a recompile.
-            bool setting = HelpfulEditorSettings.Inspector.scaleLockDefaultOn;
-
-            if (_scaleLockInitialized && setting == _scaleLockDefault) return;
-
-            _scaleLocked = setting;
-            _scaleLockDefault = setting;
-            _scaleLockInitialized = true;
+            ScaleLock.Local.SyncWithSetting();
+            ScaleLock.World.SyncWithSetting();
         }
 
         private void OnDisable()
@@ -58,6 +46,10 @@ namespace DNExtensions.HelpfulEditor.Inspector
             serializedObject.Update();
 
             bool showWorld = ShowWorldFields(settings);
+
+            // Only once there is a second block to tell it apart from. On a root object these rows
+            // are the only values there are, and a header over them would be labelling the obvious.
+            if (showWorld) EditorGUILayout.LabelField("Local", EditorStyles.miniBoldLabel);
 
             DrawPosition(settings);
             DrawRotation(settings);
@@ -150,7 +142,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             Vector3 newEuler = LinkedVector3Field.Draw("Rotation", displayEuler, Vector3.zero, false, ref unusedLock,
                 extraContextItems: menu => menu.AddItem(new GUIContent("Copy Quaternion"), false, () =>
-                    EditorGUIUtility.systemCopyBuffer = $"{quaternion.x},{quaternion.y},{quaternion.z},{quaternion.w}"),
+                    EditorGUIUtility.systemCopyBuffer = LinkedVector3Field.FormatQuaternion(quaternion)),
                 extraResetItems: settings.resetMenuItemsEnabled
                     ? menu => BuildResetMenu(menu, (t, v) => t.localEulerAngles = v, Vector3.zero)
                     : null,
@@ -189,7 +181,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
             EditorGUI.BeginChangeCheck();
             EditorGUI.showMixedValue = mixed;
 
-            Vector3 newValue = LinkedVector3Field.Draw("Scale", displayValue, Vector3.one, true, ref _scaleLocked,
+            Vector3 newValue = LinkedVector3Field.Draw("Scale", displayValue, Vector3.one, true, ref ScaleLock.Local.locked,
                 extraResetItems: settings.resetMenuItemsEnabled
                     ? menu => BuildResetMenu(menu, (t, v) => t.localScale = v, Vector3.one)
                     : null,
@@ -199,7 +191,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             if (!EditorGUI.EndChangeCheck()) return;
 
-            if (_scaleLocked) newValue = LinkedVector3Field.ApplyLock(displayValue, newValue, _lastScale);
+            if (ScaleLock.Local.locked) newValue = LinkedVector3Field.ApplyLock(displayValue, newValue, _lastScale);
 
             Vector3 delta = newValue - displayValue;
             Undo.RecordObjects(targets, "Scale Changed");

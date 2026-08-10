@@ -115,9 +115,14 @@ namespace DNExtensions.HelpfulEditor
 
             return ConvertTo(rawId, typeof(EntityId)) is EntityId converted ? EditorUtility.EntityIdToObject(converted) : null;
 #else
+            // Deprecated from 6000.3 in favour of EntityIdToObject, but the tree rows this resolves
+            // still carry int ids until 6.4 — so on 6.3 the int call is the matching one, and
+            // converting to an EntityId only to convert back would be the longer way round.
+#pragma warning disable 618
             if (rawId is int instanceId) return EditorUtility.InstanceIDToObject(instanceId);
 
             return ConvertTo(rawId, typeof(int)) is int converted ? EditorUtility.InstanceIDToObject(converted) : null;
+#pragma warning restore 618
 #endif
         }
     }

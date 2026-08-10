@@ -369,9 +369,11 @@ namespace DNExtensions.HelpfulEditor
 
                     EditorGUILayout.Space(4);
                     EditorGUILayout.HelpBox(
-                        "Scenes are grouped into submenus by the folders they sit in, and the open ones are ticked.\n" +
-                        "Choosing one opens it, asking to save first if anything is unsaved; Open Additive loads it alongside.\n" +
-                        "Only the name is clickable — it lights up under the cursor, and the rest of the header still selects the scene while right-click still opens Unity's own menu.",
+                        "Every scene in the project is listed flat by name, with the open ones ticked — deliberately not grouped by folder, which would turn picking a scene into navigating the project.\n" +
+                        "Star a scene to lift it to the top of the list; stars are per user and per project.\n" +
+                        "Choosing one opens it, asking to save first if anything is unsaved; Shift+Click, or Shift+Return, loads it additively instead.\n" +
+                        "Up and Down move through the list, Return opens, Escape closes. Scenes cannot be opened during play mode.\n" +
+                        "Only the name is clickable — an arrow appears at the end of it under the cursor, and the rest of the header still selects the scene while right-click still opens Unity's own menu.",
                         MessageType.Info);
                 }
 
@@ -419,12 +421,26 @@ namespace DNExtensions.HelpfulEditor
 
                 if (Section(Inspector, "Transform Inspector"))
                 {
-                    settings.betterTransformEnabled = EditorGUILayout.Toggle("Better Transform", settings.betterTransformEnabled);
-                    settings.scaleLockDefaultOn = EditorGUILayout.Toggle("Scale Lock Default On", settings.scaleLockDefaultOn);
-                    settings.resetMenuItemsEnabled = EditorGUILayout.Toggle("Show Reset Menu Items", settings.resetMenuItemsEnabled);
-                    settings.worldFieldsEnabled = EditorGUILayout.Toggle(
-                        new GUIContent("World Fields", "Adds world position, rotation and scale below the local rows. Only shown on objects with a parent, since a root object's local values already are its world values."),
-                        settings.worldFieldsEnabled);
+                    settings.betterTransformEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Better Transform", "Replaces Unity's Transform inspector with one whose rows carry copy, paste and reset buttons."),
+                        settings.betterTransformEnabled);
+
+                    settings.betterRectTransformEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Better Rect Transform", "The same for RectTransform. Separate because that inspector is the larger rebuild of the two — turning it off falls back to Unity's own while leaving the Transform one in place."),
+                        settings.betterRectTransformEnabled);
+
+                    // The rest describe rows that only exist inside those two inspectors, so with
+                    // both off there is nothing for them to govern.
+                    using (new EditorGUI.DisabledScope(!settings.betterTransformEnabled && !settings.betterRectTransformEnabled))
+                    {
+                        settings.scaleLockDefaultOn = EditorGUILayout.Toggle(
+                            new GUIContent("Scale Lock Default On", "Start the proportional lock on the scale rows switched on. Applies to the local and world rows alike."),
+                            settings.scaleLockDefaultOn);
+                        settings.resetMenuItemsEnabled = EditorGUILayout.Toggle("Show Reset Menu Items", settings.resetMenuItemsEnabled);
+                        settings.worldFieldsEnabled = EditorGUILayout.Toggle(
+                            new GUIContent("World Fields", "Adds world position, rotation and scale below the local rows. Only shown on objects with a parent, since a root object's local values already are its world values."),
+                            settings.worldFieldsEnabled);
+                    }
                 }
 
                 if (Section(Inspector, "Save In Play Mode"))

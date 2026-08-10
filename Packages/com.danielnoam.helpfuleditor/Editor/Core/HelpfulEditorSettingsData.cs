@@ -62,6 +62,9 @@ namespace DNExtensions.HelpfulEditor
         public bool isolationPersistsAcrossSelection;
 
         public bool betterTransformEnabled = true;
+        public bool betterRectTransformEnabled = true;
+
+        /// <summary>Seeds the proportional lock on both scale rows, local and world.</summary>
         public bool scaleLockDefaultOn;
         public bool resetMenuItemsEnabled = true;
 

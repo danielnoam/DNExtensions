@@ -25,11 +25,16 @@ namespace DNExtensions.HelpfulEditor
         /// <summary>
         /// Whether the editor font renders emoji here. The macOS editor draws nothing at all for
         /// them, so anything that leans on one for meaning has to say it in words there instead.
+        ///
+        /// Linux is treated the same way, and for the same reason rather than a confirmed one: the
+        /// editor falls back through fontconfig there, so whether a glyph appears depends on whether
+        /// the machine happens to have an emoji font installed. Opting in only where the answer is
+        /// known trades an icon for a word; guessing wrong the other way leaves a blank button.
         /// </summary>
-#if UNITY_EDITOR_OSX
-        public const bool SupportsEmoji = false;
-#else
+#if UNITY_EDITOR_WIN
         public const bool SupportsEmoji = true;
+#else
+        public const bool SupportsEmoji = false;
 #endif
 
         /// <summary>Picks whichever of the two this platform can actually display.</summary>

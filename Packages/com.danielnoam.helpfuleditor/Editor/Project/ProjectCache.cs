@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -53,18 +52,53 @@ namespace DNExtensions.HelpfulEditor.Project
 
             EditorApplication.quitting -= Flush;
             EditorApplication.quitting += Flush;
+
+            // Deferred rather than run here: this is the one thing the cache asks the AssetDatabase,
+            // and an InitializeOnLoad callback can run before it is ready to answer. Nothing depends
+            // on the pruning having happened, so a tick's delay costs nothing.
+            EditorApplication.delayCall += PruneMissingFolders;
         }
 
         private static void Flush() => instance.SaveIfDirty();
 
+        /// <summary>
+        /// Drops entries for folders that are gone. Nothing else would ever notice: the cache is
+        /// only ever consulted for folders the window is currently drawing, so a deleted one is
+        /// simply never asked about again.
+        ///
+        /// Asked of the AssetDatabase rather than of the disk. These are asset paths, and only the
+        /// ones under Assets/ are filesystem paths as well — a registry package lives in
+        /// Library/PackageCache under a versioned folder name, so Directory.Exists says no for every
+        /// package path there has ever been. Testing that way threw the whole of Packages/ out on
+        /// every save, to be rescanned from scratch the next session.
+        /// </summary>
+        private static void PruneMissingFolders()
+        {
+            ProjectCache cache = instance;
+            bool removed = false;
+
+            for (int i = cache._entries.Count - 1; i >= 0; i--)
+            {
+                string path = cache._entries[i].path;
+                if (!string.IsNullOrEmpty(path) && AssetDatabase.IsValidFolder(path)) continue;
+
+                if (!string.IsNullOrEmpty(path)) cache._byPath.Remove(path);
+
+                cache._entries.RemoveAt(i);
+                removed = true;
+            }
+
+            if (removed) cache._dirty = true;
+        }
+
+        /// <summary>
+        /// Nothing to do, but the interface needs it — the deserialize half is what rebuilds the
+        /// path lookup. Pruning used to live here and does not belong in a serialization callback:
+        /// it runs while the editor is tearing down for a reload or a quit, which is the worst
+        /// possible moment to ask the AssetDatabase anything.
+        /// </summary>
         public void OnBeforeSerialize()
         {
-            // Folders that no longer exist would otherwise accumulate forever, since nothing ever
-            // asks about them again to notice they are gone.
-            for (int i = _entries.Count - 1; i >= 0; i--)
-            {
-                if (!Directory.Exists(_entries[i].path)) _entries.RemoveAt(i);
-            }
         }
 
         public void OnAfterDeserialize()

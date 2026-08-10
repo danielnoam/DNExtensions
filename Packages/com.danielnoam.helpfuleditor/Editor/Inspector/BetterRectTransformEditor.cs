@@ -31,8 +31,14 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private const float DropdownSize = 49f;
         private const float DropdownOffsetX = 2f;
         private const float DropdownOffsetY = 17f;
+
+        /// <summary>How far inside the preset square the mode glyphs are drawn. The stretch headers get the square itself.</summary>
+        private const int DropdownPreviewInset = 7;
+
         private const float AxisLabelWidth = 13f;
-        private const float ModeButtonWidth = 20f;
+
+        /// <summary>Unity's own size for these two, so the pair reads as the same control it replaces.</summary>
+        private const float ModeButtonWidth = 26f;
         private const float ButtonWidth = 20f;
         private const float ButtonsTotal = ButtonWidth * 3f;
 
@@ -73,10 +79,6 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private static MethodInfo _drawLayoutMode;
         private static MethodInfo _drawLayoutHeaders;
         private static bool _reflectionResolved;
-
-        private static bool _scaleLocked;
-        private static bool _scaleLockInitialized;
-        private static bool _scaleLockDefault;
 
         private Editor _nativeEditor;
         private Vector3 _lastScale;
@@ -120,12 +122,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
             // cannot be created. Its own OnEnable is what puts the anchor handles in the Scene view.
             EnsureNativeEditor();
 
-            bool setting = HelpfulEditorSettings.Inspector.scaleLockDefaultOn;
-            if (_scaleLockInitialized && setting == _scaleLockDefault) return;
-
-            _scaleLocked = setting;
-            _scaleLockDefault = setting;
-            _scaleLockInitialized = true;
+            ScaleLock.Local.SyncWithSetting();
+            ScaleLock.World.SyncWithSetting();
         }
 
         private void OnDisable()
@@ -149,7 +147,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
         {
             InspectorSettings settings = HelpfulEditorSettings.Inspector;
 
-            if (!settings.moduleEnabled || !settings.betterTransformEnabled)
+            if (!settings.moduleEnabled || !settings.betterRectTransformEnabled)
             {
                 DrawNativeInspector();
                 return;
@@ -162,6 +160,12 @@ namespace DNExtensions.HelpfulEditor.Inspector
             EditorGUIUtility.wideMode = true;
 
             DrawDrivenWarning();
+
+            // Above the whole rect block rather than beside the rotation row: everything from the
+            // anchor presets down is parent-relative, and it is all of it the world block below
+            // stands opposite. Drawn only when that block is there to stand opposite.
+            bool showWorld = settings.worldFieldsEnabled && TransformWorldFields.AnyParented(targets);
+            if (showWorld) EditorGUILayout.LabelField("Local", EditorStyles.miniBoldLabel);
 
             bool raw = EditorPrefs.GetBool(RawEditPref, false);
             bool stretchX = !raw && IsStretched(0);
@@ -179,10 +183,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             // Under a Canvas the world values are where the rect actually landed once the layout has
             // had its say, which is the reading the rect fields above cannot give on their own.
-            if (settings.worldFieldsEnabled && TransformWorldFields.AnyParented(targets))
-            {
-                _worldFields.Draw(serializedObject, target as Transform, targets);
-            }
+            if (showWorld) _worldFields.Draw(serializedObject, target as Transform, targets);
 
             EditorGUIUtility.wideMode = wideMode;
 
@@ -282,25 +283,34 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 if (obj is RectTransform rect && !rect.parent) anyWithoutParent = true;
             }
 
-            Rect rect2 = GUILayoutUtility.GetRect(0f, 0f);
-            rect2.x += DropdownOffsetX;
-            rect2.y += DropdownOffsetY;
-            rect2.width = DropdownSize;
-            rect2.height = DropdownSize;
+            Rect dropdownRect = GUILayoutUtility.GetRect(0f, 0f);
+            dropdownRect.x += DropdownOffsetX;
+            dropdownRect.y += DropdownOffsetY;
+            dropdownRect.width = DropdownSize;
+            dropdownRect.height = DropdownSize;
 
             using (new EditorGUI.DisabledScope(anyWithoutParent))
             {
-                if (EditorGUI.DropdownButton(rect2, GUIContent.none, FocusType.Passive, "label"))
+                if (EditorGUI.DropdownButton(dropdownRect, GUIContent.none, FocusType.Passive, "label"))
                 {
                     GUIUtility.keyboardControl = 0;
-                    ShowPresetWindow(rect2);
+                    ShowPresetWindow(dropdownRect);
                 }
             }
 
-            Rect inner = new RectOffset(7, 7, 7, 7).Remove(rect2);
+            // A parentless rect has no anchors worth previewing — the button stays, disabled, but the
+            // preview inside it would be describing a relationship that is not there.
+            if (anyWithoutParent) return;
 
-            InvokeLayoutDraw(_drawLayoutMode, inner);
-            InvokeLayoutDraw(_drawLayoutHeaders, inner);
+            // The two halves take different rects, which is the whole reason they are separate calls.
+            // The mode glyphs are drawn inside the square, so they get it inset. The stretch headers
+            // are drawn deliberately outside whatever rect they are handed — give them the inset one
+            // and every header creeps that same inset inwards, closing the gap between the stretch
+            // bars and the square they belong to.
+            InvokeLayoutDraw(_drawLayoutMode, new RectOffset(DropdownPreviewInset, DropdownPreviewInset,
+                DropdownPreviewInset, DropdownPreviewInset).Remove(dropdownRect));
+
+            InvokeLayoutDraw(_drawLayoutHeaders, dropdownRect);
         }
 
         /// <summary>Falls back to a letter, so a missing icon leaves a button that still says what it is.</summary>
@@ -477,8 +487,12 @@ namespace DNExtensions.HelpfulEditor.Inspector
             Vector3 pivotPosition = rect.localPosition;
             Vector2 size = rect.rect.size;
 
-            EditorGUIUtility.systemCopyBuffer =
-                $"{pivotPosition.x},{pivotPosition.y},{pivotPosition.z},{size.x},{size.y}";
+            // Invariant, matching LinkedVector3Field, so the two halves of the clipboard format agree
+            // and a comma-decimal locale cannot turn five fields into ten.
+            EditorGUIUtility.systemCopyBuffer = string.Join(",",
+                LinkedVector3Field.Format(pivotPosition.x), LinkedVector3Field.Format(pivotPosition.y),
+                LinkedVector3Field.Format(pivotPosition.z), LinkedVector3Field.Format(size.x),
+                LinkedVector3Field.Format(size.y));
         }
 
         /// <summary>
@@ -502,7 +516,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             for (int i = 0; i < parts.Length; i++)
             {
-                if (!float.TryParse(parts[i], out values[i])) return false;
+                if (!LinkedVector3Field.TryParse(parts[i], out values[i])) return false;
             }
 
             pivotPosition = new Vector3(values[0], values[1], values[2]);
@@ -582,6 +596,10 @@ namespace DNExtensions.HelpfulEditor.Inspector
             Rect column = GetColumnRect(row, 2);
             float line = EditorGUIUtility.singleLineHeight;
 
+            // Unity extends these two pixels upward into the line above, which is empty in its
+            // inspector. Ours is not — the copy/paste/reset strip sits there — so the pair keeps the
+            // width Unity gives it and stops at the line boundary rather than overlapping a
+            // neighbour Unity does not have.
             Rect left = new Rect(column.xMax - ModeButtonWidth * 2f, column.y + line, ModeButtonWidth, line);
             Rect right = new Rect(column.xMax - ModeButtonWidth, column.y + line, ModeButtonWidth, line);
 
@@ -660,7 +678,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
                 Vector3 newEuler = LinkedVector3Field.Draw("Rotation", displayEuler, Vector3.zero, false, ref unusedLock,
                     extraContextItems: menu => menu.AddItem(new GUIContent("Copy Quaternion"), false, () =>
-                        EditorGUIUtility.systemCopyBuffer = $"{quaternion.x},{quaternion.y},{quaternion.z},{quaternion.w}"),
+                        EditorGUIUtility.systemCopyBuffer = LinkedVector3Field.FormatQuaternion(quaternion)),
                     extraResetItems: settings.resetMenuItemsEnabled
                         ? menu => TransformResetMenu.Build(menu, targets, (t, v) => t.localEulerAngles = v, Vector3.zero)
                         : null,
@@ -698,7 +716,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 EditorGUI.BeginChangeCheck();
                 EditorGUI.showMixedValue = mixed;
 
-                Vector3 newValue = LinkedVector3Field.Draw("Scale", displayValue, Vector3.one, true, ref _scaleLocked,
+                Vector3 newValue = LinkedVector3Field.Draw("Scale", displayValue, Vector3.one, true, ref ScaleLock.Local.locked,
                     extraResetItems: settings.resetMenuItemsEnabled
                         ? menu => TransformResetMenu.Build(menu, targets, (t, v) => t.localScale = v, Vector3.one)
                         : null,
@@ -708,7 +726,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
                 if (!EditorGUI.EndChangeCheck()) return;
 
-                if (_scaleLocked) newValue = LinkedVector3Field.ApplyLock(displayValue, newValue, _lastScale);
+                if (ScaleLock.Local.locked) newValue = LinkedVector3Field.ApplyLock(displayValue, newValue, _lastScale);
 
                 Vector3 delta = newValue - displayValue;
                 Undo.RecordObjects(targets, "Scale Changed");

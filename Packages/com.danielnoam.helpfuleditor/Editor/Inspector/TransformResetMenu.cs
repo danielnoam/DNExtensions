@@ -69,7 +69,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 Transform child = transform.GetChild(i);
                 child.position = worldPositions[i];
                 child.rotation = worldRotations[i];
-                SetLossyScale(child, worldScales[i]);
+                TransformWorldFields.SetLossyScale(child, worldScales[i]);
             }
         }
 
@@ -81,18 +81,6 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 Undo.RecordObject(child, "Reset Only Children");
                 setter(child, resetValue);
             }
-        }
-
-        private static void SetLossyScale(Transform transform, Vector3 targetLossyScale)
-        {
-            Transform parent = transform.parent;
-            Vector3 parentScale = parent ? parent.lossyScale : Vector3.one;
-
-            transform.localScale = new Vector3(
-                parentScale.x != 0f ? targetLossyScale.x / parentScale.x : 1f,
-                parentScale.y != 0f ? targetLossyScale.y / parentScale.y : 1f,
-                parentScale.z != 0f ? targetLossyScale.z / parentScale.z : 1f
-            );
         }
     }
 }

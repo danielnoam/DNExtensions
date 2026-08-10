@@ -177,9 +177,7 @@ namespace DNExtensions.HelpfulEditor.Project
 
             if (!CreateSymlink(localPath, _targetPath))
             {
-                EditorUtility.DisplayDialog("Linked Assets",
-                    "Could not create the link.\n\nOn Windows this usually means Developer Mode is off — without it, " +
-                    "creating a symlink needs administrator rights.", "OK");
+                EditorUtility.DisplayDialog("Linked Assets", $"Could not create the link.\n\n{FailureHint}", "OK");
                 return;
             }
 
@@ -191,6 +189,14 @@ namespace DNExtensions.HelpfulEditor.Project
 
             AssetDatabase.Refresh();
         }
+
+        /// <summary>Why the link most likely failed here, since the reason is entirely platform-specific.</summary>
+#if UNITY_EDITOR_WIN
+        private const string FailureHint = "On Windows this usually means Developer Mode is off — without it, " +
+                                           "creating a symlink needs administrator rights.";
+#else
+        private const string FailureHint = "Check that the target exists and that this location is writable.";
+#endif
 
         /// <summary>
         /// Shelling out because .NET has no symlink API before .NET 6 — mklink is a cmd builtin
@@ -210,8 +216,11 @@ namespace DNExtensions.HelpfulEditor.Project
                 start.FileName = "cmd.exe";
                 start.Arguments = $"/c mklink /d \"{localPath.Replace('/', '\\')}\" \"{targetPath.Replace('/', '\\')}\"";
 #else
-                start.FileName = "/bin/bash";
-                start.Arguments = $"-c \"ln -s '{targetPath}' '{localPath}'\"";
+                // sh rather than bash: POSIX guarantees the former, and macOS has been steadily
+                // demoting the latter. A single quote inside a path would otherwise close the quoting
+                // and hand the rest of the name to the shell as commands.
+                start.FileName = "/bin/sh";
+                start.Arguments = $"-c \"ln -s {ShellQuote(targetPath)} {ShellQuote(localPath)}\"";
 #endif
 
                 using (Process process = Process.Start(start))
@@ -228,5 +237,17 @@ namespace DNExtensions.HelpfulEditor.Project
                 return false;
             }
         }
+
+#if !UNITY_EDITOR_WIN
+        /// <summary>
+        /// A path as one shell word. Single quotes protect everything but a single quote, which is
+        /// closed, escaped and reopened — the standard POSIX dance, and the only character a folder
+        /// name is at all likely to carry that would otherwise end the quoting.
+        /// </summary>
+        private static string ShellQuote(string path)
+        {
+            return $"'{path.Replace("'", "'\\''")}'";
+        }
+#endif
     }
 }

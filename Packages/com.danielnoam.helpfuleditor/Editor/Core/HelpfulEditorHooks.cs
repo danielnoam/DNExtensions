@@ -46,7 +46,13 @@ namespace DNExtensions.HelpfulEditor
 #else
         private static void OnHierarchyItem(int instanceId, Rect rowRect)
         {
+            // Deprecated from 6000.3, but the EntityId hook this would migrate to only exists from
+            // 6.4 — so on 6.3 the int callback is still the only way in, and its id is still an int.
+            // Suppressed rather than branched a third time for a call that works on every version
+            // that reaches here.
+#pragma warning disable 618
             HierarchyItem?.Invoke(instanceId, EditorUtility.InstanceIDToObject(instanceId), rowRect);
+#pragma warning restore 618
         }
 #endif
 

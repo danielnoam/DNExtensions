@@ -146,17 +146,19 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 ObjectReferences = new Dictionary<string, string>()
             };
 
-            SerializedObject serializedObject = new SerializedObject(component);
-            SerializedProperty property = serializedObject.GetIterator();
-
-            while (property.NextVisible(true))
+            using (SerializedObject serializedObject = new SerializedObject(component))
             {
-                if (property.propertyType != SerializedPropertyType.ObjectReference) continue;
+                SerializedProperty property = serializedObject.GetIterator();
 
-                Object value = property.objectReferenceValue;
-                snapshot.ObjectReferences[property.propertyPath] = value
-                    ? GlobalObjectId.GetGlobalObjectIdSlow(value).ToString()
-                    : string.Empty;
+                while (property.NextVisible(true))
+                {
+                    if (property.propertyType != SerializedPropertyType.ObjectReference) continue;
+
+                    Object value = property.objectReferenceValue;
+                    snapshot.ObjectReferences[property.propertyPath] = value
+                        ? GlobalObjectId.GetGlobalObjectIdSlow(value).ToString()
+                        : string.Empty;
+                }
             }
 
             return snapshot;
@@ -184,7 +186,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             if (snapshot.ObjectReferences.Count > 0)
             {
-                SerializedObject serializedObject = new SerializedObject(component);
+                using SerializedObject serializedObject = new SerializedObject(component);
                 bool changed = false;
 
                 foreach (KeyValuePair<string, string> entry in snapshot.ObjectReferences)

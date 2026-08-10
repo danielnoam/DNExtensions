@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using UnityEditor;
 using UnityEngine;
 
@@ -92,41 +93,6 @@ namespace DNExtensions.HelpfulEditor
             }
 
             return newValue;
-        }
-
-        /// <summary>
-        /// A row that can be read but not written: the value greyed out, with a copy button standing
-        /// where the copy button of an editable row would, so the two line up down the inspector. Copy
-        /// is left live — the button is about the number, not about editing it.
-        /// </summary>
-        public static void DrawReadOnly(string label, Vector3 value)
-        {
-            Rect rowRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-
-            float fieldW = rowRect.width - EditorGUIUtility.labelWidth - ButtonsTotal - Spacing;
-            Rect labelRect = new Rect(rowRect.x, rowRect.y, EditorGUIUtility.labelWidth, rowRect.height);
-            Rect fieldRect = new Rect(rowRect.x + EditorGUIUtility.labelWidth, rowRect.y, fieldW, rowRect.height);
-            Rect copyRect = new Rect(fieldRect.xMax + Spacing, rowRect.y, ButtonWidth, rowRect.height);
-
-            HandleContextClick(labelRect, value, null);
-            HandleContextClick(fieldRect, value, null);
-
-            EditorGUI.LabelField(labelRect, label);
-
-            using (new EditorGUI.DisabledScope(true))
-            {
-                bool prevWide = EditorGUIUtility.wideMode;
-                EditorGUIUtility.wideMode = true;
-                int oldIndent = EditorGUI.indentLevel;
-                EditorGUI.indentLevel = 0;
-
-                EditorGUI.Vector3Field(fieldRect, GUIContent.none, value);
-
-                EditorGUI.indentLevel = oldIndent;
-                EditorGUIUtility.wideMode = prevWide;
-            }
-
-            if (GUI.Button(copyRect, new GUIContent("C", "Copy"), EditorStyles.miniButton)) CopyToClipboard(value);
         }
 
         /// <summary>Layout-free variant for Rect-based drawers. Always renders as a single line.</summary>
@@ -251,9 +217,9 @@ namespace DNExtensions.HelpfulEditor
             GenericMenu menu = new GenericMenu();
             menu.AddItem(new GUIContent("Copy"), false, () => CopyToClipboard(value));
             menu.AddSeparator("");
-            menu.AddItem(new GUIContent("Copy X"), false, () => EditorGUIUtility.systemCopyBuffer = value.x.ToString());
-            menu.AddItem(new GUIContent("Copy Y"), false, () => EditorGUIUtility.systemCopyBuffer = value.y.ToString());
-            menu.AddItem(new GUIContent("Copy Z"), false, () => EditorGUIUtility.systemCopyBuffer = value.z.ToString());
+            menu.AddItem(new GUIContent("Copy X"), false, () => EditorGUIUtility.systemCopyBuffer = Format(value.x));
+            menu.AddItem(new GUIContent("Copy Y"), false, () => EditorGUIUtility.systemCopyBuffer = Format(value.y));
+            menu.AddItem(new GUIContent("Copy Z"), false, () => EditorGUIUtility.systemCopyBuffer = Format(value.z));
 
             if (extraContextItems != null)
             {
@@ -268,9 +234,26 @@ namespace DNExtensions.HelpfulEditor
         /// <summary>
         /// Shared with the component header buttons so a value copied from a Transform row can be
         /// pasted onto a RectTransform and back.
+        ///
+        /// Written and read invariantly. The comma is the separator here, and under a locale that
+        /// also uses it as the decimal point the current culture would write (1.5, 2.5, 3.5) as
+        /// "1,5,2,5,3,5" — six fields where three were meant, which fails to parse back.
         /// </summary>
         public static void CopyToClipboard(Vector3 value) =>
-            EditorGUIUtility.systemCopyBuffer = $"{value.x},{value.y},{value.z}";
+            EditorGUIUtility.systemCopyBuffer = $"{Format(value.x)},{Format(value.y)},{Format(value.z)}";
+
+        /// <summary>One axis, in the same invariant form the whole-vector copy uses.</summary>
+        public static string Format(float value) => value.ToString(CultureInfo.InvariantCulture);
+
+        /// <summary>
+        /// The Copy Quaternion form, shared by the three rotation rows so all of them write the same
+        /// thing — and the same thing they would if the row had copied a Vector3.
+        /// </summary>
+        public static string FormatQuaternion(Quaternion value) =>
+            $"{Format(value.x)},{Format(value.y)},{Format(value.z)},{Format(value.w)}";
+
+        public static bool TryParse(string text, out float value) =>
+            float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
 
         public static bool CanPaste() => TryParseClipboard(out _);
 
@@ -283,9 +266,9 @@ namespace DNExtensions.HelpfulEditor
             string[] parts = clipboard.Split(',');
             if (parts.Length != 3) return false;
 
-            if (float.TryParse(parts[0], out float x) &&
-                float.TryParse(parts[1], out float y) &&
-                float.TryParse(parts[2], out float z))
+            if (TryParse(parts[0], out float x) &&
+                TryParse(parts[1], out float y) &&
+                TryParse(parts[2], out float z))
             {
                 result = new Vector3(x, y, z);
                 return true;
