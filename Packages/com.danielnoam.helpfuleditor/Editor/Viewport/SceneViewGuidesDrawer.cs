@@ -3,21 +3,24 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace DNExtensions.HelpfulEditor.GameView
+namespace DNExtensions.HelpfulEditor.Viewport
 {
     /// <summary>
-    /// Rulers and draggable guides over a Game View. Guides are held as a fraction of the render
-    /// target, so zooming, panning and resizing all leave them on the same game pixel.
+    /// Rulers and draggable guides, pinned to the Scene View window itself.
     ///
-    /// The rulers are pinned to the window under the toolbar and do cover the first 18 pixels of the
-    /// game. That is deliberate: the Game View draws edge to edge and cannot be asked to keep clear,
-    /// and every attempt to tuck the rulers into the surround around the render target only worked in
-    /// Fixed Resolution — Free Aspect has no surround at all. The Rulers button in the toolbar hides
-    /// them for the times that bite matters; the guides stay, and take the reclaimed strip.
+    /// They are a VisualElement rather than something drawn in the scene GUI pass because that is the
+    /// only way they hold still. Anything drawn with Handles lives in the scene, so it pans and zooms
+    /// with the canvas — and a ruler that slides about is not a ruler. The geometry they lay out
+    /// against is pushed in from the scene GUI pass instead, which is the only place HandleUtility can
+    /// project the canvas onto the window.
+    ///
+    /// The strips do cover the top-left 18 pixels of the view, and whatever Scene View overlay is
+    /// sitting there with them. That is the same bite the Game View rulers take, and it is settled the
+    /// same way: the toolbar toggle takes them off when it matters.
     /// </summary>
-    internal class GameViewGuidelinesDrawer : VisualElement
+    internal class SceneViewGuidesDrawer : VisualElement
     {
-        public const string OverlayName = "helpfuleditor-gameview-guidelines";
+        public const string OverlayName = "helpfuleditor-sceneview-guidelines";
 
         private const float RulerSize = 18f;
         private const float LabelLength = 56f;
@@ -25,9 +28,7 @@ namespace DNExtensions.HelpfulEditor.GameView
         private const float DragThicknessMultiplier = 3f;
         private const float ShiftIncrement = 10f;
 
-        private readonly EditorWindow _gameView;
-        private readonly GameViewGeometry _geometry = new GameViewGeometry();
-
+        private readonly SceneView _sceneView;
         private readonly IMGUIContainer _drawLayer;
         private readonly VisualElement _corner;
         private readonly VisualElement _topRuler;
@@ -35,12 +36,17 @@ namespace DNExtensions.HelpfulEditor.GameView
         private readonly VisualElement _grabLayer;
 
         /// <summary>
-        /// Pooled rather than rebuilt. These elements carry the pointer capture that drives a drag,
-        /// so destroying one to re-lay it out cancels the drag the user is in the middle of.
+        /// Pooled rather than rebuilt. These carry the pointer capture that drives a drag, so throwing
+        /// one away to re-lay it out cancels the drag the user is in the middle of.
         /// </summary>
         private readonly List<VisualElement> _grabPool = new List<VisualElement>();
 
         private GUIStyle _labelStyle;
+
+        private Rect _canvasRect;
+        private Vector2 _referenceSize = Vector2.one;
+        private bool _axisAligned;
+        private bool _hasTarget;
 
         private enum DragMode
         {
@@ -58,9 +64,9 @@ namespace DNExtensions.HelpfulEditor.GameView
         private Vector2 _lastPointer;
         private int _hoverIndex = -1;
 
-        public GameViewGuidelinesDrawer(EditorWindow gameView)
+        public SceneViewGuidesDrawer(SceneView sceneView)
         {
-            _gameView = gameView;
+            _sceneView = sceneView;
             name = OverlayName;
             pickingMode = PickingMode.Ignore;
             Stretch(this);
@@ -81,43 +87,61 @@ namespace DNExtensions.HelpfulEditor.GameView
             RegisterDrag(_topRuler);
             RegisterDrag(_leftRuler);
 
-            // Added last so ticks and numbers paint over the ruler strips instead of under them.
+            // Added last so the ticks and numbers paint over the strips rather than under them.
             _drawLayer = new IMGUIContainer(OnDrawGUI) { pickingMode = PickingMode.Ignore };
             Stretch(_drawLayer);
             Add(_drawLayer);
 
             RegisterCallback<GeometryChangedEvent>(_ => RefreshLayout());
-            RefreshLayout();
+        }
+
+        /// <summary>
+        /// Where the canvas landed on the window, handed over from the scene GUI pass. Nothing here can
+        /// work that out for itself — HandleUtility only projects inside that pass.
+        /// </summary>
+        public void SetGeometry(Rect canvasRect, Vector2 referenceSize, bool axisAligned, bool hasTarget)
+        {
+            bool changed = _canvasRect != canvasRect
+                           || _referenceSize != referenceSize
+                           || _axisAligned != axisAligned
+                           || _hasTarget != hasTarget;
+
+            _canvasRect = canvasRect;
+            _referenceSize = referenceSize;
+            _axisAligned = axisAligned;
+            _hasTarget = hasTarget;
+
+            if (changed) RefreshLayout();
         }
 
         public void RefreshLayout()
         {
-            GameViewSettings settings = HelpfulEditorSettings.GameView;
+            SceneViewSettings settings = HelpfulEditorSettings.SceneView;
 
-            _geometry.Update(_gameView, WindowRect);
+            // Off angle there is nothing the rulers could be numbered in, so they go rather than
+            // showing a scale that does not describe anything on screen.
+            bool active = settings.showRulers && _hasTarget && _axisAligned;
+            DisplayStyle display = active ? DisplayStyle.Flex : DisplayStyle.None;
 
-            bool rulers = settings.showRulers;
-            DisplayStyle display = rulers ? DisplayStyle.Flex : DisplayStyle.None;
             _corner.style.display = display;
             _topRuler.style.display = display;
             _leftRuler.style.display = display;
 
-            if (rulers)
+            if (active)
             {
-                Rect ruler = RulerArea;
+                Rect window = WindowRect;
 
-                SetRect(_corner, new Rect(ruler.x, ruler.y, RulerSize, RulerSize));
-                SetRect(_topRuler, new Rect(ruler.x + RulerSize, ruler.y, Mathf.Max(0f, ruler.width - RulerSize), RulerSize));
-                SetRect(_leftRuler, new Rect(ruler.x, ruler.y + RulerSize, RulerSize, Mathf.Max(0f, ruler.height - RulerSize)));
+                SetRect(_corner, new Rect(window.x, window.y, RulerSize, RulerSize));
+                SetRect(_topRuler, new Rect(window.x + RulerSize, window.y, Mathf.Max(0f, window.width - RulerSize), RulerSize));
+                SetRect(_leftRuler, new Rect(window.x, window.y + RulerSize, RulerSize, Mathf.Max(0f, window.height - RulerSize)));
             }
 
-            LayoutGrabTargets(settings);
+            LayoutGrabTargets(settings, active);
 
             _drawLayer.MarkDirtyRepaint();
-            _gameView.Repaint();
         }
 
-        /// <summary>The overlay's own box, which is the whole window — unlike the game area, this never lags a resize.</summary>
+        /// <summary>The overlay's own box, which is the whole window — unlike a laid-out child it never lags a resize.</summary>
         private Rect WindowRect
         {
             get
@@ -127,81 +151,60 @@ namespace DNExtensions.HelpfulEditor.GameView
             }
         }
 
-        /// <summary>
-        /// Pinned to the window's drawable area — flush under the toolbar and out to the edges. The
-        /// render target is not what they follow: it moves with the aspect mode and the zoom, which
-        /// is what made the rulers wander in Free Aspect.
-        /// </summary>
-        private Rect RulerArea
-        {
-            get
-            {
-                Rect window = WindowRect;
-                float top = Mathf.Clamp(_geometry.ContentRect.y, window.y, Mathf.Max(window.y, window.yMax - RulerSize));
+        private static float RulerThickness => HelpfulEditorSettings.SceneView.showRulers ? RulerSize : 0f;
 
-                return new Rect(window.x, top, window.width, Mathf.Max(0f, window.yMax - top));
-            }
-        }
-
-        /// <summary>Zero while the rulers are hidden, which hands their strip of the window back to the game.</summary>
-        private static float RulerThickness => HelpfulEditorSettings.GameView.showRulers ? RulerSize : 0f;
-
+        /// <summary>The window minus the strips, which is everything a guide is allowed to be dropped in.</summary>
         private Rect GuideArea
         {
             get
             {
-                Rect ruler = RulerArea;
+                Rect window = WindowRect;
                 float thickness = RulerThickness;
 
-                return new Rect(ruler.x + thickness, ruler.y + thickness,
-                    Mathf.Max(0f, ruler.width - thickness), Mathf.Max(0f, ruler.height - thickness));
+                return new Rect(window.x + thickness, window.y + thickness,
+                    Mathf.Max(0f, window.width - thickness), Mathf.Max(0f, window.height - thickness));
             }
         }
 
         /// <summary>
-        /// The part of the render target that is actually on show. Zoomed in, the game rect runs well
-        /// past the window — drawing a guide across all of it puts the line over the rulers and the
-        /// Game View's own toolbar, which are not ours to paint on.
+        /// The part of the canvas actually on show. Zoomed in, the canvas runs well past the window —
+        /// grab targets stretched across all of it would take clicks meant for the rulers.
         /// </summary>
-        private Rect VisibleGameRect
+        private Rect VisibleCanvasRect
         {
             get
             {
-                Rect game = _geometry.GameRect;
                 Rect area = GuideArea;
 
                 return Rect.MinMaxRect(
-                    Mathf.Max(game.xMin, area.xMin),
-                    Mathf.Max(game.yMin, area.yMin),
-                    Mathf.Min(game.xMax, area.xMax),
-                    Mathf.Min(game.yMax, area.yMax));
+                    Mathf.Max(_canvasRect.xMin, area.xMin),
+                    Mathf.Max(_canvasRect.yMin, area.yMin),
+                    Mathf.Min(_canvasRect.xMax, area.xMax),
+                    Mathf.Min(_canvasRect.yMax, area.yMax));
             }
         }
 
-        private void LayoutGrabTargets(GameViewSettings settings)
+        private void LayoutGrabTargets(SceneViewSettings settings, bool active)
         {
-            bool active = settings.showRulers && _geometry.HasUsableRect;
-            Rect game = VisibleGameRect;
+            Rect canvas = VisibleCanvasRect;
 
             for (int i = 0; i < settings.guides.Count; i++)
             {
                 VisualElement grab = GetGrabTarget(i);
-                GameViewGuide guide = settings.guides[i];
+                SceneViewGuide guide = settings.guides[i];
 
-                float viewPos = _geometry.NormalizedToView(guide.isHorizontal, guide.normalizedPosition);
+                float viewPos = NormalizedToView(guide.isHorizontal, guide.normalizedPosition);
 
-                // Clipped to what is on show for the same reason the line is: a grab target over the
-                // rulers would take clicks meant for them.
-                bool visible = active && game.width > 0f && game.height > 0f && (guide.isHorizontal
-                    ? viewPos >= game.yMin && viewPos <= game.yMax
-                    : viewPos >= game.xMin && viewPos <= game.xMax);
+                bool visible = active && canvas.width > 0f && canvas.height > 0f && (guide.isHorizontal
+                    ? viewPos >= canvas.yMin && viewPos <= canvas.yMax
+                    : viewPos >= canvas.xMin && viewPos <= canvas.xMax);
 
                 grab.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
                 if (!visible) continue;
 
                 SetRect(grab, guide.isHorizontal
-                    ? new Rect(game.x, viewPos - GrabThickness * 0.5f, game.width, GrabThickness)
-                    : new Rect(viewPos - GrabThickness * 0.5f, game.y, GrabThickness, game.height));
+                    ? new Rect(canvas.x, viewPos - GrabThickness * 0.5f, canvas.width, GrabThickness)
+                    : new Rect(viewPos - GrabThickness * 0.5f, canvas.y, GrabThickness, canvas.height));
             }
 
             for (int i = settings.guides.Count; i < _grabPool.Count; i++)
@@ -239,7 +242,7 @@ namespace DNExtensions.HelpfulEditor.GameView
         private void SetHover(int index)
         {
             _hoverIndex = index;
-            _gameView.Repaint();
+            Repaint();
         }
 
         private void ClearHover(int index)
@@ -247,7 +250,7 @@ namespace DNExtensions.HelpfulEditor.GameView
             if (_hoverIndex != index) return;
 
             _hoverIndex = -1;
-            _gameView.Repaint();
+            Repaint();
         }
 
         /// <summary>A null axis means the corner, which only offers the menu.</summary>
@@ -255,14 +258,13 @@ namespace DNExtensions.HelpfulEditor.GameView
         {
             if (evt.button == 1)
             {
-                GameViewModule.ShowGuideMenu();
+                SceneViewGuides.ShowGuideMenu();
                 evt.StopPropagation();
                 return;
             }
 
             if (evt.button != 0 || horizontal == null) return;
-
-            if (!_geometry.HasUsableRect) return;
+            if (!_hasTarget || !_axisAligned) return;
 
             _dragMode = DragMode.Create;
             _dragIndex = -1;
@@ -275,12 +277,12 @@ namespace DNExtensions.HelpfulEditor.GameView
         {
             if (evt.button == 1)
             {
-                GameViewModule.ShowGuideMenu();
+                SceneViewGuides.ShowGuideMenu();
                 evt.StopPropagation();
                 return;
             }
 
-            GameViewSettings settings = HelpfulEditorSettings.GameView;
+            SceneViewSettings settings = HelpfulEditorSettings.SceneView;
             if (evt.button != 0 || index < 0 || index >= settings.guides.Count) return;
 
             _dragMode = DragMode.Move;
@@ -303,7 +305,7 @@ namespace DNExtensions.HelpfulEditor.GameView
             evt.StopPropagation();
 
             _drawLayer.MarkDirtyRepaint();
-            _gameView.Repaint();
+            Repaint();
         }
 
         private void OnPointerMove(PointerMoveEvent evt)
@@ -317,7 +319,7 @@ namespace DNExtensions.HelpfulEditor.GameView
             UpdatePreview(_lastPointer);
 
             _drawLayer.MarkDirtyRepaint();
-            _gameView.Repaint();
+            Repaint();
             evt.StopPropagation();
         }
 
@@ -337,32 +339,32 @@ namespace DNExtensions.HelpfulEditor.GameView
             evt.StopPropagation();
         }
 
-        /// <summary>Dropping outside the game area deletes, which is the same gesture image editors use.</summary>
+        /// <summary>Dropping outside the canvas deletes, which is the gesture image editors already use.</summary>
         private void FinishDrag(Vector2 pointer)
         {
             if (_dragMode == DragMode.None) return;
 
             UpdatePreview(pointer);
 
-            GameViewSettings settings = HelpfulEditorSettings.GameView;
-            bool delete = !GuideArea.Contains(pointer);
+            SceneViewSettings settings = HelpfulEditorSettings.SceneView;
+            bool delete = !GuideArea.Contains(pointer) || !_canvasRect.Contains(pointer);
 
             if (_dragMode == DragMode.Create && !delete)
             {
-                settings.guides.Add(new GameViewGuide
+                settings.guides.Add(new SceneViewGuide
                 {
                     isHorizontal = _dragHorizontal,
                     normalizedPosition = _dragNormalized
                 });
 
-                HelpfulEditorSettings.SaveGameView();
+                HelpfulEditorSettings.SaveSceneView();
             }
             else if (_dragMode == DragMode.Move && _dragIndex >= 0 && _dragIndex < settings.guides.Count)
             {
                 if (delete) settings.guides.RemoveAt(_dragIndex);
                 else settings.guides[_dragIndex].normalizedPosition = _dragNormalized;
 
-                HelpfulEditorSettings.SaveGameView();
+                HelpfulEditorSettings.SaveSceneView();
             }
 
             _dragMode = DragMode.None;
@@ -370,11 +372,12 @@ namespace DNExtensions.HelpfulEditor.GameView
             _hoverIndex = -1;
 
             RefreshLayout();
+            Repaint();
         }
 
         private void UpdatePreview(Vector2 pointer)
         {
-            float normalized = _geometry.ViewToNormalized(_dragHorizontal, _dragHorizontal ? pointer.y : pointer.x);
+            float normalized = ViewToNormalized(_dragHorizontal, _dragHorizontal ? pointer.y : pointer.x);
 
             if (_dragAlt)
             {
@@ -382,78 +385,108 @@ namespace DNExtensions.HelpfulEditor.GameView
             }
             else if (_dragShift)
             {
-                float axis = Mathf.Max(1f, _dragHorizontal ? _geometry.GameSize.y : _geometry.GameSize.x);
+                float axis = Mathf.Max(1f, _dragHorizontal ? _referenceSize.y : _referenceSize.x);
                 normalized = Mathf.Round(normalized * axis / ShiftIncrement) * ShiftIncrement / axis;
             }
 
             _dragNormalized = Mathf.Clamp01(normalized);
         }
 
+        /// <summary>The guide being dragged, which the scene pass draws in place of its stored position.</summary>
+        public bool TryGetPreview(out bool horizontal, out float normalized, out int movedIndex)
+        {
+            horizontal = _dragHorizontal;
+            normalized = _dragNormalized;
+            movedIndex = _dragMode == DragMode.Move ? _dragIndex : -1;
+
+            return _dragMode != DragMode.None;
+        }
+
+        public int HoverIndex => _dragMode == DragMode.None ? _hoverIndex : -1;
+
+        private float NormalizedToView(bool horizontal, float normalized)
+        {
+            return horizontal
+                ? _canvasRect.y + normalized * _canvasRect.height
+                : _canvasRect.x + normalized * _canvasRect.width;
+        }
+
+        private float ViewToNormalized(bool horizontal, float viewPos)
+        {
+            float size = horizontal ? _canvasRect.height : _canvasRect.width;
+            if (Mathf.Abs(size) < 0.0001f) return 0.5f;
+
+            return (viewPos - (horizontal ? _canvasRect.y : _canvasRect.x)) / size;
+        }
+
+        private float ReferencePixelsToView(bool horizontal, float pixels)
+        {
+            float size = Mathf.Max(1f, horizontal ? _referenceSize.y : _referenceSize.x);
+
+            return NormalizedToView(horizontal, pixels / size);
+        }
+
+        private float ViewToReferencePixels(bool horizontal, float viewPos)
+        {
+            return ViewToNormalized(horizontal, viewPos) * (horizontal ? _referenceSize.y : _referenceSize.x);
+        }
+
         private void OnDrawGUI()
         {
-            GameViewSettings settings = HelpfulEditorSettings.GameView;
-
-            // The toolbar button takes the guides with it: rulers off is the way to get an unobstructed
-            // look at the game, which a set of guides left drawn over it would rather defeat.
-            if (!settings.showRulers) return;
-
-            _geometry.Update(_gameView, WindowRect);
-            if (!_geometry.HasUsableRect) return;
+            SceneViewSettings settings = HelpfulEditorSettings.SceneView;
+            if (!settings.showRulers || !_hasTarget || !_axisAligned) return;
 
             EnsureLabelStyle();
 
             Handles.BeginGUI();
 
             DrawRulers();
-            DrawGuides(settings);
             ApplyCursors(settings);
 
-            if (_dragMode != DragMode.None)
-            {
-                float width = Mathf.Max(0.5f, settings.guideWidth);
-                DrawGuide(_dragHorizontal, _dragNormalized, settings.guideColor, Mathf.Max(width * DragThicknessMultiplier, width + 2f));
-                DrawReadout();
-            }
+            if (_dragMode != DragMode.None) DrawReadout();
 
             Handles.EndGUI();
         }
 
         /// <summary>
-        /// Ticks are labelled in game pixels rather than window pixels, so the numbers match the
-        /// resolution dropdown at any zoom. Zero and the far edge are always included, so the render
-        /// target's own bounds are always readable.
+        /// Ticks are numbered in the canvas' own units, so they match the reference resolution rather
+        /// than the zoom. Zero and the far edge are always drawn, so the canvas' bounds stay readable.
         /// </summary>
         private void DrawRulers()
         {
-            Rect ruler = RulerArea;
+            Rect window = WindowRect;
             Rect guideArea = GuideArea;
-            Rect visible = _geometry.VisibleGamePixels;
+            Rect visible = VisibleCanvasRect;
             Color tick = new Color(0.85f, 0.85f, 0.85f, 0.95f);
 
-            float stepX = NiceStep(Mathf.Max(1f, visible.width));
-            for (float value = Mathf.Floor(visible.xMin / stepX) * stepX; value <= visible.xMax + stepX * 0.01f; value += stepX)
+            float minX = ViewToReferencePixels(false, visible.xMin);
+            float maxX = ViewToReferencePixels(false, visible.xMax);
+            float stepX = NiceStep(maxX - minX);
+
+            for (float value = Mathf.Floor(minX / stepX) * stepX; value <= maxX + stepX * 0.01f; value += stepX)
             {
-                DrawTick(Mathf.Round(value), true, ruler, guideArea, stepX, tick);
+                DrawTick(Mathf.Round(value), true, window, guideArea, stepX, tick);
             }
 
-            DrawTick(0f, true, ruler, guideArea, stepX, tick);
-            DrawTick(Mathf.Round(_geometry.GameSize.x), true, ruler, guideArea, stepX, tick);
+            DrawTick(0f, true, window, guideArea, stepX, tick);
+            DrawTick(Mathf.Round(_referenceSize.x), true, window, guideArea, stepX, tick);
 
-            float stepY = NiceStep(Mathf.Max(1f, visible.height));
-            for (float value = Mathf.Floor(visible.yMin / stepY) * stepY; value <= visible.yMax + stepY * 0.01f; value += stepY)
+            float minY = ViewToReferencePixels(true, visible.yMin);
+            float maxY = ViewToReferencePixels(true, visible.yMax);
+            float stepY = NiceStep(maxY - minY);
+
+            for (float value = Mathf.Floor(minY / stepY) * stepY; value <= maxY + stepY * 0.01f; value += stepY)
             {
-                DrawTick(Mathf.Round(value), false, ruler, guideArea, stepY, tick);
+                DrawTick(Mathf.Round(value), false, window, guideArea, stepY, tick);
             }
 
-            DrawTick(0f, false, ruler, guideArea, stepY, tick);
-            DrawTick(Mathf.Round(_geometry.GameSize.y), false, ruler, guideArea, stepY, tick);
+            DrawTick(0f, false, window, guideArea, stepY, tick);
+            DrawTick(Mathf.Round(_referenceSize.y), false, window, guideArea, stepY, tick);
         }
 
-        private void DrawTick(float gamePixel, bool horizontalAxis, Rect ruler, Rect guideArea, float step, Color tickColor)
+        private void DrawTick(float canvasPixel, bool horizontalAxis, Rect window, Rect guideArea, float step, Color tickColor)
         {
-            float position = horizontalAxis
-                ? _geometry.GamePixelToView(new Vector2(gamePixel, 0f)).x
-                : _geometry.GamePixelToView(new Vector2(0f, gamePixel)).y;
+            float position = ReferencePixelsToView(!horizontalAxis, canvasPixel);
 
             if (horizontalAxis)
             {
@@ -464,47 +497,47 @@ namespace DNExtensions.HelpfulEditor.GameView
                 return;
             }
 
-            float axisSize = horizontalAxis ? _geometry.GameSize.x : _geometry.GameSize.y;
-            bool endpoint = Mathf.Approximately(gamePixel, 0f) || Mathf.Approximately(gamePixel, Mathf.Round(axisSize));
-            bool major = endpoint || Mathf.RoundToInt(gamePixel / step) % 2 == 0;
+            float axisSize = horizontalAxis ? _referenceSize.x : _referenceSize.y;
+            bool endpoint = Mathf.Approximately(canvasPixel, 0f) || Mathf.Approximately(canvasPixel, Mathf.Round(axisSize));
+            bool major = endpoint || Mathf.RoundToInt(canvasPixel / step) % 2 == 0;
 
             float length = RulerSize * (major ? 0.65f : 0.35f);
             Color color = major ? Color.white : tickColor;
 
             if (horizontalAxis)
             {
-                DrawLine(new Vector2(position, ruler.y + RulerSize), new Vector2(position, ruler.y + RulerSize - length), color, 1f);
+                DrawLine(new Vector2(position, window.y + RulerSize), new Vector2(position, window.y + RulerSize - length), color);
 
                 if (!major) return;
 
-                // The far edge label is pulled inwards so it does not run off the ruler.
-                float labelX = endpoint && gamePixel > 0f ? position - 40f : position + 2f;
-                DrawLabel(new Rect(labelX, ruler.y, LabelLength, RulerSize), Mathf.RoundToInt(gamePixel).ToString());
+                // The far edge label is pulled inwards so it does not run off the end of the ruler.
+                float labelX = endpoint && canvasPixel > 0f ? position - 40f : position + 2f;
+                DrawLabel(new Rect(labelX, window.y, LabelLength, RulerSize), Mathf.RoundToInt(canvasPixel).ToString());
                 return;
             }
 
-            DrawLine(new Vector2(ruler.x + RulerSize, position), new Vector2(ruler.x + RulerSize - length, position), color, 1f);
+            DrawLine(new Vector2(window.x + RulerSize, position), new Vector2(window.x + RulerSize - length, position), color);
 
             if (!major) return;
 
-            // Rotating by -90 turns the label's own left-to-right into bottom-to-top, so the rect's
-            // left edge ends up below the tick and its right edge above. Every label therefore starts
-            // at the pivot and reads upwards — except zero, whose tick sits at the very top of the
-            // game: running upwards from there would put it in the toolbar, so it is right-aligned
-            // instead and ends at the tick, growing downwards into the ruler.
-            bool zero = endpoint && gamePixel <= 0f;
-            float pivotX = ruler.x + RulerSize * 0.5f;
+            // Rotating by -90 turns the label's own left-to-right into bottom-to-top, so it starts at
+            // the pivot and reads upwards. Zero is the exception: its tick sits at the top of the
+            // canvas, and running upwards from there would take it off the ruler, so it is right
+            // aligned instead and ends at the tick.
+            bool zero = endpoint && canvasPixel <= 0f;
+            float pivotX = window.x + RulerSize * 0.5f;
+
             Rect labelRect = zero
                 ? new Rect(pivotX - LabelLength, position - 8f, LabelLength, 16f)
                 : new Rect(pivotX + 2f, position - 8f, LabelLength, 16f);
 
             Matrix4x4 previous = GUI.matrix;
             GUIUtility.RotateAroundPivot(-90f, new Vector2(pivotX, position));
-            DrawLabel(labelRect, Mathf.RoundToInt(gamePixel).ToString(), zero ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft);
+            DrawLabel(labelRect, Mathf.RoundToInt(canvasPixel).ToString(), zero ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft);
             GUI.matrix = previous;
         }
 
-        /// <summary>Drawn offset in four directions first, so the number stays legible over any game content.</summary>
+        /// <summary>Drawn offset in four directions first, so the number stays legible over any content.</summary>
         private void DrawLabel(Rect rect, string text, TextAnchor alignment = TextAnchor.MiddleLeft)
         {
             _labelStyle.alignment = alignment;
@@ -522,42 +555,11 @@ namespace DNExtensions.HelpfulEditor.GameView
             GUI.color = previous;
         }
 
-        private void DrawGuides(GameViewSettings settings)
-        {
-            float baseWidth = Mathf.Max(0.5f, settings.guideWidth);
-
-            for (int i = 0; i < settings.guides.Count; i++)
-            {
-                if (_dragMode == DragMode.Move && i == _dragIndex) continue;
-
-                GameViewGuide guide = settings.guides[i];
-                DrawGuide(guide.isHorizontal, guide.normalizedPosition, settings.guideColor, _hoverIndex == i ? baseWidth + 1f : baseWidth);
-            }
-        }
-
-        private void DrawGuide(bool horizontal, float normalized, Color color, float thickness)
-        {
-            Rect visible = VisibleGameRect;
-            if (visible.width <= 0f || visible.height <= 0f) return;
-
-            float position = _geometry.NormalizedToView(horizontal, normalized);
-
-            if (horizontal)
-            {
-                if (position < visible.yMin || position > visible.yMax) return;
-                DrawLine(new Vector2(visible.xMin, position), new Vector2(visible.xMax, position), color, thickness);
-                return;
-            }
-
-            if (position < visible.xMin || position > visible.xMax) return;
-            DrawLine(new Vector2(position, visible.yMin), new Vector2(position, visible.yMax), color, thickness);
-        }
-
         private void DrawReadout()
         {
             Rect guideArea = GuideArea;
-            float position = _geometry.NormalizedToView(_dragHorizontal, _dragNormalized);
-            int pixels = Mathf.RoundToInt(_dragNormalized * (_dragHorizontal ? _geometry.GameSize.y : _geometry.GameSize.x));
+            float position = NormalizedToView(_dragHorizontal, _dragNormalized);
+            int pixels = Mathf.RoundToInt(_dragNormalized * (_dragHorizontal ? _referenceSize.y : _referenceSize.x));
 
             Vector2 origin = _dragHorizontal
                 ? new Vector2(guideArea.x + 8f, position + 4f)
@@ -570,13 +572,13 @@ namespace DNExtensions.HelpfulEditor.GameView
             GUI.Box(new Rect(origin.x, origin.y, size.x + 8f, size.y), label, EditorStyles.helpBox);
         }
 
-        private void ApplyCursors(GameViewSettings settings)
+        private void ApplyCursors(SceneViewSettings settings)
         {
             if (_dragMode != DragMode.None)
             {
-                // Over the whole window, not just the guide area: the drag is most interesting once
-                // the pointer has left that area, because that is when letting go deletes.
-                bool willDelete = !GuideArea.Contains(_lastPointer);
+                // Over the whole window, not just the canvas: the drag is most interesting once the
+                // pointer has left it, because that is when letting go throws the guide away.
+                bool willDelete = !GuideArea.Contains(_lastPointer) || !_canvasRect.Contains(_lastPointer);
 
                 EditorGUIUtility.AddCursorRect(WindowRect, willDelete ? MouseCursor.ArrowMinus : MouseCursor.MoveArrow);
 
@@ -591,21 +593,26 @@ namespace DNExtensions.HelpfulEditor.GameView
 
             if (_hoverIndex < 0 || _hoverIndex >= settings.guides.Count) return;
 
-            GameViewGuide guide = settings.guides[_hoverIndex];
-            Rect game = VisibleGameRect;
-            float position = _geometry.NormalizedToView(guide.isHorizontal, guide.normalizedPosition);
+            SceneViewGuide guide = settings.guides[_hoverIndex];
+            Rect canvas = VisibleCanvasRect;
+            float position = NormalizedToView(guide.isHorizontal, guide.normalizedPosition);
 
             Rect hitRect = guide.isHorizontal
-                ? new Rect(game.x, position - GrabThickness * 0.5f, game.width, GrabThickness)
-                : new Rect(position - GrabThickness * 0.5f, game.y, GrabThickness, game.height);
+                ? new Rect(canvas.x, position - GrabThickness * 0.5f, canvas.width, GrabThickness)
+                : new Rect(position - GrabThickness * 0.5f, canvas.y, GrabThickness, canvas.height);
 
             EditorGUIUtility.AddCursorRect(hitRect, MouseCursor.MoveArrow);
         }
 
-        private static void DrawLine(Vector2 from, Vector2 to, Color color, float thickness)
+        private void Repaint()
+        {
+            if (_sceneView) _sceneView.Repaint();
+        }
+
+        private static void DrawLine(Vector2 from, Vector2 to, Color color)
         {
             Handles.color = color;
-            Handles.DrawAAPolyLine(thickness, from, to);
+            Handles.DrawAAPolyLine(1f, from, to);
         }
 
         /// <summary>Spacing rounded to 1, 2 or 5 times a power of ten, so labels read cleanly at any zoom.</summary>

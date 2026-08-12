@@ -26,6 +26,7 @@ namespace DNExtensions.HelpfulEditor.Viewport
             if (!settings.moduleEnabled) return;
 
             SceneViewPicker.Process(sceneView, settings);
+            SceneViewGuides.Process(sceneView, settings);
         }
     }
 }

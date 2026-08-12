@@ -125,6 +125,41 @@ namespace DNExtensions.HelpfulEditor
 
         /// <summary>How far a snap will look for a surface before giving up.</summary>
         public float snapMaxDistance = 1000f;
+
+        /// <summary>Guides and rulers on the canvas being edited, for placing UI against.</summary>
+        public bool guidesEnabled = true;
+
+        /// <summary>
+        /// The rulers are also the only way to pull a new guide out, so this takes both away — and it
+        /// is what the guides are hidden by, the same as the Game View's Rulers button.
+        /// </summary>
+        public bool showRulers = true;
+
+        public Color guideColor = new Color(0f, 0.85f, 1f, 0.9f);
+        public float guideWidth = 2f;
+
+        /// <summary>Drawn under the guide as a wider line of the same shape, so it borders rather than doubles it.</summary>
+        public Color guideOutlineColor = new Color(0f, 0f, 0f, 0.65f);
+
+        public float guideOutlineWidth = 1.5f;
+
+        /// <summary>What a guide turns while it is holding a snapped rect, which thickness alone reads too quietly.</summary>
+        public Color guideSnapColor = new Color(1f, 0.45f, 0.1f, 1f);
+
+        public bool guideSnapEnabled = true;
+
+        /// <summary>How close, in screen points, a dragged rect has to come before a guide takes it.</summary>
+        public float guideSnapDistance = 8f;
+
+        public List<SceneViewGuide> guides = new List<SceneViewGuide>();
+    }
+
+    /// <summary>One Scene View guide, stored as a fraction of the canvas rect so it survives a resolution change.</summary>
+    [Serializable]
+    internal class SceneViewGuide
+    {
+        public bool isHorizontal;
+        public float normalizedPosition = 0.5f;
     }
 
     /// <summary>One Game View guide, stored as a fraction of the render target so it survives resizing and zoom.</summary>

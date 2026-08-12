@@ -89,8 +89,14 @@ namespace DNExtensions.HelpfulEditor
             {
                 label = "Scene View",
                 guiHandler = _ => DrawSceneView(),
-                keywords = new[] { "scene view", "viewport", "overlay", "picker", "select", "overlapping" }
+                keywords = new[] { "scene view", "viewport", "overlay", "picker", "select", "overlapping", "guides", "rulers", "snap", "canvas" }
             };
+        }
+
+        /// <summary>Opened from the Scene View ruler's own context menu.</summary>
+        public static void OpenSceneViewSettings()
+        {
+            SettingsService.OpenProjectSettings($"{RootPath}/Scene View");
         }
 
         private static void DrawSceneView()
@@ -162,10 +168,59 @@ namespace DNExtensions.HelpfulEditor
                         MessageType.Info);
                 }
 
+                if (Section(SceneViewModule, "Canvas Guides"))
+                {
+                    settings.guidesEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Enabled", "Draws guides and rulers on the canvas being edited, for placing UI against."),
+                        settings.guidesEnabled);
+
+                    using (new EditorGUI.DisabledScope(!settings.guidesEnabled))
+                    {
+                        settings.guideColor = EditorGUILayout.ColorField("Colour", settings.guideColor);
+                        settings.guideWidth = EditorGUILayout.Slider("Width", settings.guideWidth, 0.5f, 8f);
+
+                        settings.guideOutlineColor = EditorGUILayout.ColorField(
+                            new GUIContent("Outline Colour", "Bordered rather than doubled — the outline is a wider line of the same shape drawn underneath."),
+                            settings.guideOutlineColor);
+
+                        settings.guideOutlineWidth = EditorGUILayout.Slider("Outline Width", settings.guideOutlineWidth, 0f, 4f);
+
+                        settings.guideSnapColor = EditorGUILayout.ColorField(
+                            new GUIContent("Snapped Colour", "What a guide turns while it is holding a rect."),
+                            settings.guideSnapColor);
+
+                        settings.guideSnapEnabled = EditorGUILayout.Toggle(
+                            new GUIContent("Snap Rects", "Pulls a rect being dragged onto a guide once its edge or centre comes close enough."),
+                            settings.guideSnapEnabled);
+
+                        using (new EditorGUI.DisabledScope(!settings.guideSnapEnabled))
+                        {
+                            settings.guideSnapDistance = EditorGUILayout.Slider("Snap Distance", settings.guideSnapDistance, 1f, 32f);
+                        }
+                    }
+
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.HelpBox(
+                        "Guides belong to the root canvas of whatever is selected, and stay put when the selection moves off UI.\n" +
+                        "The Canvas Guides overlay in the Scene View toolbar shows and hides the rulers and the guides together; right-click it, or a ruler, for the guide menu.\n" +
+                        "Drag off the top ruler for a vertical guide, off the left ruler for a horizontal one.\n" +
+                        "Drag a guide back onto a ruler, or off the canvas, to delete it.\n" +
+                        "Hold Alt while dragging to snap to the centre, Shift to move in 10px steps.\n" +
+                        "Positions are held against the canvas rect, so they survive a reference resolution change.\n" +
+                        "The rulers are pinned to the window and appear only while the view is square to the canvas — orbit away and the guides stay, dimmed, but nothing can be placed against them.\n" +
+                        "Like the Game View's, the rulers take the top-left 18 pixels of the view, and whatever Scene View overlay is sitting there with them.\n" +
+                        "Snapping corrects the rect after Unity's own tools have moved it, so the Move and Rect tools keep working as they do; a rect being resized is left alone.",
+                        MessageType.Info);
+                }
+
                 EndSections();
             }
 
-            if (EditorGUI.EndChangeCheck()) HelpfulEditorSettings.SaveSceneView();
+            if (EditorGUI.EndChangeCheck())
+            {
+                HelpfulEditorSettings.SaveSceneView();
+                Viewport.SceneViewGuides.Refresh();
+            }
 
             DrawResetButton("Scene View", HelpfulEditorSettings.ResetSceneView);
         }
