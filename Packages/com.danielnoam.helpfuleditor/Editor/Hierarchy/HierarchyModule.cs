@@ -48,6 +48,10 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         /// </summary>
         private static void OnUpdate()
         {
+            // Nothing below draws or tracks anything while the module is off, and the repaint it
+            // would otherwise force runs on every editor tick the cursor spends over the window.
+            if (!HelpfulEditorSettings.Hierarchy.moduleEnabled) return;
+
             // Only acts on positive evidence: mouseOverWindow is null whenever the editor cannot
             // say where the cursor is, and treating that as "left the window" would clear the hover
             // between ticks and leave the keybinds with nothing to act on.
@@ -57,10 +61,13 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             {
                 // The component strip's hover lift and its link cursor are both only established
                 // while a row is being drawn, and the Hierarchy does not repaint as the pointer
-                // moves across it. Marking rows interactive asks the editor to, but that reaches
-                // into internals that are not on every version — so the repaint is driven from here
-                // too, which is the polling fallback HelpfulEditorGUI.MarkInteractive describes.
-                EditorApplication.RepaintHierarchyWindow();
+                // moves across it. Rows ask the editor to by marking themselves interactive; only
+                // where that is unavailable does the repaint have to be driven from here, which is
+                // the polling fallback HelpfulEditorGUI.MarkInteractive describes. Forcing one
+                // every tick regardless made resting the cursor over the Hierarchy a continuous
+                // full redraw of every visible row.
+                if (!HelpfulEditorGUI.HotRegionAvailable) EditorApplication.RepaintHierarchyWindow();
+
                 return;
             }
 
@@ -88,6 +95,11 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
             GameObject gameObject = item as GameObject;
             bool hovered = TrackHover(rawId, gameObject, rowRect);
+
+            // Registers the row as interactive so the editor repaints on mouse move by itself. The
+            // whole row, not just the strip inside it: the hover state gates the zebra stripe and
+            // the child-count tooltip as well, so anywhere on the row is somewhere a move matters.
+            HelpfulEditorGUI.MarkInteractive(HelpfulEditorGUI.FullRowRect(rowRect));
 
             bool selected = gameObject && Selection.Contains(gameObject);
 

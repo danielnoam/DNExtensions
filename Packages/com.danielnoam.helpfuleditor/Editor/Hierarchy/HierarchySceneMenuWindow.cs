@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
 
 namespace DNExtensions.HelpfulEditor.Hierarchy
 {
@@ -17,6 +18,9 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
     /// Starred scenes are listed above the rest with a divider between them. Open scenes are marked
     /// where they fall rather than lifted into a group of their own — the tick already says so, and
     /// a section for something the header above is already naming was a division too many.
+    ///
+    /// A search field sits above the list and takes focus on open, so a project with more scenes
+    /// than fit on screen is narrowed by typing rather than by scrolling.
     /// </summary>
     internal class HierarchySceneMenuWindow : HelpfulEditorDropdownListWindow
     {
@@ -46,6 +50,12 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
         protected override int RowCount => _paths.Count;
 
+        protected override bool ShowSearchField => true;
+
+        protected override string EmptySearchText => "No scenes match";
+
+        protected override void OnSearchChanged(string query) => Rebuild();
+
         /// <param name="activator">The header's name rect in screen space, so the list drops from the name it belongs to.</param>
         public static void Open(Rect activator)
         {
@@ -63,32 +73,48 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         }
 
         /// <summary>
-        /// Rebuilt from scratch whenever the order could have changed, which starring a scene does.
-        /// Group 0 is starred and 1 is everything else, each sorted by the name shown, since the path
-        /// is no longer what orders the list.
+        /// Rebuilt from scratch whenever the order could have changed, which starring a scene and
+        /// typing in the search field both do. Group 0 is starred and 1 is everything else, since a
+        /// search narrows the list rather than changing what is worth keeping at the top of it.
+        ///
+        /// Ordered by how well the name matches and then by the name itself — an empty query matches
+        /// everything at the same cost, so the unsearched list reads alphabetically as it always did.
         /// </summary>
         private void Rebuild()
         {
-            List<string> all = new List<string>();
+            List<KeyValuePair<string, float>> matched = new List<KeyValuePair<string, float>>();
 
             foreach (string guid in AssetDatabase.FindAssets("t:Scene"))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
-                if (!string.IsNullOrEmpty(path)) all.Add(path);
+                if (string.IsNullOrEmpty(path)) continue;
+
+                // Matched on the name alone, not the path: the list shows names, and a query that
+                // hit a folder somewhere up the path would look like it had matched nothing.
+                if (!HelpfulEditorFuzzySearch.TryMatch(SceneName(path), SearchQuery, out float cost)) continue;
+
+                matched.Add(new KeyValuePair<string, float>(path, cost));
             }
 
-            all.Sort((left, right) => string.Compare(SceneName(left), SceneName(right), StringComparison.OrdinalIgnoreCase));
+            matched.Sort((left, right) =>
+            {
+                int byCost = left.Value.CompareTo(right.Value);
+
+                return byCost != 0
+                    ? byCost
+                    : string.Compare(SceneName(left.Key), SceneName(right.Key), StringComparison.OrdinalIgnoreCase);
+            });
 
             _paths.Clear();
             _groups.Clear();
 
             for (int group = 0; group <= 1; group++)
             {
-                foreach (string path in all)
+                foreach (KeyValuePair<string, float> entry in matched)
                 {
-                    if (GroupOf(path) != group) continue;
+                    if (GroupOf(entry.Key) != group) continue;
 
-                    _paths.Add(path);
+                    _paths.Add(entry.Key);
                     _groups.Add(group);
                 }
             }
@@ -136,6 +162,10 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             if (open) GUI.Label(new Rect(rowRect.x, rowRect.y, TickWidth, rowRect.height), "✓", EditorStyles.boldLabel);
 
             _rowContent.text = SceneName(path);
+
+            // The only place the middle-click is announced. It reveals rather than changes anything,
+            // so it is worth offering and not worth a row of its own to advertise.
+            _rowContent.tooltip = $"{path}\nMiddle-click to ping in the Project window";
 
             GUI.Label(Rect.MinMaxRect(rowRect.x + TickWidth, rowRect.y, starRect.x, rowRect.yMax),
                 _rowContent, open ? EditorStyles.boldLabel : EditorStyles.label);
@@ -219,6 +249,26 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             // inside a dropdown's own GUI pass is not something to do to the editor.
             OpenSceneMode mode = additive ? OpenSceneMode.Additive : OpenSceneMode.Single;
             EditorApplication.delayCall += () => OpenScene(path, mode);
+        }
+
+        /// <summary>
+        /// Middle-click points at the scene asset in the Project window instead of opening it, which
+        /// is how to find where a scene actually lives without loading it and losing what is open.
+        /// Nothing is selected — a ping frames and flashes the row on its own, and taking the
+        /// selection would redirect every locked Inspector along with it.
+        /// </summary>
+        protected override void AlternateActivate(int index)
+        {
+            Object asset = AssetDatabase.LoadAssetAtPath<Object>(_paths[index]);
+            if (!asset) return;
+
+            // Closed first: the panel is a dropdown sitting over the Project window, so a ping behind
+            // it would frame the row where it cannot be seen. Deferred for the same reason the scene
+            // open is — reaching into another window from inside this one's GUI pass, as it is being
+            // torn down, is not something to do to the editor.
+            Close();
+
+            EditorApplication.delayCall += () => EditorGUIUtility.PingObject(asset);
         }
 
         private static void OpenScene(string path, OpenSceneMode mode)

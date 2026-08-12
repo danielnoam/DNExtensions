@@ -73,9 +73,15 @@ namespace DNExtensions.HelpfulEditor
 
         /// <summary>
         /// Skips the wait before the next poll. Called by the paths that create or lock a window,
-        /// which know the title is about to be wrong and need not wait to be told.
+        /// which know the title is about to be wrong and need not wait to be told. The window scan
+        /// goes with it: a window created a moment ago is not in the cached one yet, and polling
+        /// immediately against a scan that predates it would find nothing to rename.
         /// </summary>
-        public static void RequestRefresh() => _lastRefresh = 0.0;
+        public static void RequestRefresh()
+        {
+            _lastRefresh = 0.0;
+            HelpfulEditorWindows.Invalidate();
+        }
 
         /// <summary>
         /// Polled rather than driven by an event: locking a window, and changing the folder a locked
@@ -85,12 +91,14 @@ namespace DNExtensions.HelpfulEditor
         {
             if (!HelpfulEditorSettings.Project.windowTitlesEnabled) return;
 
-            // vTabs renames the same windows from its own loop. Both writing titleContent would
-            // flip-flop, so the one that can tell the other is there is the one that yields.
-            if (HelpfulEditorPlugins.VTabsActive) return;
-
             if (EditorApplication.timeSinceStartup - _lastRefresh < RefreshInterval) return;
             _lastRefresh = EditorApplication.timeSinceStartup;
+
+            // vTabs renames the same windows from its own loop. Both writing titleContent would
+            // flip-flop, so the one that can tell the other is there is the one that yields. Behind
+            // the interval rather than in front of it: the check reads an EditorPref, which is a
+            // registry hit on Windows, and this runs on every editor tick.
+            if (HelpfulEditorPlugins.VTabsActive) return;
 
             foreach (EditorWindow browser in HelpfulEditorWindows.AllProjectBrowsers()) UpdateBrowser(browser);
 

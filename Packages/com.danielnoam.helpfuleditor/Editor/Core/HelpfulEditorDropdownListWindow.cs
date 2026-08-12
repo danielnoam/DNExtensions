@@ -1,3 +1,4 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,15 +15,36 @@ namespace DNExtensions.HelpfulEditor
     internal abstract class HelpfulEditorDropdownListWindow : HelpfulEditorDropdownWindow
     {
         private const float ScrollBarWidth = 14f;
+        private const float SearchHeight = 18f;
+        private const float SearchGap = 4f;
+
+        /// <summary>
+        /// Unique per window so two dropdowns open at once cannot focus each other's field. Focus is
+        /// addressed by name in IMGUI, and a shared name is a shared address.
+        /// </summary>
+        private readonly string _searchControlName = $"helpfuleditor-dropdown-search-{Guid.NewGuid():N}";
 
         private static Color RowHighlightColor => EditorGUIUtility.isProSkin
             ? new Color(1f, 1f, 1f, 0.09f)
             : new Color(0f, 0f, 0f, 0.08f);
 
+        private static Color EmptyTextColor => EditorGUIUtility.isProSkin
+            ? new Color(1f, 1f, 1f, 0.45f)
+            : new Color(0f, 0f, 0f, 0.45f);
+
+        private static GUIStyle _emptyStyle;
+
+        private static GUIStyle EmptyStyle => _emptyStyle ??= new GUIStyle(EditorStyles.label)
+        {
+            alignment = TextAnchor.MiddleCenter
+        };
+
         private Vector2 _scroll;
         private int _highlighted;
         private bool _sized;
         private bool _reveal;
+        private string _search = string.Empty;
+        private bool _searchFocused;
 
         protected virtual float RowHeight => 20f;
         protected virtual float MinWidth => 190f;
@@ -40,6 +62,34 @@ namespace DNExtensions.HelpfulEditor
         /// <summary>Rows that say no are drawn but cannot be clicked. Keyboard activation is refused too.</summary>
         protected virtual bool IsRowEnabled(int index) => true;
 
+        /// <summary>
+        /// Middle-click on a row. Nothing by default — a list whose rows stand for something findable
+        /// elsewhere overrides it. Unlike <see cref="Activate"/> it is offered on disabled rows too,
+        /// since pointing at a thing is not doing anything to it.
+        /// </summary>
+        protected virtual void AlternateActivate(int index)
+        {
+        }
+
+        /// <summary>A search field above the list, which filters it. Off unless a subclass asks for it.</summary>
+        protected virtual bool ShowSearchField => false;
+
+        /// <summary>What is typed in the search field, empty when there is none or nothing is typed.</summary>
+        protected string SearchQuery => _search;
+
+        /// <summary>
+        /// Called when the query changes, for the subclass to rebuild its rows against it. The list's
+        /// highlight and scroll are reset around this, so the rebuilt set is read from the top.
+        /// </summary>
+        protected virtual void OnSearchChanged(string query)
+        {
+        }
+
+        /// <summary>Shown in place of the list when a search matches nothing.</summary>
+        protected virtual string EmptySearchText => "No matches";
+
+        private bool IsSearching => ShowSearchField && !string.IsNullOrEmpty(_search);
+
         /// <summary>Called every pass with the row under the cursor or keyboard, for previewing it elsewhere.</summary>
         protected virtual void OnHighlightChanged(int index)
         {
@@ -54,7 +104,11 @@ namespace DNExtensions.HelpfulEditor
         /// <summary>A sensible gap for SeparatorBefore to return, so grouped lists space alike.</summary>
         protected const float SeparatorHeight = 7f;
 
-        protected override bool IsValid => RowCount > 0;
+        /// <summary>
+        /// A search that matches nothing empties the list without emptying the window — closing on it
+        /// would take the field away mid-typo and leave no way to correct it.
+        /// </summary>
+        protected override bool IsValid => RowCount > 0 || IsSearching;
 
         protected int Highlighted => _highlighted;
 
@@ -71,8 +125,10 @@ namespace DNExtensions.HelpfulEditor
 
         private float DesiredHeight()
         {
-            return Mathf.Clamp(ChromeHeight + ListHeight(), MinHeight, MaxHeight);
+            return Mathf.Clamp(ChromeHeight + SearchStripHeight + ListHeight(), MinHeight, MaxHeight);
         }
+
+        private float SearchStripHeight => ShowSearchField ? SearchHeight + SearchGap : 0f;
 
         /// <summary>Every row plus whatever the separators add, which is what the rows are laid out against.</summary>
         private float ListHeight()
@@ -86,9 +142,67 @@ namespace DNExtensions.HelpfulEditor
         protected override void DrawContent(Rect content, Event evt)
         {
             if (!_sized && evt.type == EventType.Layout) ApplySize();
-            if (HandleKeys(evt)) return;
 
-            DrawList(content, evt);
+            // Ahead of the field being drawn, because a focused text field claims the arrow keys and
+            // Return for its own caret — and in a list with a search box those still belong to the
+            // list. Taken here they never reach it.
+            bool keyUsed = HandleKeys(evt);
+
+            Rect list = content;
+
+            if (ShowSearchField)
+            {
+                DrawSearchField(new Rect(content.x, content.y, content.width, SearchHeight));
+
+                list = Rect.MinMaxRect(content.x, content.y + SearchStripHeight, content.xMax, content.yMax);
+            }
+
+            if (keyUsed) return;
+
+            if (RowCount == 0)
+            {
+                Color previous = GUI.color;
+                GUI.color = EmptyTextColor;
+
+                GUI.Label(list, EmptySearchText, EmptyStyle);
+
+                GUI.color = previous;
+                return;
+            }
+
+            DrawList(list, evt);
+        }
+
+        /// <summary>
+        /// Focused as soon as it exists, so the list can be narrowed by typing without clicking into
+        /// anything first — which is the only reason to put a search box on a dropdown that is
+        /// already under the cursor.
+        /// </summary>
+        private void DrawSearchField(Rect rect)
+        {
+            GUI.SetNextControlName(_searchControlName);
+
+            string query = EditorGUI.TextField(rect, _search, EditorStyles.toolbarSearchField);
+
+            // After the first draw rather than on open: a control cannot be focused before it exists.
+            if (!_searchFocused)
+            {
+                _searchFocused = true;
+                EditorGUI.FocusTextInControl(_searchControlName);
+            }
+
+            if (query == _search) return;
+
+            _search = query;
+
+            // Reset around the rebuild, not after it: the rebuilt list is a different set of rows,
+            // and carrying a highlight or a scroll offset into it lands on whatever happens to sit
+            // at that index now.
+            _highlighted = 0;
+            _scroll = Vector2.zero;
+
+            OnSearchChanged(query);
+            Repaint();
         }
 
         private void ApplySize()
@@ -100,7 +214,7 @@ namespace DNExtensions.HelpfulEditor
 
             // A clamped list scrolls, and the bar takes its width out of the rows rather than the
             // window — so it has to be asked for on top, or the widest row loses its tail to it.
-            bool scrolls = ChromeHeight + ListHeight() > MaxHeight;
+            bool scrolls = ChromeHeight + SearchStripHeight + ListHeight() > MaxHeight;
 
             float width = Mathf.Clamp(widest + ChromeWidth + (scrolls ? ScrollBarWidth : 0f), MinWidth, MaxWidth);
 
@@ -126,7 +240,14 @@ namespace DNExtensions.HelpfulEditor
                 case KeyCode.Return:
                 case KeyCode.KeypadEnter:
                     evt.Use();
-                    if (IsRowEnabled(_highlighted)) Activate(_highlighted, evt.shift);
+
+                    // Range-checked because a search that matches nothing leaves the window open over
+                    // an empty list, and the highlight then names a row that is not there.
+                    if (_highlighted >= 0 && _highlighted < RowCount && IsRowEnabled(_highlighted))
+                    {
+                        Activate(_highlighted, evt.shift);
+                    }
+
                     return true;
 
                 default:
@@ -136,6 +257,9 @@ namespace DNExtensions.HelpfulEditor
 
         private void Move(int delta)
         {
+            // Nothing to move between, and the clamp below would settle on -1 rather than on a row.
+            if (RowCount == 0) return;
+
             _highlighted = Mathf.Clamp(_highlighted + delta, 0, RowCount - 1);
             _reveal = true;
 
@@ -181,12 +305,27 @@ namespace DNExtensions.HelpfulEditor
 
                 DrawRow(rowRect, i);
 
-                if (!hovered || evt.type != EventType.MouseDown || !IsRowEnabled(i)) continue;
+                if (!hovered || evt.type != EventType.MouseDown) continue;
+
+                // Middle-click points at a row rather than acting on it, so it is allowed even where
+                // activation is not — the same reasoning that keeps a scene's star live in play mode.
+                if (evt.button == 2)
+                {
+                    evt.Use();
+
+                    // Closed out first, since either call below can close the window and leave the
+                    // scroll view without its matching end call.
+                    GUI.EndScrollView();
+                    AlternateActivate(i);
+                    return;
+                }
+
+                // Right-click is nobody's here. It used to activate along with every other button,
+                // which made a stray one open a scene.
+                if (evt.button != 0 || !IsRowEnabled(i)) continue;
 
                 evt.Use();
 
-                // Closed out before activating, since activating can close the window and leave the
-                // scroll view without its matching end call.
                 GUI.EndScrollView();
                 Activate(i, evt.shift);
                 return;

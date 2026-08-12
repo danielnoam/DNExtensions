@@ -748,13 +748,10 @@ namespace DNExtensions.HelpfulEditor
             return treeView == null ? null : GetMemberValue(treeView, "data");
         }
 
-        private static EditorWindow FindWindow(Type windowType)
-        {
-            if (windowType == null) return null;
-
-            Object[] windows = Resources.FindObjectsOfTypeAll(windowType);
-            return windows.Length > 0 ? windows[0] as EditorWindow : null;
-        }
+        // Shared scan rather than one of its own: TryGetProjectListAreaRect runs this every editor
+        // tick while the cursor is over the Project window, and a raw FindObjectsOfTypeAll there
+        // costs the whole loaded object set every time.
+        private static EditorWindow FindWindow(Type windowType) => HelpfulEditorWindows.First(windowType);
 
         private static object GetMemberValue(object instance, string memberName)
         {

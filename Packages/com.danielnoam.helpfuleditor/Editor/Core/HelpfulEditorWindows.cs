@@ -14,8 +14,23 @@ namespace DNExtensions.HelpfulEditor
     /// </summary>
     internal static class HelpfulEditorWindows
     {
+        /// <summary>
+        /// How long a window scan is reused for. Resources.FindObjectsOfTypeAll walks every loaded
+        /// object in the editor, so what it costs scales with the size of the project rather than
+        /// with the handful of windows it hands back — and the suite's update loops between them
+        /// were each asking for their own, several dozen times a second. That is unnoticeable in a
+        /// small project and enough to make a large one feel sluggish while sitting idle.
+        ///
+        /// Short enough that a window opened by hand is decorated before anyone notices it wasn't;
+        /// the paths that open one themselves call <see cref="Invalidate"/> rather than wait.
+        /// </summary>
+        private const double ScanInterval = 0.25;
+
         private static readonly Type HierarchyWindowType = typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow");
         private static readonly Type ProjectWindowType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ProjectBrowser");
+
+        private static readonly List<EditorWindow> Scanned = new List<EditorWindow>();
+        private static double _lastScan = double.NegativeInfinity;
 
         // PropertyEditor is InspectorWindow's base on modern Unity, and is also the floating
         // Properties window's own type — matching on it covers both, and falls back for versions
@@ -43,6 +58,44 @@ namespace DNExtensions.HelpfulEditor
         public static IEnumerable<EditorWindow> AllInspectors() => AllOfType(InspectorWindowType);
 
         /// <summary>
+        /// Drops the cached scan, for code that has just opened a window and would otherwise have to
+        /// wait out <see cref="ScanInterval"/> before anything could find it.
+        /// </summary>
+        public static void Invalidate() => _lastScan = double.NegativeInfinity;
+
+        /// <summary>Every open window of a kind, subclasses included.</summary>
+        public static IEnumerable<EditorWindow> AllOfType(Type windowType)
+        {
+            List<EditorWindow> windows = new List<EditorWindow>();
+            if (windowType == null) return windows;
+
+            // Copied out rather than filtered lazily: callers open and close windows while iterating
+            // the result, which would otherwise be mutating the scan they are walking.
+            foreach (EditorWindow window in Scan())
+            {
+                if (windowType.IsInstanceOfType(window)) windows.Add(window);
+            }
+
+            return windows;
+        }
+
+        /// <summary>Any one open window of a kind, for the lookups that only need to find the type once.</summary>
+        public static EditorWindow First(Type windowType)
+        {
+            if (windowType == null) return null;
+
+            foreach (EditorWindow window in Scan())
+            {
+                if (windowType.IsInstanceOfType(window)) return window;
+            }
+
+            return null;
+        }
+
+        /// <summary>Every open window, whatever it is.</summary>
+        public static IEnumerable<EditorWindow> All() => new List<EditorWindow>(Scan());
+
+        /// <summary>
         /// The Scene View an action should act on. SceneView.lastActiveSceneView on its own is null
         /// until one has been focused at least once in the session, so anything reaching for it
         /// bare does nothing at all on a freshly opened layout.
@@ -68,17 +121,35 @@ namespace DNExtensions.HelpfulEditor
             return active ? active : SceneView.sceneViews[0] as SceneView;
         }
 
-        private static IEnumerable<EditorWindow> AllOfType(Type windowType)
+        /// <summary>
+        /// The one scan every lookup above is served from. Rebuilt when it has aged out, and as soon
+        /// as any window in it has been closed — a destroyed entry is not merely stale, it is a
+        /// window callers would go on skipping until the interval happened to elapse.
+        /// </summary>
+        private static List<EditorWindow> Scan()
         {
-            List<EditorWindow> windows = new List<EditorWindow>();
-            if (windowType == null) return windows;
+            double now = EditorApplication.timeSinceStartup;
+            if (now - _lastScan < ScanInterval && !HasClosedWindow()) return Scanned;
 
-            foreach (UnityEngine.Object candidate in Resources.FindObjectsOfTypeAll(windowType))
+            _lastScan = now;
+            Scanned.Clear();
+
+            foreach (EditorWindow window in Resources.FindObjectsOfTypeAll<EditorWindow>())
             {
-                if (candidate is EditorWindow window) windows.Add(window);
+                if (window) Scanned.Add(window);
             }
 
-            return windows;
+            return Scanned;
+        }
+
+        private static bool HasClosedWindow()
+        {
+            foreach (EditorWindow window in Scanned)
+            {
+                if (!window) return true;
+            }
+
+            return false;
         }
 
         /// <summary>

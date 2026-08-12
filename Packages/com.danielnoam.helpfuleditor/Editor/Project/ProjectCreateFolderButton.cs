@@ -45,6 +45,7 @@ namespace DNExtensions.HelpfulEditor.Project
         };
 
         private static double _lastRefresh;
+        private static bool _removed;
 
         static ProjectCreateFolderButton()
         {
@@ -54,9 +55,18 @@ namespace DNExtensions.HelpfulEditor.Project
 
         /// <summary>
         /// Skips the wait before the next poll, for the paths that have just created a window and
-        /// know it needs a button.
+        /// know it needs a button. Also the way back in once the button has been switched off, since
+        /// the poll stands itself down until told otherwise.
         /// </summary>
-        public static void RequestRefresh() => _lastRefresh = 0.0;
+        public static void RequestRefresh()
+        {
+            _lastRefresh = 0.0;
+            _removed = false;
+
+            // A window created a moment ago is not in the cached scan yet, so polling immediately
+            // against it would find nothing to put a button on.
+            HelpfulEditorWindows.Invalidate();
+        }
 
         private static void Refresh()
         {
@@ -64,6 +74,13 @@ namespace DNExtensions.HelpfulEditor.Project
             _lastRefresh = EditorApplication.timeSinceStartup;
 
             bool wanted = HelpfulEditorSettings.Project.moduleEnabled && HelpfulEditorSettings.Project.createFolderButtonEnabled;
+
+            // A switched-off button needs one pass to clear what is already there and nothing after
+            // that — the settings screen calls RequestRefresh when it comes back on. Without this
+            // the poll goes on querying every Project window's visual tree ten times a second for a
+            // feature nobody has enabled.
+            if (!wanted && _removed) return;
+            _removed = !wanted;
 
             foreach (EditorWindow window in HelpfulEditorWindows.AllProjectBrowsers())
             {

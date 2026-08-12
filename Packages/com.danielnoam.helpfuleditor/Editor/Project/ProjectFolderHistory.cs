@@ -125,9 +125,9 @@ namespace DNExtensions.HelpfulEditor.Project
             try
             {
                 Type browserType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ProjectBrowser");
-                Object[] windows = browserType != null ? Resources.FindObjectsOfTypeAll(browserType) : Array.Empty<Object>();
+                EditorWindow browser = HelpfulEditorWindows.First(browserType);
 
-                if (windows.Length > 0 && windows[0] is EditorWindow browser && TryShowFolderContents(browserType, browser, folder))
+                if (browser && TryShowFolderContents(browserType, browser, folder))
                 {
                     browser.Repaint();
                     return true;

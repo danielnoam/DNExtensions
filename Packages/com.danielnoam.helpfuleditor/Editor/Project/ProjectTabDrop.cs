@@ -44,7 +44,7 @@ namespace DNExtensions.HelpfulEditor.Project
 
             if (!AnyDropEnabled()) return;
 
-            foreach (EditorWindow window in Resources.FindObjectsOfTypeAll<EditorWindow>())
+            foreach (EditorWindow window in HelpfulEditorWindows.All())
             {
                 Object dockArea = HelpfulEditorDockArea.Of(window);
                 if (!dockArea || Registered.ContainsKey(dockArea)) continue;

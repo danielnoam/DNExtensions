@@ -5,7 +5,6 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Object = UnityEngine.Object;
 
 namespace DNExtensions.HelpfulEditor.GameView
 {
@@ -117,10 +116,8 @@ namespace DNExtensions.HelpfulEditor.GameView
 
             foreach (EditorWindow closed in Closed) Strips.Remove(closed);
 
-            foreach (Object window in Resources.FindObjectsOfTypeAll(_gameViewType))
+            foreach (EditorWindow gameView in HelpfulEditorWindows.AllOfType(_gameViewType))
             {
-                if (!(window is EditorWindow gameView)) continue;
-
                 if (Strips.TryGetValue(gameView, out Strip strip))
                 {
                     // Re-checked every scan: a host view holds several tabs and its OnGUI points at

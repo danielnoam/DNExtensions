@@ -74,9 +74,9 @@ namespace DNExtensions.HelpfulEditor.GameView
             _gameViewType ??= typeof(Editor).Assembly.GetType("UnityEditor.GameView");
             if (_gameViewType == null) yield break;
 
-            foreach (UnityEngine.Object window in Resources.FindObjectsOfTypeAll(_gameViewType))
+            foreach (EditorWindow gameView in HelpfulEditorWindows.AllOfType(_gameViewType))
             {
-                if (window is EditorWindow gameView) yield return gameView;
+                yield return gameView;
             }
         }
 
