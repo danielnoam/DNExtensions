@@ -3,7 +3,7 @@
     "showRulers": false,
     "guidesEnabled": true,
     "screenshotEnabled": true,
-    "screenshotForceResolution": true,
+    "screenshotForceResolution": false,
     "screenshotResolution": {
         "x": 1920,
         "y": 1080

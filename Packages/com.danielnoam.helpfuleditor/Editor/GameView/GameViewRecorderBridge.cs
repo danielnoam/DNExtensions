@@ -157,12 +157,20 @@ namespace DNExtensions.HelpfulEditor.GameView
 
                 _controllerType.GetMethod("PrepareRecording", AnyInstance)?.Invoke(_controller, null);
 
-                if (_controllerType.GetMethod("StartRecording", AnyInstance)?.Invoke(_controller, null) is true) return true;
+                if (_controllerType.GetMethod("StartRecording", AnyInstance)?.Invoke(_controller, null) is not true)
+                {
+                    Debug.LogError("[HelpfulEditor] Unity Recorder refused to start the recording.");
+                    Release();
 
-                Debug.LogError("[HelpfulEditor] Unity Recorder refused to start the recording.");
-                Release();
+                    return false;
+                }
 
-                return false;
+                // Read back rather than echoed: Recorder resolves the path through its own filename
+                // generator and appends the codec's extension, so this is where the file will really
+                // land — which is not otherwise visible anywhere until it appears.
+                Debug.Log($"[HelpfulEditor] Recording to {Get(_movieSettings, "OutputFile")} through Unity Recorder.");
+
+                return true;
             }
             catch (Exception e)
             {

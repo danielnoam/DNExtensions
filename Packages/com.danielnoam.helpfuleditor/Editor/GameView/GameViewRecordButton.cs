@@ -81,7 +81,7 @@ namespace DNExtensions.HelpfulEditor.GameView
             foreach (RecordingMode mode in (RecordingMode[])Enum.GetValues(typeof(RecordingMode)))
             {
                 RecordingMode captured = mode;
-                string path = $"Mode/{GameViewRecording.Label(mode)}";
+                string path = $"Mode/{GameViewToolbarMenu.Label(mode)}";
 
                 // Offered but dead without the package, which says more than leaving it out would.
                 if (mode == RecordingMode.Recorder && !GameViewRecorderBridge.Available)
@@ -104,7 +104,7 @@ namespace DNExtensions.HelpfulEditor.GameView
             {
                 RecordingQuality captured = quality;
 
-                Entry(menu, $"Quality/{GameViewRecording.Label(quality)}", settings.recordingQuality == quality, () => SetQuality(captured));
+                Entry(menu, $"Quality/{GameViewToolbarMenu.Label(quality)}", settings.recordingQuality == quality, () => SetQuality(captured));
             }
 
             Entry(menu, "Force Resolution", settings.recordingForceResolution, ToggleForceResolution);
@@ -123,16 +123,9 @@ namespace DNExtensions.HelpfulEditor.GameView
             evt.StopPropagation();
         }
 
-        /// <summary>
-        /// A menu entry that is greyed rather than absent while a take is running, so the settings can
-        /// still be read off mid-recording — the tick still says what this one is being recorded at.
-        /// </summary>
         private static void Entry(GenericMenu menu, string path, bool on, GenericMenu.MenuFunction chosen)
         {
-            GUIContent label = new GUIContent(path);
-
-            if (GameViewRecording.IsActive) menu.AddDisabledItem(label, on);
-            else menu.AddItem(label, on, chosen);
+            GameViewToolbarMenu.Entry(menu, path, on, GameViewRecording.IsActive, chosen);
         }
 
         private static void SetMode(RecordingMode mode)

@@ -57,13 +57,52 @@ namespace DNExtensions.HelpfulEditor.GameView
             if (evt.button != 1) return;
 
             GenericMenu menu = new GenericMenu();
+            GameViewSettings settings = HelpfulEditorSettings.GameView;
+
+            // Locked while a capture is in flight: a forced-resolution shot owns the Game View's size
+            // until it is done, and changing what it is capturing halfway would describe it wrongly.
+            bool locked = GameViewScreenshot.Busy;
+
+            foreach (ScreenshotFormat format in (ScreenshotFormat[])Enum.GetValues(typeof(ScreenshotFormat)))
+            {
+                ScreenshotFormat captured = format;
+
+                GameViewToolbarMenu.Entry(menu, $"Format/{GameViewToolbarMenu.Label(format)}",
+                    settings.screenshotFormat == format, locked, () => SetFormat(captured));
+            }
+
+            GameViewToolbarMenu.Entry(menu, "Exclude UI", settings.screenshotExcludeUi, locked, ToggleExcludeUi);
+            GameViewToolbarMenu.Entry(menu, "Force Resolution", settings.screenshotForceResolution, locked, ToggleForceResolution);
+
+            menu.AddSeparator(string.Empty);
 
             menu.AddItem(new GUIContent("Open Screenshot Folder"), false, GameViewScreenshot.OpenFolder);
-            menu.AddSeparator(string.Empty);
             menu.AddItem(new GUIContent("Settings…"), false, HelpfulEditorSettingsProvider.OpenGameViewSettings);
 
             menu.ShowAsContext();
             evt.StopPropagation();
+        }
+
+        private static void SetFormat(ScreenshotFormat format)
+        {
+            HelpfulEditorSettings.GameView.screenshotFormat = format;
+            HelpfulEditorSettings.SaveGameView();
+        }
+
+        private static void ToggleExcludeUi()
+        {
+            GameViewSettings settings = HelpfulEditorSettings.GameView;
+
+            settings.screenshotExcludeUi = !settings.screenshotExcludeUi;
+            HelpfulEditorSettings.SaveGameView();
+        }
+
+        private static void ToggleForceResolution()
+        {
+            GameViewSettings settings = HelpfulEditorSettings.GameView;
+
+            settings.screenshotForceResolution = !settings.screenshotForceResolution;
+            HelpfulEditorSettings.SaveGameView();
         }
 
         private void OnDrawGUI()

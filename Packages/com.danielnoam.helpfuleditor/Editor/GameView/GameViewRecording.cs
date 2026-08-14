@@ -71,6 +71,9 @@ namespace DNExtensions.HelpfulEditor.GameView
         /// <summary>Set when a take is delegated, so Stop knows which recorder it is stopping.</summary>
         private static bool _delegated;
 
+        /// <summary>Whether Recorder has been seen recording, which is what makes a later "not recording" mean "finished".</summary>
+        private static bool _delegatedConfirmed;
+
         /// <summary>
         /// Survives the domain reload that entering play mode causes, which a static field would not —
         /// the request to record is made before the reload and acted on after it.
@@ -515,13 +518,23 @@ namespace DNExtensions.HelpfulEditor.GameView
         /// </summary>
         private static void PumpDelegated()
         {
-            if (!GameViewRecorderBridge.IsRecording)
+            if (GameViewRecorderBridge.IsRecording)
             {
-                Release(discard: false);
+                _delegatedConfirmed = true;
+
+                if (_gameView) _gameView.Repaint();
                 return;
             }
 
-            if (_gameView) _gameView.Repaint();
+            // Not started yet is not the same as finished. A session only reports itself recording
+            // once its first frame has gone through, a tick or two after StartRecording returned —
+            // and letting go here meant the take was abandoned without ever being stopped, which is
+            // exactly when Recorder writes the file.
+            if (!_delegatedConfirmed) return;
+
+            // Stopped explicitly rather than just dropped, so the file gets written.
+            GameViewRecorderBridge.Stop();
+            Release(discard: false);
         }
 
         private static void TrySync(double activeDuration)
@@ -665,6 +678,7 @@ namespace DNExtensions.HelpfulEditor.GameView
             if (_delegated && discard) GameViewRecorderBridge.Stop();
 
             _delegated = false;
+            _delegatedConfirmed = false;
 
             IsPaused = false;
             _starting = false;
@@ -715,23 +729,6 @@ namespace DNExtensions.HelpfulEditor.GameView
             };
         }
 
-        /// <summary>
-        /// The same text the settings popups show, read off the enum's own InspectorName so the
-        /// toolbar menu and the settings page cannot drift apart. Falls back to the plain name for a
-        /// member that has no attribute.
-        /// </summary>
-        public static string Label<T>(T value) where T : Enum
-        {
-            System.Reflection.MemberInfo[] member = typeof(T).GetMember(value.ToString());
-
-            if (member.Length > 0 &&
-                Attribute.GetCustomAttribute(member[0], typeof(InspectorNameAttribute)) is InspectorNameAttribute named)
-            {
-                return named.displayName;
-            }
-
-            return value.ToString();
-        }
 
         public static string ResolveFolder()
         {
