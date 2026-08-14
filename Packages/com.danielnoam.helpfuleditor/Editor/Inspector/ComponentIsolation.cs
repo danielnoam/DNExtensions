@@ -59,6 +59,18 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private static void Maintain()
         {
             if (Isolated.Count == 0) return;
+
+            // The header bar holds the only way in or out of isolation, so switching either it or the
+            // module off while something is isolated would leave the rest of the components hidden
+            // with nothing left to click to bring them back. Releasing them here is what makes
+            // turning it off leave no trace.
+            InspectorSettings settings = HelpfulEditorSettings.Inspector;
+            if (!settings.moduleEnabled || !settings.headerBarEnabled)
+            {
+                Clear();
+                return;
+            }
+
             if (EditorApplication.timeSinceStartup - _lastMaintain < MaintainInterval) return;
 
             _lastMaintain = EditorApplication.timeSinceStartup;

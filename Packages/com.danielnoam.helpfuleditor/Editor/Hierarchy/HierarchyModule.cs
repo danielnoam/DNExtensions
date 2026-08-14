@@ -118,7 +118,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                 return;
             }
 
-            if (settings.treeDepthLinesEnabled)
+            if (settings.treeLinesEnabled)
             {
                 DrawTreeLines(rowRect, gameObject.transform, settings);
             }
@@ -143,7 +143,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         /// </summary>
         private static void DrawTreeLines(Rect rowRect, Transform transform, HierarchySettings settings)
         {
-            Color color = settings.treeDepthLineColor;
+            Color color = settings.treeLineColor;
             if (color.a <= 0f) return;
 
             AncestorBuffer.Clear();
@@ -167,7 +167,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             // the foldout arrow — so the elbow stops at the arrow's edge rather than running
             // underneath the glyph.
             HelpfulEditorGUI.DrawTreeConnectors(rowRect, rowRect.x - HelpfulEditorGUI.IndentWidth * depth,
-                LastOnPathBuffer, color, settings.treeDepthLineStyle, transform.childCount > 0);
+                LastOnPathBuffer, color, settings.treeLineStyle, transform.childCount > 0);
         }
 
         /// <summary>

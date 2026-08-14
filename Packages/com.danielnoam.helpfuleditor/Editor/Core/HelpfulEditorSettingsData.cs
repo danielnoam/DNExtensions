@@ -16,13 +16,13 @@ namespace DNExtensions.HelpfulEditor
         public Color zebraColorOdd = new Color(0f, 0f, 0f, 1f);
         public float zebraOpacity = 0.07f;
 
-        public bool treeDepthLinesEnabled = true;
-        public Color treeDepthLineColor = new Color(0.5f, 0.5f, 0.5f, 0.35f);
-        public LineStyle treeDepthLineStyle = LineStyle.Solid;
+        public bool treeLinesEnabled = true;
+        public Color treeLineColor = new Color(0.5f, 0.5f, 0.5f, 0.35f);
+        public LineStyle treeLineStyle = LineStyle.Solid;
 
         public bool componentStripEnabled = true;
         public int componentStripMaxIcons = 6;
-        public float componentIconSize = 14f;
+        public float componentStripIconSize = 14f;
         public bool componentQuickEditEnabled = true;
         public List<string> excludedComponentTypes = new List<string> { "Transform", "RectTransform" };
 
@@ -207,6 +207,30 @@ namespace DNExtensions.HelpfulEditor
         /// <summary>Relative paths are taken from the project root, so the default travels with the project.</summary>
         public string screenshotFolder = "Screenshots";
 
+        public bool recordingEnabled = true;
+
+        /// <summary>Also what decides whether there is audio: only deterministic capture can produce any.</summary>
+        public RecordingMode recordingMode = RecordingMode.RealTime;
+
+        /// <summary>
+        /// The rate the video is written at. What actually reaches the encoder is whatever the editor
+        /// managed to draw — a gap is padded with the last frame rather than shortening the video.
+        /// </summary>
+        public int recordingFps = 30;
+
+        public RecordingQuality recordingQuality = RecordingQuality.Medium;
+
+        /// <summary>Kept apart from the screenshots so a folder of PNGs does not fill up with MP4s.</summary>
+        public string recordingFolder = "Recordings";
+
+        /// <summary>
+        /// Holds the Game View at a set resolution for the whole take rather than only a moment, so
+        /// resizing the window mid-recording cannot change the frame size the encoder was opened with.
+        /// </summary>
+        public bool recordingForceResolution;
+
+        public Vector2Int recordingResolution = new Vector2Int(1920, 1080);
+
         public Color guideColor = new Color(0f, 0.85f, 1f, 0.9f);
         public float guideWidth = 2f;
 
@@ -222,7 +246,7 @@ namespace DNExtensions.HelpfulEditor
     }
 
     [Serializable]
-    internal class ProjectModuleSettings
+    internal class ProjectSettings
     {
         public bool moduleEnabled = true;
 
@@ -244,7 +268,7 @@ namespace DNExtensions.HelpfulEditor
         public LineStyle treeLineStyle = LineStyle.Solid;
 
         public bool twoLineNamesEnabled;
-        public bool showFileExtensions;
+        public bool showFileExtensionsEnabled;
 
         public bool folderContentIconsEnabled = true;
         public int folderContentMaxIcons = 4;
@@ -273,7 +297,7 @@ namespace DNExtensions.HelpfulEditor
         public KeyBind expandCollapseRecursiveKey = KeyBind.Of(KeyCode.E, shift: true);
         public KeyBind collapseAllKey = KeyBind.Of(KeyCode.E, ctrl: true, shift: true);
         public KeyBind isolateKey = KeyBind.Of(KeyCode.E, ctrl: true);
-        public KeyBind revealInFinderKey = KeyBind.Of(KeyCode.R, ctrl: true);
+        public KeyBind revealInFinderKey = KeyBind.Of(KeyCode.R, alt: true);
         public KeyBind quickObjectWindowKey = KeyBind.Of(KeyCode.Mouse0, alt: true);
         /// <summary>
         /// Opens whatever is under the cursor in a new tab: a folder as a second Project window,
@@ -281,20 +305,14 @@ namespace DNExtensions.HelpfulEditor
         /// </summary>
         public KeyBind openInNewTabKey = KeyBind.Of(KeyCode.Mouse2);
 
-        /// <summary>On: the new window becomes a tab beside the one clicked. Off: it floats.</summary>
-        public bool autoDock = true;
+        /// <summary>
+        /// Opening things as their own tab at all: a folder as a folder tab, anything else as its
+        /// Properties window. Covers both the keybind and the tab-strip drop.
+        /// </summary>
+        public bool tabsEnabled = true;
 
-        /// <summary>Keeps the new window on its folder, which also lets it be named after it.</summary>
-        public bool lockFolderWindows = true;
-
-        /// <summary>Dropping a folder on a dock area's tab strip opens it there as its own tab.</summary>
-        public bool folderDropCreatesTabEnabled = true;
-
-        /// <summary>Dropping anything else on a tab strip opens its Properties window there instead.</summary>
-        public bool objectDropOpensPropertiesEnabled = true;
-
-        /// <summary>Names windows pinned to something after what they show, instead of their window type.</summary>
-        public bool windowTitlesEnabled = true;
+        /// <summary>Dropping onto a dock area's tab strip opens the tab there, rather than only the keybind doing it.</summary>
+        public bool dropOnTabsEnabled = true;
 
         public KeyBind closeWindowKey = KeyBind.Of(KeyCode.W, ctrl: true);
         public KeyBind reopenWindowKey = KeyBind.Of(KeyCode.T, ctrl: true, shift: true);

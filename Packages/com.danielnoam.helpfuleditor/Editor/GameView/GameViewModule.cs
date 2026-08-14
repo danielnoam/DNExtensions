@@ -27,6 +27,7 @@ namespace DNExtensions.HelpfulEditor.GameView
 
             GameViewToolbar.RegisterProvider(_ => new GameViewRulerToggle());
             GameViewToolbar.RegisterProvider(gameView => new GameViewScreenshotButton(gameView), priority: 10);
+            GameViewToolbar.RegisterProvider(gameView => new GameViewRecordButton(gameView), priority: 20);
         }
 
         /// <summary>
@@ -67,6 +68,17 @@ namespace DNExtensions.HelpfulEditor.GameView
             HelpfulEditorSettings.SaveGameView();
 
             Sync();
+        }
+
+        /// <summary>Any open Game View, for the paths that need one but were not started from a particular one.</summary>
+        public static EditorWindow FirstGameView()
+        {
+            foreach (EditorWindow gameView in EnumerateGameViews())
+            {
+                if (gameView) return gameView;
+            }
+
+            return null;
         }
 
         private static IEnumerable<EditorWindow> EnumerateGameViews()

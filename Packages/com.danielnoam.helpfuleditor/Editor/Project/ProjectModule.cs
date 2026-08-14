@@ -58,7 +58,7 @@ namespace DNExtensions.HelpfulEditor.Project
         /// </summary>
         private static void OnUpdate()
         {
-            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
+            ProjectSettings settings = HelpfulEditorSettings.Project;
             if (!settings.moduleEnabled) return;
 
             // Captured once: mouseOverWindow is re-evaluated on every read and can go null between
@@ -148,7 +148,7 @@ namespace DNExtensions.HelpfulEditor.Project
 
         private static void OnProjectItem(string guid, Rect rowRect)
         {
-            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
+            ProjectSettings settings = HelpfulEditorSettings.Project;
             if (!settings.moduleEnabled) return;
 
             bool newPass = BeginRow(rowRect, settings.treeLinesEnabled);
@@ -278,7 +278,7 @@ namespace DNExtensions.HelpfulEditor.Project
         /// child terminate its guide instead of running it past the end of the branch. The depth-only
         /// fallback keeps the guides drawn, just without the terminating elbows.
         /// </summary>
-        private static void DrawTreeLines(Rect rowRect, string path, bool isFolder, int pathDepth, ProjectModuleSettings settings)
+        private static void DrawTreeLines(Rect rowRect, string path, bool isFolder, int pathDepth, ProjectSettings settings)
         {
             // The extra step drops the guide for the Assets root itself: its direct children sit at
             // the top level and get no line, exactly as the Hierarchy's scene roots do.
@@ -314,7 +314,7 @@ namespace DNExtensions.HelpfulEditor.Project
         /// only allowed the space to the right of the row's own label — aligning it against the row
         /// alone puts icons on top of long folder names.
         /// </summary>
-        private static void DrawFolderContentIcons(Rect rowRect, string path, ProjectModuleSettings settings)
+        private static void DrawFolderContentIcons(Rect rowRect, string path, ProjectSettings settings)
         {
             Texture[] icons = ProjectFolderContents.Get(path, settings.folderContentRecursive);
             if (icons.Length == 0) return;

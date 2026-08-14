@@ -13,6 +13,9 @@ namespace DNExtensions.HelpfulEditor
         private const string RootPath = "Project/DNExtensions/Helpful Editor";
         private const string FoldoutPrefix = "DNExtensions.HelpfulEditor.Foldout.";
 
+        /// <summary>What one step of EditorGUI.indentLevel is worth in pixels.</summary>
+        private const float IndentStep = 15f;
+
         private const string Hierarchy = "Hierarchy";
         private const string Inspector = "Inspector";
         private const string ProjectModule = "Project";
@@ -109,6 +112,8 @@ namespace DNExtensions.HelpfulEditor
                 new GUIContent("Module Enabled", "Adds the suite's overlays to every Scene View."),
                 settings.moduleEnabled, EditorStyles.boldLabel);
 
+            DrawKeyBindNote();
+
             using (new EditorGUI.DisabledScope(!settings.moduleEnabled))
             {
                 BeginSections();
@@ -119,24 +124,27 @@ namespace DNExtensions.HelpfulEditor
                         new GUIContent("Enabled", "Lists every object under the cursor in a window to choose from."),
                         settings.pickerEnabled);
 
-                    settings.pickerKey = DrawKeyBind("Open Picker", settings.pickerKey);
-
-                    settings.pickerMaxResults = EditorGUILayout.IntSlider("Max Results", settings.pickerMaxResults, 1, 100);
-
-                    settings.pickerHighlightEnabled = EditorGUILayout.Toggle(
-                        new GUIContent("Highlight On Hover", "Outline the hovered row's object in the Scene View, drawn through anything in front of it."),
-                        settings.pickerHighlightEnabled);
-
-                    using (new EditorGUI.DisabledScope(!settings.pickerHighlightEnabled))
+                    using (new EditorGUI.DisabledScope(!settings.pickerEnabled))
                     {
-                        settings.pickerHighlightColor = EditorGUILayout.ColorField("Highlight Colour", settings.pickerHighlightColor);
+                        settings.pickerKey = DrawKeyBind("Open Picker", settings.pickerKey);
+
+                        settings.pickerMaxResults = EditorGUILayout.IntSlider("Max Results", settings.pickerMaxResults, 1, 100);
+
+                        settings.pickerHighlightEnabled = EditorGUILayout.Toggle(
+                            new GUIContent("Highlight On Hover", "Outline the hovered row's object in the Scene View, drawn through anything in front of it."),
+                            settings.pickerHighlightEnabled);
+
+                        using (new EditorGUI.DisabledScope(!settings.pickerHighlightEnabled))
+                        {
+                            settings.pickerHighlightColor = EditorGUILayout.ColorField("Highlight Colour", settings.pickerHighlightColor);
+                        }
+
+                        settings.pickerMaxIcons = EditorGUILayout.IntSlider("Max Icons", settings.pickerMaxIcons, 1, 20);
+                        DrawStringList("Excluded Types", settings.pickerExcludedComponentTypes);
                     }
 
-                    settings.pickerMaxIcons = EditorGUILayout.IntSlider("Max Icons", settings.pickerMaxIcons, 1, 20);
-                    DrawStringList("Excluded Types", settings.pickerExcludedComponentTypes);
-
                     EditorGUILayout.Space(4);
-                    EditorGUILayout.HelpBox(
+                    IndentedHelpBox(
                         "Click a row to select it, Shift+Click to add it to the selection without closing.\n" +
                         "Up and Down move through the list, Return selects, Escape closes.\n" +
                         "While enabled, the bound click is taken outright — the editor's own menu for that gesture does not open.\n" +
@@ -151,12 +159,15 @@ namespace DNExtensions.HelpfulEditor
                         new GUIContent("Enabled", "Adds a Snap submenu to the Scene View's right-click menu."),
                         settings.snapMenuEnabled);
 
-                    settings.snapMaxDistance = Mathf.Max(0.01f, EditorGUILayout.FloatField(
-                        new GUIContent("Max Distance", "How far a snap looks for a surface before giving up."),
-                        settings.snapMaxDistance));
+                    using (new EditorGUI.DisabledScope(!settings.snapMenuEnabled))
+                    {
+                        settings.snapMaxDistance = Mathf.Max(0.01f, EditorGUILayout.FloatField(
+                            new GUIContent("Max Distance", "How far a snap looks for a surface before giving up."),
+                            settings.snapMaxDistance));
+                    }
 
                     EditorGUILayout.Space(4);
-                    EditorGUILayout.HelpBox(
+                    IndentedHelpBox(
                         "Right-click a selected object in the Scene View and choose Snap → Floor, Ceiling or Nearest Wall.\n" +
                         "Nearest Wall casts the four world horizontals and takes whichever needs the least movement.\n" +
                         "The object lands with the leading face of its bounds on the surface, so an off-centre pivot still sits correctly.\n" +
@@ -200,7 +211,7 @@ namespace DNExtensions.HelpfulEditor
                     }
 
                     EditorGUILayout.Space(4);
-                    EditorGUILayout.HelpBox(
+                    IndentedHelpBox(
                         "Guides belong to the root canvas of whatever is selected, and stay put when the selection moves off UI.\n" +
                         "The Canvas Guides overlay in the Scene View toolbar shows and hides the rulers and the guides together; right-click it, or a ruler, for the guide menu.\n" +
                         "Drag off the top ruler for a vertical guide, off the left ruler for a horizontal one.\n" +
@@ -250,11 +261,15 @@ namespace DNExtensions.HelpfulEditor
                     settings.guidesEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Enabled", "The rulers, the toolbar's Rulers button and the guides are one feature — this takes the overlay off the Game View entirely."),
                         settings.guidesEnabled);
-                    settings.guideColor = EditorGUILayout.ColorField("Colour", settings.guideColor);
-                    settings.guideWidth = EditorGUILayout.Slider("Width", settings.guideWidth, 0.5f, 8f);
+
+                    using (new EditorGUI.DisabledScope(!settings.guidesEnabled))
+                    {
+                        settings.guideColor = EditorGUILayout.ColorField("Colour", settings.guideColor);
+                        settings.guideWidth = EditorGUILayout.Slider("Width", settings.guideWidth, 0.5f, 8f);
+                    }
 
                     EditorGUILayout.Space(4);
-                    EditorGUILayout.HelpBox(
+                    IndentedHelpBox(
                         "Drag off the top ruler for a vertical guide, off the left ruler for a horizontal one.\n" +
                         "Drag a guide back onto a ruler to delete it.\n" +
                         "Hold Alt while dragging to snap to the centre, Shift to move in 10px steps.\n" +
@@ -269,41 +284,103 @@ namespace DNExtensions.HelpfulEditor
                         new GUIContent("Enabled", "Adds a camera button to the Game View toolbar that saves a PNG on the spot."),
                         settings.screenshotEnabled);
 
-                    DrawScreenshotFolder(settings);
-
-                    settings.screenshotFormat = (ScreenshotFormat)EditorGUILayout.EnumPopup(
-                        new GUIContent("Format", "PNG keeps alpha and is lossless. JPG is smaller but cannot store transparency."),
-                        settings.screenshotFormat);
-
-                    using (new EditorGUI.DisabledScope(settings.screenshotFormat != ScreenshotFormat.Jpg))
+                    using (new EditorGUI.DisabledScope(!settings.screenshotEnabled))
                     {
-                        settings.screenshotJpgQuality = EditorGUILayout.IntSlider("JPG Quality", settings.screenshotJpgQuality, 1, 100);
-                    }
+                        DrawScreenshotFolder(settings);
 
-                    settings.screenshotExcludeUi = EditorGUILayout.Toggle(
-                        new GUIContent("Exclude UI", "Leave the UI out of the capture: overlay canvases are skipped entirely and the UI layer is culled."),
-                        settings.screenshotExcludeUi);
+                        settings.screenshotFormat = (ScreenshotFormat)EditorGUILayout.EnumPopup(
+                            new GUIContent("Format", "PNG keeps alpha and is lossless. JPG is smaller but cannot store transparency."),
+                            settings.screenshotFormat);
 
-                    settings.screenshotForceResolution = EditorGUILayout.Toggle(
-                        new GUIContent("Force Resolution", "Sizes the Game View to a set resolution for the capture and puts it back afterwards."),
-                        settings.screenshotForceResolution);
+                        using (new EditorGUI.DisabledScope(settings.screenshotFormat != ScreenshotFormat.Jpg))
+                        {
+                            settings.screenshotJpgQuality = EditorGUILayout.IntSlider("JPG Quality", settings.screenshotJpgQuality, 1, 100);
+                        }
 
-                    using (new EditorGUI.DisabledScope(!settings.screenshotForceResolution))
-                    {
-                        Vector2Int resolution = EditorGUILayout.Vector2IntField("Resolution", settings.screenshotResolution);
+                        settings.screenshotExcludeUi = EditorGUILayout.Toggle(
+                            new GUIContent("Exclude UI", "Leave the UI out of the capture: overlay canvases are skipped entirely and the UI layer is culled."),
+                            settings.screenshotExcludeUi);
 
-                        settings.screenshotResolution = new Vector2Int(
-                            Mathf.Clamp(resolution.x, 1, 8192),
-                            Mathf.Clamp(resolution.y, 1, 8192));
+                        settings.screenshotForceResolution = EditorGUILayout.Toggle(
+                            new GUIContent("Force Resolution", "Sizes the Game View to a set resolution for the capture and puts it back afterwards."),
+                            settings.screenshotForceResolution);
+
+                        using (new EditorGUI.DisabledScope(!settings.screenshotForceResolution))
+                        {
+                            Vector2Int resolution = EditorGUILayout.Vector2IntField("Resolution", settings.screenshotResolution);
+
+                            settings.screenshotResolution = new Vector2Int(
+                                Mathf.Clamp(resolution.x, 1, 8192),
+                                Mathf.Clamp(resolution.y, 1, 8192));
+                        }
                     }
 
                     EditorGUILayout.Space(4);
-                    EditorGUILayout.HelpBox(
+                    IndentedHelpBox(
                         "Files are named GameView <date> <time> <width>x<height>, at the game's own resolution rather than the window's.\n" +
                         "A relative folder is taken from the project root, so it travels with the project.\n" +
                         "Forcing a resolution resizes the Game View for a moment — it will visibly flick to that size and back.\n" +
                         "Excluding the UI switches to rendering the cameras directly instead of saving the Game View's own image: no resize flicker, but what lands on disk is no longer guaranteed to match the window pixel for pixel.\n" +
                         "Right-click the button to open the folder.",
+                        MessageType.Info);
+                }
+
+                if (Section(GameViewModule, "Recording"))
+                {
+                    settings.recordingEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Enabled", "Adds a record button to the Game View toolbar that saves an MP4."),
+                        settings.recordingEnabled);
+
+                    using (new EditorGUI.DisabledScope(!settings.recordingEnabled))
+                    {
+                        DrawRecordingFolder(settings);
+
+                        // Both are read when a recording starts and baked into the encoder, so the
+                        // toolbar's own menu greys them out mid-take rather than letting them lie.
+                        using (new EditorGUI.DisabledScope(GameView.GameViewRecording.IsActive))
+                        {
+                            settings.recordingMode = (RecordingMode)EditorGUILayout.EnumPopup(
+                                new GUIContent("Mode", "Real Time is the suite's own recorder: it follows the clock and works outside play mode, without audio. Unity Recorder hands the take to that package, which captures every frame in step with the game and records its audio."),
+                                settings.recordingMode);
+
+                            if (settings.recordingMode == RecordingMode.Recorder && !GameView.GameViewRecorderBridge.Available)
+                            {
+                                IndentedHelpBox("The Unity Recorder package is not installed, so this mode cannot record. Install com.unity.recorder, or switch back to Real Time.",
+                                    MessageType.Warning);
+                            }
+
+                            settings.recordingFps = EditorGUILayout.IntPopup("Frame Rate",
+                                settings.recordingFps, new[] { "24", "30", "60" }, new[] { 24, 30, 60 });
+
+                            settings.recordingQuality = (RecordingQuality)EditorGUILayout.EnumPopup(
+                                new GUIContent("Quality", "The bit rate the video is written at."),
+                                settings.recordingQuality);
+
+                            settings.recordingForceResolution = EditorGUILayout.Toggle(
+                                new GUIContent("Force Resolution", "Hold the Game View at a set resolution for the whole recording, and put it back afterwards."),
+                                settings.recordingForceResolution);
+
+                            using (new EditorGUI.DisabledScope(!settings.recordingForceResolution))
+                            {
+                                Vector2Int resolution = EditorGUILayout.Vector2IntField("Resolution", settings.recordingResolution);
+
+                                settings.recordingResolution = new Vector2Int(
+                                    Mathf.Clamp(resolution.x, 1, 8192),
+                                    Mathf.Clamp(resolution.y, 1, 8192));
+                            }
+                        }
+                    }
+
+                    EditorGUILayout.Space(4);
+                    IndentedHelpBox(
+                        "Files are named the same way captures are, at the game's own resolution rather than the window's.\n" +
+                        "Recording writes to a temporary file and only moves it into the folder when you stop, so a discarded take leaves nothing behind.\n" +
+                        "While recording the button becomes pause and stop. Right-click it for the rate, the quality, the folder, and to discard the take instead of saving it.\n" +
+                        "Real Time follows the clock and records whatever the editor draws, in play mode or out of it. A slow frame is held rather than dropped, so the video stays the length the take took. No audio — capturing it needs a frame driver inside the running game, which this deliberately does not have.\n" +
+                        "Unity Recorder hands the take to that package, which does have one: every frame captured in step with the game, with audio. Pressing record out of play mode starts the game and picks the take up once it is running. It needs the package installed, the game runs slower than real time while it records, and there is no pause — only stop.\n" +
+                        "Forcing a resolution holds the Game View at that size for the whole take, not just a moment, so the window visibly changes size until you stop. Real Time opens its encoder only once the view has reached it; Recorder is told the size directly.\n" +
+                        "Quality is a bit rate in Real Time and Recorder's own quality steps otherwise, so Ultra records as High there.\n" +
+                        "One recording at a time, and it follows the Game View it was started from. Reloading scripts ends it.",
                         MessageType.Info);
                 }
 
@@ -345,6 +422,29 @@ namespace DNExtensions.HelpfulEditor
             EditorGUILayout.EndHorizontal();
         }
 
+        /// <summary>The recordings folder, browsed and stored the same way the screenshot one is.</summary>
+        private static void DrawRecordingFolder(GameViewSettings settings)
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            settings.recordingFolder = EditorGUILayout.TextField(
+                new GUIContent("Folder", "Where recordings are saved. Relative paths are taken from the project root."),
+                settings.recordingFolder);
+
+            if (GUILayout.Button("Browse…", GUILayout.Width(70f)))
+            {
+                string picked = EditorUtility.OpenFolderPanel("Recording Folder", GameView.GameViewRecording.ResolveFolder(), string.Empty);
+
+                if (!string.IsNullOrEmpty(picked))
+                {
+                    settings.recordingFolder = GameView.GameViewScreenshot.ToSettingPath(picked);
+                    GUI.changed = true;
+                }
+            }
+
+            EditorGUILayout.EndHorizontal();
+        }
+
         private static void DrawRoot()
         {
             EditorGUILayout.Space(6);
@@ -358,7 +458,7 @@ namespace DNExtensions.HelpfulEditor
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Status", EditorStyles.boldLabel);
 
-            EditorGUILayout.HelpBox(GlobalKeyCapture.Available
+            IndentedHelpBox(GlobalKeyCapture.Available
                     ? "Hover keybinds are active and fire regardless of which window has focus."
                     : "Hover keybinds could not hook Unity's global event handler — they will only fire while the target window has focus.",
                 GlobalKeyCapture.Available ? MessageType.Info : MessageType.Warning);
@@ -371,6 +471,7 @@ namespace DNExtensions.HelpfulEditor
             EditorGUI.BeginChangeCheck();
 
             settings.moduleEnabled = EditorGUILayout.ToggleLeft("Module Enabled", settings.moduleEnabled, EditorStyles.boldLabel);
+            DrawKeyBindNote();
 
             using (new EditorGUI.DisabledScope(!settings.moduleEnabled))
             {
@@ -379,34 +480,50 @@ namespace DNExtensions.HelpfulEditor
                 if (Section(Hierarchy, "Zebra Stripes"))
                 {
                     settings.zebraStripesEnabled = EditorGUILayout.Toggle("Enabled", settings.zebraStripesEnabled);
-                    settings.zebraColorEven = EditorGUILayout.ColorField("Even Rows", settings.zebraColorEven);
-                    settings.zebraColorOdd = EditorGUILayout.ColorField("Odd Rows", settings.zebraColorOdd);
-                    settings.zebraOpacity = EditorGUILayout.Slider("Opacity", settings.zebraOpacity, 0f, 1f);
+
+                    using (new EditorGUI.DisabledScope(!settings.zebraStripesEnabled))
+                    {
+                        settings.zebraColorEven = EditorGUILayout.ColorField("Even Rows", settings.zebraColorEven);
+                        settings.zebraColorOdd = EditorGUILayout.ColorField("Odd Rows", settings.zebraColorOdd);
+                        settings.zebraOpacity = EditorGUILayout.Slider("Opacity", settings.zebraOpacity, 0f, 1f);
+                    }
                 }
 
-                if (Section(Hierarchy, "Tree Depth Lines"))
+                if (Section(Hierarchy, "Tree Lines"))
                 {
-                    settings.treeDepthLinesEnabled = EditorGUILayout.Toggle("Enabled", settings.treeDepthLinesEnabled);
-                    settings.treeDepthLineColor = EditorGUILayout.ColorField("Colour", settings.treeDepthLineColor);
-                    settings.treeDepthLineStyle = (LineStyle)EditorGUILayout.EnumPopup("Style", settings.treeDepthLineStyle);
+                    settings.treeLinesEnabled = EditorGUILayout.Toggle("Enabled", settings.treeLinesEnabled);
+
+                    using (new EditorGUI.DisabledScope(!settings.treeLinesEnabled))
+                    {
+                        settings.treeLineColor = EditorGUILayout.ColorField("Colour", settings.treeLineColor);
+                        settings.treeLineStyle = (LineStyle)EditorGUILayout.EnumPopup("Style", settings.treeLineStyle);
+                    }
                 }
 
                 if (Section(Hierarchy, "Component Strip"))
                 {
                     settings.componentStripEnabled = EditorGUILayout.Toggle("Enabled", settings.componentStripEnabled);
-                    settings.componentStripMaxIcons = EditorGUILayout.IntSlider("Max Icons", settings.componentStripMaxIcons, 1, 20);
-                    settings.componentIconSize = EditorGUILayout.Slider("Icon Size", settings.componentIconSize, 8f, 24f);
-                    settings.componentQuickEditEnabled = EditorGUILayout.Toggle(
-                        new GUIContent("Alt+Click Quick Edit", "Alt+Click a component icon to open it in a floating mini inspector."),
-                        settings.componentQuickEditEnabled);
-                    DrawStringList("Excluded Types", settings.excludedComponentTypes);
+
+                    using (new EditorGUI.DisabledScope(!settings.componentStripEnabled))
+                    {
+                        settings.componentStripMaxIcons = EditorGUILayout.IntSlider("Max Icons", settings.componentStripMaxIcons, 1, 20);
+                        settings.componentStripIconSize = EditorGUILayout.Slider("Icon Size", settings.componentStripIconSize, 8f, 24f);
+                        settings.componentQuickEditEnabled = EditorGUILayout.Toggle(
+                            new GUIContent("Alt+Click Quick Edit", "Alt+Click a component icon to open it in a floating mini inspector."),
+                            settings.componentQuickEditEnabled);
+                        DrawStringList("Excluded Types", settings.excludedComponentTypes);
+                    }
                 }
 
                 if (Section(Hierarchy, "Child Count"))
                 {
                     settings.childCountEnabled = EditorGUILayout.Toggle("Enabled", settings.childCountEnabled);
-                    settings.childCountPosition = (BadgePosition)EditorGUILayout.EnumPopup("Position", settings.childCountPosition);
-                    settings.childCountHideWhenOneOrZero = EditorGUILayout.Toggle("Hide When ≤ 1", settings.childCountHideWhenOneOrZero);
+
+                    using (new EditorGUI.DisabledScope(!settings.childCountEnabled))
+                    {
+                        settings.childCountPosition = (BadgePosition)EditorGUILayout.EnumPopup("Position", settings.childCountPosition);
+                        settings.childCountHideWhenOneOrZero = EditorGUILayout.Toggle("Hide When ≤ 1", settings.childCountHideWhenOneOrZero);
+                    }
                 }
 
                 if (Section(Hierarchy, "Folding"))
@@ -414,6 +531,25 @@ namespace DNExtensions.HelpfulEditor
                     settings.animatedFoldsEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Animate", "Play Collapse Everything and Isolate one fold at a time instead of applying them instantly."),
                         settings.animatedFoldsEnabled);
+
+                    settings.expandCollapseKey = DrawKeyBind("Expand / Collapse", settings.expandCollapseKey);
+                    settings.expandCollapseRecursiveKey = DrawKeyBind("Expand / Collapse All", settings.expandCollapseRecursiveKey);
+                    settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);
+
+                    // Isolation is a fold: it collapses everything that is not on the path to the
+                    // target, and it is played by the same queue Animate governs.
+                    settings.isolateKey = DrawKeyBind("Isolate", settings.isolateKey);
+                }
+
+                if (Section(Hierarchy, "Row Actions"))
+                {
+                    settings.toggleActiveKey = DrawKeyBind("Toggle Active", settings.toggleActiveKey);
+                    settings.focusKey = DrawKeyBind("Focus In Scene View", settings.focusKey);
+
+                    EditorGUILayout.Space(4);
+                    IndentedHelpBox(
+                        "Both act on the row under the cursor rather than on the selection, so the Hierarchy does not have to be focused first.",
+                        MessageType.Info);
                 }
 
                 if (Section(Hierarchy, "Scene Menu"))
@@ -423,24 +559,13 @@ namespace DNExtensions.HelpfulEditor
                         settings.sceneMenuEnabled);
 
                     EditorGUILayout.Space(4);
-                    EditorGUILayout.HelpBox(
+                    IndentedHelpBox(
                         "Every scene in the project is listed flat by name, with the open ones ticked — deliberately not grouped by folder, which would turn picking a scene into navigating the project.\n" +
                         "Star a scene to lift it to the top of the list; stars are per user and per project.\n" +
                         "Choosing one opens it, asking to save first if anything is unsaved; Shift+Click, or Shift+Return, loads it additively instead.\n" +
                         "Up and Down move through the list, Return opens, Escape closes. Scenes cannot be opened during play mode.\n" +
                         "Only the name is clickable — an arrow appears at the end of it under the cursor, and the rest of the header still selects the scene while right-click still opens Unity's own menu.",
                         MessageType.Info);
-                }
-
-                if (Section(Hierarchy, "Keybinds"))
-                {
-                    EditorGUILayout.LabelField("Set a key to None to disable that action.", EditorStyles.miniLabel);
-                    settings.toggleActiveKey = DrawKeyBind("Toggle Active", settings.toggleActiveKey);
-                    settings.focusKey = DrawKeyBind("Focus In Scene View", settings.focusKey);
-                    settings.expandCollapseKey = DrawKeyBind("Expand / Collapse", settings.expandCollapseKey);
-                    settings.expandCollapseRecursiveKey = DrawKeyBind("Expand / Collapse All", settings.expandCollapseRecursiveKey);
-                    settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);
-                    settings.isolateKey = DrawKeyBind("Isolate", settings.isolateKey);
                 }
 
                 EndSections();
@@ -458,6 +583,7 @@ namespace DNExtensions.HelpfulEditor
             EditorGUI.BeginChangeCheck();
 
             settings.moduleEnabled = EditorGUILayout.ToggleLeft("Module Enabled", settings.moduleEnabled, EditorStyles.boldLabel);
+            DrawKeyBindNote();
 
             using (new EditorGUI.DisabledScope(!settings.moduleEnabled))
             {
@@ -466,12 +592,38 @@ namespace DNExtensions.HelpfulEditor
                 if (Section(Inspector, "Object Header Bar"))
                 {
                     settings.headerBarEnabled = EditorGUILayout.Toggle("Enabled", settings.headerBarEnabled);
-                    settings.headerBarButtonHeight = EditorGUILayout.Slider("Button Height", settings.headerBarButtonHeight, 16f, 32f);
-                    settings.fieldSearchEnabled = EditorGUILayout.Toggle(
-                        new GUIContent("Field Search Bar", "Search field that filters properties across every component on the object."),
-                        settings.fieldSearchEnabled);
-                    settings.isolationPersistsAcrossSelection = EditorGUILayout.Toggle("Isolation Persists", settings.isolationPersistsAcrossSelection);
-                    DrawStringList("Excluded Types", settings.excludedComponentTypes);
+
+                    // The search bar and the isolation control are both drawn by the header bar, so
+                    // with it off there is nothing for any of these to govern.
+                    using (new EditorGUI.DisabledScope(!settings.headerBarEnabled))
+                    {
+                        settings.headerBarButtonHeight = EditorGUILayout.Slider("Button Height", settings.headerBarButtonHeight, 16f, 32f);
+                        settings.fieldSearchEnabled = EditorGUILayout.Toggle(
+                            new GUIContent("Field Search Bar", "Search field that filters properties across every component on the object."),
+                            settings.fieldSearchEnabled);
+
+                        using (new EditorGUI.DisabledScope(!settings.fieldSearchEnabled))
+                        {
+                            settings.focusSearchKey = DrawKeyBind("Focus Search", settings.focusSearchKey);
+                        }
+
+                        settings.isolationPersistsAcrossSelection = EditorGUILayout.Toggle("Isolation Persists", settings.isolationPersistsAcrossSelection);
+                        DrawStringList("Excluded Types", settings.excludedComponentTypes);
+                    }
+                }
+
+                if (Section(Inspector, "Component Actions"))
+                {
+                    settings.expandCollapseKey = DrawKeyBind("Expand / Collapse", settings.expandCollapseKey);
+                    settings.toggleEnabledKey = DrawKeyBind("Toggle Enabled", settings.toggleEnabledKey);
+                    settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);
+
+                    EditorGUILayout.Space(4);
+                    IndentedHelpBox(
+                        "Expand / Collapse and Toggle Enabled act on the component under the cursor in the Inspector body, falling back to the header bar button when the cursor is up in the bar.\n" +
+                        "Collapse Everything acts on the whole object, so it needs nothing under the cursor.\n" +
+                        "None of them need the header bar, and they keep working with it switched off.",
+                        MessageType.Info);
                 }
 
                 if (Section(Inspector, "Transform Inspector"))
@@ -503,7 +655,11 @@ namespace DNExtensions.HelpfulEditor
                     settings.saveInPlayModeEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Enabled", "Adds a save button to component headers during play mode. Marked components are restored after returning to edit mode."),
                         settings.saveInPlayModeEnabled);
-                    DrawStringList("Blacklisted Types", settings.saveInPlayModeBlacklist);
+
+                    using (new EditorGUI.DisabledScope(!settings.saveInPlayModeEnabled))
+                    {
+                        DrawStringList("Blacklisted Types", settings.saveInPlayModeBlacklist);
+                    }
                 }
 
                 if (Section(Inspector, "Component Header Buttons"))
@@ -522,20 +678,20 @@ namespace DNExtensions.HelpfulEditor
                 if (Section(Inspector, "Component Dragger"))
                 {
                     settings.componentDraggerEnabled = EditorGUILayout.Toggle("Enabled", settings.componentDraggerEnabled);
-                    settings.altInvertsMoveCopyDefault = EditorGUILayout.Toggle(
-                        new GUIContent("Alt Inverts Move/Copy", "Off: drag moves, Alt copies. On: drag copies, Alt moves."),
-                        settings.altInvertsMoveCopyDefault);
-                    settings.transferDependencies = EditorGUILayout.Toggle("Transfer Dependencies", settings.transferDependencies);
-                    DrawDependencyWhitelist(settings.dependencyWhitelist);
-                }
 
-                if (Section(Inspector, "Keybinds"))
-                {
-                    EditorGUILayout.LabelField("Component actions apply to the header bar button under the cursor.", EditorStyles.miniLabel);
-                    settings.expandCollapseKey = DrawKeyBind("Expand / Collapse", settings.expandCollapseKey);
-                    settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);
-                    settings.toggleEnabledKey = DrawKeyBind("Toggle Enabled", settings.toggleEnabledKey);
-                    settings.focusSearchKey = DrawKeyBind("Focus Search", settings.focusSearchKey);
+                    using (new EditorGUI.DisabledScope(!settings.componentDraggerEnabled))
+                    {
+                        settings.altInvertsMoveCopyDefault = EditorGUILayout.Toggle(
+                            new GUIContent("Alt Inverts Move/Copy", "Off: drag moves, Alt copies. On: drag copies, Alt moves."),
+                            settings.altInvertsMoveCopyDefault);
+                        settings.transferDependencies = EditorGUILayout.Toggle("Transfer Dependencies", settings.transferDependencies);
+
+                        // The whitelist is nothing but extra pairs for the transfer to follow.
+                        using (new EditorGUI.DisabledScope(!settings.transferDependencies))
+                        {
+                            DrawDependencyWhitelist(settings.dependencyWhitelist);
+                        }
+                    }
                 }
 
                 EndSections();
@@ -548,11 +704,12 @@ namespace DNExtensions.HelpfulEditor
 
         private static void DrawProject()
         {
-            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
+            ProjectSettings settings = HelpfulEditorSettings.Project;
 
             EditorGUI.BeginChangeCheck();
 
             settings.moduleEnabled = EditorGUILayout.ToggleLeft("Module Enabled", settings.moduleEnabled, EditorStyles.boldLabel);
+            DrawKeyBindNote();
 
             using (new EditorGUI.DisabledScope(!settings.moduleEnabled))
             {
@@ -563,23 +720,35 @@ namespace DNExtensions.HelpfulEditor
                     settings.hoverHighlightEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Enabled", "The Project window has no hover tint of its own, unlike the Hierarchy."),
                         settings.hoverHighlightEnabled);
-                    settings.hoverColor = EditorGUILayout.ColorField("Colour", settings.hoverColor);
-                    settings.hoverOpacity = EditorGUILayout.Slider("Opacity", settings.hoverOpacity, 0f, 1f);
+
+                    using (new EditorGUI.DisabledScope(!settings.hoverHighlightEnabled))
+                    {
+                        settings.hoverColor = EditorGUILayout.ColorField("Colour", settings.hoverColor);
+                        settings.hoverOpacity = EditorGUILayout.Slider("Opacity", settings.hoverOpacity, 0f, 1f);
+                    }
                 }
 
                 if (Section(ProjectModule, "Zebra Stripes"))
                 {
                     settings.zebraStripesEnabled = EditorGUILayout.Toggle("Enabled", settings.zebraStripesEnabled);
-                    settings.zebraColorEven = EditorGUILayout.ColorField("Even Rows", settings.zebraColorEven);
-                    settings.zebraColorOdd = EditorGUILayout.ColorField("Odd Rows", settings.zebraColorOdd);
-                    settings.zebraOpacity = EditorGUILayout.Slider("Opacity", settings.zebraOpacity, 0f, 1f);
+
+                    using (new EditorGUI.DisabledScope(!settings.zebraStripesEnabled))
+                    {
+                        settings.zebraColorEven = EditorGUILayout.ColorField("Even Rows", settings.zebraColorEven);
+                        settings.zebraColorOdd = EditorGUILayout.ColorField("Odd Rows", settings.zebraColorOdd);
+                        settings.zebraOpacity = EditorGUILayout.Slider("Opacity", settings.zebraOpacity, 0f, 1f);
+                    }
                 }
 
                 if (Section(ProjectModule, "Tree Lines"))
                 {
                     settings.treeLinesEnabled = EditorGUILayout.Toggle("Enabled", settings.treeLinesEnabled);
-                    settings.treeLineColor = EditorGUILayout.ColorField("Colour", settings.treeLineColor);
-                    settings.treeLineStyle = (LineStyle)EditorGUILayout.EnumPopup("Style", settings.treeLineStyle);
+
+                    using (new EditorGUI.DisabledScope(!settings.treeLinesEnabled))
+                    {
+                        settings.treeLineColor = EditorGUILayout.ColorField("Colour", settings.treeLineColor);
+                        settings.treeLineStyle = (LineStyle)EditorGUILayout.EnumPopup("Style", settings.treeLineStyle);
+                    }
                 }
 
                 if (Section(ProjectModule, "Folding"))
@@ -587,6 +756,58 @@ namespace DNExtensions.HelpfulEditor
                     settings.animatedFoldsEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Animate", "Play multi-row folds one at a time, and glide to where back/forward lands instead of jumping there."),
                         settings.animatedFoldsEnabled);
+
+                    settings.expandCollapseKey = DrawKeyBind("Expand / Collapse", settings.expandCollapseKey);
+                    settings.expandCollapseRecursiveKey = DrawKeyBind("Expand / Collapse All", settings.expandCollapseRecursiveKey);
+                    settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);
+
+                    // Isolation is a fold, played by the same queue Animate governs.
+                    settings.isolateKey = DrawKeyBind("Isolate", settings.isolateKey);
+                }
+
+                if (Section(ProjectModule, "Row Actions"))
+                {
+                    settings.revealInFinderKey = DrawKeyBind($"Reveal In {HelpfulEditorPlatform.FileManagerName}", settings.revealInFinderKey);
+                    settings.quickObjectWindowKey = DrawKeyBind("Quick Object Window", settings.quickObjectWindowKey);
+
+                    EditorGUILayout.Space(4);
+                    IndentedHelpBox(
+                        "Both act on the row under the cursor rather than on the selection, so the Project window does not have to be focused first.\n" +
+                        "Quick Object Window opens whatever is under the cursor in a floating window — a Properties window, or a folder tab when it is a folder. Open In New Tab, under Tabs, is the docking counterpart.",
+                        MessageType.Info);
+                }
+
+                if (Section(ProjectModule, "Navigation"))
+                {
+                    settings.navigateBackKey = DrawKeyBind("Navigate Back", settings.navigateBackKey);
+                    settings.navigateForwardKey = DrawKeyBind("Navigate Forward", settings.navigateForwardKey);
+
+                    EditorGUILayout.Space(4);
+                    IndentedHelpBox(
+                        "Moves through the folders the Project window has browsed, the way back and forward work in a browser.\n" +
+                        "Whether the jump is animated or instant is Animate, under Folding.",
+                        MessageType.Info);
+                }
+
+                if (Section(ProjectModule, "Window History"))
+                {
+                    settings.closeWindowKey = DrawKeyBind("Close Focused Window", settings.closeWindowKey);
+                    settings.reopenWindowKey = DrawKeyBind("Reopen Closed Window", settings.reopenWindowKey);
+
+                    DrawStringList("Never Close These Windows", settings.closeWindowExcludedTypes);
+                    EditorGUILayout.LabelField("Closing is undoable, so this list is usually best left empty.", EditorStyles.miniLabel);
+
+                    if (HelpfulEditorPlugins.VTabsActive)
+                    {
+                        IndentedHelpBox("vTabs binds the same defaults for close and reopen, acting on the tab rather than the window. Both will fire — rebind one side.",
+                            MessageType.Warning);
+                    }
+
+                    EditorGUILayout.Space(4);
+                    IndentedHelpBox(
+                        "A closed window is remembered with where it was docked, so reopening puts it back in its tab strip rather than floating.\n" +
+                        "Folder tabs come back on their folder and Properties windows on their object.",
+                        MessageType.Info);
                 }
 
                 if (Section(ProjectModule, "Asset Names"))
@@ -594,9 +815,9 @@ namespace DNExtensions.HelpfulEditor
                     settings.twoLineNamesEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Two-Line Names", "Wrap names to two lines instead of ellipsising them. Icon view only — List rows are one line tall and cannot be made taller without stretching the folder tree."),
                         settings.twoLineNamesEnabled);
-                    settings.showFileExtensions = EditorGUILayout.Toggle(
+                    settings.showFileExtensionsEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Show File Extensions", "Append the file extension to asset names. Applies to both views."),
-                        settings.showFileExtensions);
+                        settings.showFileExtensionsEnabled);
                 }
 
                 if (Section(ProjectModule, "Folder Contents"))
@@ -604,26 +825,17 @@ namespace DNExtensions.HelpfulEditor
                     settings.folderContentIconsEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Type Icons", "Show which asset types a folder holds, most common first."),
                         settings.folderContentIconsEnabled);
-                    settings.folderContentMaxIcons = EditorGUILayout.IntSlider("Max Icons", settings.folderContentMaxIcons, 1, 10);
-                    settings.folderContentIconSize = EditorGUILayout.Slider("Icon Size", settings.folderContentIconSize, 8f, 20f);
-                    settings.folderContentRecursive = EditorGUILayout.Toggle(
-                        new GUIContent("Include Subfolders", "Off: only assets directly in the folder. On: everything beneath it."),
-                        settings.folderContentRecursive);
-                    settings.folderContentIconsInObjectView = EditorGUILayout.Toggle(
-                        new GUIContent("Show In Object View", "Also draw the strip on folders in the right-hand pane, not just the folder tree."),
-                        settings.folderContentIconsInObjectView);
-                }
 
-                if (Section(ProjectModule, "Window Titles"))
-                {
-                    settings.windowTitlesEnabled = EditorGUILayout.Toggle(
-                        new GUIContent("Enabled", "Name windows pinned to something after what they show: a locked Project window takes its folder's name, a floating Properties window takes its object's."),
-                        settings.windowTitlesEnabled);
-
-                    if (HelpfulEditorPlugins.VTabsActive)
+                    using (new EditorGUI.DisabledScope(!settings.folderContentIconsEnabled))
                     {
-                        EditorGUILayout.HelpBox("vTabs is installed and already renames these windows, so this is standing down. Disable vTabs to use it.",
-                            MessageType.Info);
+                        settings.folderContentMaxIcons = EditorGUILayout.IntSlider("Max Icons", settings.folderContentMaxIcons, 1, 10);
+                        settings.folderContentIconSize = EditorGUILayout.Slider("Icon Size", settings.folderContentIconSize, 8f, 20f);
+                        settings.folderContentRecursive = EditorGUILayout.Toggle(
+                            new GUIContent("Include Subfolders", "Off: only assets directly in the folder. On: everything beneath it."),
+                            settings.folderContentRecursive);
+                        settings.folderContentIconsInObjectView = EditorGUILayout.Toggle(
+                            new GUIContent("Show In Object View", "Also draw the strip on folders in the right-hand pane, not just the folder tree."),
+                            settings.folderContentIconsInObjectView);
                     }
                 }
 
@@ -640,73 +852,61 @@ namespace DNExtensions.HelpfulEditor
                         new GUIContent("Enabled", "Badge folders that are meant to be symlinks with whether they still are."),
                         settings.linkedAssetsEnabled);
 
-                    EditorGUILayout.LabelField($"{settings.linkedAssetFolders.Count} folders tracked. Manage them in the window.",
-                        EditorStyles.miniLabel);
-
-                    if (GUILayout.Button("Open Linked Assets", EditorStyles.miniButton, GUILayout.Width(140f)))
+                    // The window itself stays reachable from Tools/DNExtensions while the feature is
+                    // off — this is a shortcut to it, not the only way in.
+                    using (new EditorGUI.DisabledScope(!settings.linkedAssetsEnabled))
                     {
-                        Project.LinkedAssetsWindow.ShowWindow();
+                        EditorGUILayout.LabelField($"{settings.linkedAssetFolders.Count} folders tracked. Manage them in the window.",
+                            EditorStyles.miniLabel);
+
+                        if (IndentedButton("Open Linked Assets", 140f))
+                        {
+                            Project.LinkedAssetsWindow.ShowWindow();
+                        }
                     }
                 }
 
                 if (Section(ProjectModule, "Drag Conflicts"))
                 {
                     settings.dragConflictResolutionEnabled = EditorGUILayout.Toggle("Enabled", settings.dragConflictResolutionEnabled);
-                    settings.conflictDefaultChoice = (ConflictDefaultChoice)EditorGUILayout.EnumPopup("Default Choice", settings.conflictDefaultChoice);
-                    settings.cancelIsDefaultOnEscape = EditorGUILayout.Toggle("Escape Cancels", settings.cancelIsDefaultOnEscape);
-                    EditorGUILayout.HelpBox("Replacing an asset overwrites the file in place and cannot be undone. Version control is the only recovery path.",
+
+                    using (new EditorGUI.DisabledScope(!settings.dragConflictResolutionEnabled))
+                    {
+                        settings.conflictDefaultChoice = (ConflictDefaultChoice)EditorGUILayout.EnumPopup("Default Choice", settings.conflictDefaultChoice);
+
+                        // Escape only has a slot to land in while the dialog is the thing deciding.
+                        using (new EditorGUI.DisabledScope(settings.conflictDefaultChoice != ConflictDefaultChoice.AlwaysAsk))
+                        {
+                            settings.cancelIsDefaultOnEscape = EditorGUILayout.Toggle("Escape Cancels", settings.cancelIsDefaultOnEscape);
+                        }
+                    }
+                    IndentedHelpBox("Replacing an asset overwrites the file in place and cannot be undone. Version control is the only recovery path.",
                         MessageType.Warning);
                 }
 
                 if (Section(ProjectModule, "Tabs"))
                 {
-                    settings.autoDock = EditorGUILayout.Toggle(
-                        new GUIContent("Auto Dock", "On: the new window docks beside the one clicked. Off: it opens floating."),
-                        settings.autoDock);
-                    settings.lockFolderWindows = EditorGUILayout.Toggle(
-                        new GUIContent("Lock To Folder", "Keep the new window on its folder instead of letting it follow the selection. Also what lets it be named after the folder."),
-                        settings.lockFolderWindows);
-                    settings.folderDropCreatesTabEnabled = EditorGUILayout.Toggle(
-                        new GUIContent("Drop Folder On Tabs", "Drag a folder onto any window's tab strip to open it there as its own Project tab."),
-                        settings.folderDropCreatesTabEnabled);
-                    settings.objectDropOpensPropertiesEnabled = EditorGUILayout.Toggle(
-                        new GUIContent("Drop Object On Tabs", "Drag anything that is not a folder onto a tab strip to open its Properties window there. Works for scene objects as well as assets."),
-                        settings.objectDropOpensPropertiesEnabled);
+                    settings.tabsEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Enabled", "Opening what is under the cursor as its own tab: a folder as a folder tab, anything else as its Properties window."),
+                        settings.tabsEnabled);
+
+                    using (new EditorGUI.DisabledScope(!settings.tabsEnabled))
+                    {
+                        settings.dropOnTabsEnabled = EditorGUILayout.Toggle(
+                            new GUIContent("Drop On Tabs", "Drag onto any window's tab strip to open it there, as well as using the keybind. Works for folders, assets and scene objects alike."),
+                            settings.dropOnTabsEnabled);
+
+                        settings.openInNewTabKey = DrawKeyBind("Open In New Tab", settings.openInNewTabKey);
+                    }
 
                     EditorGUILayout.Space(4);
-                    EditorGUILayout.HelpBox(
-                        "These govern where new tabs land. The chord that opens one is Open In New Tab, under Keybinds.\n" +
-                        "Either way it acts on whatever is under the cursor: a folder opens as a second Project window, anything else opens its Properties window.\n" +
-                        "Dropping onto a tab strip docks into the strip it was dropped on, regardless of Auto Dock.\n" +
+                    IndentedHelpBox(
+                        "Open In New Tab acts on whatever is under the cursor: a folder opens as a folder tab, anything else opens its Properties window.\n" +
+                        "A folder tab is the object view on its own — the same grid as the Project window's right-hand pane, with a breadcrumb instead of a folder tree. Double-click a subfolder to go into it, click a breadcrumb segment to come back out.\n" +
+                        "The new tab docks beside the window it was opened from, and only floats when that window is floating itself. Dropping onto a tab strip docks into the strip it was dropped on.\n" +
+                        "To open something floating instead, use Quick Object Window under Row Actions.\n" +
                         "Scene objects work as well as assets — they have no folder to show, so they always take the Properties route.",
                         MessageType.Info);
-                }
-
-                if (Section(ProjectModule, "Keybinds"))
-                {
-                    EditorGUILayout.LabelField("Set a key to None to disable that action.", EditorStyles.miniLabel);
-                    settings.expandCollapseKey = DrawKeyBind("Expand / Collapse", settings.expandCollapseKey);
-                    settings.expandCollapseRecursiveKey = DrawKeyBind("Expand / Collapse All", settings.expandCollapseRecursiveKey);
-                    settings.collapseAllKey = DrawKeyBind("Collapse Everything", settings.collapseAllKey);
-                    settings.isolateKey = DrawKeyBind("Isolate", settings.isolateKey);
-                    settings.revealInFinderKey = DrawKeyBind($"Reveal In {HelpfulEditorPlatform.FileManagerName}", settings.revealInFinderKey);
-                    settings.quickObjectWindowKey = DrawKeyBind("Quick Object Window", settings.quickObjectWindowKey);
-                    settings.openInNewTabKey = DrawKeyBind("Open In New Tab", settings.openInNewTabKey);
-                    settings.navigateBackKey = DrawKeyBind("Navigate Back", settings.navigateBackKey);
-                    settings.navigateForwardKey = DrawKeyBind("Navigate Forward", settings.navigateForwardKey);
-                    settings.closeWindowKey = DrawKeyBind("Close Focused Window", settings.closeWindowKey);
-                    settings.reopenWindowKey = DrawKeyBind("Reopen Closed Window", settings.reopenWindowKey);
-                    DrawStringList("Never Close These Windows", settings.closeWindowExcludedTypes);
-                    EditorGUILayout.LabelField("Closing is undoable, so this list is usually best left empty.", EditorStyles.miniLabel);
-
-                    if (HelpfulEditorPlugins.VTabsActive)
-                    {
-                        EditorGUILayout.HelpBox("vTabs binds the same defaults for close and reopen, acting on the tab rather than the window. Both will fire — rebind one side.",
-                            MessageType.Warning);
-                    }
-                    EditorGUILayout.LabelField(
-                        $"Mouse0 / Mouse1 / Mouse2 bind to left, right and middle click. Ctrl means {HelpfulEditorPlatform.CommandModifierName} on this platform.",
-                        EditorStyles.miniLabel);
                 }
 
                 EndSections();
@@ -716,8 +916,7 @@ namespace DNExtensions.HelpfulEditor
             {
                 HelpfulEditorSettings.SaveProject();
 
-                // Toggling either of these should show in the editor immediately, not on the next poll.
-                HelpfulEditorWindowTitles.RequestRefresh();
+                // Toggling this should show in the editor immediately, not on the next poll.
                 Project.ProjectCreateFolderButton.RequestRefresh();
             }
 
@@ -762,6 +961,54 @@ namespace DNExtensions.HelpfulEditor
             EditorGUI.indentLevel = _sectionIndent;
         }
 
+        /// <summary>
+        /// GUILayout buttons take no notice of EditorGUI.indentLevel, so a button inside a section
+        /// would sit flush against the window edge while every field above it is indented. The indent
+        /// is applied by hand here so the two line up.
+        /// </summary>
+        private static bool IndentedButton(string label, float width)
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            GUILayout.Space(EditorGUI.indentLevel * IndentStep);
+            bool pressed = GUILayout.Button(label, EditorStyles.miniButton, GUILayout.Width(width));
+            GUILayout.FlexibleSpace();
+
+            EditorGUILayout.EndHorizontal();
+
+            return pressed;
+        }
+
+        /// <summary>
+        /// Help boxes are laid out by GUILayout too, so they share the button's blind spot to
+        /// EditorGUI.indentLevel and need the same treatment to line up with the section they belong
+        /// to. Deliberately outside whatever DisabledScope the section's options sit in — the text
+        /// explaining a feature is worth reading while deciding whether to switch it on.
+        /// </summary>
+        private static void IndentedHelpBox(string message, MessageType type)
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            GUILayout.Space(EditorGUI.indentLevel * IndentStep);
+            EditorGUILayout.HelpBox(message, type);
+
+            EditorGUILayout.EndHorizontal();
+        }
+
+        /// <summary>
+        /// The two things that are true of every keybind on the page. Drawn once under the module
+        /// toggle rather than inside each section — the keybinds now live beside the features they
+        /// belong to, and repeating this in every one of them would be most of what the page says.
+        /// </summary>
+        private static void DrawKeyBindNote()
+        {
+            EditorGUILayout.LabelField("Set a key to None to disable that action.", EditorStyles.miniLabel);
+
+            EditorGUILayout.LabelField(
+                $"Mouse0 / Mouse1 / Mouse2 bind to left, right and middle click. Ctrl means {HelpfulEditorPlatform.CommandModifierName} on this platform.",
+                EditorStyles.miniLabel);
+        }
+
         private static KeyBind DrawKeyBind(string label, KeyBind value)
         {
             EditorGUILayout.BeginHorizontal();
@@ -796,7 +1043,7 @@ namespace DNExtensions.HelpfulEditor
 
             if (removeAt >= 0) values.RemoveAt(removeAt);
 
-            if (GUILayout.Button(addLabel, EditorStyles.miniButton, GUILayout.Width(80f))) values.Add(string.Empty);
+            if (IndentedButton(addLabel, 80f)) values.Add(string.Empty);
 
             EditorGUI.indentLevel--;
         }
@@ -825,7 +1072,7 @@ namespace DNExtensions.HelpfulEditor
 
             if (removeAt >= 0) pairs.RemoveAt(removeAt);
 
-            if (GUILayout.Button("Add Pair", EditorStyles.miniButton, GUILayout.Width(80f))) pairs.Add(new ComponentDependencyPair());
+            if (IndentedButton("Add Pair", 80f)) pairs.Add(new ComponentDependencyPair());
 
             EditorGUI.indentLevel--;
         }

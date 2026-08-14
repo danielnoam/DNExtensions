@@ -47,7 +47,7 @@ namespace DNExtensions.HelpfulEditor.Project
             if (SessionState.GetBool(SessionKey, false)) return;
             SessionState.SetBool(SessionKey, true);
 
-            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
+            ProjectSettings settings = HelpfulEditorSettings.Project;
             if (!settings.moduleEnabled || !settings.linkedAssetsEnabled) return;
 
             foreach (string folder in settings.linkedAssetFolders)
@@ -64,7 +64,7 @@ namespace DNExtensions.HelpfulEditor.Project
         }
 
         /// <summary>The tracked folder this row is, or null when the row is not one of them.</summary>
-        public static string MatchFolder(string assetPath, ProjectModuleSettings settings)
+        public static string MatchFolder(string assetPath, ProjectSettings settings)
         {
             if (!settings.linkedAssetsEnabled || string.IsNullOrEmpty(assetPath)) return null;
 

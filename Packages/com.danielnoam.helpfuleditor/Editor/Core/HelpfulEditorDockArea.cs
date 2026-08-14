@@ -107,6 +107,8 @@ namespace DNExtensions.HelpfulEditor
 
             try
             {
+                Detach(window, dockArea);
+
                 MethodInfo method = index >= 0 ? FindAddTab(dockArea.GetType(), true) : null;
                 bool withIndex = method != null;
 
@@ -121,6 +123,26 @@ namespace DNExtensions.HelpfulEditor
                 WarnOnce(e);
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Takes a window out of the dock area it is already in, closing that area's container when it
+        /// held nothing else.
+        ///
+        /// AddTab only registers the window with its new host; it never detaches it from the old one.
+        /// For a freshly created window that is nothing to do, but moving one that is already open
+        /// leaves the frame it came from behind as an empty floating window. Unity's own tab drag goes
+        /// through RemoveTab first for the same reason.
+        ///
+        /// Skipped when the window is already in the target, where removing it could destroy the very
+        /// dock area it is being added to.
+        /// </summary>
+        private static void Detach(EditorWindow window, Object target)
+        {
+            Object current = Of(window);
+            if (!current || current == target) return;
+
+            typeof(EditorWindow).GetMethod("RemoveFromDockArea", AnyInstance)?.Invoke(window, null);
         }
 
         /// <summary>

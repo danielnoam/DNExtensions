@@ -5,9 +5,9 @@ using UnityEngine;
 namespace DNExtensions.HelpfulEditor.Inspector
 {
     /// <summary>
-    /// Hover keybinds for the Inspector. The per-component actions target whichever component button
-    /// in the header bar the cursor is over — that bar is the only place the suite knows where each
-    /// component sits, since Unity does not expose the inline component headers.
+    /// Hover keybinds for the Inspector. The per-component actions target whichever component the
+    /// cursor is over in the Inspector body, falling back to the header bar button when the cursor is
+    /// up in the bar itself — so they work whether or not the header bar is switched on.
     /// </summary>
     [InitializeOnLoad]
     internal static class InspectorKeybinds

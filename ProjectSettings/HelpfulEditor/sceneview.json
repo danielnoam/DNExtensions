@@ -23,7 +23,7 @@
     "snapMenuEnabled": true,
     "snapMaxDistance": 1000.0,
     "guidesEnabled": true,
-    "showRulers": true,
+    "showRulers": false,
     "guideColor": {
         "r": 0.0,
         "g": 0.8500000238418579,

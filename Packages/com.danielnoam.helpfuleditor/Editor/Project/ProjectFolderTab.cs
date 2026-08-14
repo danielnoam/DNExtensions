@@ -6,9 +6,11 @@ using Object = UnityEngine.Object;
 namespace DNExtensions.HelpfulEditor.Project
 {
     /// <summary>
-    /// Opens a folder in a second Project window, the way a middle-click opens a link in a new tab.
-    /// Unity has the machinery for this — every Project window can be told which folder to show — but
-    /// no menu item or shortcut reaches it, and ProjectBrowser is internal.
+    /// Opens a folder as its own tab, the way a middle-click opens a link in a new browser tab.
+    ///
+    /// The tab is a ProjectFolderWindow — one folder and nothing else. On a Unity version whose object
+    /// view cannot be hosted, this falls back to what it used to do: a second Project window, locked
+    /// to the folder so it does not follow the selection.
     /// </summary>
     internal static class ProjectFolderTab
     {
@@ -25,7 +27,7 @@ namespace DNExtensions.HelpfulEditor.Project
 
             // Deferred: creating and focusing a window from inside the click that asked for it
             // reshuffles focus while the event is still being dispatched.
-            EditorApplication.delayCall += () => Create(folderPath, dockArea, HelpfulEditorSettings.Project.autoDock);
+            EditorApplication.delayCall += () => Create(folderPath, dockArea, dock: true);
         }
 
         /// <summary>
@@ -40,22 +42,46 @@ namespace DNExtensions.HelpfulEditor.Project
             EditorApplication.delayCall += () => Create(folderPath, dockArea, dock: true);
         }
 
+        /// <summary>
+        /// Opens the folder floating. For the Quick Object Window, which is a look rather than a place
+        /// to work — everything else it opens floats too, and docking a tab into the strip you
+        /// happened to be hovering is not what that gesture means.
+        /// </summary>
+        public static void OpenFloating(string folderPath)
+        {
+            if (!IsFolder(folderPath)) return;
+
+            EditorApplication.delayCall += () => Create(folderPath, null, dock: false);
+        }
+
         private static bool IsFolder(string folderPath)
         {
-            return ProjectBrowserType != null && !string.IsNullOrEmpty(folderPath) && AssetDatabase.IsValidFolder(folderPath);
+            return !string.IsNullOrEmpty(folderPath) && AssetDatabase.IsValidFolder(folderPath);
         }
 
         private static void Create(string folderPath, Object dockArea, bool dock)
         {
-            if (ScriptableObject.CreateInstance(ProjectBrowserType) is not EditorWindow window) return;
+            EditorWindow window = ProjectFolderWindow.Supported
+                ? ProjectFolderWindow.Create(folderPath)
+                : CreateProjectBrowser();
+
+            if (!window) return;
 
             if (!dock || !HelpfulEditorDockArea.AddTab(dockArea, window)) window.Show();
 
             window.Focus();
 
-            // A second hop: the browser builds its trees on its first OnGUI, and asking it to show a
-            // folder before that leaves it on whatever the last window was looking at.
-            EditorApplication.delayCall += () => ShowFolder(window, folderPath);
+            // Only the fallback needs the second hop. A folder window is told its folder before it is
+            // shown and holds it as its own state; a browser builds its trees on its first OnGUI, and
+            // being asked for a folder before that leaves it on whatever the last window looked at.
+            if (window is not ProjectFolderWindow) EditorApplication.delayCall += () => ShowFolder(window, folderPath);
+        }
+
+        private static EditorWindow CreateProjectBrowser()
+        {
+            if (ProjectBrowserType == null) return null;
+
+            return ScriptableObject.CreateInstance(ProjectBrowserType) as EditorWindow;
         }
 
         private static void ShowFolder(EditorWindow window, string folderPath)
@@ -74,14 +100,13 @@ namespace DNExtensions.HelpfulEditor.Project
                 return;
             }
 
-            // Locked, so the window stays the folder's window rather than drifting off with the next
-            // selection — which is also what lets it be named after the folder rather than reading
-            // "Project" like every other one.
-            if (HelpfulEditorSettings.Project.lockFolderWindows) HelpfulEditorProjectWindow.SetLocked(window, true);
+            // A borrowed Project window has no identity of its own, so it is locked to stop it
+            // drifting off with the next selection — which is also what lets the window titles name
+            // it after the folder rather than leaving it reading "Project".
+            HelpfulEditorProjectWindow.SetLocked(window, true);
 
-            // The title and the new-folder button are both driven by polling, and this is the moment
-            // they are both about to be wrong — so they are told rather than left to notice.
-            HelpfulEditorWindowTitles.RequestRefresh();
+            // Driven by polling, and this is the moment it is about to be wrong — so it is told
+            // rather than left to notice.
             ProjectCreateFolderButton.RequestRefresh();
         }
     }

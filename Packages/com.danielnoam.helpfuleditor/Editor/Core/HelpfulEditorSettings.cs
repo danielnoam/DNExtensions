@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -20,13 +21,13 @@ namespace DNExtensions.HelpfulEditor
 
         private static HierarchySettings _hierarchy;
         private static InspectorSettings _inspector;
-        private static ProjectModuleSettings _project;
+        private static ProjectSettings _project;
         private static GameViewSettings _gameView;
         private static SceneViewSettings _sceneView;
 
         public static HierarchySettings Hierarchy => _hierarchy ??= Load<HierarchySettings>(HierarchyFile);
         public static InspectorSettings Inspector => _inspector ??= Load<InspectorSettings>(InspectorFile);
-        public static ProjectModuleSettings Project => _project ??= Load<ProjectModuleSettings>(ProjectFile);
+        public static ProjectSettings Project => _project ??= Load<ProjectSettings>(ProjectFile);
         public static GameViewSettings GameView => _gameView ??= Load<GameViewSettings>(GameViewFile);
         public static SceneViewSettings SceneView => _sceneView ??= Load<SceneViewSettings>(SceneViewFile);
 
@@ -82,7 +83,7 @@ namespace DNExtensions.HelpfulEditor
 
         public static void ResetProject()
         {
-            _project = new ProjectModuleSettings();
+            _project = new ProjectSettings();
             SaveProject();
         }
 
@@ -114,7 +115,7 @@ namespace DNExtensions.HelpfulEditor
                 if (File.Exists(path))
                 {
                     string json = File.ReadAllText(path);
-                    if (!string.IsNullOrWhiteSpace(json)) JsonUtility.FromJsonOverwrite(json, result);
+                    if (!string.IsNullOrWhiteSpace(json)) JsonUtility.FromJsonOverwrite(MigrateKeys(json, fileName), result);
                 }
             }
             catch (Exception e)
@@ -123,6 +124,52 @@ namespace DNExtensions.HelpfulEditor
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Settings fields that were renamed after the suite had already written files, old name to
+        /// new. JsonUtility matches on field name and silently ignores one it does not recognise, so
+        /// without this a rename would quietly reset whatever the old key held. Keyed by file, since
+        /// the same name can mean different things in two modules.
+        ///
+        /// Rewriting the text rather than reading both names keeps the settings classes clean of dead
+        /// fields, and the entry stops mattering as soon as the file is saved again under the new key.
+        /// </summary>
+        private static readonly Dictionary<string, (string from, string to)[]> RenamedKeys =
+            new Dictionary<string, (string, string)[]>
+            {
+                [HierarchyFile] = new[]
+                {
+                    ("treeDepthLinesEnabled", "treeLinesEnabled"),
+                    ("treeDepthLineColor", "treeLineColor"),
+                    ("treeDepthLineStyle", "treeLineStyle"),
+                    ("componentIconSize", "componentStripIconSize")
+                },
+                [ProjectFile] = new[]
+                {
+                    ("showFileExtensions", "showFileExtensionsEnabled"),
+
+                    // Two toggles became one. The folder half carries over and the object half is
+                    // dropped, since a file that had them set differently has no single answer.
+                    ("folderDropCreatesTabEnabled", "dropOnTabsEnabled")
+                }
+            };
+
+        /// <summary>
+        /// The trailing colon is what makes this safe to run on an already-migrated file: once the key
+        /// has been rewritten the old spelling no longer appears in key position, and a value that
+        /// happens to contain the same words is never followed by one.
+        /// </summary>
+        private static string MigrateKeys(string json, string fileName)
+        {
+            if (!RenamedKeys.TryGetValue(fileName, out (string from, string to)[] renames)) return json;
+
+            foreach ((string from, string to) in renames)
+            {
+                json = json.Replace($"\"{from}\":", $"\"{to}\":");
+            }
+
+            return json;
         }
 
         private static void Save<T>(T settings, string fileName) where T : class

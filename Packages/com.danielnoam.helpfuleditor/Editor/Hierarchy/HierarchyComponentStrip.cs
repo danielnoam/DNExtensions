@@ -78,7 +78,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
             Rect area = Rect.MinMaxRect(labelEnd, rowRect.y, rowRect.xMax, rowRect.yMax);
 
-            HelpfulEditorGUI.LayoutIconStrip(area, components.Count, settings.componentIconSize,
+            HelpfulEditorGUI.LayoutIconStrip(area, components.Count, settings.componentStripIconSize,
                 settings.componentStripMaxIcons, IconRects, out int shown, out Rect overflowRect);
 
             if (shown == 0) return 0f;

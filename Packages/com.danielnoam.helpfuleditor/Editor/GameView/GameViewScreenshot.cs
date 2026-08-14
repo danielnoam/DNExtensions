@@ -491,7 +491,8 @@ namespace DNExtensions.HelpfulEditor.GameView
             texture.SetPixels32(pixels);
         }
 
-        private static RenderTexture GetRenderTexture(EditorWindow gameView)
+        /// <summary>Shared with the recorder, which reads frames from the same target for the same reasons.</summary>
+        public static RenderTexture GetRenderTexture(EditorWindow gameView)
         {
             ResolveReflection();
 

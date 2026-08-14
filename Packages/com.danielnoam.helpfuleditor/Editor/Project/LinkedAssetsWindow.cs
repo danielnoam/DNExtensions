@@ -28,7 +28,7 @@ namespace DNExtensions.HelpfulEditor.Project
 
         private void OnGUI()
         {
-            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
+            ProjectSettings settings = HelpfulEditorSettings.Project;
 
             EditorGUILayout.LabelField("Linked Assets", EditorStyles.boldLabel);
             EditorGUILayout.LabelField("Folders under Assets/ that are symlinks to somewhere else on disk.",
@@ -41,7 +41,7 @@ namespace DNExtensions.HelpfulEditor.Project
             DrawCreate(settings);
         }
 
-        private void DrawTracked(ProjectModuleSettings settings)
+        private void DrawTracked(ProjectSettings settings)
         {
             EditorGUILayout.LabelField("Tracked", EditorStyles.boldLabel);
 
@@ -55,7 +55,7 @@ namespace DNExtensions.HelpfulEditor.Project
         /// Adds a folder that is already on disk. Creating a link tracks it automatically, so this is
         /// for the other way round — a symlink made outside Unity, or one that was untracked.
         /// </summary>
-        private void DrawTrackExisting(ProjectModuleSettings settings)
+        private void DrawTrackExisting(ProjectSettings settings)
         {
             EditorGUILayout.BeginHorizontal();
 
@@ -80,7 +80,7 @@ namespace DNExtensions.HelpfulEditor.Project
             EditorGUILayout.LabelField("A folder name directly under Assets/, without the Assets/ prefix.", EditorStyles.miniLabel);
         }
 
-        private void DrawTrackedList(ProjectModuleSettings settings)
+        private void DrawTrackedList(ProjectSettings settings)
         {
             _scroll = EditorGUILayout.BeginScrollView(_scroll, GUILayout.Height(160));
 
@@ -127,7 +127,7 @@ namespace DNExtensions.HelpfulEditor.Project
             return linked ? "Linked" : "Broken — a real folder, not syncing";
         }
 
-        private void DrawCreate(ProjectModuleSettings settings)
+        private void DrawCreate(ProjectSettings settings)
         {
             EditorGUILayout.LabelField("Create", EditorStyles.boldLabel);
 
@@ -153,7 +153,7 @@ namespace DNExtensions.HelpfulEditor.Project
             if (GUILayout.Button("Create Link", GUILayout.Height(28f))) Create(settings);
         }
 
-        private void Create(ProjectModuleSettings settings)
+        private void Create(ProjectSettings settings)
         {
             if (string.IsNullOrWhiteSpace(_folderName) || string.IsNullOrWhiteSpace(_targetPath))
             {

@@ -14,17 +14,17 @@
         "a": 1.0
     },
     "zebraOpacity": 0.07000000029802323,
-    "treeDepthLinesEnabled": true,
-    "treeDepthLineColor": {
+    "treeLinesEnabled": true,
+    "treeLineColor": {
         "r": 0.5,
         "g": 0.5,
         "b": 0.5,
         "a": 0.3499999940395355
     },
-    "treeDepthLineStyle": 1,
+    "treeLineStyle": 1,
     "componentStripEnabled": true,
     "componentStripMaxIcons": 6,
-    "componentIconSize": 12.0,
+    "componentStripIconSize": 12.0,
     "componentQuickEditEnabled": true,
     "excludedComponentTypes": [
         "Transform",

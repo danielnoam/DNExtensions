@@ -31,7 +31,7 @@
     },
     "treeLineStyle": 1,
     "twoLineNamesEnabled": true,
-    "showFileExtensions": true,
+    "showFileExtensionsEnabled": true,
     "folderContentIconsEnabled": true,
     "folderContentMaxIcons": 2,
     "folderContentIconSize": 12.0,
@@ -70,8 +70,8 @@
     },
     "revealInFinderKey": {
         "key": 114,
-        "ctrl": true,
-        "alt": false,
+        "ctrl": false,
+        "alt": true,
         "shift": false
     },
     "quickObjectWindowKey": {
@@ -86,11 +86,8 @@
         "alt": false,
         "shift": false
     },
-    "autoDock": true,
-    "lockFolderWindows": true,
-    "folderDropCreatesTabEnabled": true,
-    "objectDropOpensPropertiesEnabled": true,
-    "windowTitlesEnabled": true,
+    "tabsEnabled": true,
+    "dropOnTabsEnabled": true,
     "closeWindowKey": {
         "key": 119,
         "ctrl": true,

@@ -4,6 +4,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Object = UnityEngine.Object;
 
 namespace DNExtensions.HelpfulEditor.Project
 {
@@ -243,6 +244,33 @@ namespace DNExtensions.HelpfulEditor.Project
             if (menuPath == null) return;
 
             EditorApplication.ExecuteMenuItem(menuPath);
+        }
+
+        /// <summary>
+        /// Creates a folder inside a named folder, for callers that know their target rather than
+        /// relying on which folder the editor considers active.
+        ///
+        /// The menu route above cannot be reused for those: ProjectWindowUtil.GetActiveFolderPath
+        /// asks the Project browser and nothing else — it does not consult the selection — so an
+        /// Assets/Create item fired from a folder tab would create in whatever a Project window
+        /// happens to be showing. This creates the folder outright and selects it instead.
+        /// </summary>
+        public static void CreateFolderIn(string folderPath)
+        {
+            if (string.IsNullOrEmpty(folderPath) || !AssetDatabase.IsValidFolder(folderPath)) return;
+
+            string unique = AssetDatabase.GenerateUniqueAssetPath($"{folderPath}/New Folder");
+            int slash = unique.LastIndexOf('/');
+            if (slash < 0) return;
+
+            string guid = AssetDatabase.CreateFolder(folderPath, unique.Substring(slash + 1));
+            if (string.IsNullOrEmpty(guid)) return;
+
+            Object created = AssetDatabase.LoadAssetAtPath<Object>(AssetDatabase.GUIDToAssetPath(guid));
+            if (!created) return;
+
+            Selection.activeObject = created;
+            EditorGUIUtility.PingObject(created);
         }
     }
 }

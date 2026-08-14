@@ -23,7 +23,7 @@ namespace DNExtensions.HelpfulEditor.Project
             EditorWindow source = EditorWindow.mouseOverWindow ? EditorWindow.mouseOverWindow : EditorWindow.focusedWindow;
             Object dockArea = HelpfulEditorDockArea.Of(source);
 
-            EditorApplication.delayCall += () => Create(target, dockArea, HelpfulEditorSettings.Project.autoDock);
+            EditorApplication.delayCall += () => Create(target, dockArea, dock: true);
         }
 
         /// <summary>
@@ -57,10 +57,6 @@ namespace DNExtensions.HelpfulEditor.Project
             if (!dock || !HelpfulEditorDockArea.AddTab(dockArea, window)) window.Show();
 
             window.Focus();
-
-            // A pinned Properties window is named after what it shows, and the titles are driven by
-            // polling — so it is told rather than left to notice.
-            HelpfulEditorWindowTitles.RequestRefresh();
         }
     }
 }

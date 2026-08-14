@@ -114,8 +114,6 @@ namespace DNExtensions.HelpfulEditor.Project
             Object dockArea = DockAreaOf(tree);
             if (!dockArea) return;
 
-            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
-
             DragAndDrop.AcceptDrag();
             evt.StopPropagation();
 
@@ -125,11 +123,11 @@ namespace DNExtensions.HelpfulEditor.Project
 
                 if (TryGetFolderPath(dragged, out string folderPath))
                 {
-                    if (settings.folderDropCreatesTabEnabled) ProjectFolderTab.OpenInDockArea(folderPath, dockArea);
+                    ProjectFolderTab.OpenInDockArea(folderPath, dockArea);
                     continue;
                 }
 
-                if (settings.objectDropOpensPropertiesEnabled) ProjectPropertiesTab.OpenInDockArea(dragged, dockArea);
+                ProjectPropertiesTab.OpenInDockArea(dragged, dockArea);
             }
         }
 
@@ -150,27 +148,20 @@ namespace DNExtensions.HelpfulEditor.Project
 
         private static bool AnyDropEnabled()
         {
-            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
+            ProjectSettings settings = HelpfulEditorSettings.Project;
 
-            return settings.moduleEnabled && (settings.folderDropCreatesTabEnabled || settings.objectDropOpensPropertiesEnabled);
+            return settings.moduleEnabled && settings.tabsEnabled && settings.dropOnTabsEnabled;
         }
 
         /// <summary>
-        /// Whether the drag holds something this would act on, so a drag of only folders with folder
-        /// drops turned off still passes through to whatever is underneath.
+        /// Whether the drag holds anything at all to open, so an empty or already-destroyed drag
+        /// passes through to whatever is underneath rather than being swallowed.
         /// </summary>
         private static bool HasHandledObject()
         {
-            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
-
             foreach (Object dragged in DragAndDrop.objectReferences)
             {
-                if (!dragged) continue;
-
-                bool folder = TryGetFolderPath(dragged, out string _);
-
-                if (folder && settings.folderDropCreatesTabEnabled) return true;
-                if (!folder && settings.objectDropOpensPropertiesEnabled) return true;
+                if (dragged) return true;
             }
 
             return false;

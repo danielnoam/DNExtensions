@@ -32,6 +32,7 @@ namespace DNExtensions.HelpfulEditor
         private static void Poll()
         {
             if (CurrentEvent == null) return;
+            if (!AnyAltAffordance()) return;
 
             try
             {
@@ -52,6 +53,18 @@ namespace DNExtensions.HelpfulEditor
                 _warned = true;
                 Debug.LogWarning($"[HelpfulEditor] Modifier-key highlights will not update until the mouse moves. ({e.Message})");
             }
+        }
+
+        /// <summary>
+        /// Everything that changes appearance on Alt belongs to one of these three — the Hierarchy's
+        /// quick edit, the Inspector's dragger, the Project's quick object window. With all of them
+        /// off nothing looks different for holding the key, so nothing needs redrawing.
+        /// </summary>
+        private static bool AnyAltAffordance()
+        {
+            return HelpfulEditorSettings.Hierarchy.moduleEnabled
+                   || HelpfulEditorSettings.Inspector.moduleEnabled
+                   || HelpfulEditorSettings.Project.moduleEnabled;
         }
     }
 }

@@ -62,6 +62,7 @@ namespace DNExtensions.HelpfulEditor
                 snapshot.tabIndex = HelpfulEditorDockArea.IndexOfTab(snapshot.dockArea, window);
 
                 CaptureBrowser(window, snapshot);
+                CaptureFolderTab(window, snapshot);
                 CaptureInspected(window, snapshot);
 
                 Closed.Add(snapshot);
@@ -111,14 +112,16 @@ namespace DNExtensions.HelpfulEditor
 
             RestoreBrowser(window, snapshot);
 
+            // Before the title is restored, so the folder tab's own naming does not overwrite it.
+            if (window is Project.ProjectFolderWindow folderTab) folderTab.SetFolder(snapshot.folderPath);
+
             // Windows opened through GetWindow set their title there, so one built by CreateInstance
             // comes up titled with its own type name instead.
             if (!string.IsNullOrEmpty(snapshot.title)) window.titleContent.text = snapshot.title;
 
             HelpfulEditorDockArea.ClearTitleCache();
 
-            // Both are driven by polling and both are about to be wrong for the window just restored.
-            HelpfulEditorWindowTitles.RequestRefresh();
+            // Driven by polling, and about to be wrong for the window just restored.
             Project.ProjectCreateFolderButton.RequestRefresh();
 
             if (snapshot.wasFocused || !previous) window.Focus();
@@ -130,20 +133,52 @@ namespace DNExtensions.HelpfulEditor
         /// <summary>
         /// The Properties menu item acts on the selection, so the current selection is put back
         /// afterwards — reopening a window should not be a selection change.
+        ///
+        /// The menu item always opens its window floating, with nowhere to say otherwise, so one that
+        /// was a tab is moved back into its strip afterwards. Which window it made is found by
+        /// comparing before and against after: the call reports only whether it ran.
         /// </summary>
         private static bool ReopenPropertyWindow(Snapshot snapshot)
         {
             Object[] previousSelection = Selection.objects;
+            EditorWindow previous = EditorWindow.focusedWindow;
+
+            HashSet<EditorWindow> before = new HashSet<EditorWindow>(HelpfulEditorWindows.AllInspectors());
 
             try
             {
                 Selection.activeObject = snapshot.inspectedObject;
-                return EditorApplication.ExecuteMenuItem("Assets/Properties...");
+                if (!EditorApplication.ExecuteMenuItem("Assets/Properties...")) return false;
             }
             finally
             {
                 Selection.objects = previousSelection;
             }
+
+            EditorWindow opened = NewInspector(before);
+            if (!opened) return true;
+
+            if (snapshot.dockArea) HelpfulEditorDockArea.AddTab(snapshot.dockArea, opened, snapshot.tabIndex);
+
+            HelpfulEditorDockArea.ClearTitleCache();
+
+            if (snapshot.wasFocused || !previous) opened.Focus();
+            else previous.Focus();
+
+            return true;
+        }
+
+        private static EditorWindow NewInspector(HashSet<EditorWindow> before)
+        {
+            // The window was created a moment ago and is not in the cached scan yet.
+            HelpfulEditorWindows.Invalidate();
+
+            foreach (EditorWindow candidate in HelpfulEditorWindows.AllInspectors())
+            {
+                if (candidate && !before.Contains(candidate)) return candidate;
+            }
+
+            return null;
         }
 
         private static void CaptureBrowser(EditorWindow window, Snapshot snapshot)
@@ -159,6 +194,15 @@ namespace DNExtensions.HelpfulEditor
             if (GetMember(listArea, "gridSize") is int gridSize) snapshot.gridSize = gridSize;
 
             snapshot.folderPath = ActiveFolderOf(window);
+        }
+
+        /// <summary>
+        /// A folder tab is nothing but the folder it shows, and its path is serialized on the window
+        /// instance — which the close destroys. Without it the rebuilt tab comes back empty.
+        /// </summary>
+        private static void CaptureFolderTab(EditorWindow window, Snapshot snapshot)
+        {
+            if (window is Project.ProjectFolderWindow folderTab) snapshot.folderPath = folderTab.FolderPath;
         }
 
         /// <summary>

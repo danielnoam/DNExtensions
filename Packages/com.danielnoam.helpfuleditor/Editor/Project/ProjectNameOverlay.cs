@@ -105,14 +105,14 @@ namespace DNExtensions.HelpfulEditor.Project
             }
         }
 
-        public static void Draw(Rect rowRect, string assetPath, bool isListView, bool isFolder, ProjectModuleSettings settings)
+        public static void Draw(Rect rowRect, string assetPath, bool isListView, bool isFolder, ProjectSettings settings)
         {
             if (string.IsNullOrEmpty(assetPath)) return;
 
             // Folders have no extension, and Path.GetExtension would happily invent one from a dot
             // in the name — every package folder is reverse-DNS, so they would all sprout a fake
             // ".textmeshpro" style suffix.
-            bool showExtension = settings.showFileExtensions && !isFolder;
+            bool showExtension = settings.showFileExtensionsEnabled && !isFolder;
 
             if (isListView)
             {

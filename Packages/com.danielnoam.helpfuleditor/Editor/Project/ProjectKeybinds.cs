@@ -22,7 +22,7 @@ namespace DNExtensions.HelpfulEditor.Project
 
         private static void OnKeyEvent()
         {
-            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
+            ProjectSettings settings = HelpfulEditorSettings.Project;
             if (!settings.moduleEnabled) return;
             if (EditorGUIUtility.editingTextField) return;
 
@@ -138,7 +138,7 @@ namespace DNExtensions.HelpfulEditor.Project
         {
             ProcessPendingQuickObjectWindow();
 
-            ProjectModuleSettings settings = HelpfulEditorSettings.Project;
+            ProjectSettings settings = HelpfulEditorSettings.Project;
             if (EditorGUIUtility.editingTextField) return;
 
             Event evt = Event.current;
@@ -162,10 +162,10 @@ namespace DNExtensions.HelpfulEditor.Project
             if (!rowRect.Contains(evt.mousePosition)) return;
             if (string.IsNullOrEmpty(path)) return;
 
-            // A folder gets a second Project window showing it; anything else has nothing to show
-            // that way, so it gets its Properties window instead — the same split the tab strip drop
-            // makes, reached with the wheel button rather than a drag.
-            if (settings.openInNewTabKey.IsMouseButton && settings.openInNewTabKey.Matches(evt))
+            // A folder gets a folder tab; anything else has no folder to show, so it gets its
+            // Properties window instead — the same split the tab strip drop makes, reached with the
+            // wheel button rather than a drag.
+            if (settings.tabsEnabled && settings.openInNewTabKey.IsMouseButton && settings.openInNewTabKey.Matches(evt))
             {
                 if (AssetDatabase.IsValidFolder(path)) ProjectFolderTab.Open(path);
                 else ProjectPropertiesTab.Open(AssetDatabase.LoadAssetAtPath<Object>(path));
@@ -208,6 +208,15 @@ namespace DNExtensions.HelpfulEditor.Project
         private static void OpenQuickObjectWindow(string path)
         {
             if (string.IsNullOrEmpty(path)) return;
+
+            // A folder's properties are nothing worth looking at, so a folder opens as a folder tab.
+            // Floating rather than docked, unlike Open In New Tab: this gesture opens a look at
+            // something, and everything else it opens floats too.
+            if (AssetDatabase.IsValidFolder(path))
+            {
+                ProjectFolderTab.OpenFloating(path);
+                return;
+            }
 
             Object asset = AssetDatabase.LoadMainAssetAtPath(path);
             if (!asset) return;
