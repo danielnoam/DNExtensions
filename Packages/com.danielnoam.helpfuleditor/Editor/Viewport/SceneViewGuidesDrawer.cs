@@ -88,7 +88,12 @@ namespace DNExtensions.HelpfulEditor.Viewport
             RegisterDrag(_leftRuler);
 
             // Added last so the ticks and numbers paint over the strips rather than under them.
-            _drawLayer = new IMGUIContainer(OnDrawGUI) { pickingMode = PickingMode.Ignore };
+            //
+            // Not focusable, and that is not a detail. An IMGUIContainer takes keyboard focus by
+            // default, and this one is stretched across the whole Scene View — with it focusable it
+            // takes the key events that the suite's keybinds are routed through, so every hover
+            // keybind in the suite stops working the moment this window has focus.
+            _drawLayer = new IMGUIContainer(OnDrawGUI) { pickingMode = PickingMode.Ignore, focusable = false };
             Stretch(_drawLayer);
             Add(_drawLayer);
 

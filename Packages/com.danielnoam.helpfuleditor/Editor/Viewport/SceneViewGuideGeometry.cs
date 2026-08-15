@@ -15,10 +15,13 @@ namespace DNExtensions.HelpfulEditor.Viewport
     /// </summary>
     internal class SceneViewGuideGeometry
     {
-        private const float AlignmentTolerance = 0.75f;
+        /// <summary>How far off square the canvas may sit, as a slope rather than a distance.</summary>
+        private const float SkewTolerance = 0.015f;
+
         private const float MinimumScreenSize = 4f;
 
         private static readonly Vector3[] CornerBuffer = new Vector3[4];
+        private static readonly Vector3[] BoundsBuffer = new Vector3[4];
 
         private RectTransform _canvasRect;
 
@@ -92,6 +95,55 @@ namespace DNExtensions.HelpfulEditor.Viewport
                 : Mathf.Lerp(local.xMin, local.xMax, normalized);
         }
 
+        public float LocalToNormalized(bool horizontal, float local)
+        {
+            Rect rect = LocalRect;
+
+            return horizontal
+                ? Mathf.InverseLerp(rect.yMax, rect.yMin, local)
+                : Mathf.InverseLerp(rect.xMin, rect.xMax, local);
+        }
+
+        /// <summary>The canvas' own rect, which everything on the canvas plane is measured against.</summary>
+        public Rect LocalRect => _canvasRect ? _canvasRect.rect : new Rect(0f, 0f, 1f, 1f);
+
+        /// <summary>
+        /// The grid line nearest a point on the canvas plane. Counted from the same corner the rulers
+        /// count from — the left edge and the top edge — so a line at 100 is where the ruler says 100.
+        /// </summary>
+        public float NearestGridLine(bool horizontal, float local, float spacing)
+        {
+            if (spacing <= 0.0001f) return local;
+
+            Rect rect = LocalRect;
+            float origin = horizontal ? rect.yMax : rect.xMin;
+            float step = horizontal ? -spacing : spacing;
+
+            return origin + Mathf.Round((local - origin) / step) * step;
+        }
+
+        /// <summary>
+        /// A rect's extent in the canvas' own space. Taken from the world corners rather than from the
+        /// rect directly so that a rotated or nested child still measures as the box it visually
+        /// occupies, which is the thing being lined up.
+        /// </summary>
+        public bool TryGetLocalBounds(RectTransform target, out Bounds bounds)
+        {
+            bounds = default;
+            if (!_canvasRect || !target) return false;
+
+            target.GetWorldCorners(BoundsBuffer);
+
+            bounds = new Bounds(_canvasRect.InverseTransformPoint(BoundsBuffer[0]), Vector3.zero);
+
+            for (int i = 1; i < BoundsBuffer.Length; i++)
+            {
+                bounds.Encapsulate(_canvasRect.InverseTransformPoint(BoundsBuffer[i]));
+            }
+
+            return true;
+        }
+
         public void GetWorldEndpoints(bool horizontal, float normalized, out Vector3 from, out Vector3 to)
         {
             Rect local = _canvasRect.rect;
@@ -131,15 +183,31 @@ namespace DNExtensions.HelpfulEditor.Viewport
 
         private static bool IsUpright(Vector2 bottomLeft, Vector2 topLeft, Vector2 topRight, Vector2 bottomRight)
         {
-            if (Mathf.Abs(topLeft.x - bottomLeft.x) > AlignmentTolerance) return false;
-            if (Mathf.Abs(topRight.x - bottomRight.x) > AlignmentTolerance) return false;
-            if (Mathf.Abs(topLeft.y - topRight.y) > AlignmentTolerance) return false;
-            if (Mathf.Abs(bottomLeft.y - bottomRight.y) > AlignmentTolerance) return false;
+            Vector2 top = topRight - topLeft;
+            Vector2 bottom = bottomRight - bottomLeft;
+            Vector2 left = bottomLeft - topLeft;
+            Vector2 right = bottomRight - topRight;
 
-            // Seen from behind or upside down the corners still form an upright rectangle, but every
-            // axis runs the wrong way — which would have the rulers counting backwards and a guide
-            // dragged left travelling right.
-            return topRight.x - topLeft.x > MinimumScreenSize && bottomLeft.y - topLeft.y > MinimumScreenSize;
+            // Seen from behind or upside down every axis runs the wrong way, which would have the
+            // rulers counting backwards and a guide dragged left travelling right.
+            if (top.x < MinimumScreenSize || bottom.x < MinimumScreenSize) return false;
+            if (left.y < MinimumScreenSize || right.y < MinimumScreenSize) return false;
+
+            // Measured as slopes rather than as gaps in pixels. The same small angle off square throws
+            // the corners further apart the more the view is zoomed in, so a tolerance counted in
+            // pixels quietly tightens as you zoom — and took the rulers away part way into a zoom,
+            // which is exactly when the work wants them.
+            if (Mathf.Abs(top.y) / top.x > SkewTolerance) return false;
+            if (Mathf.Abs(bottom.y) / bottom.x > SkewTolerance) return false;
+            if (Mathf.Abs(left.x) / left.y > SkewTolerance) return false;
+            if (Mathf.Abs(right.x) / right.y > SkewTolerance) return false;
+
+            // Opposite edges within a hair of the same length. Turning the canvas about its own
+            // vertical leaves all four edges still running square on screen but makes the far side
+            // shorter, and a ruler numbered evenly across a foreshortened canvas would be lying.
+            if (Mathf.Abs(top.x - bottom.x) / top.x > SkewTolerance) return false;
+
+            return Mathf.Abs(left.y - right.y) / left.y <= SkewTolerance;
         }
 
         /// <summary>

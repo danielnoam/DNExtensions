@@ -220,7 +220,42 @@ namespace DNExtensions.HelpfulEditor
                         "Positions are held against the canvas rect, so they survive a reference resolution change.\n" +
                         "The rulers are pinned to the window and appear only while the view is square to the canvas — orbit away and the guides stay, dimmed, but nothing can be placed against them.\n" +
                         "Like the Game View's, the rulers take the top-left 18 pixels of the view, and whatever Scene View overlay is sitting there with them.\n" +
-                        "Snapping corrects the rect after Unity's own tools have moved it, so the Move and Rect tools keep working as they do; a rect being resized is left alone.",
+                        "Snapping corrects the rect after Unity's own tools have moved it, so the Move and Rect tools keep working as they do; a rect being resized is left alone.\n" +
+                        "A snap holds until it is pulled well clear of where it was made, so a rect can be slid along a guide without it letting go.\n" +
+                        "Hold Ctrl (Cmd on a Mac) to stand this down mid-drag and let Unity's own grid snapping have the rect instead.\n" +
+                        "Only a rect being moved is corrected — resizing, rotating and scaling are all left alone.\n" +
+                        "Right-click a ruler and use From Selection to drop guides on the edges and centre of whatever is selected.",
+                        MessageType.Info);
+                }
+
+                if (Section(SceneViewModule, "Canvas Grid"))
+                {
+                    settings.gridEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Enabled", "Draws a grid in the canvas' own units on the canvas plane."),
+                        settings.gridEnabled);
+
+                    using (new EditorGUI.DisabledScope(!settings.gridEnabled))
+                    {
+                        settings.gridCellSize = Mathf.Max(1f, EditorGUILayout.FloatField(
+                            new GUIContent("Cell Size", "In the canvas' own units, which for a scaled canvas is reference pixels."),
+                            settings.gridCellSize));
+
+                        settings.gridSubdivisions = EditorGUILayout.IntSlider("Subdivisions", settings.gridSubdivisions, 0, 16);
+
+                        settings.gridColor = EditorGUILayout.ColorField("Colour", settings.gridColor);
+                        settings.gridSubdivisionColor = EditorGUILayout.ColorField("Subdivision Colour", settings.gridSubdivisionColor);
+
+                        settings.gridSnapEnabled = EditorGUILayout.Toggle(
+                            new GUIContent("Snap Rects", "Snaps to the finest division on show. Guides always win over the grid."),
+                            settings.gridSnapEnabled);
+                    }
+
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.HelpBox(
+                        "The Grid button in the Canvas Guides overlay shows and hides it; the guide menu carries the same toggle.\n" +
+                        "Cells are counted from the canvas' left and top edges, so a line at 100 is where the ruler reads 100.\n" +
+                        "Lines are dropped once they would fall closer together than five screen points, so zooming out thins the grid rather than filling it in.\n" +
+                        "Snapping prefers a guide whenever one is in range, and only falls back to the grid when none is.",
                         MessageType.Info);
                 }
 

@@ -151,6 +151,21 @@ namespace DNExtensions.HelpfulEditor
         /// <summary>How close, in screen points, a dragged rect has to come before a guide takes it.</summary>
         public float guideSnapDistance = 8f;
 
+        // Off by default: a grid laid over every canvas is a strong opinion to impose on someone who
+        // only turned the guides on.
+        public bool gridEnabled;
+
+        /// <summary>Cell size in the canvas' own units, which for a scaled canvas is reference pixels.</summary>
+        public float gridCellSize = 100f;
+
+        public int gridSubdivisions = 1;
+
+        public Color gridColor = Color.white;
+        public Color gridSubdivisionColor = new Color(1f, 1f, 1f, 70f / 255f);
+
+        /// <summary>Snapping to the grid, which guides always outrank.</summary>
+        public bool gridSnapEnabled = true;
+
         public List<SceneViewGuide> guides = new List<SceneViewGuide>();
     }
 

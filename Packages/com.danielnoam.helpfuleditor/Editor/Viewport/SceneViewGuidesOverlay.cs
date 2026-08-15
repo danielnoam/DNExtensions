@@ -26,6 +26,11 @@ namespace DNExtensions.HelpfulEditor.Viewport
         {
             tooltip = Tooltip;
 
+            // A toolbar toggle that holds keyboard focus is a toolbar toggle that swallows the next
+            // keystroke. The suite's keybinds ride on EditorApplication.globalEventHandler, which
+            // never sees an event a focused field has already taken.
+            focusable = false;
+
             ApplyIcons();
 
             value = HelpfulEditorSettings.SceneView.showRulers;
@@ -90,6 +95,41 @@ namespace DNExtensions.HelpfulEditor.Viewport
     }
 
     /// <summary>
+    /// The Grid toggle, sat beside the Guides one. Kept separate rather than folded into the guide
+    /// button because the two are independently useful — a grid is a background to work over, guides
+    /// are placed one at a time — and either is worth having without the other.
+    /// </summary>
+    [EditorToolbarElement(Id, typeof(SceneView))]
+    internal sealed class SceneViewGridToggle : EditorToolbarToggle
+    {
+        public const string Id = "HelpfulEditor/CanvasGrid";
+
+        public SceneViewGridToggle()
+        {
+            focusable = false;
+            text = "Grid";
+            tooltip = "Show a grid in the canvas' own units, drawn on the canvas plane.";
+
+            value = HelpfulEditorSettings.SceneView.gridEnabled;
+
+            this.RegisterValueChangedCallback(OnValueChanged);
+
+            RegisterCallback<AttachToPanelEvent>(_ => SetValueWithoutNotify(HelpfulEditorSettings.SceneView.gridEnabled));
+        }
+
+        private static void OnValueChanged(ChangeEvent<bool> evt)
+        {
+            SceneViewSettings settings = HelpfulEditorSettings.SceneView;
+            if (settings.gridEnabled == evt.newValue) return;
+
+            settings.gridEnabled = evt.newValue;
+            HelpfulEditorSettings.SaveSceneView();
+
+            SceneViewGuides.Refresh();
+        }
+    }
+
+    /// <summary>
     /// Shown by default, because a feature reached only by first knowing to add its overlay is a
     /// feature nobody finds — and taken away entirely while the feature is switched off, rather than
     /// left in the toolbar as a button that does nothing.
@@ -112,7 +152,7 @@ namespace DNExtensions.HelpfulEditor.Viewport
         /// </summary>
         private bool _hiddenByFeature;
 
-        private SceneViewGuidesOverlay() : base(SceneViewGuidesToggle.Id)
+        private SceneViewGuidesOverlay() : base(SceneViewGuidesToggle.Id, SceneViewGridToggle.Id)
         {
         }
 

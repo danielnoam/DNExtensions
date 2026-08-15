@@ -162,6 +162,17 @@ namespace DNExtensions.HelpfulEditor
             if (windowType == null) return false;
 
             EditorWindow window = EditorWindow.mouseOverWindow;
+
+            // Unity only fills mouseOverWindow in once it has processed a mouse move, so it comes back
+            // null after every domain reload and stays null until the pointer is moved. Every keybind
+            // gated on it then silently does nothing — which reads as the whole suite having died, and
+            // then fixes itself the moment the mouse is jiggled or another tab is clicked.
+            //
+            // The focused window is the best answer available while Unity has none of its own. This
+            // only opens the gate where it was previously shut: whenever mouseOverWindow does resolve,
+            // it still decides, so hovering one window while another holds focus behaves as before.
+            if (!window) window = EditorWindow.focusedWindow;
+
             return window && windowType.IsInstanceOfType(window);
         }
     }

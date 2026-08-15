@@ -25,6 +25,14 @@ namespace DNExtensions.HelpfulEditor.Viewport
         private const float DragThicknessMultiplier = 3f;
         private const float OffAngleAlpha = 0.35f;
 
+        /// <summary>Below this the grid stops being a grid and becomes a wash, at a line per pixel to draw it.</summary>
+        private const float MinGridScreenSpacing = 5f;
+
+        private const int MaxGridLines = 400;
+
+        /// <summary>How close two guides have to be before generation treats them as the one guide.</summary>
+        private const float DuplicateEpsilon = 0.0005f;
+
         private static readonly SceneViewGuideGeometry Geometry = new SceneViewGuideGeometry();
 
         public static void Process(SceneView sceneView, SceneViewSettings settings)
@@ -35,11 +43,18 @@ namespace DNExtensions.HelpfulEditor.Viewport
             Geometry.Update();
             drawer.SetGeometry(Geometry.ScreenRect, Geometry.ReferenceSize, Geometry.IsAxisAligned, Geometry.HasTarget);
 
-            if (!Geometry.HasTarget || !settings.showRulers) return;
+            if (!Geometry.HasTarget) return;
 
             SceneViewGuideSnapping.Process(settings, Geometry);
 
-            if (Event.current.type == EventType.Repaint) DrawGuides(settings, drawer);
+            if (Event.current.type != EventType.Repaint) return;
+
+            // The two have their own toggles and neither gates the other: a grid is a background to
+            // work over, and wanting one without a set of guides drawn across it is the ordinary case.
+            if (settings.gridEnabled) DrawGrid(settings);
+
+            // Drawn second, so a guide sitting on a grid line still reads as the guide.
+            if (settings.showRulers) DrawGuides(settings, drawer);
         }
 
         /// <summary>
@@ -82,8 +97,22 @@ namespace DNExtensions.HelpfulEditor.Viewport
                 menu.AddDisabledItem(new GUIContent("Add Horizontal Guide"));
             }
 
+            if (settings.showRulers && HasRectSelection())
+            {
+                menu.AddItem(new GUIContent("From Selection/Edges"), false, () => AddGuidesFromSelection(true, false));
+                menu.AddItem(new GUIContent("From Selection/Centre"), false, () => AddGuidesFromSelection(false, true));
+                menu.AddItem(new GUIContent("From Selection/Edges and Centre"), false, () => AddGuidesFromSelection(true, true));
+            }
+            else
+            {
+                menu.AddDisabledItem(new GUIContent("From Selection/Edges"));
+            }
+
             if (settings.guides.Count > 0) menu.AddItem(new GUIContent("Clear All Guides"), false, ClearGuides);
             else menu.AddDisabledItem(new GUIContent("Clear All Guides"));
+
+            menu.AddSeparator(string.Empty);
+            menu.AddItem(new GUIContent("Show Grid"), settings.gridEnabled, ToggleGrid);
 
             menu.AddSeparator(string.Empty);
             menu.AddItem(new GUIContent("Settings…"), false, HelpfulEditorSettingsProvider.OpenSceneViewSettings);
@@ -160,6 +189,146 @@ namespace DNExtensions.HelpfulEditor.Viewport
                 drawer.PlaceBehind(child);
                 return;
             }
+        }
+
+        /// <summary>
+        /// A grid in the canvas' own units, drawn on the canvas plane with everything else rather than
+        /// on the window — so it sits under the UI it is there to measure, and holds still against it.
+        /// </summary>
+        private static void DrawGrid(SceneViewSettings settings)
+        {
+            Color major = settings.gridColor;
+            Color minor = settings.gridSubdivisionColor;
+
+            if (!Geometry.IsAxisAligned)
+            {
+                major.a *= OffAngleAlpha;
+                minor.a *= OffAngleAlpha;
+            }
+
+            float cell = Mathf.Max(1f, settings.gridCellSize);
+            int subdivisions = Mathf.Clamp(settings.gridSubdivisions, 0, 16);
+
+            Color previousColor = Handles.color;
+            CompareFunction previousZTest = Handles.zTest;
+
+            Handles.zTest = CompareFunction.Always;
+
+            // Subdivisions first, so a major line paints over the one it shares a position with.
+            if (subdivisions > 0) DrawGridLines(cell / (subdivisions + 1), minor);
+            DrawGridLines(cell, major);
+
+            Handles.color = previousColor;
+            Handles.zTest = previousZTest;
+        }
+
+        private static void DrawGridLines(float spacing, Color color)
+        {
+            if (color.a <= 0f) return;
+
+            DrawGridAxis(false, spacing, color);
+            DrawGridAxis(true, spacing, color);
+        }
+
+        private static void DrawGridAxis(bool horizontal, float spacing, Color color)
+        {
+            float size = horizontal ? Geometry.ReferenceSize.y : Geometry.ReferenceSize.x;
+
+            // Dropped rather than drawn dense: at this zoom the lines would be closer together than
+            // they are wide, which reads as a flat tint and costs a draw call per pixel to say it.
+            if (spacing * Mathf.Abs(Geometry.ScreenScale(horizontal)) < MinGridScreenSpacing) return;
+
+            int count = Mathf.FloorToInt(size / spacing);
+            if (count > MaxGridLines) return;
+
+            Handles.color = color;
+
+            for (int i = 0; i <= count; i++)
+            {
+                float normalized = i * spacing / size;
+                if (normalized > 1f) break;
+
+                Geometry.GetWorldEndpoints(horizontal, normalized, out Vector3 from, out Vector3 to);
+                Handles.DrawAAPolyLine(1f, from, to);
+            }
+        }
+
+        /// <summary>
+        /// Guides along the edges and centre of whatever is selected, which is the quick way to get a
+        /// layout to line up against something that already exists rather than against a number.
+        /// </summary>
+        public static void AddGuidesFromSelection(bool edges, bool centres)
+        {
+            SceneViewSettings settings = HelpfulEditorSettings.SceneView;
+            if (!Geometry.HasTarget) return;
+
+            int added = 0;
+
+            foreach (Transform transform in Selection.transforms)
+            {
+                if (!(transform is RectTransform rectTransform)) continue;
+                if (!Geometry.TryGetLocalBounds(rectTransform, out Bounds bounds)) continue;
+
+                if (edges)
+                {
+                    added += TryAddGuide(settings, false, bounds.min.x);
+                    added += TryAddGuide(settings, false, bounds.max.x);
+                    added += TryAddGuide(settings, true, bounds.min.y);
+                    added += TryAddGuide(settings, true, bounds.max.y);
+                }
+
+                if (centres)
+                {
+                    added += TryAddGuide(settings, false, bounds.center.x);
+                    added += TryAddGuide(settings, true, bounds.center.y);
+                }
+            }
+
+            if (added == 0) return;
+
+            HelpfulEditorSettings.SaveSceneView();
+            Refresh();
+        }
+
+        /// <summary>
+        /// Skipped where one already sits, so running this twice over the same selection does not stack
+        /// guides on top of each other — and where the rect falls outside the canvas, because a guide
+        /// clamped back onto the edge would not be where it was asked for.
+        /// </summary>
+        private static int TryAddGuide(SceneViewSettings settings, bool horizontal, float local)
+        {
+            float normalized = Geometry.LocalToNormalized(horizontal, local);
+            if (normalized < 0f || normalized > 1f) return 0;
+
+            foreach (SceneViewGuide guide in settings.guides)
+            {
+                if (guide.isHorizontal != horizontal) continue;
+                if (Mathf.Abs(guide.normalizedPosition - normalized) < DuplicateEpsilon) return 0;
+            }
+
+            settings.guides.Add(new SceneViewGuide { isHorizontal = horizontal, normalizedPosition = normalized });
+
+            return 1;
+        }
+
+        public static bool HasRectSelection()
+        {
+            foreach (Transform transform in Selection.transforms)
+            {
+                if (transform is RectTransform) return true;
+            }
+
+            return false;
+        }
+
+        public static void ToggleGrid()
+        {
+            SceneViewSettings settings = HelpfulEditorSettings.SceneView;
+
+            settings.gridEnabled = !settings.gridEnabled;
+            HelpfulEditorSettings.SaveSceneView();
+
+            Refresh();
         }
 
         private static void DrawGuides(SceneViewSettings settings, SceneViewGuidesDrawer drawer)
