@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Overlays;
@@ -68,8 +67,8 @@ namespace DNExtensions.HelpfulEditor.Viewport
         /// <summary>Falls back to the word, so a missing icon leaves a button that still reads.</summary>
         private void ApplyIcons()
         {
-            Texture2D on = LoadIcon("GridVisible");
-            Texture2D off = LoadIcon("GridHidden");
+            Texture2D on = HelpfulEditorGUI.LoadIcon("GridVisible");
+            Texture2D off = HelpfulEditorGUI.LoadIcon("GridHidden");
 
             if (on && off)
             {
@@ -79,18 +78,6 @@ namespace DNExtensions.HelpfulEditor.Viewport
             }
 
             text = "Guides";
-        }
-
-        private static Texture2D LoadIcon(string iconName)
-        {
-            try
-            {
-                return EditorGUIUtility.IconContent(iconName)?.image as Texture2D;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
         }
     }
 

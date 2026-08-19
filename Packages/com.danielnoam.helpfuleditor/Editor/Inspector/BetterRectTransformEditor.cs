@@ -316,17 +316,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
         /// <summary>Falls back to a letter, so a missing icon leaves a button that still says what it is.</summary>
         private static GUIContent ModeIcon(string iconName, string fallback, string tooltip)
         {
-            try
-            {
-                GUIContent icon = EditorGUIUtility.IconContent(iconName);
-                if (icon?.image) return new GUIContent(icon.image, tooltip);
-            }
-            catch (Exception)
-            {
-                // Falls through to the letter below.
-            }
-
-            return new GUIContent(fallback, tooltip);
+            return HelpfulEditorGUI.IconContent(tooltip, iconName) ?? new GUIContent(fallback, tooltip);
         }
 
         private void ShowPresetWindow(Rect buttonRect)
@@ -465,19 +455,48 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             if (GUI.Button(resetRect, new GUIContent("R", "Reset position, and flush stretched axes to their anchors"), EditorStyles.miniButtonRight))
             {
-                ResetRect(true, false);
+                ResetRect(TransformResetMenu.ApplyToTargets, true, false, "Reset Position");
             }
         }
 
+        /// <summary>
+        /// The same three scopes the Transform rows offer, over the three things a rect can be reset to.
+        /// Nine entries flat would read badly — "Reset Position And Flush Without Children" is not a name
+        /// anyone scans — so the child-scoped forms are a submenu each and the plain three stay on top,
+        /// where they already were.
+        /// </summary>
         private void ShowResetMenu()
         {
             GenericMenu menu = new GenericMenu();
 
-            menu.AddItem(new GUIContent("Reset Position"), false, () => ResetRect(true, false));
-            menu.AddItem(new GUIContent("Flush To Anchors"), false, () => ResetRect(false, true));
-            menu.AddItem(new GUIContent("Reset Position And Flush"), false, () => ResetRect(true, true));
+            AddResetItems(menu, string.Empty, TransformResetMenu.ApplyToTargets);
+
+            // The same switch that governs the trio on the rotation and scale rows, so "Show Reset Menu
+            // Items" means one thing across the inspector rather than two.
+            if (HelpfulEditorSettings.Inspector.resetMenuItemsEnabled)
+            {
+                menu.AddSeparator(string.Empty);
+
+                AddResetItems(menu, "Without Children", TransformResetMenu.ApplyWithoutChildren);
+                AddResetItems(menu, "Only Children", TransformResetMenu.ApplyToChildren);
+            }
 
             menu.ShowAsContext();
+        }
+
+        private void AddResetItems(GenericMenu menu, string scopeName, TransformResetMenu.Scope scope)
+        {
+            bool scoped = !string.IsNullOrEmpty(scopeName);
+
+            string path = scoped ? $"{scopeName}/" : string.Empty;
+            string suffix = scoped ? $" {scopeName}" : string.Empty;
+
+            void Add(string label, bool position, bool size) =>
+                menu.AddItem(new GUIContent(path + label), false, () => ResetRect(scope, position, size, label + suffix));
+
+            Add("Reset Position", true, false);
+            Add("Flush To Anchors", false, true);
+            Add("Reset Position And Flush", true, true);
         }
 
         private void CopyRect()
@@ -561,26 +580,30 @@ namespace DNExtensions.HelpfulEditor.Inspector
         /// On an axis that does not, zero is a rect with no width — a reset that leaves nothing to see
         /// is not a reset anyone wants, so that axis keeps the size it had.
         /// </summary>
-        private void ResetRect(bool position, bool size)
+        private void ResetRect(TransformResetMenu.Scope scope, bool position, bool size, string undoName)
         {
-            Undo.RecordObjects(targets, "Reset RectTransform Values");
-
-            foreach (Object obj in targets)
-            {
-                if (!(obj is RectTransform rect)) continue;
-
-                if (position) rect.anchoredPosition3D = Vector3.zero;
-                if (!size) continue;
-
-                Vector2 delta = rect.sizeDelta;
-
-                if (!Mathf.Approximately(rect.anchorMin.x, rect.anchorMax.x)) delta.x = 0f;
-                if (!Mathf.Approximately(rect.anchorMin.y, rect.anchorMax.y)) delta.y = 0f;
-
-                rect.sizeDelta = delta;
-            }
+            scope(targets, transform => ApplyReset(transform, position, size), undoName);
 
             serializedObject.Update();
+        }
+
+        /// <summary>
+        /// Skips anything that is not a rect, which the child scopes need: a RectTransform's children
+        /// are not all RectTransforms, and a plain one has no anchors to flush to.
+        /// </summary>
+        private static void ApplyReset(Transform transform, bool position, bool size)
+        {
+            if (!(transform is RectTransform rect)) return;
+
+            if (position) rect.anchoredPosition3D = Vector3.zero;
+            if (!size) return;
+
+            Vector2 delta = rect.sizeDelta;
+
+            if (!Mathf.Approximately(rect.anchorMin.x, rect.anchorMax.x)) delta.x = 0f;
+            if (!Mathf.Approximately(rect.anchorMin.y, rect.anchorMax.y)) delta.y = 0f;
+
+            rect.sizeDelta = delta;
         }
 
         /// <summary>

@@ -333,7 +333,7 @@ namespace DNExtensions.HelpfulEditor.Project
             // Icon and glyph in one content, the way the Project window's button reads.
             _newFolderContent ??= new GUIContent(
                 "+",
-                EditorGUIUtility.IconContent("Folder Icon")?.image,
+                HelpfulEditorGUI.LoadIcon("Folder Icon"),
                 "New folder in this folder");
 
             // No right-click create menu, unlike the Project window's button: Unity's Assets/Create

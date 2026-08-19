@@ -311,9 +311,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 // "showing all", and releasing it is what a hidden component looks like.
                 style.Draw(rect, EyeContent, hovered, false, !isolating, false);
 
-                Texture eye = EditorGUIUtility.IconContent(isolating
+                Texture eye = HelpfulEditorGUI.LoadIcon(isolating
                     ? "animationvisibilitytoggleoff"
-                    : "animationvisibilitytoggleon")?.image;
+                    : "animationvisibilitytoggleon");
 
                 if (eye)
                 {

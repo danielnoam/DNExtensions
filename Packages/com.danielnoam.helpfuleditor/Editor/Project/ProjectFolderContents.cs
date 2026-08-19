@@ -145,7 +145,7 @@ namespace DNExtensions.HelpfulEditor.Project
                 Texture assetIcon = AssetDatabase.GetCachedIcon(samplePath);
                 if (assetIcon) return assetIcon;
 
-                Texture generic = EditorGUIUtility.IconContent("ScriptableObject Icon")?.image;
+                Texture generic = HelpfulEditorGUI.LoadIcon("ScriptableObject Icon");
                 if (generic) return generic;
             }
 

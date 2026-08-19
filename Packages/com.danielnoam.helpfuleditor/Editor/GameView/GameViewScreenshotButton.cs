@@ -135,20 +135,7 @@ namespace DNExtensions.HelpfulEditor.GameView
         /// <summary>Tries each name in turn and falls back to the word, so a missing icon still reads.</summary>
         private static GUIContent Icon(string tooltip, params string[] iconNames)
         {
-            foreach (string iconName in iconNames)
-            {
-                try
-                {
-                    GUIContent icon = EditorGUIUtility.IconContent(iconName);
-                    if (icon?.image) return new GUIContent(icon.image, tooltip);
-                }
-                catch (Exception)
-                {
-                    // Falls through to the next name, and then to the text below.
-                }
-            }
-
-            return new GUIContent("Snap", tooltip);
+            return HelpfulEditorGUI.IconContent(tooltip, iconNames) ?? new GUIContent("Snap", tooltip);
         }
     }
 }

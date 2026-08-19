@@ -249,7 +249,7 @@ namespace DNExtensions.HelpfulEditor.GameView
         private static bool _iconsAreProSkin;
 
         /// <summary>The same camera the Play From Camera toolbar button uses, so the two read as a set.</summary>
-        private static GUIContent RecordIcon => Cached(ref _recordIcon, "SceneViewCamera@2x", "SceneViewCamera");
+        private static GUIContent RecordIcon => Cached(ref _recordIcon, "SceneViewCamera");
         /// <summary>
         /// Recorder is driving, so this is a readout and a stop — the dot stays lit beside the time to
         /// say the take is running, since there is no pause icon here to say it instead.
@@ -296,28 +296,13 @@ namespace DNExtensions.HelpfulEditor.GameView
             return slot ??= Icon(names) ?? GUIContent.none;
         }
 
-        /// <summary>Tries the skin's own variant first, then the plain name, then gives up quietly.</summary>
+        /// <summary>
+        /// Takes the first name this editor carries, and gives up quietly if it carries none. The
+        /// skin's own variant is picked up by the lookup itself, so the names here are the plain ones.
+        /// </summary>
         private static GUIContent Icon(params string[] names)
         {
-            foreach (string name in names)
-            {
-                string skinned = EditorGUIUtility.isProSkin ? $"d_{name}" : name;
-
-                foreach (string candidate in new[] { skinned, name })
-                {
-                    try
-                    {
-                        GUIContent icon = EditorGUIUtility.IconContent(candidate);
-                        if (icon?.image) return icon;
-                    }
-                    catch (Exception)
-                    {
-                        // Falls through to the next name, and then to nothing.
-                    }
-                }
-            }
-
-            return null;
+            return HelpfulEditorGUI.IconContent(null, names);
         }
 
         /// <summary>Placed left of the button's own text, which is what reserves the room for it.</summary>

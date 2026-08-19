@@ -1,4 +1,3 @@
-using System;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -107,17 +106,7 @@ namespace DNExtensions.HelpfulEditor.GameView
         /// <summary>Falls back to the word, so a missing icon leaves a button that still reads.</summary>
         private static GUIContent Icon(string iconName, string tooltip)
         {
-            try
-            {
-                GUIContent icon = EditorGUIUtility.IconContent(iconName);
-                if (icon?.image) return new GUIContent(icon.image, tooltip);
-            }
-            catch (Exception)
-            {
-                // Falls through to the text button below.
-            }
-
-            return new GUIContent("Rulers", tooltip);
+            return HelpfulEditorGUI.IconContent(tooltip, iconName) ?? new GUIContent("Rulers", tooltip);
         }
     }
 }

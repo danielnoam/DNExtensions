@@ -128,7 +128,7 @@ namespace DNExtensions.HelpfulEditor.Project
             button.style.alignItems = Align.Center;
             button.style.justifyContent = Justify.Center;
 
-            Texture folderIcon = EditorGUIUtility.IconContent("Folder Icon")?.image;
+            Texture folderIcon = HelpfulEditorGUI.LoadIcon("Folder Icon");
             if (folderIcon)
             {
                 Image icon = new Image { image = folderIcon, scaleMode = ScaleMode.ScaleToFit };

@@ -25,7 +25,13 @@ namespace DNExtensions.HelpfulEditor
         private const BindingFlags AnyMember = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
         private static readonly Dictionary<Type, Texture> IconCache = new Dictionary<Type, Texture>();
+        private static readonly Dictionary<string, Texture2D> BuiltInIcons = new Dictionary<string, Texture2D>();
+        private static readonly HashSet<string> MissingIcons = new HashSet<string>();
         private static GUIStyle _badgeStyle;
+
+        private static MethodInfo _loadIcon;
+        private static bool _loadIconResolved;
+        private static bool _builtInIconsAreProSkin;
 
         private static PropertyInfo _guiViewCurrent;
         private static MethodInfo _markHotRegion;
@@ -401,6 +407,103 @@ namespace DNExtensions.HelpfulEditor
             Texture icon = content?.image;
             IconCache[type] = icon;
             return icon;
+        }
+
+        /// <summary>
+        /// A built-in editor icon by name, or null where this editor has no icon of that name.
+        ///
+        /// The built-in names come and go between Unity versions, so anything the suite reaches for
+        /// is a name that may simply not be there — and EditorGUIUtility.IconContent answers a name
+        /// it cannot find with a console error of its own rather than with a null. No try/catch can
+        /// intercept that, because nothing is thrown, which is how an optional icon turned into a
+        /// permanent red line in projects on the versions that lack it. This takes the internal
+        /// lookup underneath IconContent instead, which returns null and says nothing.
+        ///
+        /// Several names may be given and the first that resolves wins, which is how a caller offers
+        /// a choice of glyphs and lets the version in hand pick. Skin (d_) and @2x variants are the
+        /// lookup's own business, so plain names are enough.
+        /// </summary>
+        public static Texture2D LoadIcon(params string[] names)
+        {
+            if (names == null) return null;
+
+            // Icons are per-skin, and the textures behind the old ones are dropped when the skin
+            // changes, so what was cached under the other skin is worse than useless.
+            if (_builtInIconsAreProSkin != EditorGUIUtility.isProSkin)
+            {
+                _builtInIconsAreProSkin = EditorGUIUtility.isProSkin;
+
+                BuiltInIcons.Clear();
+                MissingIcons.Clear();
+            }
+
+            foreach (string name in names)
+            {
+                Texture2D icon = LoadSingleIcon(name);
+                if (icon) return icon;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// The same lookup wrapped for the toolbar buttons, which want a tooltip beside the glyph.
+        /// Null rather than an empty content when nothing resolved, so the caller can put its own
+        /// word there instead and leave a button that still reads.
+        /// </summary>
+        public static GUIContent IconContent(string tooltip, params string[] names)
+        {
+            Texture2D icon = LoadIcon(names);
+
+            return icon ? new GUIContent(icon, tooltip ?? string.Empty) : null;
+        }
+
+        /// <summary>
+        /// Misses are remembered as well as hits: a name this editor does not carry will not start
+        /// carrying it, and these run from OnGUI. Hits are re-resolved if the texture behind one has
+        /// gone, which a cached null would otherwise hide.
+        /// </summary>
+        private static Texture2D LoadSingleIcon(string name)
+        {
+            if (string.IsNullOrEmpty(name) || MissingIcons.Contains(name)) return null;
+            if (BuiltInIcons.TryGetValue(name, out Texture2D cached) && cached) return cached;
+
+            Texture2D icon = null;
+
+            if (LoadIconMethod != null)
+            {
+                try
+                {
+                    icon = LoadIconMethod.Invoke(null, new object[] { name }) as Texture2D;
+                }
+                catch (Exception)
+                {
+                    // Left null, and remembered below as a miss so the call is not tried again.
+                }
+            }
+
+            if (icon) BuiltInIcons[name] = icon;
+            else MissingIcons.Add(name);
+
+            return icon;
+        }
+
+        /// <summary>
+        /// EditorGUIUtility.LoadIcon, which is the quiet half of the public IconContent. Internal in
+        /// every version the suite supports, hence the reflection; absent it there is nothing else to
+        /// fall back to, since the public path is the one that logs.
+        /// </summary>
+        private static MethodInfo LoadIconMethod
+        {
+            get
+            {
+                if (_loadIconResolved) return _loadIcon;
+
+                _loadIconResolved = true;
+                _loadIcon = typeof(EditorGUIUtility).GetMethod("LoadIcon", AnyMember, null, new[] { typeof(string) }, null);
+
+                return _loadIcon;
+            }
         }
 
         private static bool IsExcluded(Component component, List<string> excludedTypeNames)

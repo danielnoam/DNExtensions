@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -16,6 +17,9 @@ namespace DNExtensions.HelpfulEditor
         private const float LockWidth = 20f;
         private const float ButtonsTotal = ButtonWidth * 3f;
         private const float Spacing = 5f;
+
+        private static MethodInfo _propertyMenu;
+        private static bool _propertyMenuResolved;
 
         /// <param name="locked">Current lock state. Passed by ref — updated when toggled.</param>
         /// <param name="extraContextItems">Extra items appended to the label/field right-click menu.</param>
@@ -37,7 +41,7 @@ namespace DNExtensions.HelpfulEditor
                 Rect rowRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
 
                 if (property != null) EditorGUI.BeginProperty(rowRect, GUIContent.none, property);
-                newValue = DrawRow(rowRect, label, value, resetValue, showLock, lockW, ref locked, extraContextItems, extraResetItems);
+                newValue = DrawRow(rowRect, label, value, resetValue, showLock, lockW, ref locked, extraContextItems, extraResetItems, property);
                 if (property != null) EditorGUI.EndProperty();
             }
             else
@@ -45,16 +49,14 @@ namespace DNExtensions.HelpfulEditor
                 EditorGUILayout.BeginHorizontal();
                 float labelW = EditorGUIUtility.labelWidth - lockW;
                 Rect labelRect = GUILayoutUtility.GetRect(new GUIContent(label), GUI.skin.label, GUILayout.Width(labelW));
-                HandleContextClick(labelRect, value, extraContextItems);
+                HandleContextClick(labelRect, value, extraContextItems, property);
                 GUI.Label(labelRect, label);
 
                 if (showLock)
                 {
                     Rect lockRect = GUILayoutUtility.GetRect(lockW, EditorGUIUtility.singleLineHeight, GUILayout.Width(lockW));
                     EditorGUIUtility.AddCursorRect(lockRect, MouseCursor.Link);
-                    locked = GUI.Toggle(lockRect, locked,
-                        EditorGUIUtility.IconContent(locked ? "Linked" : "Unlinked"),
-                        EditorStyles.label);
+                    locked = GUI.Toggle(lockRect, locked, LockContent(locked), EditorStyles.label);
                 }
 
                 GUILayout.FlexibleSpace();
@@ -68,7 +70,7 @@ namespace DNExtensions.HelpfulEditor
                 // already been drawn by the time there is a rect to hang the override bar on.
                 if (property != null) EditorGUI.BeginProperty(fieldRect, GUIContent.none, property);
 
-                HandleContextClick(fieldRect, value, extraContextItems);
+                HandleContextClick(fieldRect, value, extraContextItems, property);
 
                 bool prevWide = EditorGUIUtility.wideMode;
                 EditorGUIUtility.wideMode = true;
@@ -129,7 +131,7 @@ namespace DNExtensions.HelpfulEditor
         }
 
         private static Vector3 DrawRow(Rect rowRect, string label, Vector3 value, Vector3 resetValue, bool showLock, float lockW, ref bool locked,
-            Action<GenericMenu> extraContextItems, Action<GenericMenu> extraResetItems)
+            Action<GenericMenu> extraContextItems, Action<GenericMenu> extraResetItems, SerializedProperty property = null)
         {
             float labelW = EditorGUIUtility.labelWidth - lockW;
             float fieldW = rowRect.width - EditorGUIUtility.labelWidth - ButtonsTotal - Spacing;
@@ -139,18 +141,16 @@ namespace DNExtensions.HelpfulEditor
             Rect fieldRect = new Rect(rowRect.x + EditorGUIUtility.labelWidth, rowRect.y, fieldW, rowRect.height);
             Rect buttonsRect = new Rect(fieldRect.xMax + Spacing, rowRect.y, ButtonsTotal, rowRect.height);
 
-            HandleContextClick(labelRect, value, extraContextItems);
+            HandleContextClick(labelRect, value, extraContextItems, property);
             EditorGUI.LabelField(labelRect, label);
 
             if (showLock)
             {
                 EditorGUIUtility.AddCursorRect(lockRect, MouseCursor.Link);
-                locked = GUI.Toggle(lockRect, locked,
-                    EditorGUIUtility.IconContent(locked ? "Linked" : "Unlinked"),
-                    EditorStyles.label);
+                locked = GUI.Toggle(lockRect, locked, LockContent(locked), EditorStyles.label);
             }
 
-            HandleContextClick(fieldRect, value, extraContextItems);
+            HandleContextClick(fieldRect, value, extraContextItems, property);
 
             bool prevWide = EditorGUIUtility.wideMode;
             EditorGUIUtility.wideMode = true;
@@ -209,7 +209,19 @@ namespace DNExtensions.HelpfulEditor
             EditorGUI.EndDisabledGroup();
         }
 
-        private static void HandleContextClick(Rect rect, Vector3 value, Action<GenericMenu> extraContextItems)
+        /// <summary>
+        /// The chain-link glyph, or a padlock where the editor has no chain, or the letter where it
+        /// has neither — a toggle drawn with no content at all is a toggle nobody can find.
+        /// </summary>
+        private static GUIContent LockContent(bool locked)
+        {
+            string tooltip = locked ? "Axes locked together. Click to unlock." : "Axes independent. Click to lock them together.";
+
+            return HelpfulEditorGUI.IconContent(tooltip, locked ? "Linked" : "Unlinked", locked ? "LockIcon-On" : "LockIcon")
+                   ?? new GUIContent(locked ? "L" : "U", tooltip);
+        }
+
+        private static void HandleContextClick(Rect rect, Vector3 value, Action<GenericMenu> extraContextItems, SerializedProperty property = null)
         {
             if (Event.current.type != EventType.ContextClick) return;
             if (!rect.Contains(Event.current.mousePosition)) return;
@@ -227,8 +239,52 @@ namespace DNExtensions.HelpfulEditor
                 extraContextItems(menu);
             }
 
+            // The row's own items are added to the property's menu rather than shown instead of it.
+            // EditorGUI.EndProperty only builds that menu if the context click is still unhandled by
+            // the time it runs, so showing ours here and using the event took Apply and Revert away
+            // from every row this draws — the prefab workflow, gone, in exchange for Copy X.
+            if (AppendToPropertyMenu(property, menu)) return;
+
             menu.ShowAsContext();
             Event.current.Use();
+        }
+
+        /// <summary>
+        /// EditorGUI.DoPropertyContextMenu, which fills the given menu with the property's own items —
+        /// Apply override, Revert override, Copy Property Path and whatever a drawer contributed — and
+        /// then uses the event and shows it. Internal in every version the suite supports, hence the
+        /// reflection; without it the row keeps its old menu rather than losing one.
+        /// </summary>
+        private static bool AppendToPropertyMenu(SerializedProperty property, GenericMenu menu)
+        {
+            MethodInfo show = DoPropertyContextMenuMethod;
+            if (property == null || show == null) return false;
+
+            try
+            {
+                show.Invoke(null, new object[] { property, null, menu });
+                return true;
+            }
+            catch (Exception)
+            {
+                // Nothing shown yet, so the caller's own menu is still there to fall back on.
+                return false;
+            }
+        }
+
+        private static MethodInfo DoPropertyContextMenuMethod
+        {
+            get
+            {
+                if (_propertyMenuResolved) return _propertyMenu;
+
+                _propertyMenuResolved = true;
+                _propertyMenu = typeof(EditorGUI).GetMethod("DoPropertyContextMenu",
+                    BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public, null,
+                    new[] { typeof(SerializedProperty), typeof(SerializedProperty), typeof(GenericMenu) }, null);
+
+                return _propertyMenu;
+            }
         }
 
         /// <summary>
