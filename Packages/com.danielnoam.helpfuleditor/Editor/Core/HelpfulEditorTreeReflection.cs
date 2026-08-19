@@ -753,6 +753,73 @@ namespace DNExtensions.HelpfulEditor
         // costs the whole loaded object set every time.
         private static EditorWindow FindWindow(Type windowType) => HelpfulEditorWindows.First(windowType);
 
+        /// <summary>
+        /// Whether the Project window is renaming this particular asset. Asked of the rename overlay
+        /// itself because <c>EditorGUIUtility.editingTextField</c> cannot answer it: that flag is
+        /// global — a focused field anywhere in the editor sets it — so treating it as "this row is
+        /// being renamed" blanks a row's overlay whenever something else happens to hold the caret.
+        ///
+        /// Both halves are asked. A rename runs in the list area in the two-column layout and in the
+        /// tree in one column, and which of them is on screen is the layout's business, not ours.
+        /// </summary>
+        public static bool IsProjectRenaming(object rawId)
+        {
+            if (rawId == null) return false;
+
+            try
+            {
+                Type browserType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ProjectBrowser");
+                if (browserType == null) return false;
+
+                FieldInfo listAreaField = browserType.GetField("m_ListArea", AnyInstance);
+
+                foreach (EditorWindow window in HelpfulEditorWindows.AllProjectBrowsers())
+                {
+                    if (IsRenamingIn(FindRenameOverlay(listAreaField?.GetValue(window)), rawId)) return true;
+                }
+
+                object state = GetMemberValue(GetActiveProjectTreeView(), "state");
+
+                return IsRenamingIn(FindRenameOverlay(state), rawId);
+            }
+            catch (Exception e)
+            {
+                WarnOnce(e);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// The overlay is reached by a method on the list area and by a property on the tree's state,
+        /// and its own type went generic in Unity 6 — so it is found by name and used by name rather
+        /// than named anywhere here.
+        /// </summary>
+        private static object FindRenameOverlay(object owner)
+        {
+            if (owner == null) return null;
+
+            MethodInfo getter = owner.GetType().GetMethod("GetRenameOverlay", AnyInstance, null, Type.EmptyTypes, null);
+            if (getter != null) return getter.Invoke(owner, null);
+
+            return GetMemberValue(owner, "renameOverlay") ?? GetMemberValue(owner, "m_RenameOverlay");
+        }
+
+        private static bool IsRenamingIn(object overlay, object rawId)
+        {
+            if (overlay == null) return false;
+
+            MethodInfo isRenaming = overlay.GetType().GetMethod("IsRenaming", AnyInstance, null, Type.EmptyTypes, null);
+            if (!(isRenaming?.Invoke(overlay, null) is bool renaming) || !renaming) return false;
+
+            // Which object it is renaming, in whichever id type this version of the overlay holds.
+            object userData = GetMemberValue(overlay, "userData");
+            if (userData == null) return false;
+
+            object converted = HelpfulEditorObjectId.ConvertTo(rawId, userData.GetType());
+
+            return converted != null && converted.Equals(userData);
+        }
+
         private static object GetMemberValue(object instance, string memberName)
         {
             if (instance == null) return null;

@@ -20,6 +20,9 @@ namespace DNExtensions.HelpfulEditor.Project
         private const float LabelInset = 12f;
         private const float ListLabelGap = 2f;
 
+        /// <summary>The style the Project window labels its own grid rows with, selection highlight and all.</summary>
+        private const string GridLabelStyleName = "ProjectBrowserGridLabel";
+
         private static readonly char[] Separators = { ' ', '_', '-', '.' };
 
         // Path splitting allocates, and this runs for every visible row on every repaint.
@@ -31,12 +34,20 @@ namespace DNExtensions.HelpfulEditor.Project
         private static readonly Dictionary<string, (string first, string second)> LineCache =
             new Dictionary<string, (string, string)>();
 
+        // The same, for the single-line form: one cut point per name per width.
+        private static readonly Dictionary<string, string> SingleLineCache = new Dictionary<string, string>();
+
+        // Widths of the drawn text, which is what the highlight is sized from. Keyed by the final
+        // string, so a name and the same name over two lines are separate entries.
+        private static readonly Dictionary<string, float> WidthCache = new Dictionary<string, float>();
+
         private static readonly List<int> BoundaryBuffer = new List<int>();
 
         private static readonly GUIContent MeasureContent = new GUIContent();
         private static readonly GUIContent DrawContent = new GUIContent();
 
         private static GUIStyle _labelStyle;
+        private static bool _hasSkinStyle;
         private static Color _backgroundColor;
         private static Color _selectedColor;
         private static float _lineCacheWidth = -1f;
@@ -71,27 +82,39 @@ namespace DNExtensions.HelpfulEditor.Project
             // Break points were measured with the old style's font, so they mean nothing once it
             // has been rebuilt.
             LineCache.Clear();
+            SingleLineCache.Clear();
+            WidthCache.Clear();
         }
 
         private static void OnProjectChanged()
         {
             NameCache.Clear();
             LineCache.Clear();
+            SingleLineCache.Clear();
+            WidthCache.Clear();
         }
 
         private static void BuildStyle()
         {
-            _labelStyle = new GUIStyle
-            {
-                fontSize = 10,
-                alignment = TextAnchor.UpperCenter,
+            // Built on the style the Project window labels its own grid rows with, so a selected name
+            // gets the highlight Unity draws for every other row — its shape, its colours, and the
+            // grey it turns when the window loses focus. Drawing that by hand meant a flat rectangle
+            // in a hardcoded blue that never greyed and never matched.
+            GUIStyle skinStyle = GUI.skin.FindStyle(GridLabelStyleName);
 
-                // Lines are worked out here rather than left to IMGUI, which breaks a long name at
-                // whatever character it runs out of room on.
-                wordWrap = false,
-                clipping = TextClipping.Overflow,
-                margin = new RectOffset(0, 0, 0, 0)
-            };
+            _hasSkinStyle = skinStyle != null;
+            _labelStyle = skinStyle != null ? new GUIStyle(skinStyle) : new GUIStyle();
+
+            _labelStyle.fontSize = 10;
+            _labelStyle.alignment = TextAnchor.UpperCenter;
+
+            // Lines are worked out here rather than left to IMGUI, which breaks a long name at
+            // whatever character it runs out of room on.
+            _labelStyle.wordWrap = false;
+            _labelStyle.clipping = TextClipping.Overflow;
+            _labelStyle.margin = new RectOffset(0, 0, 0, 0);
+
+            WidthCache.Clear();
 
             if (EditorGUIUtility.isProSkin)
             {
@@ -166,8 +189,28 @@ namespace DNExtensions.HelpfulEditor.Project
             GUI.color = previous;
         }
 
+        /// <summary>The widest of the drawn lines, which is what the highlight is sized to.</summary>
+        private static float LineWidth(string text)
+        {
+            if (WidthCache.TryGetValue(text, out float cached)) return cached;
+
+            float widest = 0f;
+
+            foreach (string line in text.Split('\n'))
+            {
+                widest = Mathf.Max(widest, Width(line));
+            }
+
+            WidthCache[text] = widest;
+            return widest;
+        }
+
         private static void DrawGridLabel(Rect rowRect, string assetPath, bool wrap, bool showExtension)
         {
+            // GUIStyle.Draw is a repaint-only call, and nothing here is anything but drawing — no
+            // control is claimed, so there is nothing for the other events to do either.
+            if (Event.current.type != EventType.Repaint) return;
+
             Object asset = AssetDatabase.LoadMainAssetAtPath(assetPath);
             if (!asset) return;
 
@@ -194,6 +237,14 @@ namespace DNExtensions.HelpfulEditor.Project
                     text = first;
                 }
             }
+            else
+            {
+                // The style overflows rather than clips — which is what lets the two-line form draw
+                // past the cell it was measured in — so a single line has to be cut to fit or a long
+                // name runs straight over the one beside it. Only reachable with wrapping off and
+                // extensions on, since that is the one case that draws an unmeasured line.
+                text = FitOneLine(text, rowRect.width);
+            }
 
             DrawContent.text = text;
             DrawContent.tooltip = string.Empty;
@@ -201,34 +252,90 @@ namespace DNExtensions.HelpfulEditor.Project
             bool selected = Selection.Contains(asset);
 
             // Measured from the style rather than asked of CalcHeight: with wrapping off, the
-            // reported height of a string containing a break is not reliably two lines' worth.
-            float textHeight = LabelStyle.lineHeight * lines;
-            Rect nameRect = new Rect(rowRect.x, rowRect.yMax - LabelInset, rowRect.width, textHeight + 4f);
+            // reported height of a string containing a break is not reliably two lines' worth. The
+            // style's own padding has to be added — Unity's grid label carries some, and leaving it
+            // out sized the highlight to the text alone, so a second line hung below the box.
+            float textHeight = LabelStyle.lineHeight * lines + LabelStyle.padding.vertical;
+            Rect nameRect = new Rect(rowRect.x, rowRect.yMax - LabelInset, rowRect.width, textHeight + 2f);
 
-            // The backing is deliberately wider than the text rect: Unity's own label bleeds a few
-            // pixels past its bounds, and anything left showing reads as a double-drawn name.
+            // Covered in the plain background whatever the state, including selected: Unity's own
+            // highlight is hidden along with the label it sits behind, and a new one is drawn below
+            // around the name this actually shows. The backing is deliberately wider than the text
+            // rect — Unity's label bleeds a few pixels past its bounds, and anything left showing
+            // reads as a double-drawn name.
             Rect backgroundRect = new Rect(nameRect.x - 6f, nameRect.y - 1f, nameRect.width + 12f, nameRect.height + 3f);
-            EditorGUI.DrawRect(backgroundRect, selected ? _selectedColor : _backgroundColor);
+            EditorGUI.DrawRect(backgroundRect, _backgroundColor);
+
+            // Hugging the text rather than filling the cell, which is what Unity's own highlight does
+            // and the largest part of why filling it looked wrong at bigger icon sizes.
+            float width = Mathf.Min(rowRect.width, LineWidth(text) + 6f);
+            Rect labelRect = new Rect(rowRect.x + (rowRect.width - width) * 0.5f, nameRect.y, width, nameRect.height);
+
+            if (_hasSkinStyle)
+            {
+                // Unity greys a selection while the window is not the focused one, and the style knows
+                // how — it only has to be told which of the two this is.
+                bool focused = HelpfulEditorWindows.IsProjectBrowser(EditorWindow.focusedWindow);
+
+                LabelStyle.Draw(labelRect, DrawContent, false, false, selected, focused);
+                return;
+            }
+
+            // No such style on this skin. A flat fill at least reads as a selection.
+            if (selected) EditorGUI.DrawRect(labelRect, _selectedColor);
 
             LabelStyle.normal.textColor = EditorGUIUtility.isProSkin || selected ? Color.white : Color.black;
 
             // Intentionally does not consume the click: the row still has to handle selection,
             // double-click-to-open and click-to-rename.
-            GUI.Label(nameRect, DrawContent, LabelStyle);
+            GUI.Label(labelRect, DrawContent, LabelStyle);
         }
 
+        /// <summary>
+        /// Only while this row hosts a live text field, which drawing over would cover what is being
+        /// typed. It used to be enough to ask whether the active object was being edited, but
+        /// EditorGUIUtility.editingTextField is global — a focused field anywhere in the editor sets
+        /// it — so the selected row lost its name and extension whenever anything else held the caret,
+        /// which is most of the time an asset is selected.
+        ///
+        /// The flag is still the first thing checked, as the cheap half: a rename is always a focused
+        /// text field, so with nothing being typed anywhere there is nothing to look up. It is only
+        /// the converse that does not hold, and the lookup is what settles that.
+        /// </summary>
         private static bool IsRenaming(Object asset)
         {
-            return Selection.activeObject == asset && EditorGUIUtility.editingTextField;
+            if (!EditorGUIUtility.editingTextField) return false;
+
+            return HelpfulEditorTreeReflection.IsProjectRenaming(HelpfulEditorObjectId.Raw(asset));
+        }
+
+        /// <summary>Break points and cut points were measured against a width, so they mean nothing once it changes.</summary>
+        private static void EnsureCacheWidth(float maxWidth)
+        {
+            if (Mathf.Approximately(_lineCacheWidth, maxWidth)) return;
+
+            _lineCacheWidth = maxWidth;
+
+            LineCache.Clear();
+            SingleLineCache.Clear();
+        }
+
+        /// <summary>The one-line form, cut to the cell so a long name does not run into its neighbour.</summary>
+        private static string FitOneLine(string text, float maxWidth)
+        {
+            EnsureCacheWidth(maxWidth);
+
+            if (SingleLineCache.TryGetValue(text, out string cached)) return cached;
+
+            string fitted = Width(text) <= maxWidth ? text : Truncate(text, maxWidth);
+
+            SingleLineCache[text] = fitted;
+            return fitted;
         }
 
         private static (string first, string second) BuildLines(string text, float maxWidth)
         {
-            if (!Mathf.Approximately(_lineCacheWidth, maxWidth))
-            {
-                _lineCacheWidth = maxWidth;
-                LineCache.Clear();
-            }
+            EnsureCacheWidth(maxWidth);
 
             if (LineCache.TryGetValue(text, out (string first, string second) cached)) return cached;
 
