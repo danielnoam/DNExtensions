@@ -10,6 +10,21 @@
     "scaleLockDefaultOn": false,
     "resetMenuItemsEnabled": true,
     "worldFieldsEnabled": true,
+    "uiPreviewEnabled": true,
+    "particlePreviewEnabled": true,
+    "particlePreviewAutoPlay": true,
+    "uiPreviewBackground": {
+        "r": 0.27044016122817995,
+        "g": 0.27044016122817995,
+        "b": 0.27044016122817995,
+        "a": 1.0
+    },
+    "particlePreviewBackground": {
+        "r": 0.21383637189865113,
+        "g": 0.21383637189865113,
+        "b": 0.21383637189865113,
+        "a": 1.0
+    },
     "saveInPlayModeEnabled": true,
     "saveInPlayModeBlacklist": [
         "UnityEngine.Canvas",

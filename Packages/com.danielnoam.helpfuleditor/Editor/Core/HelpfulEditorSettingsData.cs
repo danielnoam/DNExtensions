@@ -71,6 +71,22 @@ namespace DNExtensions.HelpfulEditor
         /// <summary>Adds world position, rotation and scale below the local rows on parented objects.</summary>
         public bool worldFieldsEnabled = true;
 
+        /// <summary>
+        /// Extra entries in the inspector's preview area. Both are additions beside Unity's own
+        /// preview rather than replacements for it, so switching either off leaves exactly what the
+        /// editor showed before — nothing at all for UI, and a static render for particles.
+        /// </summary>
+        public bool uiPreviewEnabled = true;
+        public bool particlePreviewEnabled = true;
+
+        /// <summary>Starts the effect on selection rather than waiting for the play button.</summary>
+        public bool particlePreviewAutoPlay = true;
+
+        /// <summary>What each preview clears to. Two of them, because a UI prefab is often checked
+        /// against a light background and an additive effect is lost on one.</summary>
+        public Color uiPreviewBackground = new Color(0.16f, 0.16f, 0.16f, 1f);
+        public Color particlePreviewBackground = new Color(0.13f, 0.13f, 0.14f, 1f);
+
         public bool saveInPlayModeEnabled = true;
 
         /// <summary>Component types that get no save button — ones whose state does not survive a restore usefully.</summary>

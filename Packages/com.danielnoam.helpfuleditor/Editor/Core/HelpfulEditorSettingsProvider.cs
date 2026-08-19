@@ -685,6 +685,37 @@ namespace DNExtensions.HelpfulEditor
                     }
                 }
 
+                if (Section(Inspector, "Preview"))
+                {
+                    EditorGUILayout.LabelField("Drag to orbit, middle-drag or Alt-drag to pan, scroll to zoom.", EditorStyles.miniLabel);
+
+                    settings.uiPreviewEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("UI Preview", "Adds a preview for UI prefabs, which Unity gives none — its own preview keeps only objects with a Renderer, and a CanvasRenderer is not one."),
+                        settings.uiPreviewEnabled);
+
+                    using (new EditorGUI.DisabledScope(!settings.uiPreviewEnabled))
+                    {
+                        settings.uiPreviewBackground = EditorGUILayout.ColorField(
+                            new GUIContent("UI Background", "What the UI preview clears to. Also on the preview's own toolbar, which is the quicker way to check a screen against light and dark."),
+                            settings.uiPreviewBackground);
+                    }
+
+                    settings.particlePreviewEnabled = EditorGUILayout.Toggle(
+                        new GUIContent("Particle Preview", "Adds a preview for particle prefabs that simulates. Unity's own is a single render of a system that was never run, which is why it looks empty."),
+                        settings.particlePreviewEnabled);
+
+                    using (new EditorGUI.DisabledScope(!settings.particlePreviewEnabled))
+                    {
+                        settings.particlePreviewAutoPlay = EditorGUILayout.Toggle(
+                            new GUIContent("Auto Play", "Start the effect as soon as it is selected, rather than waiting for the play button."),
+                            settings.particlePreviewAutoPlay);
+
+                        settings.particlePreviewBackground = EditorGUILayout.ColorField(
+                            new GUIContent("Particle Background", "What the particle preview clears to. Additive effects need somewhere dark to read against."),
+                            settings.particlePreviewBackground);
+                    }
+                }
+
                 if (Section(Inspector, "Save In Play Mode"))
                 {
                     settings.saveInPlayModeEnabled = EditorGUILayout.Toggle(
