@@ -61,6 +61,10 @@ namespace DNExtensions.HelpfulEditor.Inspector
             public ParticleSystem Root;
             public Bounds Bounds;
 
+            /// <summary>Whether <see cref="Bounds"/> holds an effect measured inside a canvas, which is
+            /// the mixed case — the flat frame comes from the canvas and this is folded into it.</summary>
+            public bool HasParticleBounds;
+
             /// <summary>Where this copy's simulation has got to, which is not where the clock is until
             /// it has been drawn. Negative until it has been simulated at all.</summary>
             public float SimulatedTo = -1f;
@@ -166,8 +170,12 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 // there is none until the canvas has been through a rebuild.
                 Canvas.ForceUpdateCanvases();
 
+                Bounds bounds = ContentBounds(entry.Stage.Instance);
+
+                if (entry.HasParticleBounds) bounds.Encapsulate(entry.Bounds);
+
                 float aspect = rect.height > 0f ? rect.width / rect.height : 1f;
-                _view.ApplyOrthographic(entry.Stage.Camera, ContentBounds(entry.Stage.Instance), aspect, 1.1f);
+                _view.ApplyOrthographic(entry.Stage.Camera, bounds, aspect, 1.1f);
             }
             else
             {
@@ -314,6 +322,16 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             if (entry.Ui) BuildCanvas(entry);
             else BuildSpatial(entry);
+
+            // A canvas prefab with an effect in it is simulated and controllable either way, but the
+            // frame it is drawn in comes from CanvasRenderers and a particle system is not one — so
+            // without this the effect plays outside the view. Sampled once, and after the canvas has
+            // settled where everything sits, since that is what puts the particles somewhere.
+            if (entry.Ui && entry.Root)
+            {
+                entry.Bounds = SampleBounds(entry);
+                entry.HasParticleBounds = true;
+            }
 
             // The opening angle follows whatever the first object turned out to be. Flat content seen
             // from three-quarters is a sliver, and a burst seen square-on is a smudge.

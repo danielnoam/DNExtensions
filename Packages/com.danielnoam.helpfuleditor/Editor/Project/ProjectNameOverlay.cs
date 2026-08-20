@@ -23,6 +23,13 @@ namespace DNExtensions.HelpfulEditor.Project
         /// <summary>The style the Project window labels its own grid rows with, selection highlight and all.</summary>
         private const string GridLabelStyleName = "ProjectBrowserGridLabel";
 
+        /// <summary>Breathing room between the name and the edge of the highlight around it.</summary>
+        private const float HighlightPadding = 10f;
+
+        /// <summary>How far the highlight sits above the first line, so its slack is shared between the
+        /// top and the bottom rather than all of it landing under the last line.</summary>
+        private const float HighlightLift = 2f;
+
         private static readonly char[] Separators = { ' ', '_', '-', '.' };
 
         // Path splitting allocates, and this runs for every visible row on every repaint.
@@ -47,7 +54,7 @@ namespace DNExtensions.HelpfulEditor.Project
         private static readonly GUIContent DrawContent = new GUIContent();
 
         private static GUIStyle _labelStyle;
-        private static bool _hasSkinStyle;
+        private static GUIStyle _highlightStyle;
         private static Color _backgroundColor;
         private static Color _selectedColor;
         private static float _lineCacheWidth = -1f;
@@ -94,25 +101,50 @@ namespace DNExtensions.HelpfulEditor.Project
             WidthCache.Clear();
         }
 
+        /// <summary>
+        /// Two styles, because they are two jobs. The highlight is Unity's own grid label, used for
+        /// nothing but its background — its shape, its colours, and the grey it turns when the window
+        /// loses focus, none of which is worth reproducing by hand. The text is ours, because the two
+        /// lines are measured and broken here and a style that brings its own padding, content offset
+        /// and alignment moves the name around inside a box sized by different arithmetic. Asking one
+        /// style to do both is what left a second line hanging outside the highlight.
+        /// </summary>
         private static void BuildStyle()
         {
-            // Built on the style the Project window labels its own grid rows with, so a selected name
-            // gets the highlight Unity draws for every other row — its shape, its colours, and the
-            // grey it turns when the window loses focus. Drawing that by hand meant a flat rectangle
-            // in a hardcoded blue that never greyed and never matched.
             GUIStyle skinStyle = GUI.skin.FindStyle(GridLabelStyleName);
 
-            _hasSkinStyle = skinStyle != null;
-            _labelStyle = skinStyle != null ? new GUIStyle(skinStyle) : new GUIStyle();
+            // Copied, never used directly: the skin's styles are shared, and a field set on one of
+            // them changes it everywhere Unity draws with it.
+            if (skinStyle != null)
+            {
+                _highlightStyle = new GUIStyle(skinStyle)
+                {
+                    // The reason a two-line name kept getting a one-line highlight. Unity's grid label
+                    // is a single row, so it pins its own height — and a style with fixedHeight set
+                    // renders at that height whatever rect it is handed, so nothing about the rect
+                    // this is drawn into could ever have made it taller.
+                    fixedHeight = 0f,
+                    fixedWidth = 0f,
+                    stretchHeight = true,
+                    stretchWidth = true
+                };
+            }
+            else
+            {
+                _highlightStyle = null;
+            }
 
-            _labelStyle.fontSize = 10;
-            _labelStyle.alignment = TextAnchor.UpperCenter;
+            _labelStyle = new GUIStyle
+            {
+                fontSize = 10,
+                alignment = TextAnchor.UpperCenter,
 
-            // Lines are worked out here rather than left to IMGUI, which breaks a long name at
-            // whatever character it runs out of room on.
-            _labelStyle.wordWrap = false;
-            _labelStyle.clipping = TextClipping.Overflow;
-            _labelStyle.margin = new RectOffset(0, 0, 0, 0);
+                // Lines are worked out here rather than left to IMGUI, which breaks a long name at
+                // whatever character it runs out of room on.
+                wordWrap = false,
+                clipping = TextClipping.Overflow,
+                margin = new RectOffset(0, 0, 0, 0)
+            };
 
             WidthCache.Clear();
 
@@ -253,42 +285,75 @@ namespace DNExtensions.HelpfulEditor.Project
 
             // Measured from the style rather than asked of CalcHeight: with wrapping off, the
             // reported height of a string containing a break is not reliably two lines' worth. The
-            // style's own padding has to be added — Unity's grid label carries some, and leaving it
-            // out sized the highlight to the text alone, so a second line hung below the box.
-            float textHeight = LabelStyle.lineHeight * lines + LabelStyle.padding.vertical;
-            Rect nameRect = new Rect(rowRect.x, rowRect.yMax - LabelInset, rowRect.width, textHeight + 2f);
+            // style is the plain one, which carries no padding of its own, so this is the whole of it.
+            float textHeight = LabelStyle.lineHeight * lines;
+            Rect nameRect = new Rect(rowRect.x, rowRect.yMax - LabelInset, rowRect.width, textHeight + 4f);
 
             // Covered in the plain background whatever the state, including selected: Unity's own
             // highlight is hidden along with the label it sits behind, and a new one is drawn below
             // around the name this actually shows. The backing is deliberately wider than the text
             // rect — Unity's label bleeds a few pixels past its bounds, and anything left showing
             // reads as a double-drawn name.
-            Rect backgroundRect = new Rect(nameRect.x - 6f, nameRect.y - 1f, nameRect.width + 12f, nameRect.height + 3f);
-            EditorGUI.DrawRect(backgroundRect, _backgroundColor);
-
             // Hugging the text rather than filling the cell, which is what Unity's own highlight does
             // and the largest part of why filling it looked wrong at bigger icon sizes.
-            float width = Mathf.Min(rowRect.width, LineWidth(text) + 6f);
-            Rect labelRect = new Rect(rowRect.x + (rowRect.width - width) * 0.5f, nameRect.y, width, nameRect.height);
+            float width = Mathf.Min(rowRect.width, LineWidth(text) + HighlightPadding);
+            float x = rowRect.x + (rowRect.width - width) * 0.5f;
 
-            if (_hasSkinStyle)
-            {
-                // Unity greys a selection while the window is not the focused one, and the style knows
-                // how — it only has to be told which of the two this is.
-                bool focused = HelpfulEditorWindows.IsProjectBrowser(EditorWindow.focusedWindow);
+            Rect textRect = new Rect(x, nameRect.y, width, nameRect.height);
 
-                LabelStyle.Draw(labelRect, DrawContent, false, false, selected, focused);
-                return;
-            }
+            // Lifted off the text rather than sharing its rect. Sharing it put the top edge exactly on
+            // the first line and left the whole of the slack under the last one, which reads as a box
+            // sitting too low behind the name.
+            Rect highlightRect = new Rect(x, nameRect.y - HighlightLift, width, nameRect.height);
 
-            // No such style on this skin. A flat fill at least reads as a selection.
-            if (selected) EditorGUI.DrawRect(labelRect, _selectedColor);
+            Rect backgroundRect = new Rect(nameRect.x - 6f, highlightRect.y - 1f, nameRect.width + 12f, nameRect.height + 5f);
+            EditorGUI.DrawRect(backgroundRect, _backgroundColor);
 
-            LabelStyle.normal.textColor = EditorGUIUtility.isProSkin || selected ? Color.white : Color.black;
+            // Unity greys a selection while its window is not the focused one, and the style knows how
+            // — it only has to be told which of the two this is.
+            bool focused = HelpfulEditorWindows.IsProjectBrowser(EditorWindow.focusedWindow);
+
+            if (selected) DrawHighlight(highlightRect, focused);
+
+            LabelStyle.normal.textColor = TextColor(selected, focused);
 
             // Intentionally does not consume the click: the row still has to handle selection,
             // double-click-to-open and click-to-rename.
-            GUI.Label(labelRect, DrawContent, LabelStyle);
+            GUI.Label(textRect, DrawContent, LabelStyle);
+        }
+
+        /// <summary>
+        /// Drawn with empty content on purpose. The style is here for its background and nothing else,
+        /// and handing it the name would let its own text metrics decide where the box ends.
+        /// </summary>
+        private static void DrawHighlight(Rect rect, bool focused)
+        {
+            if (_highlightStyle == null)
+            {
+                // No such style on this skin. A flat fill at least reads as a selection.
+                EditorGUI.DrawRect(rect, _selectedColor);
+                return;
+            }
+
+            _highlightStyle.Draw(rect, GUIContent.none, false, false, true, focused);
+        }
+
+        /// <summary>
+        /// Taken from whichever state the highlight was drawn in, so the name reads against it. Some
+        /// skins leave a state's colour unset, which arrives as transparent — drawing a name in
+        /// nothing is worse than the plain rule this replaced, so that falls back to it.
+        /// </summary>
+        private static Color TextColor(bool selected, bool focused)
+        {
+            Color fallback = EditorGUIUtility.isProSkin || selected ? Color.white : Color.black;
+
+            if (_highlightStyle == null) return fallback;
+
+            GUIStyleState state = selected
+                ? focused ? _highlightStyle.onFocused : _highlightStyle.onNormal
+                : _highlightStyle.normal;
+
+            return state != null && state.textColor.a > 0f ? state.textColor : fallback;
         }
 
         /// <summary>
