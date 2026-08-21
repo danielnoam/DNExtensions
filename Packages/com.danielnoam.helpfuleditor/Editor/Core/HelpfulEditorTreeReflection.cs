@@ -18,6 +18,23 @@ namespace DNExtensions.HelpfulEditor
     {
         private const BindingFlags AnyInstance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
+        /// <summary>
+        /// Resolved once. The lookup is by name against an assembly, which is not free, and the
+        /// entry points below reach for this type constantly — one of them on every editor tick the
+        /// cursor spends over the Project window.
+        /// </summary>
+        private static readonly Type ProjectBrowserType =
+            typeof(EditorWindow).Assembly.GetType("UnityEditor.ProjectBrowser");
+
+        /// <summary>
+        /// Members already looked up, by declaring type and name, with a null entry for one that is
+        /// not there. GetProperty and GetField were being run afresh on every read, and the answer
+        /// for a given type cannot change while the editor is loaded — a rebuild of the Project
+        /// tree topology alone asks for several per row.
+        /// </summary>
+        private static readonly Dictionary<(Type, string), MemberInfo> MemberCache =
+            new Dictionary<(Type, string), MemberInfo>();
+
         private static bool _warned;
         private static bool _foldAnimationWarned;
         private static bool _foldAnimationResolved;
@@ -125,11 +142,11 @@ namespace DNExtensions.HelpfulEditor
 
             try
             {
-                Type browserType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ProjectBrowser");
+                Type browserType = ProjectBrowserType;
                 EditorWindow window = FindWindow(browserType);
                 if (!window || !IsTwoColumnLayout(browserType, window)) return false;
 
-                object value = browserType.GetField("m_ListAreaRect", AnyInstance)?.GetValue(window);
+                object value = FindField(browserType, "m_ListAreaRect")?.GetValue(window);
                 if (value is Rect listAreaRect)
                 {
                     rect = listAreaRect;
@@ -173,7 +190,7 @@ namespace DNExtensions.HelpfulEditor
         /// </summary>
         private static bool IsTwoColumnLayout(Type browserType, EditorWindow window)
         {
-            return browserType.GetField("m_FolderTree", AnyInstance)?.GetValue(window) != null;
+            return FindField(browserType, "m_FolderTree")?.GetValue(window) != null;
         }
 
         /// <summary>
@@ -187,11 +204,11 @@ namespace DNExtensions.HelpfulEditor
 
             try
             {
-                Type browserType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ProjectBrowser");
+                Type browserType = ProjectBrowserType;
                 EditorWindow window = FindWindow(browserType);
                 if (!window) return hosts;
 
-                object listArea = browserType.GetField("m_ListArea", AnyInstance)?.GetValue(window);
+                object listArea = FindField(browserType, "m_ListArea")?.GetValue(window);
                 if (listArea == null) return hosts;
 
                 hosts.Add(listArea);
@@ -372,8 +389,7 @@ namespace DNExtensions.HelpfulEditor
         {
             try
             {
-                PropertyInfo property = item.GetType().GetProperty("hasChildren", AnyInstance);
-                object value = property?.GetValue(item);
+                object value = GetMemberValue(item, "hasChildren");
                 return !(value is bool hasChildren) || hasChildren;
             }
             catch (Exception e)
@@ -521,8 +537,8 @@ namespace DNExtensions.HelpfulEditor
                 EditorWindow window = FindWindow(windowType);
                 if (!window) return null;
 
-                object sceneHierarchy = windowType.GetProperty("sceneHierarchy", AnyInstance)?.GetValue(window)
-                                        ?? windowType.GetField("m_SceneHierarchy", AnyInstance)?.GetValue(window);
+                object sceneHierarchy = (FindMember(windowType, "sceneHierarchy") as PropertyInfo)?.GetValue(window)
+                                        ?? FindField(windowType, "m_SceneHierarchy")?.GetValue(window);
                 if (sceneHierarchy == null) return null;
 
                 return GetMemberValue(sceneHierarchy, "treeView") ?? GetMemberValue(sceneHierarchy, "m_TreeView");
@@ -543,12 +559,12 @@ namespace DNExtensions.HelpfulEditor
         {
             try
             {
-                Type browserType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ProjectBrowser");
+                Type browserType = ProjectBrowserType;
                 EditorWindow window = FindWindow(browserType);
                 if (!window) return null;
 
                 string fieldName = IsTwoColumnLayout(browserType, window) ? "m_FolderTree" : "m_AssetTree";
-                return browserType.GetField(fieldName, AnyInstance)?.GetValue(window);
+                return FindField(browserType, fieldName)?.GetValue(window);
             }
             catch (Exception e)
             {
@@ -706,7 +722,7 @@ namespace DNExtensions.HelpfulEditor
 
             try
             {
-                FieldInfo field = state.GetType().GetField("scrollPos", AnyInstance);
+                FieldInfo field = FindField(state.GetType(), "scrollPos");
                 if (field == null || field.FieldType != typeof(Vector2)) return false;
 
                 field.SetValue(state, new Vector2(0f, scroll));
@@ -725,13 +741,13 @@ namespace DNExtensions.HelpfulEditor
 
             try
             {
-                Type browserType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ProjectBrowser");
+                Type browserType = ProjectBrowserType;
                 EditorWindow window = FindWindow(browserType);
                 if (!window) return trees;
 
                 foreach (string fieldName in new[] { "m_AssetTree", "m_FolderTree" })
                 {
-                    object treeView = browserType.GetField(fieldName, AnyInstance)?.GetValue(window);
+                    object treeView = FindField(browserType, fieldName)?.GetValue(window);
                     if (treeView != null) trees.Add(treeView);
                 }
             }
@@ -768,10 +784,10 @@ namespace DNExtensions.HelpfulEditor
 
             try
             {
-                Type browserType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ProjectBrowser");
+                Type browserType = ProjectBrowserType;
                 if (browserType == null) return false;
 
-                FieldInfo listAreaField = browserType.GetField("m_ListArea", AnyInstance);
+                FieldInfo listAreaField = FindField(browserType, "m_ListArea");
 
                 foreach (EditorWindow window in HelpfulEditorWindows.AllProjectBrowsers())
                 {
@@ -820,16 +836,41 @@ namespace DNExtensions.HelpfulEditor
             return converted != null && converted.Equals(userData);
         }
 
+        /// <summary>
+        /// The member of this name on this type, resolved once and remembered — including the fact
+        /// that there is none, which is just as worth not repeating.
+        ///
+        /// Property first, then field, which is the order the value readers have always used. The
+        /// callers that want specifically a field ask for names Unity only ever gives to private
+        /// fields, so the two cannot collide in practice; if one ever did, the cast at those call
+        /// sites yields null and the call degrades to the same no-op as a missing member.
+        /// </summary>
+        private static MemberInfo FindMember(Type type, string memberName)
+        {
+            if (type == null || string.IsNullOrEmpty(memberName)) return null;
+
+            (Type, string) key = (type, memberName);
+            if (MemberCache.TryGetValue(key, out MemberInfo cached)) return cached;
+
+            MemberInfo member = (MemberInfo)type.GetProperty(memberName, AnyInstance)
+                                ?? type.GetField(memberName, AnyInstance);
+
+            MemberCache[key] = member;
+            return member;
+        }
+
+        private static FieldInfo FindField(Type type, string fieldName) => FindMember(type, fieldName) as FieldInfo;
+
         private static object GetMemberValue(object instance, string memberName)
         {
             if (instance == null) return null;
 
-            Type type = instance.GetType();
-            PropertyInfo property = type.GetProperty(memberName, AnyInstance);
-            if (property != null) return property.GetValue(instance);
-
-            FieldInfo field = type.GetField(memberName, AnyInstance);
-            return field?.GetValue(instance);
+            switch (FindMember(instance.GetType(), memberName))
+            {
+                case PropertyInfo property: return property.GetValue(instance);
+                case FieldInfo field: return field.GetValue(instance);
+                default: return null;
+            }
         }
 
         private static object InvokeWithId(object instance, string methodName, object rawId, params object[] extraArgs)

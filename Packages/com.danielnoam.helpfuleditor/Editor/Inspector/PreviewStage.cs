@@ -133,8 +133,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
         /// <summary>
         /// Repaints the inspector from outside a GUI callback, which is the one thing an animated
         /// preview cannot otherwise do: ObjectPreview is handed no window and owns no editor whose
-        /// Repaint it could call. Reached through FindObjectsOfTypeAll so that asking for the windows
-        /// cannot create one.
+        /// Repaint it could call. The windows are looked up rather than fetched so that asking for
+        /// them cannot create one.
         /// </summary>
         public static void RepaintInspectors()
         {
@@ -186,25 +186,18 @@ namespace DNExtensions.HelpfulEditor.Inspector
         }
 
         /// <summary>
-        /// The open inspectors. Both InspectorWindow and the floating PropertyEditor it derives from
-        /// are internal, so the base type is resolved by name and everything assignable to it counts;
-        /// where that fails the type names themselves are the fallback.
+        /// The open inspectors, from the shared window scan rather than a FindObjectsOfTypeAll of
+        /// this class's own. That call walks every loaded object in the editor, so it costs what the
+        /// project is big rather than what it returns — and RepaintInspectors runs thirty times a
+        /// second for as long as an animated preview is playing, which made this the one place in
+        /// the suite still paying that per frame.
+        ///
+        /// The scan it reads is up to a quarter second old, so an inspector opened by hand can miss
+        /// a frame or two of an animation before it starts being repainted. Every other module in
+        /// the suite already accepts that trade, and it is invisible against a preview that plays
+        /// for seconds.
         /// </summary>
-        private static IEnumerable<EditorWindow> Inspectors()
-        {
-            ResolveSelection();
-
-            foreach (EditorWindow window in Resources.FindObjectsOfTypeAll<EditorWindow>())
-            {
-                if (!window) continue;
-
-                bool match = _propertyEditorType != null
-                    ? _propertyEditorType.IsInstanceOfType(window)
-                    : window.GetType().Name == "InspectorWindow" || window.GetType().Name == "PropertyEditor";
-
-                if (match) yield return window;
-            }
-        }
+        private static IEnumerable<EditorWindow> Inspectors() => HelpfulEditorWindows.AllInspectors();
 
         private static void ResolveSelection()
         {

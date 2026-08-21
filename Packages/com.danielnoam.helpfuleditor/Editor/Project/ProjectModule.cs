@@ -15,19 +15,40 @@ namespace DNExtensions.HelpfulEditor.Project
     {
         private const float ListViewRowHeightLimit = 20f;
         private const double HoverTimeout = 0.25;
+
+        /// <summary>
+        /// How long the pane rect below is reused for. Reading it means finding the window and
+        /// reaching into it, and only a resize, a splitter drag or a layout switch can change the
+        /// answer — none of which the eye can follow inside this — where the tick it used to run on
+        /// fires whenever the editor feels like it.
+        /// </summary>
+        private const double ListAreaRectInterval = 0.25;
         private const float LabelIconGap = 2f;
         private const float LabelPadding = 6f;
 
         private static readonly List<Rect> IconRects = new List<Rect>();
         private static readonly GUIContent OverflowContent = new GUIContent();
-        private static readonly GUIContent MeasureContent = new GUIContent();
+
+        /// <summary>
+        /// The asset selection, refreshed once per pass. Selection.assetGUIDs builds a fresh array
+        /// on every read, so asking it per row meant one of those per visible row per repaint to
+        /// answer a question whose answer cannot change while a pass is running.
+        /// </summary>
+        private static readonly HashSet<string> SelectedGuids = new HashSet<string>(StringComparer.Ordinal);
 
         private static double _lastHoverTime;
+        private static double _lastListAreaScan;
         private static Rect _listAreaRect;
         private static bool _hasListAreaRect;
         private static string _lastMainGuid;
         private static float _lastMainX;
-        private static float _lastRowY;
+
+        /// <summary>
+        /// Starts high so the first row of the first pass is recognised as one. At zero it was not:
+        /// no row sits above the top of the window, so the opening sweep after a domain reload fell
+        /// through every check that a pass boundary gates.
+        /// </summary>
+        private static float _lastRowY = float.MaxValue;
         private static float _treeBaseX;
         private static bool _hasTreeBaseX;
 
@@ -75,7 +96,11 @@ namespace DNExtensions.HelpfulEditor.Project
 
             ProjectFolderHistory.RecordCurrentFolder();
 
-            _hasListAreaRect = HelpfulEditorTreeReflection.TryGetProjectListAreaRect(out _listAreaRect);
+            if (EditorApplication.timeSinceStartup - _lastListAreaScan >= ListAreaRectInterval)
+            {
+                _lastListAreaScan = EditorApplication.timeSinceStartup;
+                _hasListAreaRect = HelpfulEditorTreeReflection.TryGetProjectListAreaRect(out _listAreaRect);
+            }
 
             if (HelpfulEditorGUI.HotRegionAvailable) return;
 
@@ -168,7 +193,7 @@ namespace DNExtensions.HelpfulEditor.Project
 
             ProjectKeybinds.HandleRowInput(path, rowRect);
 
-            bool selected = Array.IndexOf(Selection.assetGUIDs, guid) >= 0;
+            bool selected = SelectedGuids.Contains(guid);
 
             if (!selected)
             {
@@ -205,7 +230,7 @@ namespace DNExtensions.HelpfulEditor.Project
             // overlay would draw the FBX's name and extension over a mesh or material row.
             bool subAsset = IsSubAssetRow(guid, rowRect, newPass);
 
-            if (!subAsset) ProjectNameOverlay.Draw(rowRect, path, isListView, isFolder, settings);
+            if (!subAsset) ProjectNameOverlay.Draw(rowRect, path, isListView, isFolder, selected, settings);
 
             if (settings.folderContentIconsEnabled && isFolder && isListView && !subAsset &&
                 (treeRow || settings.folderContentIconsInObjectView))
@@ -231,6 +256,9 @@ namespace DNExtensions.HelpfulEditor.Project
             _lastRowY = rowRect.y;
 
             if (!newPass) return false;
+
+            SelectedGuids.Clear();
+            foreach (string guid in Selection.assetGUIDs) SelectedGuids.Add(guid);
 
             // Reading the tree means finding the window, so it is skipped entirely when nothing is
             // going to ask for the answer.
@@ -349,9 +377,8 @@ namespace DNExtensions.HelpfulEditor.Project
         private static float LabelWidth(string path)
         {
             int slash = path.LastIndexOf('/');
-            MeasureContent.text = slash >= 0 ? path.Substring(slash + 1) : path;
 
-            return EditorStyles.label.CalcSize(MeasureContent).x;
+            return HelpfulEditorGUI.LabelWidth(slash >= 0 ? path.Substring(slash + 1) : path);
         }
 
         /// <summary>

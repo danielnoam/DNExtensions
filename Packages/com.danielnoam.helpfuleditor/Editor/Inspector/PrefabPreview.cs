@@ -329,8 +329,10 @@ namespace DNExtensions.HelpfulEditor.Inspector
             // settled where everything sits, since that is what puts the particles somewhere.
             if (entry.Ui && entry.Root)
             {
-                entry.Bounds = SampleBounds(entry);
-                entry.HasParticleBounds = true;
+                // Only when the effect actually drew something. Nothing found means nothing to widen
+                // the frame for, and the fallback box would push it out for no reason.
+                entry.Bounds = SampleBounds(entry, out bool found);
+                entry.HasParticleBounds = found;
             }
 
             // The opening angle follows whatever the first object turned out to be. Flat content seen
@@ -390,7 +392,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             entry.Stage.AmbientColor = new Color(0.6f, 0.6f, 0.6f, 1f);
 
-            entry.Bounds = entry.Root ? SampleBounds(entry) : StaticBounds(entry.Stage.Instance);
+            entry.Bounds = entry.Root ? SampleBounds(entry, out _) : StaticBounds(entry.Stage.Instance);
         }
 
         /// <summary>
@@ -442,7 +444,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
         /// at t=0, and a camera framed on that would sit inside the effect it is meant to show. Fixed
         /// afterwards, because a camera that refits itself every frame reads as the effect shrinking.
         /// </summary>
-        private static Bounds SampleBounds(Entry entry)
+        private static Bounds SampleBounds(Entry entry, out bool found)
         {
             float span = Mathf.Max(0.1f, Mathf.Min(entry.Root.main.duration, 3f));
 
@@ -457,6 +459,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
                 Encapsulate(entry.Stage.Instance, ref bounds, ref any);
             }
+
+            found = any;
 
             if (!any) return new Bounds(entry.Stage.Instance.transform.position, Vector3.one);
 
@@ -481,6 +485,13 @@ namespace DNExtensions.HelpfulEditor.Inspector
         {
             foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>(false))
             {
+                // A switched-off renderer draws nothing, so framing around it frames around nothing.
+                // It matters most for UI: ParticleEffectForUGUI disables the ParticleSystemRenderer
+                // and bakes the mesh into a CanvasRenderer instead, and the disabled renderer still
+                // reports the bounds of particles simulating in world units — inside a canvas measured
+                // in pixels, which blew the frame up until the UI was a speck in the middle of it.
+                if (!renderer.enabled) continue;
+
                 Bounds current = renderer.bounds;
                 if (current.size == Vector3.zero) continue;
 

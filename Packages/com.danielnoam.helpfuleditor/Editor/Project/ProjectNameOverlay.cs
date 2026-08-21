@@ -160,7 +160,7 @@ namespace DNExtensions.HelpfulEditor.Project
             }
         }
 
-        public static void Draw(Rect rowRect, string assetPath, bool isListView, bool isFolder, ProjectSettings settings)
+        public static void Draw(Rect rowRect, string assetPath, bool isListView, bool isFolder, bool selected, ProjectSettings settings)
         {
             if (string.IsNullOrEmpty(assetPath)) return;
 
@@ -179,7 +179,7 @@ namespace DNExtensions.HelpfulEditor.Project
 
             if (!settings.twoLineNamesEnabled && !showExtension) return;
 
-            DrawGridLabel(rowRect, assetPath, settings.twoLineNamesEnabled, showExtension);
+            DrawGridLabel(rowRect, assetPath, settings.twoLineNamesEnabled, showExtension, selected);
         }
 
         private static (string name, string extension) Split(string assetPath)
@@ -198,15 +198,12 @@ namespace DNExtensions.HelpfulEditor.Project
             (string name, string extension) = Split(assetPath);
             if (string.IsNullOrEmpty(extension)) return;
 
-            Object asset = AssetDatabase.LoadMainAssetAtPath(assetPath);
-            if (!asset || IsRenaming(asset)) return;
+            if (IsRenaming(assetPath)) return;
 
-            MeasureContent.text = name;
-            float nameWidth = EditorStyles.label.CalcSize(MeasureContent).x;
+            float nameWidth = HelpfulEditorGUI.LabelWidth(name);
             float x = rowRect.x + rowRect.height + ListLabelGap + nameWidth;
 
-            MeasureContent.text = extension;
-            float extensionWidth = EditorStyles.label.CalcSize(MeasureContent).x;
+            float extensionWidth = HelpfulEditorGUI.LabelWidth(extension);
 
             // No room means Unity already ellipsised the name, and an extension tacked onto "Foo…"
             // would read as part of the name.
@@ -237,18 +234,20 @@ namespace DNExtensions.HelpfulEditor.Project
             return widest;
         }
 
-        private static void DrawGridLabel(Rect rowRect, string assetPath, bool wrap, bool showExtension)
+        /// <param name="selected">
+        /// Whether the row is in the selection. Handed down rather than asked of Selection here: the
+        /// caller has already settled it for this row, and answering it again meant loading the asset
+        /// purely to have something to pass to Selection.Contains.
+        /// </param>
+        private static void DrawGridLabel(Rect rowRect, string assetPath, bool wrap, bool showExtension, bool selected)
         {
             // GUIStyle.Draw is a repaint-only call, and nothing here is anything but drawing — no
             // control is claimed, so there is nothing for the other events to do either.
             if (Event.current.type != EventType.Repaint) return;
 
-            Object asset = AssetDatabase.LoadMainAssetAtPath(assetPath);
-            if (!asset) return;
-
             // While a rename is in progress the row hosts a live text field — drawing over it would
             // cover what is being typed.
-            if (IsRenaming(asset)) return;
+            if (IsRenaming(assetPath)) return;
 
             (string name, string extension) = Split(assetPath);
             string text = showExtension ? name + extension : name;
@@ -280,8 +279,6 @@ namespace DNExtensions.HelpfulEditor.Project
 
             DrawContent.text = text;
             DrawContent.tooltip = string.Empty;
-
-            bool selected = Selection.Contains(asset);
 
             // Measured from the style rather than asked of CalcHeight: with wrapping off, the
             // reported height of a string containing a break is not reliably two lines' worth. The
@@ -366,12 +363,20 @@ namespace DNExtensions.HelpfulEditor.Project
         /// The flag is still the first thing checked, as the cheap half: a rename is always a focused
         /// text field, so with nothing being typed anywhere there is nothing to look up. It is only
         /// the converse that does not hold, and the lookup is what settles that.
+        ///
+        /// Takes the path rather than the asset so the flag is reached before anything is loaded.
+        /// The callers used to load the asset to hand it over, which meant every visible row of every
+        /// repaint went through LoadMainAssetAtPath — and that deserialises anything not already in
+        /// memory, so scrolling a folder of textures pulled the lot in to answer a question that is
+        /// almost always no.
         /// </summary>
-        private static bool IsRenaming(Object asset)
+        private static bool IsRenaming(string assetPath)
         {
             if (!EditorGUIUtility.editingTextField) return false;
 
-            return HelpfulEditorTreeReflection.IsProjectRenaming(HelpfulEditorObjectId.Raw(asset));
+            Object asset = AssetDatabase.LoadMainAssetAtPath(assetPath);
+
+            return asset && HelpfulEditorTreeReflection.IsProjectRenaming(HelpfulEditorObjectId.Raw(asset));
         }
 
         /// <summary>Break points and cut points were measured against a width, so they mean nothing once it changes.</summary>

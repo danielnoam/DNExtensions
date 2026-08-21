@@ -29,6 +29,24 @@ namespace DNExtensions.HelpfulEditor
         private static readonly HashSet<string> MissingIcons = new HashSet<string>();
         private static GUIStyle _badgeStyle;
 
+        /// <summary>
+        /// Widths of strings drawn in the standard label style. Measuring text is the expensive part
+        /// of placing anything beside a row's own name, and the rows that need it — the Hierarchy's
+        /// component strip, the Project window's folder icons and badges — ask for the same handful
+        /// of names on every repaint.
+        /// </summary>
+        private static readonly Dictionary<string, float> LabelWidths = new Dictionary<string, float>();
+
+        /// <summary>
+        /// Past this the cache is dropped whole. Names are only added as rows draw them, so reaching
+        /// it at all means a project big enough that holding every name measured this session is the
+        /// larger cost of the two.
+        /// </summary>
+        private const int MaxLabelWidths = 4096;
+
+        private static readonly GUIContent MeasureContent = new GUIContent();
+        private static GUIStyle _measuredStyle;
+
         private static MethodInfo _loadIcon;
         private static bool _loadIconResolved;
         private static bool _builtInIconsAreProSkin;
@@ -38,6 +56,19 @@ namespace DNExtensions.HelpfulEditor
         private static MethodInfo _unclipToWindow;
         private static bool _hotRegionResolved;
         private static bool _hotRegionAvailable;
+
+        // The bound form of the two calls above, which is what MarkInteractive uses when the runtime
+        // will hand it one. MarkHotRegion is bound closed over the view rather than left open — its
+        // declaring type is internal and cannot be named in a delegate signature here.
+        private static Func<Rect, Rect> _unclipBound;
+        private static Action<Rect> _markHotRegionBound;
+        private static object _boundView;
+        private static bool _bindingUnavailable;
+
+        // Reused by the fallback path. Fresh arrays there were the bulk of what marking a row cost,
+        // and the calls run one after another rather than nested, so one buffer each is enough.
+        private static readonly object[] UnclipArgs = new object[1];
+        private static readonly object[] MarkArgs = new object[1];
 
         /// <summary>
         /// Whether rows can register themselves as interactive, which is what makes the editor
@@ -89,6 +120,41 @@ namespace DNExtensions.HelpfulEditor
             : new Color(0.65f, 0.65f, 0.65f);
 
         /// <summary>Expands a row's selection rect to span the full window width so backgrounds cover the whole row.</summary>
+        /// <summary>
+        /// Width of a string drawn in the standard label style, remembered between calls.
+        ///
+        /// Callers use this to find where a row's own name ends so they can place something after
+        /// it, which means measuring the same name on every repaint of every row that has one.
+        /// CalcSize is not cheap enough to spend that way.
+        ///
+        /// The cache is dropped when the style is rebuilt — which the editor does on a theme change
+        /// and across a play mode transition — since a width measured against the old font says
+        /// nothing about the new one. Comparing the style instance catches both without this having
+        /// to subscribe to either.
+        /// </summary>
+        public static float LabelWidth(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return 0f;
+
+            GUIStyle style = EditorStyles.label;
+
+            if (!ReferenceEquals(style, _measuredStyle))
+            {
+                _measuredStyle = style;
+                LabelWidths.Clear();
+            }
+
+            if (LabelWidths.TryGetValue(text, out float cached)) return cached;
+
+            MeasureContent.text = text;
+            float width = style.CalcSize(MeasureContent).x;
+
+            if (LabelWidths.Count >= MaxLabelWidths) LabelWidths.Clear();
+            LabelWidths[text] = width;
+
+            return width;
+        }
+
         public static Rect FullRowRect(Rect rowRect)
         {
             float right = Mathf.Max(rowRect.xMax, EditorGUIUtility.currentViewWidth);
@@ -113,8 +179,15 @@ namespace DNExtensions.HelpfulEditor
                 object view = _guiViewCurrent.GetValue(null);
                 if (view == null) return;
 
-                object unclipped = _unclipToWindow.Invoke(null, new object[] { rect });
-                _markHotRegion.Invoke(view, new[] { unclipped });
+                if (TryBind(view))
+                {
+                    _markHotRegionBound(_unclipBound(rect));
+                    return;
+                }
+
+                UnclipArgs[0] = rect;
+                MarkArgs[0] = _unclipToWindow.Invoke(null, UnclipArgs);
+                _markHotRegion.Invoke(view, MarkArgs);
             }
             catch (Exception e)
             {
@@ -122,6 +195,47 @@ namespace DNExtensions.HelpfulEditor
                 // than retried for every row of every repaint.
                 _hotRegionAvailable = false;
                 Debug.LogWarning($"[HelpfulEditor] Hover repaints fall back to polling on this Unity version. ({e.Message})");
+            }
+        }
+
+        /// <summary>
+        /// Binds the two internals as delegates, which is what takes marking a row from two
+        /// reflective invocations and four allocations down to two direct calls and none. Worth the
+        /// trouble because this runs for every visible row of every repaint, and the Hierarchy
+        /// repaints on every mouse move across it.
+        ///
+        /// The view is only rebound when the drawing moves to another window, so one binding covers
+        /// a whole window's sweep rather than a single row of it.
+        ///
+        /// False where the runtime declines to bind — MarkHotRegion is internal, and binding a
+        /// non-public method is a stricter ask than invoking one. That leaves the reflective path to
+        /// do the work, which is slower rather than broken, so it is deliberately not a reason to
+        /// give up on hover repaints the way a genuinely missing member is.
+        /// </summary>
+        private static bool TryBind(object view)
+        {
+            if (_bindingUnavailable) return false;
+
+            try
+            {
+                _unclipBound ??= (Func<Rect, Rect>)_unclipToWindow.CreateDelegate(typeof(Func<Rect, Rect>));
+
+                if (!ReferenceEquals(view, _boundView))
+                {
+                    _markHotRegionBound = (Action<Rect>)_markHotRegion.CreateDelegate(typeof(Action<Rect>), view);
+                    _boundView = view;
+                }
+
+                return true;
+            }
+            catch (Exception)
+            {
+                _bindingUnavailable = true;
+                _unclipBound = null;
+                _markHotRegionBound = null;
+                _boundView = null;
+
+                return false;
             }
         }
 

@@ -21,7 +21,6 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         private static readonly List<Transform> AncestorBuffer = new List<Transform>();
         private static readonly List<bool> LastOnPathBuffer = new List<bool>();
         private static readonly GUIContent BadgeContent = new GUIContent();
-        private static readonly GUIContent MeasureContent = new GUIContent();
         private static readonly string[] CachedCounts = BuildCountLabels();
 
         private static float _lastRowY;
@@ -213,8 +212,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             Rect badgeRect;
             if (settings.childCountPosition == BadgePosition.LeftOfName)
             {
-                MeasureContent.text = gameObject.name;
-                float nameWidth = EditorStyles.label.CalcSize(MeasureContent).x;
+                float nameWidth = HelpfulEditorGUI.LabelWidth(gameObject.name);
                 badgeRect = new Rect(rowRect.x + IconWidth + nameWidth + 4f, rowRect.y, BadgeWidth, rowRect.height);
             }
             else

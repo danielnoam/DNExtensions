@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -35,6 +36,22 @@ namespace DNExtensions.HelpfulEditor.Viewport
 
         private static readonly SceneViewGuideGeometry Geometry = new SceneViewGuideGeometry();
 
+        /// <summary>
+        /// The drawer on each Scene View that has been asked about, with a null entry meaning the
+        /// view has been stood down and has none.
+        ///
+        /// Kept because <see cref="Process"/> runs on every scene event rather than only on repaint —
+        /// a mouse move across the view is several — and resolving the drawer by query there meant
+        /// walking the whole visual tree, overlay canvas included, that many times a second. The
+        /// null entries matter as much as the live ones: with the feature off there is nothing to
+        /// find, and it was the search for it that cost the most. The Game View's overlay is kept
+        /// the same way, for the same reason.
+        /// </summary>
+        private static readonly Dictionary<SceneView, SceneViewGuidesDrawer> Drawers =
+            new Dictionary<SceneView, SceneViewGuidesDrawer>();
+
+        private static readonly List<SceneView> ClosedViews = new List<SceneView>();
+
         public static void Process(SceneView sceneView, SceneViewSettings settings)
         {
             SceneViewGuidesDrawer drawer = SyncDrawer(sceneView, settings);
@@ -66,6 +83,8 @@ namespace DNExtensions.HelpfulEditor.Viewport
         {
             SceneViewSettings settings = HelpfulEditorSettings.SceneView;
 
+            PruneClosedViews();
+
             foreach (SceneView sceneView in SceneView.sceneViews)
             {
                 SyncDrawer(sceneView, settings)?.RefreshLayout();
@@ -73,6 +92,23 @@ namespace DNExtensions.HelpfulEditor.Viewport
 
             SceneViewGuidesOverlay.RefreshVisibility();
             SceneView.RepaintAll();
+        }
+
+        /// <summary>
+        /// Drops entries for views that have since closed. Nothing would go wrong without it — a
+        /// closed view is never handed to Process again, so its entry is simply never read — but the
+        /// map would otherwise grow for as long as the session lasts.
+        /// </summary>
+        private static void PruneClosedViews()
+        {
+            ClosedViews.Clear();
+
+            foreach (SceneView sceneView in Drawers.Keys)
+            {
+                if (!sceneView) ClosedViews.Add(sceneView);
+            }
+
+            foreach (SceneView sceneView in ClosedViews) Drawers.Remove(sceneView);
         }
 
         /// <summary>
@@ -146,22 +182,64 @@ namespace DNExtensions.HelpfulEditor.Viewport
         /// </summary>
         private static SceneViewGuidesDrawer SyncDrawer(SceneView sceneView, SceneViewSettings settings)
         {
-            VisualElement root = sceneView ? sceneView.rootVisualElement : null;
+            if (!sceneView) return null;
+
+            bool wanted = settings.moduleEnabled && settings.guidesEnabled;
+
+            if (Drawers.TryGetValue(sceneView, out SceneViewGuidesDrawer cached))
+            {
+                if (!wanted)
+                {
+                    // Already stood down: nothing attached, so nothing to go looking for either.
+                    if (cached == null) return null;
+
+                    cached.RemoveFromHierarchy();
+                    Drawers[sceneView] = null;
+
+                    return null;
+                }
+
+                // Still parented means still attached, which is the whole question the query below
+                // exists to answer. A detached one falls through and is resolved properly.
+                if (cached != null && cached.parent != null) return cached;
+            }
+
+            return Resolve(sceneView, wanted);
+        }
+
+        /// <summary>
+        /// The full path, which is the one that touches the tree: whatever is already on the view is
+        /// found, and one is attached if the view should have a drawer and does not. Only reached
+        /// where the cache cannot answer — a view drawing for the first time, one whose drawer was
+        /// detached from under it, or the first event after a settings change or a domain reload.
+        ///
+        /// The query is kept rather than trusting the cache outright because switching the feature
+        /// off has to leave nothing behind whatever the cache happens to know, and after a reload it
+        /// knows nothing at all.
+        /// </summary>
+        private static SceneViewGuidesDrawer Resolve(SceneView sceneView, bool wanted)
+        {
+            VisualElement root = sceneView.rootVisualElement;
             if (root == null) return null;
 
-            SceneViewGuidesDrawer existing = root.Q<SceneViewGuidesDrawer>(SceneViewGuidesDrawer.OverlayName);
+            SceneViewGuidesDrawer drawer = root.Q<SceneViewGuidesDrawer>(SceneViewGuidesDrawer.OverlayName);
 
-            if (!settings.moduleEnabled || !settings.guidesEnabled)
+            if (!wanted)
             {
-                existing?.RemoveFromHierarchy();
+                drawer?.RemoveFromHierarchy();
+                Drawers[sceneView] = null;
+
                 return null;
             }
 
-            if (existing != null) return existing;
+            if (drawer == null)
+            {
+                drawer = new SceneViewGuidesDrawer(sceneView);
+                root.Add(drawer);
+                PlaceBelowOverlays(root, drawer);
+            }
 
-            SceneViewGuidesDrawer drawer = new SceneViewGuidesDrawer(sceneView);
-            root.Add(drawer);
-            PlaceBelowOverlays(root, drawer);
+            Drawers[sceneView] = drawer;
 
             return drawer;
         }

@@ -23,7 +23,6 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         private static readonly List<Component> Buffer = new List<Component>();
         private static readonly List<Rect> IconRects = new List<Rect>();
         private static readonly GUIContent OverflowContent = new GUIContent();
-        private static readonly GUIContent MeasureContent = new GUIContent();
 
         private static Component _pendingQuickEdit;
         private static Vector2 _pendingScreenPosition;
@@ -73,7 +72,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             HelpfulEditorGUI.GetDisplayComponents(gameObject, settings.excludedComponentTypes, components);
             if (components.Count == 0) return 0f;
 
-            float labelEnd = rowRect.x + HierarchyModule.IconWidth + LabelWidth(gameObject.name) + LabelPadding;
+            float labelEnd = rowRect.x + HierarchyModule.IconWidth + HelpfulEditorGUI.LabelWidth(gameObject.name) + LabelPadding;
             if (labelEnd >= rowRect.xMax) return 0f;
 
             Rect area = Rect.MinMaxRect(labelEnd, rowRect.y, rowRect.xMax, rowRect.yMax);
@@ -140,12 +139,6 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         private static bool Hovered(Rect rect, Event evt)
         {
             return evt != null && rect.Contains(evt.mousePosition);
-        }
-
-        private static float LabelWidth(string name)
-        {
-            MeasureContent.text = name;
-            return EditorStyles.label.CalcSize(MeasureContent).x;
         }
 
         /// <summary>

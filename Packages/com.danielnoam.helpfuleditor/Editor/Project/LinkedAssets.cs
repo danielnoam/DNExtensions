@@ -24,8 +24,23 @@ namespace DNExtensions.HelpfulEditor.Project
 
         private static GUIStyle _badgeStyle;
 
-        /// <summary>Cached per project change: every row asks about the same handful of folders.</summary>
-        private static readonly Dictionary<string, bool> SymlinkCache = new Dictionary<string, bool>();
+        /// <summary>What a tracked folder turned out to be on disk.</summary>
+        private enum LinkState
+        {
+            Missing,
+            RealFolder,
+            Symlink
+        }
+
+        /// <summary>
+        /// Cached per project change: every row asks about the same handful of folders.
+        ///
+        /// Existence is kept alongside the link state rather than asked separately. One probe of the
+        /// directory answers both, and the row needs both — a folder that is not there draws nothing,
+        /// a real one draws the broken badge — so splitting them meant a Directory.Exists on every
+        /// repaint of every tracked row, uncached, beside a link check that was already cached.
+        /// </summary>
+        private static readonly Dictionary<string, LinkState> StateCache = new Dictionary<string, LinkState>();
 
         [InitializeOnLoadMethod]
         private static void Initialize()
@@ -36,7 +51,7 @@ namespace DNExtensions.HelpfulEditor.Project
             EditorApplication.delayCall += WarnAboutBrokenLinks;
         }
 
-        private static void Invalidate() => SymlinkCache.Clear();
+        private static void Invalidate() => StateCache.Clear();
 
         /// <summary>
         /// One report per editor session. A folder that has lost its link is a real problem, but it
@@ -53,13 +68,10 @@ namespace DNExtensions.HelpfulEditor.Project
             foreach (string folder in settings.linkedAssetFolders)
             {
                 if (string.IsNullOrWhiteSpace(folder)) continue;
-                if (!Directory.Exists(FullPath(folder))) continue;
+                if (StateOf(folder) != LinkState.RealFolder) continue;
 
-                if (!IsSymlink(folder))
-                {
-                    Debug.LogError($"[HelpfulEditor] Assets/{folder} is a real folder, not a symlink. " +
-                                   "Anything placed there will not reach the linked location. Recreate the link from Tools/DNExtensions/Linked Assets.");
-                }
+                Debug.LogError($"[HelpfulEditor] Assets/{folder} is a real folder, not a symlink. " +
+                               "Anything placed there will not reach the linked location. Recreate the link from Tools/DNExtensions/Linked Assets.");
             }
         }
 
@@ -79,9 +91,10 @@ namespace DNExtensions.HelpfulEditor.Project
 
         public static void Draw(Rect rowRect, string folder, bool isListView)
         {
-            if (!Directory.Exists(FullPath(folder))) return;
+            LinkState state = StateOf(folder);
+            if (state == LinkState.Missing) return;
 
-            bool linked = IsSymlink(folder);
+            bool linked = state == LinkState.Symlink;
 
             if (!linked) EditorGUI.DrawRect(rowRect, BrokenRowTint);
 
@@ -109,28 +122,35 @@ namespace DNExtensions.HelpfulEditor.Project
         {
             if (!isListView) return new Rect(rowRect.x + 4f, rowRect.y + 4f, 64f, 16f);
 
-            float nameWidth = EditorStyles.label.CalcSize(new GUIContent(folder)).x;
+            float nameWidth = HelpfulEditorGUI.LabelWidth(folder);
             return new Rect(rowRect.x + HelpfulEditorGUI.IndentWidth + nameWidth + 10f, rowRect.y, 72f, rowRect.height);
         }
 
-        private static bool IsSymlink(string folder)
+        private static LinkState StateOf(string folder)
         {
-            if (SymlinkCache.TryGetValue(folder, out bool cached)) return cached;
+            if (StateCache.TryGetValue(folder, out LinkState cached)) return cached;
 
-            bool result = false;
+            LinkState state = LinkState.Missing;
 
             try
             {
                 DirectoryInfo info = new DirectoryInfo(FullPath(folder));
-                result = info.Exists && (info.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint;
+
+                if (info.Exists)
+                {
+                    state = (info.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint
+                        ? LinkState.Symlink
+                        : LinkState.RealFolder;
+                }
             }
             catch (Exception)
             {
-                // An unreadable folder is reported as unlinked rather than crashing the row draw.
+                // An unreadable folder is reported as missing rather than crashing the row draw,
+                // which is what Directory.Exists answered for one too — it swallows the same faults.
             }
 
-            SymlinkCache[folder] = result;
-            return result;
+            StateCache[folder] = state;
+            return state;
         }
 
         public static string FullPath(string folder) => Path.Combine(Application.dataPath, folder);
