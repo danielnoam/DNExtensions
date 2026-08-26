@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Playables;
 
 namespace DNExtensions.HelpfulEditor.Inspector
 {
@@ -36,6 +37,10 @@ namespace DNExtensions.HelpfulEditor.Inspector
         /// with it, and a scrub bar that moves while you watch it is one you cannot aim at.</summary>
         private const float TimeLabelWidth = 46f;
 
+        /// <summary>How often the frame is measured. A popup animating under it moves by less than
+        /// the padding between one of these and the next, so the frame reads as still either way.</summary>
+        private const double FrameMeasureInterval = 1.0 / 4.0;
+
         private const float ScrubWidth = 110f;
         private const float SwatchWidth = 38f;
 
@@ -58,7 +63,21 @@ namespace DNExtensions.HelpfulEditor.Inspector
             /// <summary>Drawn through a canvas and framed flat-on. Decided per object, not per selection.</summary>
             public bool Ui;
 
-            public ParticleSystem Root;
+            /// <summary>Every particle system that no other one contains. Simulate reaches a
+            /// system's own children and nothing else, and a popup keeps its effects in branches all
+            /// over the hierarchy, so stepping only the first one found leaves the rest cleared.</summary>
+            public ParticleSystem[] Roots;
+
+            /// <summary>What a template is actually animated by. The particles are the decoration on
+            /// top of a timeline, and previewing the decoration without it shows the prefab in the
+            /// state the animation is supposed to open from — half of it scaled to nothing.</summary>
+            public PlayableDirector[] Directors;
+
+            /// <summary>The canvas the copy is drawn through, which is the screen this content would
+            /// occupy. Framing is held to it: an effect's rect, or a backdrop scaled up to cover any
+            /// aspect, reaches far outside the screen and is not a thing anybody is looking at.</summary>
+            public RectTransform CanvasRect;
+
             public Bounds Bounds;
 
             /// <summary>Whether <see cref="Bounds"/> holds an effect measured inside a canvas, which is
@@ -68,9 +87,32 @@ namespace DNExtensions.HelpfulEditor.Inspector
             /// <summary>Where this copy's simulation has got to, which is not where the clock is until
             /// it has been drawn. Negative until it has been simulated at all.</summary>
             public float SimulatedTo = -1f;
+
+            /// <summary>The last frame measured, and when. Kept because the measure is the expensive
+            /// half of a repaint and the answer does not visibly change between one and the next.</summary>
+            public Bounds Framed;
+
+            public double FramedAt = double.NegativeInfinity;
+
+            public bool HasRoots => Roots != null && Roots.Length > 0;
+
+            public bool HasDirectors => Directors != null && Directors.Length > 0;
+
+            public bool Playable => HasRoots || HasDirectors;
         }
 
         private readonly Dictionary<GameObject, Entry> _entries = new Dictionary<GameObject, Entry>();
+
+        /// <summary>
+        /// Reused rather than returned fresh from every measure. The framing walks every graphic in
+        /// the prefab, a popup carries a couple of hundred of them, and this runs on a repaint —
+        /// which made the allocations, not the maths, the cost of keeping a preview on screen.
+        /// </summary>
+        private static readonly List<CanvasRenderer> RendererBuffer = new List<CanvasRenderer>();
+
+        private static readonly List<RectTransform> RectBuffer = new List<RectTransform>();
+
+        private static readonly Vector3[] CornerBuffer = new Vector3[4];
 
         private PreviewViewControls _view = new PreviewViewControls(SpatialAngles);
 
@@ -154,7 +196,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
                 return;
             }
 
-            if (entry.Root) SyncToClock(entry);
+            if (entry.Playable) SyncToClock(entry);
 
             InspectorSettings settings = HelpfulEditorSettings.Inspector;
 
@@ -167,15 +209,13 @@ namespace DNExtensions.HelpfulEditor.Inspector
             if (entry.Ui)
             {
                 // The rects are measured from built geometry, and on the first render of a selection
-                // there is none until the canvas has been through a rebuild.
+                // there is none until the canvas has been through a rebuild. Left on every repaint
+                // rather than folded into the throttled measure below, because it is what keeps the
+                // geometry being drawn current and not only what is being measured.
                 Canvas.ForceUpdateCanvases();
 
-                Bounds bounds = ContentBounds(entry.Stage.Instance);
-
-                if (entry.HasParticleBounds) bounds.Encapsulate(entry.Bounds);
-
                 float aspect = rect.height > 0f ? rect.width / rect.height : 1f;
-                _view.ApplyOrthographic(entry.Stage.Camera, bounds, aspect, 1.1f);
+                _view.ApplyOrthographic(entry.Stage.Camera, FrameBounds(entry), aspect, 1.1f);
             }
             else
             {
@@ -310,12 +350,16 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             if (settings.particlePreviewEnabled)
             {
-                entry.Root = instance.GetComponentInChildren<ParticleSystem>(true);
+                entry.Roots = ParticleRoots(instance);
 
                 // Before anything simulates, including the bounds sample below — a seed changed after
                 // that sample would mean the effect was framed on a take other than the one played.
-                if (entry.Root) FixSeeds(instance);
+                if (entry.HasRoots) FixSeeds(instance);
             }
+
+            entry.Directors = instance.GetComponentsInChildren<PlayableDirector>(true);
+
+            PrepareDirectors(entry);
 
             Camera camera = entry.Stage.Camera;
             camera.clearFlags = CameraClearFlags.SolidColor;
@@ -327,7 +371,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
             // frame it is drawn in comes from CanvasRenderers and a particle system is not one — so
             // without this the effect plays outside the view. Sampled once, and after the canvas has
             // settled where everything sits, since that is what puts the particles somewhere.
-            if (entry.Ui && entry.Root)
+            if (entry.Ui && entry.HasRoots)
             {
                 // Only when the effect actually drew something. Nothing found means nothing to widen
                 // the frame for, and the fallback box would push it out for no reason.
@@ -339,11 +383,11 @@ namespace DNExtensions.HelpfulEditor.Inspector
             // from three-quarters is a sliver, and a burst seen square-on is a smudge.
             if (_entries.Count == 1) _view = new PreviewViewControls(entry.Ui ? FlatAngles : SpatialAngles);
 
-            if (!entry.Root) return;
+            if (!entry.Playable) return;
 
             // The bar spans the longest of the selection, so a short effect sits still at the end
             // rather than the long one being cut off.
-            _length = Mathf.Max(_length, Length(entry.Root));
+            _length = Mathf.Max(_length, Length(entry));
 
             SetPlaying(_playing || settings.particlePreviewAutoPlay);
         }
@@ -380,8 +424,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             Canvas own = entry.Stage.Instance.GetComponent<Canvas>();
 
-            if (own) UseOwnCanvas(entry.Stage, own);
-            else WrapInCanvas(entry.Stage);
+            entry.CanvasRect = own ? UseOwnCanvas(entry.Stage, own) : WrapInCanvas(entry.Stage);
         }
 
         private static void BuildSpatial(Entry entry)
@@ -392,7 +435,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             entry.Stage.AmbientColor = new Color(0.6f, 0.6f, 0.6f, 1f);
 
-            entry.Bounds = entry.Root ? SampleBounds(entry, out _) : StaticBounds(entry.Stage.Instance);
+            entry.Bounds = entry.HasRoots ? SampleBounds(entry, out _) : StaticBounds(entry.Stage.Instance);
         }
 
         /// <summary>
@@ -402,18 +445,20 @@ namespace DNExtensions.HelpfulEditor.Inspector
         /// has a degenerate one as an asset, and lays its children out inside nothing. World space
         /// stops the driving and lets the size be set.
         /// </summary>
-        private static void UseOwnCanvas(PreviewStage stage, Canvas canvas)
+        private static RectTransform UseOwnCanvas(PreviewStage stage, Canvas canvas)
         {
             canvas.renderMode = RenderMode.WorldSpace;
             canvas.worldCamera = stage.Camera;
             canvas.scaleFactor = 1f;
 
-            if (!(canvas.transform is RectTransform rect)) return;
+            if (!(canvas.transform is RectTransform rect)) return null;
 
             Rect area = rect.rect;
-            if (area.width >= 1f && area.height >= 1f) return;
+            if (area.width >= 1f && area.height >= 1f) return rect;
 
             rect.sizeDelta = ReferenceResolution;
+
+            return rect;
         }
 
         /// <summary>
@@ -422,21 +467,25 @@ namespace DNExtensions.HelpfulEditor.Inspector
         /// screen mode: a world-space canvas is ordinary geometry in the XY plane, so it asks nothing
         /// of the camera beyond being pointed at it.
         /// </summary>
-        private static void WrapInCanvas(PreviewStage stage)
+        private static RectTransform WrapInCanvas(PreviewStage stage)
         {
             GameObject root = stage.CreateObject("HelpfulEditor UI Preview", typeof(Canvas));
-            if (!root) return;
+            if (!root) return null;
 
             Canvas canvas = root.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             canvas.worldCamera = stage.Camera;
             canvas.scaleFactor = 1f;
 
-            if (root.transform is RectTransform rect) rect.sizeDelta = ReferenceResolution;
+            RectTransform rect = root.transform as RectTransform;
+
+            if (rect) rect.sizeDelta = ReferenceResolution;
 
             // Keeps the prefab's own anchoring, which is the point of giving it a screen-sized canvas
             // to anchor against.
             stage.Instance.transform.SetParent(root.transform, false);
+
+            return rect;
         }
 
         /// <summary>
@@ -446,7 +495,12 @@ namespace DNExtensions.HelpfulEditor.Inspector
         /// </summary>
         private static Bounds SampleBounds(Entry entry, out bool found)
         {
-            float span = Mathf.Max(0.1f, Mathf.Min(entry.Root.main.duration, 3f));
+            float span = 0.1f;
+
+            foreach (ParticleSystem root in entry.Roots)
+            {
+                if (root) span = Mathf.Max(span, Mathf.Min(root.main.duration, 3f));
+            }
 
             Bounds bounds = default;
             bool any = false;
@@ -455,7 +509,10 @@ namespace DNExtensions.HelpfulEditor.Inspector
             // sample is that the particles have genuinely travelled rather than jumped.
             foreach (float fraction in new[] { 0.25f, 0.6f, 1f })
             {
-                entry.Root.Simulate(span * fraction, true, true);
+                foreach (ParticleSystem root in entry.Roots)
+                {
+                    if (root) root.Simulate(span * fraction, true, true);
+                }
 
                 Encapsulate(entry.Stage.Instance, ref bounds, ref any);
             }
@@ -510,7 +567,7 @@ namespace DNExtensions.HelpfulEditor.Inspector
         {
             foreach (Entry entry in _entries.Values)
             {
-                if (entry.Root) return true;
+                if (entry.Playable) return true;
             }
 
             return false;
@@ -542,23 +599,176 @@ namespace DNExtensions.HelpfulEditor.Inspector
         {
             if (Mathf.Approximately(entry.SimulatedTo, _time)) return;
 
-            if (_time > entry.SimulatedTo && entry.SimulatedTo >= 0f)
+            bool stepped = _time > entry.SimulatedTo && entry.SimulatedTo >= 0f;
+
+            if (entry.HasRoots)
             {
-                entry.Root.Simulate(_time - entry.SimulatedTo, true, false, false);
+                foreach (ParticleSystem root in entry.Roots)
+                {
+                    if (!root) continue;
+
+                    if (stepped) root.Simulate(_time - entry.SimulatedTo, true, false, false);
+                    else root.Simulate(_time, true, true, _time <= AccurateSeekLimit);
+                }
             }
-            else
+
+            // A timeline is seeked rather than stepped whichever way the clock went — it is sampled
+            // from its own start every time, so there is no cheaper path forward to take.
+            if (entry.HasDirectors)
             {
-                entry.Root.Simulate(_time, true, true, _time <= AccurateSeekLimit);
+                foreach (PlayableDirector director in entry.Directors)
+                {
+                    Evaluate(director, _time);
+                }
             }
 
             entry.SimulatedTo = _time;
         }
 
-        private static float Length(ParticleSystem root)
+        /// <summary>
+        /// The timelines, put under the preview's clock rather than their own. Manual is what stops a
+        /// director from running off the editor's delta the moment its graph exists, which would leave
+        /// it playing at a speed nothing here set and ignoring the scrub bar.
+        /// </summary>
+        private static void PrepareDirectors(Entry entry)
         {
-            ParticleSystem.MainModule main = root.main;
+            if (!entry.HasDirectors) return;
 
-            return Mathf.Max(0.1f, main.duration + main.startLifetime.constantMax);
+            foreach (PlayableDirector director in entry.Directors)
+            {
+                if (!director || !director.playableAsset) continue;
+
+                director.timeUpdateMode = DirectorUpdateMode.Manual;
+                director.RebuildGraph();
+
+                Evaluate(director, 0f);
+            }
+        }
+
+        /// <summary>
+        /// Held at the end rather than looping or snapping back, so a template whose timeline is
+        /// shorter than the selection's longest one sits finished instead of restarting under it.
+        /// </summary>
+        private static void Evaluate(PlayableDirector director, float time)
+        {
+            if (!director || !director.playableAsset) return;
+
+            director.time = Mathf.Min(time, (float)director.duration);
+            director.Evaluate();
+        }
+
+        /// <summary>
+        /// The systems nothing else drives. Simulate carries a system's own children with it, so a
+        /// nested one stepped again here would run at twice the rate of the effect around it — and
+        /// taking only the first one found leaves every other branch stopped and cleared, which on a
+        /// popup is most of the effects it has.
+        /// </summary>
+        private static ParticleSystem[] ParticleRoots(GameObject instance)
+        {
+            List<ParticleSystem> roots = new List<ParticleSystem>();
+
+            foreach (ParticleSystem system in instance.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                if (!Nested(system, instance.transform)) roots.Add(system);
+            }
+
+            return roots.ToArray();
+        }
+
+        private static bool Nested(ParticleSystem system, Transform stop)
+        {
+            for (Transform parent = system.transform.parent; parent; parent = parent.parent)
+            {
+                if (parent.GetComponent<ParticleSystem>()) return true;
+                if (parent == stop) return false;
+            }
+
+            return false;
+        }
+
+        private static float Length(Entry entry)
+        {
+            float length = 0.1f;
+
+            if (entry.HasRoots)
+            {
+                foreach (ParticleSystem root in entry.Roots)
+                {
+                    if (!root) continue;
+
+                    ParticleSystem.MainModule main = root.main;
+
+                    length = Mathf.Max(length, main.duration + main.startLifetime.constantMax);
+                }
+            }
+
+            if (entry.HasDirectors)
+            {
+                foreach (PlayableDirector director in entry.Directors)
+                {
+                    if (!director || !director.playableAsset) continue;
+
+                    length = Mathf.Max(length, (float)director.duration);
+                }
+            }
+
+            return length;
+        }
+
+        /// <summary>
+        /// The box the camera is fitted to, measured at a fraction of the rate it is asked for. What
+        /// it costs is a walk of every graphic in the prefab, and a preview that plays asks for it
+        /// thirty times a second for as long as it is on screen.
+        /// </summary>
+        private static Bounds FrameBounds(Entry entry)
+        {
+            double now = EditorApplication.timeSinceStartup;
+
+            if (now - entry.FramedAt < FrameMeasureInterval) return entry.Framed;
+
+            entry.FramedAt = now;
+
+            Bounds bounds = ContentBounds(entry.Stage.Instance);
+
+            if (entry.HasParticleBounds) bounds.Encapsulate(entry.Bounds);
+
+            ClampToCanvas(entry.CanvasRect, ref bounds);
+
+            entry.Framed = bounds;
+
+            return bounds;
+        }
+
+        /// <summary>
+        /// Holds the frame to the screen the content is drawn on. What reaches outside it is either
+        /// an effect's rect, which a UI particle sizes to hold a simulation and is thousands of units
+        /// across, or a backdrop scaled up to cover any aspect — neither is something anybody is
+        /// looking at, and framing on them leaves the popup a speck in the middle.
+        ///
+        /// A prefab smaller than the screen is left alone: the clamp only ever takes the frame in to
+        /// the canvas, so a single button still gets framed on the button.
+        /// </summary>
+        private static void ClampToCanvas(RectTransform canvasRect, ref Bounds bounds)
+        {
+            if (!canvasRect) return;
+
+            Bounds screen = default;
+            bool any = false;
+
+            Encapsulate(canvasRect, ref screen, ref any);
+
+            if (!any) return;
+
+            Vector3 min = Vector3.Max(bounds.min, screen.min);
+            Vector3 max = Vector3.Min(bounds.max, screen.max);
+
+            // Nothing of it is on screen, which is a prefab laid out somewhere unusual rather than
+            // one to correct — clamping to an empty box would show nothing at all.
+            if (max.x - min.x < 1f || max.y - min.y < 1f) return;
+
+            bounds.SetMinMax(
+                new Vector3(min.x, min.y, bounds.min.z),
+                new Vector3(max.x, max.y, bounds.max.z));
         }
 
         private void Seek(float time)
@@ -611,7 +821,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
             Bounds bounds = default;
             bool any = false;
 
-            foreach (CanvasRenderer renderer in root.GetComponentsInChildren<CanvasRenderer>(false))
+            root.GetComponentsInChildren(false, RendererBuffer);
+
+            foreach (CanvasRenderer renderer in RendererBuffer)
             {
                 Encapsulate(renderer.transform as RectTransform, ref bounds, ref any);
             }
@@ -620,7 +832,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
             // left to frame on, and an empty preview would say less than their outline does.
             if (!any)
             {
-                foreach (RectTransform rect in root.GetComponentsInChildren<RectTransform>(false))
+                root.GetComponentsInChildren(false, RectBuffer);
+
+                foreach (RectTransform rect in RectBuffer)
                 {
                     Encapsulate(rect, ref bounds, ref any);
                 }
@@ -636,10 +850,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
             Rect area = rect.rect;
             if (area.width <= 0f || area.height <= 0f) return;
 
-            Vector3[] corners = new Vector3[4];
-            rect.GetWorldCorners(corners);
+            rect.GetWorldCorners(CornerBuffer);
 
-            foreach (Vector3 corner in corners)
+            foreach (Vector3 corner in CornerBuffer)
             {
                 if (!any)
                 {

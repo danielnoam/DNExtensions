@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
 namespace DNExtensions.HelpfulEditor.Inspector
@@ -35,6 +36,10 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private static FieldInfo _selectedPreviewField;
         private static bool _selectionResolved;
         private static bool _selectionAvailable;
+
+        /// <summary>Every live preview camera, which is how the emit below tells ours from the game
+        /// and scene view cameras the same callback is raised for.</summary>
+        private static readonly HashSet<Camera> Cameras = new HashSet<Camera>();
 
         private readonly List<GameObject> _owned = new List<GameObject>();
 
@@ -70,6 +75,8 @@ namespace DNExtensions.HelpfulEditor.Inspector
             _preview = new PreviewRenderUtility();
             _built = source;
 
+            Register(_preview.camera);
+
             // A plain copy rather than PrefabUtility.InstantiatePrefab: a connected prefab instance
             // brings override bookkeeping to a scene that is about to be thrown away, and every
             // property a preview sets on it would be recorded as an override of the asset. It lands in
@@ -82,6 +89,54 @@ namespace DNExtensions.HelpfulEditor.Inspector
             _instance.SetActive(true);
 
             return true;
+        }
+
+        /// <summary>
+        /// Puts a canvas in front of the preview camera under a scriptable pipeline.
+        ///
+        /// Nothing draws UI for an editor camera on its own: a pipeline has to ask for it, through
+        /// <c>EmitGeometryForCamera</c> for a preview or reflection camera and through
+        /// <c>EmitWorldGeometryForSceneView</c> for a scene view one. The built-in pipeline does it
+        /// natively and URP does both — but a pipeline is free to implement only the scene view
+        /// branch, and one that stops there draws every mesh in a preview with the canvas missing.
+        ///
+        /// So the call is made here rather than assumed of whoever is rendering. Registering the
+        /// camera instead of naming a pipeline is the point: nothing about this depends on which one
+        /// is installed, or on a preview camera pretending to be a scene view camera to reach a
+        /// branch meant for something else.
+        /// </summary>
+        private static void EmitGeometry(ScriptableRenderContext context, Camera camera)
+        {
+            if (!Cameras.Contains(camera)) return;
+
+            ScriptableRenderContext.EmitGeometryForCamera(camera);
+        }
+
+        /// <summary>
+        /// Hooked only while a preview exists, so a suite switched off leaves nothing behind — and
+        /// the callback never fires under the built-in pipeline, which has no render loop to raise it.
+        /// </summary>
+        private static void Register(Camera camera)
+        {
+            if (!camera || !Cameras.Add(camera)) return;
+
+            if (Cameras.Count > 1) return;
+
+            RenderPipelineManager.beginCameraRendering += EmitGeometry;
+        }
+
+        /// <summary>
+        /// Deliberately does not test the camera for life first. A destroyed one still matches its own
+        /// entry by reference, whereas the usual truthiness check reads it as null and would leave the
+        /// entry — and the callback with it — behind for good.
+        /// </summary>
+        private static void Unregister(Camera camera)
+        {
+            if (!Cameras.Remove(camera)) return;
+
+            if (Cameras.Count > 0) return;
+
+            RenderPipelineManager.beginCameraRendering -= EmitGeometry;
         }
 
         /// <summary>
@@ -125,6 +180,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
 
             _instance = null;
             _built = null;
+
+            // Before Cleanup, which destroys the camera this is keyed on.
+            if (_preview != null) Unregister(_preview.camera);
 
             _preview?.Cleanup();
             _preview = null;
