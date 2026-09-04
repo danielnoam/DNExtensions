@@ -47,10 +47,12 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField] private bool enableLandingRumble = true;
         [SerializeField, ShowIf("enableLandingRumble")] private ControllerRumbleEffectSettings landingRumble = new ControllerRumbleEffectSettings(0.3f, 0.5f, 0.2f);
         [SerializeField] private bool enableFootstepRumble = true;
-        [SerializeField, ShowIf("enableFootstepRumble")] private float footstepRumbleFrequency = 0.5f;
+        [Tooltip("Seconds between footstep rumbles when walking. Halved when running")]
+        [SerializeField, ShowIf("enableFootstepRumble"), Min(0.01f)] private float footstepRumbleFrequency = 0.5f;
         [SerializeField, ShowIf("enableFootstepRumble")] private ControllerRumbleEffectSettings footstepRumble = new ControllerRumbleEffectSettings(0.05f, 0f, 0.1f);
         
         [SerializeField, AutoGetSelf, HideInInspector] private FpcManager manager;
+        private const float MinimumKickTime = 0.01f;
 
         private float _baseFov;
         private Vector3 _cameraBasePosition;
@@ -64,6 +66,7 @@ namespace DNExtensions.Systems.FirstPersonController
         private Vector3 _bobOffset;
         private Vector3 _tiltOffset;
         private float _footstepTimer;
+        private FPCLocomotionBase _subscribedLocomotion;
 
         private void OnValidate()
         {
@@ -86,12 +89,23 @@ namespace DNExtensions.Systems.FirstPersonController
 
         private void OnEnable()
         {
-            manager.FpcLocomotion.OnLanded += OnLanded;
+            manager.OnLocomotionChanged += SubscribeToLocomotion;
+            SubscribeToLocomotion(manager.FpcLocomotion);
         }
 
         private void OnDisable()
         {
-            manager.FpcLocomotion.OnLanded -= OnLanded;
+            manager.OnLocomotionChanged -= SubscribeToLocomotion;
+            SubscribeToLocomotion(null);
+        }
+
+        private void SubscribeToLocomotion(FPCLocomotionBase locomotion)
+        {
+            if (_subscribedLocomotion == locomotion) return;
+
+            if (_subscribedLocomotion) _subscribedLocomotion.OnLanded -= OnLanded;
+            _subscribedLocomotion = locomotion;
+            if (_subscribedLocomotion) _subscribedLocomotion.OnLanded += OnLanded;
         }
 
         private void OnLanded(float landVelocity)
@@ -124,6 +138,8 @@ namespace DNExtensions.Systems.FirstPersonController
 
         private void UpdateKick()
         {
+            if (_kickTime <= 0f) return;
+
             float t = Time.deltaTime / _kickTime;
             _kickPositionOffset = Vector3.Lerp(_kickPositionOffset, Vector3.zero, t);
             _kickRotationOffset = Vector3.Lerp(_kickRotationOffset, Vector3.zero, t);
@@ -189,16 +205,20 @@ namespace DNExtensions.Systems.FirstPersonController
             if (!enableFootstepRumble) return;
             
             bool isMoving = manager.FpcLocomotion.IsGrounded && manager.FpcInput.MoveInput.sqrMagnitude > 0.01f;
-            
-            float frequency = footstepRumbleFrequency * (manager.FpcLocomotion.IsRunning ? 0.5f : 1f);
-            
-            if (isMoving && _footstepTimer <= 0f)
+
+            if (!isMoving)
             {
-                manager.ControllerRumbleSource?.Rumble(footstepRumble);
-                _footstepTimer = frequency;
+                // Held at zero rather than left counting down. Standing still used to run the timer
+                // arbitrarily far negative, and the next step still lands immediately either way.
+                _footstepTimer = 0f;
+                return;
             }
-            
+
             _footstepTimer -= Time.deltaTime;
+            if (_footstepTimer > 0f) return;
+
+            manager.ControllerRumbleSource?.Rumble(footstepRumble);
+            _footstepTimer = footstepRumbleFrequency * (manager.FpcLocomotion.IsRunning ? 0.5f : 1f);
         }
 
         /// <summary>
@@ -208,7 +228,7 @@ namespace DNExtensions.Systems.FirstPersonController
         {
             _kickPositionOffset += positionDirection * positionStrength;
             _kickRotationOffset += rotationDirection * rotationStrength;
-            _kickTime += kickTime;
+            _kickTime = Mathf.Max(kickTime, MinimumKickTime);
         }
     }
 }

@@ -48,6 +48,12 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         private readonly GUIContent _rowContent = new GUIContent();
         private readonly GUIContent _starContent = new GUIContent();
 
+        /// <summary>
+        /// Told once the window is gone, however it went — picked, dismissed, escaped or destroyed
+        /// before it ever showed. The header that opened it keeps its arrow lit until this fires.
+        /// </summary>
+        private Action _closed;
+
         protected override int RowCount => _paths.Count;
 
         protected override bool ShowSearchField => true;
@@ -57,9 +63,15 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         protected override void OnSearchChanged(string query) => Rebuild();
 
         /// <param name="activator">The header's name rect in screen space, so the list drops from the name it belongs to.</param>
-        public static void Open(Rect activator)
+        /// <param name="closed">
+        /// Run when the window goes away. Attached before anything can fail, so the empty-project case
+        /// below reports through OnDestroy like every other close rather than needing a path of its own.
+        /// </param>
+        public static void Open(Rect activator, Action closed = null)
         {
             HierarchySceneMenuWindow window = CreateInstance<HierarchySceneMenuWindow>();
+            window._closed = closed;
+
             window.Rebuild();
 
             if (window.RowCount == 0)
@@ -70,6 +82,14 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
             window.SetHighlight(window._groups.IndexOf(0));
             window.ShowList(activator);
+        }
+
+        private void OnDestroy()
+        {
+            Action closed = _closed;
+            _closed = null;
+
+            closed?.Invoke();
         }
 
         /// <summary>

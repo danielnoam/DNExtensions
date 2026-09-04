@@ -36,6 +36,7 @@ namespace DNExtensions.Systems.FirstPersonController
         
         public Vector2 MoveInput { get; private set; }
         public bool RunInput { get; private set; }
+        public bool CrouchInput { get; private set; }
         public bool ToggleCrouch => toggleCrouch;
 
         private void Awake()
@@ -103,6 +104,8 @@ namespace DNExtensions.Systems.FirstPersonController
         
         private void OnCrouch(InputAction.CallbackContext context)
         {
+            CrouchInput = context.ReadValueAsButton();
+
             if (toggleCrouch)
             {
                 if (context.phase == InputActionPhase.Started)

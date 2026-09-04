@@ -103,8 +103,6 @@ namespace DNExtensions.Systems.ControllerRumble
 
         private void Update()
         {
-            if (_gamepad == null && !fakeGamepad) return;
-
             _activeRumbleEffects.RemoveWhere(effect =>
             {
                 effect.Update(Time.deltaTime);
@@ -117,6 +115,13 @@ namespace DNExtensions.Systems.ControllerRumble
 
                 return shouldRemove;
             });
+
+            if (_gamepad == null && !fakeGamepad)
+            {
+                CurrentCombinedLow = 0f;
+                CurrentCombinedHigh = 0f;
+                return;
+            }
 
             if (_activeRumbleEffects.Count == 0)
             {
