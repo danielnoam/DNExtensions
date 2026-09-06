@@ -21,7 +21,8 @@ namespace DNExtensions.Systems.FirstPersonController
         
         [Header("Held Object")]
         [SerializeField] private float minTimeForThrow = 0.1f;
-        [SerializeField] private float autoDropYOffset = 1f;
+        [Tooltip("How far below the player's feet a held object can fall before it is dropped")]
+        [SerializeField] private float autoDropYOffset;
         [SerializeField, MinMaxRange(0,30)] private RangedFloat throwForceRange = new RangedFloat(5f, 15f);
         [SerializeField, MinMaxRange(1f,4f)] private RangedFloat throwHeldRange = new RangedFloat(1f, 4f);
         

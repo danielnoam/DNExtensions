@@ -30,7 +30,8 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField, ShowIf(nameof(allowCrouch))] protected bool disableCrouchWhenJumping = true;
         [SerializeField, ShowIf(nameof(allowCrouch))] protected float crouchSpeedMultiplier = 0.5f;
         [SerializeField, ShowIf(nameof(allowCrouch))] protected float crouchHeight = 1.5f;
-        [SerializeField, ShowIf(nameof(allowCrouch))] protected Vector3 crouchColliderCenter = new Vector3(0, 0.25f, 0);
+        [Tooltip("Crouching in the air holds the head still and tucks the feet up instead, so a crouch jump clears a ledge a normal jump cannot")]
+        [SerializeField, ShowIf(nameof(allowCrouch))] private bool airCrouchRaisesFeet = true;
 
         [Header("Jump")]
         [SerializeField] protected bool allowJump = true;
@@ -44,7 +45,6 @@ namespace DNExtensions.Systems.FirstPersonController
         private const float LandingMinAirTime = 0.05f;
 
         private float _standingHeight;
-        private float _standingHeadY;
         private Vector3 _standingColliderCenter;
         private float _jumpBufferCounter;
         private float _coyoteTimeCounter;
@@ -62,6 +62,7 @@ namespace DNExtensions.Systems.FirstPersonController
         public float HorizontalSpeed => HorizontalVelocity.magnitude;
 
         protected bool HasBufferedJump => _jumpBufferCounter > 0f;
+        private bool IsAirCrouching => airCrouchRaisesFeet && !IsGrounded;
 
         public event Action OnJump;
         public event Action<float> OnLanded;
@@ -78,7 +79,11 @@ namespace DNExtensions.Systems.FirstPersonController
         {
             _standingColliderCenter = manager.CharacterController.center;
             _standingHeight = manager.CharacterController.height;
-            _standingHeadY = _standingColliderCenter.y + _standingHeight / 2f;
+
+            if (allowCrouch && !Mathf.Approximately(_standingColliderCenter.y, _standingHeight / 2f))
+            {
+                Debug.LogError($"{name} character collider is not anchored to the feet, so crouching will move the player. Run Anchor Collider To Feet on the FPC Manager.", this);
+            }
         }
 
         protected virtual void OnEnable()
@@ -148,54 +153,65 @@ namespace DNExtensions.Systems.FirstPersonController
 
         protected void Crouch()
         {
-            SetColliderSize(crouchHeight, crouchColliderCenter);
+            SetColliderHeight(crouchHeight);
             IsCrouching = true;
         }
 
         /// <summary>
-        /// Resizes the character collider without letting the capsule dip into the floor while it is being resized.
+        /// Resizes the character collider around its feet, so only the top of the capsule moves. In the air the
+        /// player is shifted to keep the head still instead, leaving the feet to move.
         /// </summary>
-        private void SetColliderSize(float height, Vector3 center)
+        private void SetColliderHeight(float height)
         {
             CharacterController controller = manager.CharacterController;
+            float heightDelta = controller.height - height;
 
-            // Whichever value is written first pairs up with the old one for an instant. Applying them in the order
-            // that keeps the capsule bottom highest stops that intermediate capsule from sinking into the ground,
-            // which would push the character up and drop it back down as a fake fall.
-            float bottomIfCenterFirst = center.y - controller.height / 2f;
-            float bottomIfHeightFirst = controller.center.y - height / 2f;
+            controller.height = height;
+            controller.center = new Vector3(_standingColliderCenter.x, height / 2f, _standingColliderCenter.z);
 
-            if (bottomIfCenterFirst > bottomIfHeightFirst)
+            if (IsAirCrouching)
             {
-                controller.center = center;
-                controller.height = height;
-            }
-            else
-            {
-                controller.height = height;
-                controller.center = center;
+                MoveWithoutCollision(Vector3.up * heightDelta);
             }
         }
 
+        private void MoveWithoutCollision(Vector3 offset)
+        {
+            CharacterController controller = manager.CharacterController;
+
+            // A CharacterController holds its own copy of the position, so it has to be taken out of the way for a
+            // direct transform write to survive.
+            controller.enabled = false;
+            transform.position += offset;
+            controller.enabled = true;
+        }
+
         /// <summary>
-        /// Restores the standing collider, unless there is not enough headroom.
+        /// Restores the standing collider, unless there is no room for it.
         /// </summary>
         protected bool TryStand()
         {
             if (!IsCrouching) return true;
+            if (!HasRoomToStand()) return false;
 
-            float crouchHeadY = manager.CharacterController.center.y + manager.CharacterController.height / 2f;
-            float rayLength = _standingHeadY - crouchHeadY + StandingHeightPadding;
-            Vector3 rayOrigin = transform.position + Vector3.up * crouchHeadY;
-
-            if (Physics.Raycast(rayOrigin, Vector3.up, rayLength, collisionLayers))
-            {
-                return false;
-            }
-
-            SetColliderSize(_standingHeight, _standingColliderCenter);
+            SetColliderHeight(_standingHeight);
             IsCrouching = false;
             return true;
+        }
+
+        private bool HasRoomToStand()
+        {
+            float rayLength = _standingHeight - manager.CharacterController.height + StandingHeightPadding;
+
+            // Standing up in the air puts the feet back down rather than the head up, so the room has to be below.
+            if (IsAirCrouching)
+            {
+                return !Physics.Raycast(transform.position, Vector3.down, rayLength, collisionLayers);
+            }
+
+            Vector3 headTop = transform.position + Vector3.up * manager.CharacterController.height;
+
+            return !Physics.Raycast(headTop, Vector3.up, rayLength, collisionLayers);
         }
 
         /// <summary>
@@ -341,8 +357,8 @@ namespace DNExtensions.Systems.FirstPersonController
         {
             if (allowCrouch && IsCrouching)
             {
-                float crouchHeadY = crouchColliderCenter.y + crouchHeight / 2f;
-                float rayLength = _standingHeadY - crouchHeadY + StandingHeightPadding;
+                float crouchHeadY = manager.CharacterController.height;
+                float rayLength = _standingHeight - crouchHeadY + StandingHeightPadding;
 
                 Gizmos.color = Color.red;
                 Gizmos.DrawRay(transform.position + Vector3.up * crouchHeadY, Vector3.up * rayLength);

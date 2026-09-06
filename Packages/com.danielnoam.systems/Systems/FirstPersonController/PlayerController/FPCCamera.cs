@@ -1,3 +1,4 @@
+using DNExtensions.Utilities;
 using DNExtensions.Utilities.AutoGet;
 using Unity.Cinemachine;
 using UnityEngine;
@@ -22,9 +23,19 @@ namespace DNExtensions.Systems.FirstPersonController
         [SerializeField] private bool invertVertical;
         
         [Header("Crouch")]
-        [SerializeField] private float crouchHeadHeight = 0.2f;
+        [Tooltip("How far the head lowers when crouching, measured from its standing height")]
+        [SerializeField] private float crouchHeadDrop = 0.4f;
         [SerializeField] private float crouchHeadTransitionSpeed = 10f;
         
+        [Header("Lean")]
+        [SerializeField] private bool allowLean = true;
+        [SerializeField, ShowIf(nameof(allowLean))] private float leanAngle = 15f;
+        [SerializeField, ShowIf(nameof(allowLean))] private float leanDistance = 0.4f;
+        [SerializeField, ShowIf(nameof(allowLean))] private float leanSpeed = 8f;
+        [Tooltip("Radius of the check that keeps the head from leaning through walls, 0 to lean freely")]
+        [SerializeField, ShowIf(nameof(allowLean))] private float leanCheckRadius = 0.2f;
+        [SerializeField, ShowIf(nameof(allowLean))] private LayerMask leanCollisionLayers = 0;
+
         [Header("References")]
         [SerializeField] private Transform head;
         [SerializeField, AutoGetChildren] private CinemachineCamera cam;
@@ -37,6 +48,7 @@ namespace DNExtensions.Systems.FirstPersonController
         private float _targetTiltAngle;
         private Vector2 _rotationVelocity;
         private Vector2 _lookInput;
+        private float _currentLean;
 
         private const float MouseSensitivityMultiplier = 0.05f;
         private const float GamepadSensitivityMultiplier = 100f;
@@ -70,8 +82,9 @@ namespace DNExtensions.Systems.FirstPersonController
         private void Update()
         {
             HandleLookInput();
+            UpdateLean();
             UpdateHeadRotation();
-            UpdateHeadHeight();
+            UpdateHeadPosition();
         }
 
         private void OnLook(InputAction.CallbackContext context)
@@ -108,12 +121,41 @@ namespace DNExtensions.Systems.FirstPersonController
             }
         }
         
-        private void UpdateHeadHeight()
+        private void UpdateHeadPosition()
         {
-            float targetY = manager.FpcLocomotion.IsCrouching ? crouchHeadHeight : _standingHeadHeight;
+            float targetY = manager.FpcLocomotion.IsCrouching ? _standingHeadHeight - crouchHeadDrop : _standingHeadHeight;
             Vector3 pos = head.localPosition;
             pos.y = Mathf.Lerp(pos.y, targetY, Time.deltaTime * crouchHeadTransitionSpeed);
+            pos.x = _currentLean * leanDistance;
             head.localPosition = pos;
+        }
+
+        private void UpdateLean()
+        {
+            if (!head) return;
+
+            float targetLean = allowLean ? Mathf.Clamp(manager.FpcInput.LeanInput, -1f, 1f) : 0f;
+            _currentLean = Mathf.Lerp(_currentLean, GetUnobstructedLean(targetLean), Time.deltaTime * leanSpeed);
+        }
+
+        /// <summary>
+        /// Shortens the lean so the head stops at a wall instead of passing through it.
+        /// </summary>
+        private float GetUnobstructedLean(float targetLean)
+        {
+            if (leanCheckRadius <= 0f || Mathf.Approximately(targetLean, 0f)) return targetLean;
+
+            Vector3 headLocalPosition = head.localPosition;
+            Vector3 origin = transform.TransformPoint(new Vector3(0f, headLocalPosition.y, headLocalPosition.z));
+            Vector3 direction = transform.right * Mathf.Sign(targetLean);
+            float wantedDistance = Mathf.Abs(targetLean) * leanDistance;
+
+            if (!Physics.SphereCast(origin, leanCheckRadius, direction, out RaycastHit hit, wantedDistance, leanCollisionLayers))
+            {
+                return targetLean;
+            }
+
+            return Mathf.Sign(targetLean) * Mathf.Min(Mathf.Abs(targetLean), hit.distance / leanDistance);
         }
 
         private void UpdateHeadRotation()
@@ -127,7 +169,7 @@ namespace DNExtensions.Systems.FirstPersonController
             }
 
             transform.rotation = Quaternion.Euler(0, _currentPanAngle, 0);
-            head.localRotation = Quaternion.Euler(_currentTiltAngle, 0, 0);
+            head.localRotation = Quaternion.Euler(_currentTiltAngle, 0, -_currentLean * leanAngle);
         }
 
         /// <summary>

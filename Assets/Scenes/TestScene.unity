@@ -2001,7 +2001,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!4 &1814365528901144324
 Transform:
   m_ObjectHideFlags: 0
@@ -2011,7 +2011,7 @@ Transform:
   m_GameObject: {fileID: 4429874568882835060}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.32, z: 0}
+  m_LocalPosition: {x: 0, y: 0.68, z: 0}
   m_LocalScale: {x: 0.4, y: 1, z: 0.4}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2277,7 +2277,7 @@ Transform:
   m_GameObject: {fileID: 2116501225362715451}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.597, z: 0}
+  m_LocalPosition: {x: 0, y: 1.597, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2302,7 +2302,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   minTimeForThrow: 0.1
-  autoDropYOffset: 1
+  autoDropYOffset: -0.05
   throwForceRange:
     minValue: 5
     maxValue: 15
@@ -2321,7 +2321,7 @@ Transform:
   m_GameObject: {fileID: 1439365873206089730}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -7.52}
+  m_LocalPosition: {x: 0, y: -1, z: -7.52}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2408,8 +2408,16 @@ MonoBehaviour:
   verticalAxisRange: {x: -90, y: 90}
   invertHorizontal: 0
   invertVertical: 0
-  crouchHeadHeight: 0.2
+  crouchHeadDrop: 0.4
   crouchHeadTransitionSpeed: 10
+  allowLean: 1
+  leanAngle: 15
+  leanDistance: 0.4
+  leanSpeed: 8
+  leanCheckRadius: 0.2
+  leanCollisionLayers:
+    serializedVersion: 2
+    m_Bits: 0
   head: {fileID: 6718865669666369426}
   cam: {fileID: 813677441}
   manager: {fileID: 7793576838022702164}
@@ -2645,7 +2653,7 @@ MonoBehaviour:
   disableCrouchWhenJumping: 1
   crouchSpeedMultiplier: 0.5
   crouchHeight: 1.5
-  crouchColliderCenter: {x: 0, y: 0.25, z: 0}
+  airCrouchRaisesFeet: 0
   allowJump: 1
   jumpForce: 1.5
   jumpBufferTime: 0.1
@@ -2669,7 +2677,7 @@ MonoBehaviour:
   slideFriction: 1.5
   slideSteerAcceleration: 8
   slideSlopeAcceleration: 12
-  slideMaxDuration: 0
+  slideMaxDuration: 1
 --- !u!114 &7793576838022702175
 MonoBehaviour:
   m_ObjectHideFlags: 0

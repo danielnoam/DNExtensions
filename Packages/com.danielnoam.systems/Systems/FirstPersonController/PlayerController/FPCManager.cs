@@ -151,6 +151,43 @@ namespace DNExtensions.Systems.FirstPersonController
 #endif
         }
 
+        /// <summary>
+        /// Moves the rig so the character collider sits on the transform origin instead of around it, keeping
+        /// everything in the same world position. Crouching resizes the collider around its feet, which only
+        /// holds the player still when the collider is anchored there.
+        /// </summary>
+        [Button(ButtonPlayMode.OnlyWhenNotPlaying, "Anchor Collider To Feet")]
+        private void AnchorColliderToFeet()
+        {
+            if (!characterController)
+            {
+                Debug.LogError("There is no CharacterController to anchor.", this);
+                return;
+            }
+
+            float footOffset = characterController.center.y - characterController.height / 2f;
+
+            if (Mathf.Approximately(footOffset, 0f)) return;
+
+#if UNITY_EDITOR
+            UnityEditor.Undo.RecordObject(transform, "Anchor Collider To Feet");
+            UnityEditor.Undo.RecordObject(characterController, "Anchor Collider To Feet");
+            foreach (Transform child in transform)
+            {
+                UnityEditor.Undo.RecordObject(child, "Anchor Collider To Feet");
+            }
+#endif
+
+            transform.position += Vector3.up * footOffset;
+
+            foreach (Transform child in transform)
+            {
+                child.localPosition -= Vector3.up * footOffset;
+            }
+
+            characterController.center = new Vector3(characterController.center.x, characterController.height / 2f, characterController.center.z);
+        }
+
         [Button(ButtonPlayMode.OnlyWhenNotPlaying)]
         private void ValidateMissingComponents()
         {

@@ -17,6 +17,7 @@ namespace DNExtensions.Systems.FirstPersonController
         private InputAction _lookAction;
         private InputAction _jumpAction;
         private InputAction _crouchAction;
+        private InputAction _leanAction;
         private InputAction _runAction;
         private InputAction _interactAction;
         private InputAction _throwAction;
@@ -27,6 +28,7 @@ namespace DNExtensions.Systems.FirstPersonController
         public event Action<InputAction.CallbackContext> OnJumpAction;
         public event Action<InputAction.CallbackContext> OnRunAction;
         public event Action<InputAction.CallbackContext> OnCrouchAction;
+        public event Action<InputAction.CallbackContext> OnLeanAction;
         public event Action<InputAction.CallbackContext> OnInteractAction;
         public event Action<InputAction.CallbackContext> OnThrowAction;
         public event Action<InputAction.CallbackContext> OnToggleMenuAction;
@@ -37,6 +39,7 @@ namespace DNExtensions.Systems.FirstPersonController
         public Vector2 MoveInput { get; private set; }
         public bool RunInput { get; private set; }
         public bool CrouchInput { get; private set; }
+        public float LeanInput { get; private set; }
         public bool ToggleCrouch => toggleCrouch;
 
         private void Awake()
@@ -54,6 +57,7 @@ namespace DNExtensions.Systems.FirstPersonController
             FindAction(_playerActionMap, "Run", ref _runAction);
             FindAction(_playerActionMap, "Jump", ref _jumpAction);
             FindAction(_playerActionMap, "Crouch", ref _crouchAction);
+            FindAction(_playerActionMap, "Lean", ref _leanAction);
             FindAction(_playerActionMap, "Interact", ref _interactAction);
             FindAction(_playerActionMap, "Throw", ref _throwAction);
             FindAction(_playerActionMap, "ToggleMenu", ref _toggleMenu);
@@ -68,6 +72,7 @@ namespace DNExtensions.Systems.FirstPersonController
             SubscribeToAction(_lookAction, OnLook);
             SubscribeToAction(_jumpAction, OnJump);
             SubscribeToAction(_crouchAction, OnCrouch);
+            SubscribeToAction(_leanAction, OnLean);
             SubscribeToAction(_runAction, OnRun);
             SubscribeToAction(_interactAction, OnInteract);
             SubscribeToAction(_throwAction, OnThrow);
@@ -80,6 +85,7 @@ namespace DNExtensions.Systems.FirstPersonController
             UnsubscribeFromAction(_lookAction, OnLook);
             UnsubscribeFromAction(_jumpAction, OnJump);
             UnsubscribeFromAction(_crouchAction, OnCrouch);
+            UnsubscribeFromAction(_leanAction, OnLean);
             UnsubscribeFromAction(_runAction, OnRun);
             UnsubscribeFromAction(_interactAction, OnInteract);
             UnsubscribeFromAction(_throwAction, OnThrow);
@@ -117,6 +123,12 @@ namespace DNExtensions.Systems.FirstPersonController
             {
                 OnCrouchAction?.Invoke(context);
             }
+        }
+
+        private void OnLean(InputAction.CallbackContext context)
+        {
+            LeanInput = context.ReadValue<float>();
+            OnLeanAction?.Invoke(context);
         }
 
         private void OnRun(InputAction.CallbackContext context)
