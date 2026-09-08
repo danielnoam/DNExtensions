@@ -23,6 +23,7 @@ namespace DNExtensions.HelpfulEditor.Project
         private const int ListModeGridSize = 16;
         private const int MaxGridSize = 96;
         private const int DefaultGridSize = 64;
+        private const int MaxCreateAttempts = 3;
 
         /// <summary>
         /// Shared by every folder tab and kept across sessions, so the zoom is a preference rather
@@ -31,11 +32,16 @@ namespace DNExtensions.HelpfulEditor.Project
         /// </summary>
         private const string GridSizeKey = "DNExtensions.HelpfulEditor.FolderTab.GridSize";
 
+        /// <summary>Keeps the grid's control id its own, rather than whatever position it lands in.</summary>
+        private static readonly int ListHint = "DNExtensions.HelpfulEditor.FolderTab.List".GetHashCode();
+
         [SerializeField] private string _folderPath;
 
         private HelpfulEditorObjectListArea _listArea;
         private GUIStyle _breadcrumbStyle;
         private GUIContent _newFolderContent;
+        private bool _internalSelectionChange;
+        private int _failedAttempts;
 
         private static int StoredGridSize
         {
@@ -71,18 +77,42 @@ namespace DNExtensions.HelpfulEditor.Project
 
         private void OnEnable()
         {
-            // Rebuilt rather than serialized: the view holds native state that does not survive a
-            // domain reload, and the folder path — which does — is all it takes to put it back.
-            _listArea = HelpfulEditorObjectListArea.Create(this, Repaint, OnItemSelected);
-
-            if (_listArea != null) _listArea.GridSize = StoredGridSize;
-
             // The view reads the folder once and caches it, so anything added, removed or renamed
             // has to be announced — otherwise a tab shows whatever was there when it was opened.
             EditorApplication.projectChanged -= OnProjectChanged;
             EditorApplication.projectChanged += OnProjectChanged;
 
             ApplyTitle();
+        }
+
+        /// <summary>
+        /// Built on the first OnGUI rather than in OnEnable, and rebuilt the same way after every
+        /// domain reload — the view holds native state that does not survive one, and the folder
+        /// path, which does, is all it takes to put it back.
+        ///
+        /// It has to be OnGUI: constructing the view reads EditorStyles, which has no current skin
+        /// outside a GUI context. Doing it in OnEnable worked when a tab was opened — that happens
+        /// inside the click that asked for it — and threw on every reload afterwards, which is what
+        /// left a restored tab claiming the Unity version was at fault.
+        /// </summary>
+        private HelpfulEditorObjectListArea EnsureListArea()
+        {
+            if (_listArea != null || _failedAttempts >= MaxCreateAttempts) return _listArea;
+
+            _listArea = HelpfulEditorObjectListArea.Create(this, Repaint, OnItemSelected, OnListAreaKeyboard);
+
+            if (_listArea == null)
+            {
+                // Bounded rather than retried forever: a version that genuinely cannot host the view
+                // would otherwise construct and throw on every repaint for as long as the tab is open.
+                _failedAttempts++;
+                return null;
+            }
+
+            _listArea.GridSize = StoredGridSize;
+            _listArea.SetSelection(Selection.objects);
+
+            return _listArea;
         }
 
         /// <summary>
@@ -129,14 +159,14 @@ namespace DNExtensions.HelpfulEditor.Project
             Object[] selection = _listArea.GetSelection();
             if (selection.Length == 0) return;
 
+            // Flagged so the selection change this causes is not mirrored straight back into the view
+            // — it is already showing it, and re-initialising its selection mid-click would drop the
+            // drag the user may be starting.
+            _internalSelectionChange = true;
             Selection.objects = selection;
+            _internalSelectionChange = false;
 
-            if (!doubleClicked) return;
-
-            string path = AssetDatabase.GetAssetPath(selection[0]);
-
-            if (AssetDatabase.IsValidFolder(path)) SetFolder(path);
-            else AssetDatabase.OpenAsset(selection[0]);
+            if (doubleClicked) OpenSelection();
         }
 
         private void OnDisable()
@@ -144,6 +174,100 @@ namespace DNExtensions.HelpfulEditor.Project
             EditorApplication.projectChanged -= OnProjectChanged;
 
             if (_listArea != null) StoredGridSize = _listArea.GridSize;
+        }
+
+        /// <summary>Releases the preview manager the view owns, the way the Project window does.</summary>
+        private void OnDestroy()
+        {
+            _listArea?.Destroy();
+        }
+
+        /// <summary>
+        /// What loads the icon previews. Without it a folder of prefabs or materials shows generic
+        /// icons that never resolve, because nothing is ticking the view's preview queue.
+        /// </summary>
+        private void OnInspectorUpdate()
+        {
+            _listArea?.OnInspectorUpdate();
+        }
+
+        /// <summary>
+        /// Keeps the highlight in step with a selection made elsewhere — clicking the same asset in a
+        /// Project window, or the Inspector's lock following something new.
+        /// </summary>
+        private void OnSelectionChange()
+        {
+            if (_listArea == null || _internalSelectionChange) return;
+
+            _listArea.SetSelection(Selection.objects);
+            Repaint();
+        }
+
+        /// <summary>
+        /// The keys the Project window answers in its own list, which this had no handler for at all:
+        /// F2 (Return on Windows) renames, Return opens on Mac, and Backspace — Cmd+Up on Mac — goes
+        /// up a folder, which is the keyboard version of the breadcrumb.
+        ///
+        /// Rename lives here because the Assets/Rename menu item cannot reach this window: it asks
+        /// ProjectBrowser for whichever browser was last interacted with, and a folder tab is not
+        /// one. The view itself has always been able to rename — nothing was ever asking it to.
+        /// </summary>
+        private void OnListAreaKeyboard()
+        {
+            Event evt = Event.current;
+            if (evt == null || evt.type != EventType.KeyDown || _listArea == null) return;
+
+            // The rename field owns the keyboard while it is open, and Return there means "commit
+            // this name", not "start renaming again".
+            if (_listArea.IsRenaming()) return;
+
+            switch (evt.keyCode)
+            {
+                case KeyCode.F2:
+                    if (_listArea.BeginRename()) evt.Use();
+                    return;
+
+                case KeyCode.Return:
+                case KeyCode.KeypadEnter:
+#if UNITY_EDITOR_OSX
+                    evt.Use();
+                    OpenSelection();
+#else
+                    if (_listArea.BeginRename()) evt.Use();
+#endif
+                    return;
+
+                case KeyCode.Backspace:
+                case KeyCode.UpArrow when evt.command:
+                    GoToParentFolder();
+                    evt.Use();
+                    return;
+
+                case KeyCode.DownArrow when evt.command:
+                    evt.Use();
+                    OpenSelection();
+                    return;
+            }
+        }
+
+        /// <summary>Opens what is selected, showing a folder here rather than handing it to Unity.</summary>
+        private void OpenSelection()
+        {
+            Object[] selection = _listArea.GetSelection();
+            if (selection.Length == 0) return;
+
+            string path = AssetDatabase.GetAssetPath(selection[0]);
+
+            if (AssetDatabase.IsValidFolder(path)) SetFolder(path);
+            else AssetDatabase.OpenAsset(selection);
+        }
+
+        private void GoToParentFolder()
+        {
+            int slash = _folderPath.LastIndexOf('/');
+            if (slash <= 0) return;
+
+            SetFolder(_folderPath.Substring(0, slash));
         }
 
         /// <summary>
@@ -164,13 +288,19 @@ namespace DNExtensions.HelpfulEditor.Project
 
         private void OnGUI()
         {
+            // Taken before anything else draws, the way the Project window takes its own. The
+            // breadcrumb's buttons come and go with the folder depth, so an id allocated after them
+            // would change on every navigation — and the grid would lose keyboard focus, and with it
+            // F2 and the arrow keys, each time the tab moved.
+            int listControlId = GUIUtility.GetControlID(ListHint, FocusType.Keyboard);
+
             if (string.IsNullOrEmpty(_folderPath))
             {
                 EditorGUILayout.HelpBox("This tab has no folder.", MessageType.Info);
                 return;
             }
 
-            if (_listArea == null)
+            if (EnsureListArea() == null)
             {
                 EditorGUILayout.HelpBox(
                     "The folder view could not be hosted on this Unity version. Open the folder in a Project window instead.",
@@ -186,6 +316,10 @@ namespace DNExtensions.HelpfulEditor.Project
                 return;
             }
 
+            // First look at the event, as in the Project window's own OnGUI: this is what hands the
+            // rename field the Return that commits a name and the Escape that abandons it.
+            _listArea.OnEvent();
+
             HandleCommands();
 
             Rect header = new Rect(0f, 0f, position.width, HeaderHeight);
@@ -200,9 +334,39 @@ namespace DNExtensions.HelpfulEditor.Project
             _listArea.SetFolder(_folderPath, grid);
             _listArea.GridSize = StoredGridSize;
 
-            _listArea.OnGUI(grid, GUIUtility.GetControlID(FocusType.Keyboard));
+            _listArea.OnGUI(grid, listControlId);
+
+            HandleContextClick(grid);
 
             DrawFooter(footer);
+        }
+
+        /// <summary>
+        /// Unity's own Assets menu, opened the same way and in the same place the Project window opens
+        /// it — so Create, Reimport, Show in <see cref="HelpfulEditorPlatform.FileManagerName"/>, Find
+        /// References and the rest all read the selection this tab just set.
+        ///
+        /// Rename is the one entry that cannot land here: it asks ProjectBrowser for the browser the
+        /// user last interacted with, and a folder tab is not one. F2 and a slow second click are what
+        /// rename in this window.
+        /// </summary>
+        private void HandleContextClick(Rect gridRect)
+        {
+            Event evt = Event.current;
+            if (evt.type != EventType.ContextClick || !gridRect.Contains(evt.mousePosition)) return;
+
+            GUIUtility.hotControl = 0;
+
+            // Right-clicking empty space selects the folder itself, so Create makes its asset here
+            // rather than wherever the previous selection happened to live.
+            if (_listArea.GetSelection().Length == 0)
+            {
+                Object folder = AssetDatabase.LoadAssetAtPath<Object>(_folderPath);
+                if (folder) Selection.activeObject = folder;
+            }
+
+            EditorUtility.DisplayPopupMenu(new Rect(evt.mousePosition.x, evt.mousePosition.y, 0f, 0f), "Assets/", null);
+            evt.Use();
         }
 
         /// <summary>
@@ -217,6 +381,10 @@ namespace DNExtensions.HelpfulEditor.Project
         {
             Event evt = Event.current;
             if (evt.type != EventType.ValidateCommand && evt.type != EventType.ExecuteCommand) return;
+
+            // A rename field is reading these keys as text. Claiming Delete while a name is being
+            // edited would delete the asset the user is in the middle of naming.
+            if (_listArea.IsRenaming()) return;
 
             bool execute = evt.type == EventType.ExecuteCommand;
             Object[] selection = _listArea.GetSelection();

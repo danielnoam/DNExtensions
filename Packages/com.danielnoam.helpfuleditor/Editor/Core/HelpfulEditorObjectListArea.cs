@@ -35,8 +35,17 @@ namespace DNExtensions.HelpfulEditor
         private static ConstructorInfo _constructor;
         private static MethodInfo _init;
         private static MethodInfo _onGui;
+        private static MethodInfo _onEvent;
+        private static MethodInfo _onInspectorUpdate;
+        private static MethodInfo _onDestroy;
         private static MethodInfo _initSelection;
         private static MethodInfo _getSelection;
+        private static MethodInfo _beginRename;
+        private static MethodInfo _endRename;
+        private static MethodInfo _getRenameOverlay;
+        private static MethodInfo _isRenaming;
+        private static MethodInfo _setIsRenamingFilename;
+        private static FieldInfo _stateRenameOverlay;
         private static MethodInfo _setFolders;
         private static MethodInfo _setSearchArea;
         private static PropertyInfo _gridSize;
@@ -102,6 +111,22 @@ namespace DNExtensions.HelpfulEditor
                 _getSelection = _listAreaType.GetMethod("GetSelection", AnyInstance);
                 _gridSize = _listAreaType.GetProperty("gridSize", AnyInstance);
 
+                // The lifecycle calls ProjectBrowser makes and this used to skip. OnEvent pumps the
+                // rename overlay's own event handling, OnInspectorUpdate is what keeps asset previews
+                // loading in the background, and OnDestroy releases the preview manager they use.
+                _onEvent = _listAreaType.GetMethod("OnEvent", AnyInstance, null, Type.EmptyTypes, null);
+                _onInspectorUpdate = _listAreaType.GetMethod("OnInspectorUpdate", AnyInstance, null, Type.EmptyTypes, null);
+                _onDestroy = _listAreaType.GetMethod("OnDestroy", AnyInstance, null, Type.EmptyTypes, null);
+
+                _beginRename = _listAreaType.GetMethod("BeginRename", AnyInstance, null, new[] { typeof(float) }, null);
+                _endRename = _listAreaType.GetMethod("EndRename", AnyInstance, null, new[] { typeof(bool) }, null);
+                _getRenameOverlay = _listAreaType.GetMethod("GetRenameOverlay", AnyInstance, null, Type.EmptyTypes, null);
+
+                Type renameOverlayType = _getRenameOverlay?.ReturnType;
+                _isRenaming = renameOverlayType?.GetMethod("IsRenaming", AnyInstance, null, Type.EmptyTypes, null);
+                _setIsRenamingFilename = renameOverlayType?.GetProperty("isRenamingFilename", AnyInstance)?.GetSetMethod(true);
+                _stateRenameOverlay = _listAreaStateType.GetField("m_RenameOverlay", AnyInstance);
+
                 _setFolders = _searchFilterType.GetProperty("folders", AnyInstance)?.GetSetMethod(true);
                 _setSearchArea = _searchFilterType.GetProperty("searchArea", AnyInstance)?.GetSetMethod(true);
 
@@ -118,14 +143,24 @@ namespace DNExtensions.HelpfulEditor
         /// Null when the object view cannot be hosted on this version, which is the caller's cue to
         /// fall back. The itemSelected callback is handed the view's own "was this a double click"
         /// flag, which is the only place that distinction is available.
+        ///
+        /// Must be called from inside OnGUI. ObjectListArea's group constructor reads
+        /// EditorStyles.toolbar for its separator height, and EditorStyles has no current skin
+        /// outside a GUI context — so constructing this from OnEnable throws, which is what made a
+        /// folder tab report itself unsupported after every domain reload.
         /// </summary>
-        public static HelpfulEditorObjectListArea Create(EditorWindow owner, Action repaint, Action<bool> itemSelected)
+        public static HelpfulEditorObjectListArea Create(EditorWindow owner, Action repaint, Action<bool> itemSelected, Action keyboard = null)
         {
             if (!owner || !Available) return null;
 
             try
             {
                 object state = Activator.CreateInstance(_listAreaStateType, true);
+
+                // Filename rules rather than object-name rules for the rename field, the same thing
+                // ProjectBrowser sets on its own state before building the view.
+                object overlay = _stateRenameOverlay?.GetValue(state);
+                if (overlay != null) _setIsRenamingFilename?.Invoke(overlay, new object[] { true });
 
                 // showNoneItem off: the "None" entry belongs to an object picker, not to a folder.
                 object listArea = _constructor.Invoke(new[] { state, owner, false });
@@ -136,12 +171,18 @@ namespace DNExtensions.HelpfulEditor
                 SetFlag(listArea, "allowDeselection", true);
                 SetFlag(listArea, "foldersFirst", true);
 
+                // The two the Project window sets and this did not: the selection draws focused
+                // rather than always greyed, and typing jumps to the next matching name.
+                SetFlag(listArea, "allowFocusRendering", true);
+                SetFlag(listArea, "allowFindNextShortcut", true);
+
                 // What lets EditorApplication.projectWindowItemOnGUI reach these rows, and with it
                 // every row overlay the suite's Project module draws.
                 SetFlag(listArea, "allowUserRenderingHook", true);
 
                 SetCallback(listArea, "repaintCallback", repaint);
                 SetCallback(listArea, "itemSelectedCallback", itemSelected);
+                SetCallback(listArea, "keyboardCallback", keyboard);
 
                 return new HelpfulEditorObjectListArea(listArea);
             }
@@ -209,6 +250,97 @@ namespace DNExtensions.HelpfulEditor
             try
             {
                 _onGui.Invoke(_listArea, new object[] { rect, keyboardControlId });
+            }
+            catch (Exception e)
+            {
+                WarnOnce(e);
+            }
+        }
+
+        /// <summary>
+        /// Hands the event to the rename overlay before anything else looks at it, which is how the
+        /// Project window opens its own OnGUI. Without it the overlay never sees the Return or Escape
+        /// that is meant to commit or cancel a rename.
+        /// </summary>
+        public void OnEvent()
+        {
+            Invoke(_onEvent);
+        }
+
+        /// <summary>Drives the background loading of asset previews, the same as the Project window's own tick.</summary>
+        public void OnInspectorUpdate()
+        {
+            Invoke(_onInspectorUpdate);
+        }
+
+        /// <summary>Releases the preview manager the view owns. For the host window's OnDestroy.</summary>
+        public void Destroy()
+        {
+            Invoke(_onDestroy);
+        }
+
+        /// <summary>
+        /// Starts renaming the single selected item, reporting false when there is nothing renamable
+        /// selected. The whole rename — the field, the validation, the actual move — belongs to the
+        /// view; only starting it was ever the Project window's job.
+        /// </summary>
+        public bool BeginRename(float delay = 0f)
+        {
+            if (_beginRename == null) return false;
+
+            try
+            {
+                return _beginRename.Invoke(_listArea, new object[] { delay }) is true;
+            }
+            catch (Exception e)
+            {
+                WarnOnce(e);
+                return false;
+            }
+        }
+
+        public void EndRename(bool acceptChanges)
+        {
+            if (_endRename == null) return;
+
+            try
+            {
+                _endRename.Invoke(_listArea, new object[] { acceptChanges });
+            }
+            catch (Exception e)
+            {
+                WarnOnce(e);
+            }
+        }
+
+        /// <summary>
+        /// Whether a name is being edited right now. The host window has to know, because the keys a
+        /// rename field is reading — Delete above all — are the same ones it would otherwise treat as
+        /// asset commands.
+        /// </summary>
+        public bool IsRenaming()
+        {
+            if (_getRenameOverlay == null || _isRenaming == null) return false;
+
+            try
+            {
+                object overlay = _getRenameOverlay.Invoke(_listArea, null);
+                return overlay != null && _isRenaming.Invoke(overlay, null) is true;
+            }
+            catch (Exception e)
+            {
+                WarnOnce(e);
+                return false;
+            }
+        }
+
+        private void Invoke(MethodInfo method)
+        {
+            if (method == null) return;
+
+            try
+            {
+                method.Invoke(_listArea, null);
             }
             catch (Exception e)
             {
@@ -315,7 +447,7 @@ namespace DNExtensions.HelpfulEditor
             if (_warned) return;
 
             _warned = true;
-            Debug.LogWarning($"[HelpfulEditor] The folder view is unavailable on this Unity version, falling back to a Project window. ({e.Message})");
+            Debug.LogWarning($"[HelpfulEditor] The folder view could not be hosted here, so a folder tab will fall back to a Project window. ({e.Message})");
         }
     }
 }
