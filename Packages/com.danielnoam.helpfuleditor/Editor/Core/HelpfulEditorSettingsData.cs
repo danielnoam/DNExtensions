@@ -9,6 +9,9 @@ namespace DNExtensions.HelpfulEditor
     {
         public bool moduleEnabled = true;
 
+        /// <summary>The module switched Unity to the legacy Hierarchy, so disabling it switches back.</summary>
+        public bool forcedLegacyHierarchy;
+
         // Even rows are left untinted and odd rows only ever darken: Unity's hover highlight
         // lightens the row, so a light stripe is indistinguishable from the cursor being there.
         public bool zebraStripesEnabled = true;

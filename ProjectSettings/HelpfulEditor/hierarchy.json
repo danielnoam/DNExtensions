@@ -1,5 +1,6 @@
 {
     "moduleEnabled": true,
+    "forcedLegacyHierarchy": true,
     "zebraStripesEnabled": true,
     "zebraColorEven": {
         "r": 0.0,
@@ -13,7 +14,7 @@
         "b": 0.0,
         "a": 1.0
     },
-    "zebraOpacity": 0.07000000029802323,
+    "zebraOpacity": 0.07000000029802322,
     "treeLinesEnabled": true,
     "treeLineColor": {
         "r": 0.5,

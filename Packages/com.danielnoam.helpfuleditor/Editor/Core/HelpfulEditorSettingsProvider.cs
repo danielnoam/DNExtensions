@@ -606,7 +606,11 @@ namespace DNExtensions.HelpfulEditor
                 EndSections();
             }
 
-            if (EditorGUI.EndChangeCheck()) HelpfulEditorSettings.SaveHierarchy();
+            if (EditorGUI.EndChangeCheck())
+            {
+                HelpfulEditorSettings.SaveHierarchy();
+                HelpfulEditor.Hierarchy.HierarchyLegacyWindow.Sync();
+            }
 
             DrawResetButton("Hierarchy", HelpfulEditorSettings.ResetHierarchy);
         }

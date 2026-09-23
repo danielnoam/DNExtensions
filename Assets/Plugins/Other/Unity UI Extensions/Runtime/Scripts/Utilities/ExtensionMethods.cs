@@ -21,19 +21,14 @@ namespace UnityEngine.UI.Extensions
                 throw new ArgumentNullException(nameof(gameObject));
             }
 
-            // The GetEntityId() >= 0 check relies on the numeric sign of the instance/entity id.
-            // Unity has deprecated int-representability of EntityId, so both the int->EntityId and
-            // EntityId->int conversions warn (CS0618). We keep the original heuristic and scope-suppress
-            // the warning here; runtime behaviour is identical to the old GetInstanceID() >= 0 check.
-#pragma warning disable CS0618
+            // This used to also require a non-negative instance id, but from Unity 6.6 an EntityId has
+            // no int form (both casts are errors), so that sign heuristic is gone. Being outside any
+            // valid scene is what identifies a prefab asset; the id check only filtered stray objects.
             return
                 !gameObject.scene.IsValid() &&
                 !gameObject.scene.isLoaded &&
-                gameObject.GetEntityId() >= 0 &&
-                // I noticed that ones with IDs under 0 were objects I didn't recognize
                 !gameObject.hideFlags.HasFlag(HideFlags.HideInHierarchy);
                     // I don't care about GameObjects *inside* prefabs, just the overall prefab.
-#pragma warning restore CS0618
         }
 
         /// <summary>

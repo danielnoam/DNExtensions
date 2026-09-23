@@ -27,12 +27,15 @@ namespace DNExtensions.Utilities.AudioPreview
         }
 
         [OnOpenAsset]
+#if UNITY_6000_3_OR_NEWER
+        private static bool OnOpenAsset(EntityId entityId, int line)
+        {
+            var obj = EditorUtility.EntityIdToObject(entityId);
+#else
         private static bool OnOpenAsset(int instanceID, int line)
         {
-            // OnOpenAsset only supplies a raw instance ID; there is no non-obsolete conversion to EntityId.
-#pragma warning disable CS0618 // Type or member is obsolete
-            var obj = EditorUtility.EntityIdToObject(instanceID);
-#pragma warning restore CS0618
+            var obj = EditorUtility.InstanceIDToObject(instanceID);
+#endif
             if (obj is not AudioClip clip) return false;
             if (PlayClipMethod == null || StopClipsMethod == null) return false;
 

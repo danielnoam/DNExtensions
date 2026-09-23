@@ -366,9 +366,11 @@ namespace DNExtensions.Systems.Shapes
         public virtual void CalculateLayoutInputVertical() { }
 
         public virtual float minWidth => 0;
+        public virtual float maxWidth => float.PositiveInfinity;
         public virtual float preferredWidth => 0;
         public virtual float flexibleWidth => -1;
         public virtual float minHeight => 0;
+        public virtual float maxHeight => float.PositiveInfinity;
         public virtual float preferredHeight => 0;
         public virtual float flexibleHeight => -1;
         public virtual int layoutPriority => 0;
