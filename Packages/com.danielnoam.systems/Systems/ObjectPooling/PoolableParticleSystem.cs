@@ -40,9 +40,12 @@ namespace DNExtensions.Systems.ObjectPooling
             Play();
         }
 
+        // Follows the system's own time mode, so an unscaled effect is not held while the game is paused
         private IEnumerator ReturnAfter(float delay)
         {
-            yield return new WaitForSeconds(delay);
+            if (particle.main.useUnscaledTime) yield return new WaitForSecondsRealtime(delay);
+            else yield return new WaitForSeconds(delay);
+
             ObjectPooler.ReturnObjectToPool(gameObject);
         }
 

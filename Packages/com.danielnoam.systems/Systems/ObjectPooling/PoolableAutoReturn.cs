@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace DNExtensions.Systems.ObjectPooling
 {
@@ -10,24 +10,29 @@ namespace DNExtensions.Systems.ObjectPooling
     public class PoolableAutoReturn : MonoBehaviour, IPoolable
     {
         public float lifeTime;
+        [Tooltip("Count down in real time, so the object still returns while the game is paused or slowed. Use for audio and UI effects.")]
+        public bool useUnscaledTime;
+
+        private float _remaining;
         private bool _isInitialized;
 
         private void Update()
         {
             if (!_isInitialized) return;
 
-            lifeTime -= Time.deltaTime;
-            if (lifeTime <= 0f)
-            {
-                lifeTime = 0f;
-                _isInitialized = false;
-                ObjectPooler.ReturnObjectToPool(gameObject);
-            }
+            _remaining -= useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            if (_remaining > 0f) return;
+
+            _isInitialized = false;
+            ObjectPooler.ReturnObjectToPool(gameObject);
         }
-        
+
+        /// <summary>
+        /// Starts the countdown for this use only. The configured lifeTime is left untouched for the next use.
+        /// </summary>
         public void Initialize(float time)
         {
-            lifeTime = time;
+            _remaining = time;
             _isInitialized = true;
         }
 
@@ -38,6 +43,7 @@ namespace DNExtensions.Systems.ObjectPooling
 
         public void OnPoolReturn()
         {
+            _isInitialized = false;
         }
 
         public void OnPoolRecycle()

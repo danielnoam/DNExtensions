@@ -19,32 +19,35 @@ namespace DNExtensions.Systems.ObjectPooling
             if (!audioSource) audioSource = GetComponent<AudioSource>();
         }
 
+        private Coroutine _returnRoutine;
+
+        private void OnDisable()
+        {
+            if (_returnRoutine != null) StopCoroutine(_returnRoutine);
+        }
+
         public void Play(AudioClip clip)
         {
-            if (!audioSource) return;
+            if (!audioSource || !clip) return;
 
             audioSource.clip = clip;
             audioSource.Play();
 
-            float duration = audioSource.clip.length;
-            StartCoroutine(ReturnAfter(duration));
+            if (_returnRoutine != null) StopCoroutine(_returnRoutine);
+            _returnRoutine = StartCoroutine(ReturnAfter(clip.length / Mathf.Max(0.01f, Mathf.Abs(audioSource.pitch))));
         }
 
         public void Play(AudioClip clip, Vector3 position)
         {
-            if (!audioSource) return;
-
-            audioSource.clip = clip;
             transform.position = position;
-            audioSource.Play();
-
-            float duration = audioSource.clip.length;
-            StartCoroutine(ReturnAfter(duration));
+            Play(clip);
         }
 
+        // Audio plays in real time whatever the time scale, so the wait must too, or a paused game holds the source forever
         private IEnumerator ReturnAfter(float delay)
         {
-            yield return new WaitForSeconds(delay);
+            yield return new WaitForSecondsRealtime(delay);
+            _returnRoutine = null;
             ObjectPooler.ReturnObjectToPool(gameObject);
         }
 

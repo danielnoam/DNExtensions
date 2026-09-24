@@ -112,6 +112,7 @@ namespace DNExtensions.Systems.AudioLibrary
                 source.clip = settings.clip;
                 source.volume = settings.volume;
                 source.pitch = settings.pitch;
+                source.panStereo = settings.stereoPan;
                 source.spatialBlend = settings.spatialBlend;
                 source.reverbZoneMix = settings.reverbZoneMix;
                 source.bypassEffects = settings.bypassEffects;
@@ -131,6 +132,9 @@ namespace DNExtensions.Systems.AudioLibrary
             else if (data.AudioObject is AudioClip clip)
             {
                 source.clip = clip;
+                source.volume = 1f;
+                source.pitch = 1f;
+                source.panStereo = 0f;
                 source.spatialBlend = usePos ? 1f : 0f;
                 source.loop = false;
             }
@@ -138,7 +142,7 @@ namespace DNExtensions.Systems.AudioLibrary
             return source.clip;
         }
 
-        private void SetupAndPlay(string id, AudioSource source, AudioData data, Vector3 pos, bool usePos)
+        private void SetupAndPlay(string id, AudioSource source, AudioData data, Vector3 pos, bool usePos, float pitchMultiplier = 1f)
         {
             if (!source) return;
             
@@ -150,6 +154,8 @@ namespace DNExtensions.Systems.AudioLibrary
                 return;
             }
 
+            source.pitch *= pitchMultiplier;
+
             if (source.loop)
             {
                 _activeLoopSources[id] = source;
@@ -159,7 +165,7 @@ namespace DNExtensions.Systems.AudioLibrary
 
             if (!source.loop)
             {
-                StartCoroutine(AutoReturnRoutine(source, source.clip.length / Mathf.Abs(source.pitch), id));
+                StartCoroutine(AutoReturnRoutine(source, source.clip.length / Mathf.Max(0.01f, Mathf.Abs(source.pitch)), id));
             }
         }
 
@@ -198,9 +204,10 @@ namespace DNExtensions.Systems.AudioLibrary
             _pool.Enqueue(source);
         }
 
+        // Real time throughout: audio keeps playing while the game is paused, so a scaled wait would hold the source forever
         private IEnumerator AutoReturnRoutine(AudioSource source, float duration, string id = null)
         {
-            yield return new WaitForSeconds(duration);
+            yield return new WaitForSecondsRealtime(duration);
 
             if (!string.IsNullOrEmpty(id))
             {
@@ -220,7 +227,7 @@ namespace DNExtensions.Systems.AudioLibrary
 
             while (time < duration)
             {
-                time += Time.deltaTime;
+                time += Time.unscaledDeltaTime;
                 source.volume = Mathf.Lerp(startVolume, 0f, time / duration);
                 yield return null;
             }
@@ -239,12 +246,13 @@ namespace DNExtensions.Systems.AudioLibrary
         /// The sound will be played at the AudioManager's position and will not be spatialized.
         /// </summary>
         /// <param name="audioID"></param>
-        public static void Play(string audioID)
+        /// <param name="pitchMultiplier">Scales the profile's pitch for this play only, e.g. to raise it per combo step.</param>
+        public static void Play(string audioID, float pitchMultiplier = 1f)
         {
             if (!Instance || !Instance.TryGetAudioData(audioID, out var data)) return;
 
             AudioSource source = Instance.GetSourceFromPool();
-            Instance.SetupAndPlay(audioID, source, data, Vector3.zero, false);
+            Instance.SetupAndPlay(audioID, source, data, Vector3.zero, false, pitchMultiplier);
         }
 
 
@@ -254,12 +262,13 @@ namespace DNExtensions.Systems.AudioLibrary
         /// </summary>
         /// <param name="audioID"></param>
         /// <param name="position"></param>
-        public static void PlayAtPosition(string audioID, Vector3 position)
+        /// <param name="pitchMultiplier">Scales the profile's pitch for this play only.</param>
+        public static void PlayAtPosition(string audioID, Vector3 position, float pitchMultiplier = 1f)
         {
             if (!Instance || !Instance.TryGetAudioData(audioID, out var data)) return;
 
             AudioSource source = Instance.GetSourceFromPool();
-            Instance.SetupAndPlay(audioID, source, data, position, true);
+            Instance.SetupAndPlay(audioID, source, data, position, true, pitchMultiplier);
         }
 
 
@@ -269,12 +278,13 @@ namespace DNExtensions.Systems.AudioLibrary
         /// </summary>
         /// <param name="audioID"></param>
         /// <param name="target"></param>
-        public static void PlayAtPosition(string audioID, Transform target)
+        /// <param name="pitchMultiplier">Scales the profile's pitch for this play only.</param>
+        public static void PlayAtPosition(string audioID, Transform target, float pitchMultiplier = 1f)
         {
             if (!Instance || !Instance.TryGetAudioData(audioID, out var data)) return;
 
             AudioSource source = Instance.GetSourceFromPool();
-            Instance.SetupAndPlay(audioID, source, data, target.position, true);
+            Instance.SetupAndPlay(audioID, source, data, target.position, true, pitchMultiplier);
         }
 
         /// <summary>

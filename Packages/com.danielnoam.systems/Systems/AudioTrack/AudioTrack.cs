@@ -151,7 +151,7 @@ namespace DNExtensions.Systems.AudioTrack
 
             while (elapsed < duration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 track.Source.volume = Mathf.Lerp(startVolume, targetVolume, elapsed / duration);
                 yield return null;
             }
