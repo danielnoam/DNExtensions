@@ -26,6 +26,7 @@ namespace DNExtensions.Systems.VFXManager
 
         private EffectSequence _currentSequence;
         private Volume _postProcessingVolume;
+        private RenderMode _configuredRenderMode;
 
         public Image FullScreenImage => fullScreenImage;
         public Image IconImage => iconImage;
@@ -84,10 +85,8 @@ namespace DNExtensions.Systems.VFXManager
             }
             
 
-            if (fullscreenCanvas && fullscreenCanvas.renderMode == RenderMode.ScreenSpaceCamera && autoSetCameraIfUsingCameraOverlay && Camera.main)
-            {
-                fullscreenCanvas.worldCamera = Camera.main;
-            }
+            if (fullscreenCanvas) _configuredRenderMode = fullscreenCanvas.renderMode;
+            BindCanvasCamera();
 
             SetupPostProcessingVolume();
         }
@@ -104,13 +103,32 @@ namespace DNExtensions.Systems.VFXManager
 
         private void OnActiveSceneChanged(Scene currentScene, Scene nextScene)
         {
-
-            if (fullscreenCanvas && fullscreenCanvas.renderMode == RenderMode.ScreenSpaceCamera && autoSetCameraIfUsingCameraOverlay && Camera.main)
-            {
-                fullscreenCanvas.worldCamera = Camera.main;
-            }
+            BindCanvasCamera();
 
             SetupPostProcessingVolume();
+        }
+
+        // The manager outlives every scene, so its canvas camera is destroyed on each load. The new scene's
+        // camera may not exist yet when activeSceneChanged fires, so a missing camera is retried every frame
+        private void LateUpdate()
+        {
+            if (fullscreenCanvas && !fullscreenCanvas.worldCamera) BindCanvasCamera();
+        }
+
+        /// <summary>
+        /// Points the fullscreen canvas at the current main camera, restoring the configured render mode first,
+        /// since a Screen Space - Camera canvas without a camera renders as an overlay.
+        /// </summary>
+        private void BindCanvasCamera()
+        {
+            if (!fullscreenCanvas || !autoSetCameraIfUsingCameraOverlay) return;
+            if (_configuredRenderMode != RenderMode.ScreenSpaceCamera) return;
+
+            Camera mainCamera = Camera.main;
+            if (!mainCamera) return;
+
+            if (fullscreenCanvas.renderMode != _configuredRenderMode) fullscreenCanvas.renderMode = _configuredRenderMode;
+            fullscreenCanvas.worldCamera = mainCamera;
         }
 
         private void SetupPostProcessingVolume()
