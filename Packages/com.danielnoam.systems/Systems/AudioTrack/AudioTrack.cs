@@ -100,7 +100,7 @@ namespace DNExtensions.Systems.AudioTrack
             }
             else
             {
-                Instance.StartCoroutine(Instance.SequentialSwapRoutine(trackOut, trackIn, fadeDuration));
+                Instance.StartSequentialSwap(trackOut, trackIn, fadeDuration);
             }
             
         }
@@ -146,6 +146,12 @@ namespace DNExtensions.Systems.AudioTrack
 
         private IEnumerator FadeRoutine(RuntimeTrack track, float targetVolume, float duration)
         {
+            yield return FadeVolume(track, targetVolume, duration);
+            track.FadeCoroutine = null;
+        }
+
+        private IEnumerator FadeVolume(RuntimeTrack track, float targetVolume, float duration)
+        {
             float startVolume = track.Source.volume;
             float elapsed = 0f;
 
@@ -157,13 +163,26 @@ namespace DNExtensions.Systems.AudioTrack
             }
 
             track.Source.volume = targetVolume;
-            track.FadeCoroutine = null;
         }
-        
+
+        // Both tracks hold the swap as their fade, so a Play, Stop or new fade on either one stops it like any other fade
+        private void StartSequentialSwap(RuntimeTrack trackOut, RuntimeTrack trackIn, float fadeDuration)
+        {
+            if (trackOut.FadeCoroutine != null) StopCoroutine(trackOut.FadeCoroutine);
+            if (trackIn.FadeCoroutine != null) StopCoroutine(trackIn.FadeCoroutine);
+
+            var swap = StartCoroutine(SequentialSwapRoutine(trackOut, trackIn, fadeDuration));
+            trackOut.FadeCoroutine = swap;
+            trackIn.FadeCoroutine = swap;
+        }
+
         private IEnumerator SequentialSwapRoutine(RuntimeTrack trackOut, RuntimeTrack trackIn, float fadeDuration)
         {
-            yield return FadeRoutine(trackOut, 0f, fadeDuration);
-            yield return FadeRoutine(trackIn, trackIn.TargetVolume, fadeDuration);
+            yield return FadeVolume(trackOut, 0f, fadeDuration);
+            yield return FadeVolume(trackIn, trackIn.TargetVolume, fadeDuration);
+
+            trackOut.FadeCoroutine = null;
+            trackIn.FadeCoroutine = null;
         }
     }
 }

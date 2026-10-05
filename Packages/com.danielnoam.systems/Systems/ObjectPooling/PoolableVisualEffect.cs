@@ -14,6 +14,8 @@ namespace DNExtensions.Systems.ObjectPooling
     {
         [SerializeField] private VisualEffect effect;
         [SerializeField, Min(0.1f)] private float duration = 2f;
+        [Tooltip("Match the VFX Graph asset's Ignore Time Scale setting. Unity does not expose the asset's update mode at runtime, so it has to be set here.")]
+        [SerializeField] private bool ignoreTimeScale;
 
         private Coroutine _returnRoutine;
 
@@ -38,9 +40,13 @@ namespace DNExtensions.Systems.ObjectPooling
             Play();
         }
 
+        // Follows the effect's own time mode, so an unscaled effect is not held while the game is paused
         private IEnumerator ReturnAfter(float delay)
         {
-            yield return new WaitForSeconds(delay);
+            if (ignoreTimeScale) yield return new WaitForSecondsRealtime(delay);
+            else yield return new WaitForSeconds(delay);
+
+            _returnRoutine = null;
             ObjectPooler.ReturnObjectToPool(gameObject);
         }
 

@@ -158,6 +158,11 @@ namespace DNExtensions.Systems.AudioLibrary
 
             if (source.loop)
             {
+                // Playing the same loop ID again replaces the old source, which would otherwise never be returned
+                if (_activeLoopSources.TryGetValue(id, out var previous) && previous != source)
+                {
+                    ReturnSourceToPool(previous);
+                }
                 _activeLoopSources[id] = source;
             }
 
