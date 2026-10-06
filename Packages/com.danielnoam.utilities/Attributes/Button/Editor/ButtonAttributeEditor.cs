@@ -47,7 +47,7 @@ namespace DNExtensions.Utilities.Button
 
         public override void OnInspectorGUI()
         {
-            DrawDefaultInspector();
+            InspectorGroupDrawer.Draw(this);
 
             if (!HasAnyButtons()) return;
 

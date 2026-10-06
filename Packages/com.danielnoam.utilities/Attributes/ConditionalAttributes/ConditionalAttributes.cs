@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace DNExtensions.Utilities
@@ -6,6 +7,8 @@ namespace DNExtensions.Utilities
     /// Base class for conditional inspector attributes.
     /// Supports bool, int, float, string, enum, and object reference fields, properties, and parameterless methods returning bool.
     /// For object references, pass null as the value to check if the reference is unassigned.
+    /// On its own the condition affects only its field. When an [EndIf] follows later in the class, it also applies
+    /// to every field after it, up to the [EndIf] or the next condition of the same kind.
     /// </summary>
     public abstract class IfAttribute : PropertyAttribute
     {
@@ -71,4 +74,11 @@ namespace DNExtensions.Utilities
         /// <param name="variableValue">Value to compare against.</param>
         public DisableIfAttribute(string variableName, object variableValue) : base(variableName, variableValue) { }
     }
+
+    /// <summary>
+    /// Closes a block opened by ShowIf, HideIf, EnableIf or DisableIf.
+    /// Place it on the first field that should no longer be affected by the block.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field)]
+    public class EndIfAttribute : Attribute { }
 }

@@ -44,13 +44,16 @@ namespace DNExtensions.Utilities
             if (member is MethodInfo methodInfo)
                 return (bool)methodInfo.Invoke(targetObject, null);
 
-            return FindSiblingProperty(property, variableName) is { } sibling && EvaluateSibling(sibling, variableValue);
+            if (FindSiblingProperty(property, variableName) is { } sibling)
+                return EvaluateSibling(sibling, variableValue);
+
+            return member is FieldInfo fieldInfo && Equals(fieldInfo.GetValue(targetObject), variableValue);
         }
 
         private static bool EvaluateSibling(SerializedProperty sibling, object variableValue)
         {
             if (sibling.propertyType == SerializedPropertyType.Enum && variableValue is Enum)
-                return Equals(sibling.enumValueIndex, Convert.ToInt32(variableValue));
+                return sibling.intValue == Convert.ToInt32(variableValue);
 
             if (sibling.propertyType == SerializedPropertyType.ObjectReference)
                 return variableValue == null
@@ -72,6 +75,15 @@ namespace DNExtensions.Utilities
 
                 var method = current.GetMethod(name, flags, null, Type.EmptyTypes, null);
                 if (method != null && method.ReturnType == typeof(bool)) return method;
+
+                current = current.BaseType;
+            }
+
+            current = type;
+            while (current != null)
+            {
+                var field = current.GetField(name, flags);
+                if (field != null) return field;
 
                 current = current.BaseType;
             }
