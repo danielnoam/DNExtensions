@@ -1,10 +1,9 @@
 {
-    "name": "DNExtensions.Utilities.Attributes.Button.Editor",
+    "name": "DNExtensions.Utilities.Attributes.InspectorGroups.Editor",
     "rootNamespace": "DNExtensions.Utilities",
     "references": [
         "DNExtensions.Utilities.Attributes",
-        "DNExtensions.Utilities.Attributes.InspectorGroups.Editor",
-        "DNExtensions.Utilities.Extensions"
+        "DNExtensions.Utilities.Attributes.ConditionalAttributes.Editor"
     ],
     "includePlatforms": [
         "Editor"

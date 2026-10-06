@@ -28,6 +28,7 @@ namespace DNExtensions.Utilities
         
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
+            bool wasEnabled = GUI.enabled;
             GUI.enabled = false;
             
             if (property.isArray && property.propertyType == SerializedPropertyType.Generic)
@@ -39,7 +40,7 @@ namespace DNExtensions.Utilities
                 EditorGUI.PropertyField(position, property, label);
             }
         
-            GUI.enabled = true;
+            GUI.enabled = wasEnabled;
         }
     }
 

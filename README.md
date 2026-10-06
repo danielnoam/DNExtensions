@@ -86,7 +86,7 @@ Everything is toggleable at **Project Settings → DNExtensions → Helpful Edit
 
 The foundation the rest of the suite builds on, and the most reusable part on its own. Almost entirely inspector and workflow tooling.
 
-- **Attributes** — `AutoGet` reference population, inspector `Button`s, conditional show/hide/enable, info boxes, inline ScriptableObject editing, asset previews, read-only fields, scene pickers, separators, asset selectors, weighted chance lists, unique ScriptableObject enforcement.
+- **Attributes** — `AutoGet` reference population, inspector `Button`s, conditional show/hide/enable (per field or as `[EndIf]` blocks), `Foldout` groups, info boxes, inline ScriptableObject editing, asset previews, read-only fields, scene pickers, separators, asset selectors, weighted chance lists, unique ScriptableObject enforcement.
 - **Custom fields** — ranged values, optional values, position fields with scene picking, and dropdown-backed fields for scenes, tags, sorting layers, animator states and animator parameters.
 - **SerializableSelector** — a dropdown type picker for `[SerializeReference]` fields, so polymorphic data is editable in the inspector.
 - **SerializedInterface** — interface references that survive serialization.
