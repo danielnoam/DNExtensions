@@ -65,7 +65,8 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                 // the polling fallback HelpfulEditorGUI.MarkInteractive describes. Forcing one
                 // every tick regardless made resting the cursor over the Hierarchy a continuous
                 // full redraw of every visible row.
-                if (!HelpfulEditorGUI.HotRegionAvailable) EditorApplication.RepaintHierarchyWindow();
+                // The UI Toolkit window tracks its own hover, so polling it would only redraw it for nothing.
+                if (!HelpfulEditorGUI.HotRegionAvailable && !HierarchyTree.UsesNewWindow) EditorApplication.RepaintHierarchyWindow();
 
                 return;
             }
@@ -74,7 +75,14 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             ClearHover();
         }
 
-        private static void ClearHover()
+        /// <summary>For the UI Toolkit window, which reports hover from its row elements rather than from a draw pass.</summary>
+        internal static void SetHover(GameObject gameObject, object rawId)
+        {
+            HoveredObject = gameObject;
+            HoveredRawId = rawId;
+        }
+
+        internal static void ClearHover()
         {
             if (HoveredRawId == null) return;
 

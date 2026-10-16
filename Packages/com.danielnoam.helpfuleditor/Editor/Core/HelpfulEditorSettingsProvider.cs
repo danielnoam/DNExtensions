@@ -514,6 +514,8 @@ namespace DNExtensions.HelpfulEditor
 
                 if (Section(Hierarchy, "Zebra Stripes"))
                 {
+                    DrawLegacyOnlyNote("The new Hierarchy draws alternating rows itself: Preferences > General > Hierarchy.");
+
                     settings.zebraStripesEnabled = EditorGUILayout.Toggle("Enabled", settings.zebraStripesEnabled);
 
                     using (new EditorGUI.DisabledScope(!settings.zebraStripesEnabled))
@@ -526,6 +528,8 @@ namespace DNExtensions.HelpfulEditor
 
                 if (Section(Hierarchy, "Tree Lines"))
                 {
+                    DrawLegacyOnlyNote("Not drawn in the new Hierarchy yet.");
+
                     settings.treeLinesEnabled = EditorGUILayout.Toggle("Enabled", settings.treeLinesEnabled);
 
                     using (new EditorGUI.DisabledScope(!settings.treeLinesEnabled))
@@ -563,6 +567,8 @@ namespace DNExtensions.HelpfulEditor
 
                 if (Section(Hierarchy, "Folding"))
                 {
+                    DrawLegacyOnlyNote("Animate only applies to the legacy Hierarchy; the new one folds instantly.");
+
                     settings.animatedFoldsEnabled = EditorGUILayout.Toggle(
                         new GUIContent("Animate", "Play Collapse Everything and Isolate one fold at a time instead of applying them instantly."),
                         settings.animatedFoldsEnabled);
@@ -609,10 +615,21 @@ namespace DNExtensions.HelpfulEditor
             if (EditorGUI.EndChangeCheck())
             {
                 HelpfulEditorSettings.SaveHierarchy();
-                HelpfulEditor.Hierarchy.HierarchyLegacyWindow.Sync();
+#if UNITY_6000_6_OR_NEWER
+                HelpfulEditor.Hierarchy.HierarchyViewDecorator.Refresh();
+#endif
             }
 
             DrawResetButton("Hierarchy", HelpfulEditorSettings.ResetHierarchy);
+        }
+
+        /// <summary>Flags a Hierarchy setting the UI Toolkit window does not use, and only while that window is the one in use.</summary>
+        private static void DrawLegacyOnlyNote(string message)
+        {
+            if (!HelpfulEditor.Hierarchy.HierarchyTree.UsesNewWindow) return;
+
+            IndentedHelpBox(message, MessageType.None);
+            EditorGUILayout.Space(2);
         }
 
         private static void DrawInspector()

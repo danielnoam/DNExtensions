@@ -84,14 +84,14 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
             if (settings.expandCollapseRecursiveKey.Matches(evt))
             {
-                HelpfulEditorTreeReflection.ToggleHierarchyExpanded(ResolveRowId(target), true);
+                HierarchyTree.ToggleExpanded(ResolveRowId(target), true);
                 evt.Use();
                 return true;
             }
 
             if (settings.expandCollapseKey.Matches(evt))
             {
-                HelpfulEditorTreeReflection.ToggleHierarchyExpanded(ResolveRowId(target), false);
+                HierarchyTree.ToggleExpanded(ResolveRowId(target), false);
                 evt.Use();
                 return true;
             }
