@@ -61,6 +61,26 @@ Two assemblies inside `utilities` are gated on packages you may not have, and ar
 
 Install either package later and the corresponding assembly compiles itself into existence.
 
+### MCP tools for AI agents
+
+Each package also ships an `MCP/Editor` assembly gated on `com.unity.pipeline`, the package the Unity CLI uses to drive a running Editor. With it installed, the commands below show up in `unity list` and, through `unity mcp`, as MCP tools for Claude Code or any other MCP client. Without it nothing is built.
+
+```bash
+unity pipeline install            # once per project
+unity mcp configure claude-code   # register the Unity MCP server with the client
+```
+
+| Command | Package | What it does |
+|---|---|---|
+| `dn_capture_game_view` | helpfuleditor | Saves a PNG of the Game View (optionally re-rendered at a size, or without UI) and returns its path |
+| `dn_list_buttons` / `dn_invoke_button` | utilities | Lists and presses `[Button]` methods on a GameObject's components or an asset |
+| `dn_autoget_populate` | utilities | Populates `[AutoGet]` fields in a scene or under a GameObject and reports the ones still empty |
+| `dn_recent_assets` | utilities | The user's Quick Navigation history and favorites |
+| `dn_list_notes` / `dn_set_note` | components | Reads the `Note` components and `NoteField`s left in the loaded scenes, and writes notes |
+| `dn_list_audio_ids` | systems | The IDs registered for `AudioLibrary` and `AudioTrack` |
+| `dn_list_pools` | systems | Configured object pools, or live active/inactive counts in play mode |
+| `dn_list_scriptables` / `dn_set_so_value` / `dn_invoke_so_event` | systems | Reads and tunes `SOValue` assets, raises `SOEvent`s in play mode |
+
 ### Download size
 
 UPM clones the whole repository for each package and then uses only the subfolder. This repo is a full Unity project, so expect a large download regardless of which package you are installing.

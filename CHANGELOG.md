@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- MCP tools for AI agents: `MCP/Editor` assemblies in every package, built only when `com.unity.pipeline` is installed, exposing Game View capture, inspector buttons, AutoGet population, Quick Navigation history, scene notes, audio IDs, object pools and ScriptableObject values/events as `unity` CLI commands and MCP tools.
+
 ## [1.1.0] - 2026-10-06
 
 ### Added

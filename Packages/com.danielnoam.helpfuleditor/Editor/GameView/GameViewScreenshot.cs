@@ -470,7 +470,7 @@ namespace DNExtensions.HelpfulEditor.GameView
             Debug.Log($"[HelpfulEditor] Saved screenshot to {relative}", asset);
         }
 
-        private static void FlipVertically(Texture2D texture)
+        public static void FlipVertically(Texture2D texture)
         {
             Color32[] pixels = texture.GetPixels32();
 

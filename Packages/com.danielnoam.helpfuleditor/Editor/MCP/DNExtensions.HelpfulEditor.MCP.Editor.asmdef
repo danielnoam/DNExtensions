@@ -1,0 +1,28 @@
+{
+    "name": "DNExtensions.HelpfulEditor.MCP.Editor",
+    "rootNamespace": "DNExtensions.HelpfulEditor.MCP",
+    "references": [
+        "Unity.Pipeline",
+        "Unity.Pipeline.Attributes",
+        "DNExtensions.HelpfulEditor.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "DNEXTENSIONS_PIPELINE"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.pipeline",
+            "expression": "",
+            "define": "DNEXTENSIONS_PIPELINE"
+        }
+    ],
+    "noEngineReferences": false
+}
