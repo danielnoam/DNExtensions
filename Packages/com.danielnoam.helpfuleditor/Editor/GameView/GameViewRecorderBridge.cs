@@ -91,7 +91,13 @@ namespace DNExtensions.HelpfulEditor.GameView
 
         private static Type FindType(string fullName)
         {
+            // CurrentAssemblies leaves out assemblies a reload has unloaded, which AppDomain still
+            // hands back. It only exists in newer editors, so older ones keep the AppDomain walk.
+#if UNITY_6000_6_OR_NEWER
+            foreach (Assembly assembly in UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies())
+#else
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+#endif
             {
                 Type type = assembly.GetType(fullName, false);
                 if (type != null) return type;

@@ -364,7 +364,8 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                 menu.AddItem(component.GetType().Name, false, () => OpenQuickEditAt(overflow, component));
             }
 
-            menu.DropDown(overflow.worldBound, overflow, true);
+            // Auto: at least as wide as the badge, wider when a component name needs it.
+            menu.DropDown(overflow.worldBound, overflow, DropdownMenuSizeMode.Auto);
         }
 
         private static void OpenQuickEditAt(VisualElement anchor, Component component)
