@@ -1,0 +1,28 @@
+{
+    "name": "DNExtensions.Systems.MCP.Editor",
+    "rootNamespace": "DNExtensions.Systems.MCP",
+    "references": [
+        "Unity.Pipeline",
+        "DNExtensions.Systems",
+        "DNExtensions.Utilities.MCP.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "DNEXTENSIONS_PIPELINE"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.pipeline",
+            "expression": "",
+            "define": "DNEXTENSIONS_PIPELINE"
+        }
+    ],
+    "noEngineReferences": false
+}
