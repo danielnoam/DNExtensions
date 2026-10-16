@@ -37,7 +37,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
             if (!target) return;
 
-            _expandedBefore = HelpfulEditorTreeReflection.GetHierarchyExpandedIds();
+            _expandedBefore = HierarchyTree.GetExpandedIds();
             Target = target;
 
             HierarchyExpandQueue.AnimateTo(BuildIsolatedExpansion(target, _expandedBefore));

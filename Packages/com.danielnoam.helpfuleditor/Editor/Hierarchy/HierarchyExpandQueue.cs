@@ -12,7 +12,8 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
     {
         private static readonly HelpfulEditorFoldQueue Queue = new HelpfulEditorFoldQueue(TreeKind.Hierarchy);
 
-        private static bool AnimationEnabled => HelpfulEditorSettings.Hierarchy.animatedFoldsEnabled && Queue.CanAnimate;
+        /// <summary>The UI Toolkit window has no fold animation to drive, so folds there always apply at once.</summary>
+        private static bool AnimationEnabled => HelpfulEditorSettings.Hierarchy.animatedFoldsEnabled && !HierarchyTree.UsesNewWindow && Queue.CanAnimate;
 
         public static void Pump() => Queue.Pump();
 
@@ -24,7 +25,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         {
             if (!AnimationEnabled)
             {
-                HelpfulEditorTreeReflection.CollapseAllHierarchy();
+                HierarchyTree.CollapseAll();
                 return;
             }
 
@@ -55,7 +56,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         {
             if (!AnimationEnabled)
             {
-                HelpfulEditorTreeReflection.SetHierarchyExpandedIds(targetExpandedIds);
+                HierarchyTree.SetExpandedIds(targetExpandedIds);
                 return;
             }
 

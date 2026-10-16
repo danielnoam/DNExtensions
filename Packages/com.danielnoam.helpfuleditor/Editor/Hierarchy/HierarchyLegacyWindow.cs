@@ -5,11 +5,11 @@ using UnityEngine;
 namespace DNExtensions.HelpfulEditor.Hierarchy
 {
     /// <summary>
-    /// Unity 6.6 made a UI Toolkit Hierarchy the default. It is not a SceneHierarchyWindow and never
-    /// raises hierarchyWindowItemOnGUI, so every pass in this module has nothing to draw into and the
-    /// whole module goes silent without an error. The legacy window is still shipped behind
-    /// Project Settings > Editor > Use Legacy Hierarchy, so the module turns that on while it is
-    /// enabled and turns it back off when disabled — but only if it was the one that turned it on.
+    /// Earlier versions of the module switched Unity 6.6 back to the legacy Hierarchy, because the
+    /// new UI Toolkit window never raises hierarchyWindowItemOnGUI and the module had nothing to draw
+    /// into. It now decorates the new window directly, so a switch it made is undone once. Which
+    /// window to use is left to Project Settings > Editor > Use Legacy Hierarchy from then on: the
+    /// module works with either.
     /// </summary>
     [InitializeOnLoad]
     internal static class HierarchyLegacyWindow
@@ -21,34 +21,24 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         static HierarchyLegacyWindow()
         {
             // Setting it swaps any open Hierarchy for the other kind, which must not happen mid-load.
-            EditorApplication.delayCall -= Sync;
-            EditorApplication.delayCall += Sync;
+            EditorApplication.delayCall -= UndoForcedLegacy;
+            EditorApplication.delayCall += UndoForcedLegacy;
         }
 
-        /// <summary>Call after the module is toggled.</summary>
-        public static void Sync()
+        private static void UndoForcedLegacy()
         {
-            if (UseLegacyHierarchy == null || !UseLegacyHierarchy.CanWrite) return;
-
             HierarchySettings settings = HelpfulEditorSettings.Hierarchy;
-            bool isLegacy = (bool)UseLegacyHierarchy.GetValue(null);
+            if (!settings.forcedLegacyHierarchy) return;
 
-            if (settings.moduleEnabled)
-            {
-                if (isLegacy) return;
+            settings.forcedLegacyHierarchy = false;
+            HelpfulEditorSettings.SaveHierarchy();
 
-                UseLegacyHierarchy.SetValue(null, true);
-                settings.forcedLegacyHierarchy = true;
-                HelpfulEditorSettings.SaveHierarchy();
-                Debug.Log("HelpfulEditor: switched to the legacy Hierarchy window, which the Hierarchy module draws into. " +
-                          "Disable the module in Project Settings > HelpfulEditor > Hierarchy to go back to Unity's new one.");
-            }
-            else if (settings.forcedLegacyHierarchy)
-            {
-                if (isLegacy) UseLegacyHierarchy.SetValue(null, false);
-                settings.forcedLegacyHierarchy = false;
-                HelpfulEditorSettings.SaveHierarchy();
-            }
+            if (UseLegacyHierarchy == null || !UseLegacyHierarchy.CanWrite) return;
+            if (!(bool)UseLegacyHierarchy.GetValue(null)) return;
+
+            UseLegacyHierarchy.SetValue(null, false);
+            Debug.Log("HelpfulEditor: switched back to Unity's new Hierarchy window, which the Hierarchy module now supports. " +
+                      "Use Project Settings > Editor > Use Legacy Hierarchy to choose the old one.");
         }
     }
 }

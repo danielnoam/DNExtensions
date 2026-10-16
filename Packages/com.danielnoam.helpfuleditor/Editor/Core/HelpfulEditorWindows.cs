@@ -39,7 +39,14 @@ namespace DNExtensions.HelpfulEditor
             typeof(EditorWindow).Assembly.GetType("UnityEditor.PropertyEditor")
             ?? typeof(EditorWindow).Assembly.GetType("UnityEditor.InspectorWindow");
 
+#if UNITY_6000_6_OR_NEWER
+        /// <summary>The UI Toolkit Hierarchy, which is not a SceneHierarchyWindow and is the default from 6.6.</summary>
+        private static readonly Type NewHierarchyWindowType = typeof(global::Unity.Hierarchy.Editor.HierarchyWindow);
+
+        public static bool MouseOverHierarchy => IsMouseOver(HierarchyWindowType) || IsMouseOver(NewHierarchyWindowType);
+#else
         public static bool MouseOverHierarchy => IsMouseOver(HierarchyWindowType);
+#endif
         public static bool MouseOverProject => IsMouseOver(ProjectWindowType);
         public static bool MouseOverInspector => IsMouseOver(InspectorWindowType);
 
