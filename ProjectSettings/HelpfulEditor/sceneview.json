@@ -23,7 +23,7 @@
     "snapMenuEnabled": true,
     "snapMaxDistance": 1000.0,
     "guidesEnabled": true,
-    "showRulers": true,
+    "showRulers": false,
     "guideColor": {
         "r": 0.0,
         "g": 1.0,
@@ -40,7 +40,7 @@
     "guideOutlineWidth": 1.5,
     "guideSnapColor": {
         "r": 1.0,
-        "g": 0.44999998807907107,
+        "g": 0.44999998807907104,
         "b": 0.10000000149011612,
         "a": 1.0
     },
@@ -59,7 +59,7 @@
         "r": 1.0,
         "g": 0.0,
         "b": 0.0,
-        "a": 0.27450981736183169
+        "a": 0.27450981736183167
     },
     "gridSnapEnabled": true,
     "guides": [
@@ -73,7 +73,7 @@
         },
         {
             "isHorizontal": false,
-            "normalizedPosition": 0.30772873759269717
+            "normalizedPosition": 0.30772873759269714
         },
         {
             "isHorizontal": false,

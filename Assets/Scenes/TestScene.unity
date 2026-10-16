@@ -496,6 +496,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: VFXManager
       objectReference: {fileID: 0}
+    - target: {fileID: 3619729040768234111, guid: bce79ebf0377e9d4d934082fabe40e33, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8639727119665796664, guid: bce79ebf0377e9d4d934082fabe40e33, type: 3}
       propertyPath: m_AnchorMax.x
       value: 1
@@ -1846,6 +1850,10 @@ PrefabInstance:
     - target: {fileID: 8740322271248105233, guid: a5146d753f2965b428fbf3ec8905c510, type: 3}
       propertyPath: m_Name
       value: InputManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 8740322271248105233, guid: a5146d753f2965b428fbf3ec8905c510, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
