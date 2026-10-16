@@ -382,9 +382,12 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             arrow.style.height = 15f;
             arrow.style.marginLeft = 3f;
 
-            arrow.RegisterCallback<PointerDownEvent>(evt =>
+            // Registered on the row in the trickle-down phase, so a press on the name is taken before
+            // the view reads it as a selection or the start of a rename. The row is recycled, so what
+            // it shows is checked when the event fires rather than when the callback is added.
+            item.RegisterCallback<PointerDownEvent>(evt =>
             {
-                if (evt.button != 0) return;
+                if (evt.button != 0 || !IsOverSceneLabel(item, arrow, evt.position)) return;
 
                 evt.StopImmediatePropagation();
 
@@ -393,24 +396,40 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
                 _pressed = arrow;
                 arrow.style.opacity = 1f;
-            });
+            }, TrickleDown.TrickleDown);
 
-            arrow.RegisterCallback<PointerUpEvent>(evt =>
+            item.RegisterCallback<PointerUpEvent>(evt =>
             {
                 if (_pressed != arrow) return;
 
                 _pressed = null;
                 evt.StopImmediatePropagation();
 
+                if (!IsOverSceneLabel(item, arrow, evt.position)) return;
+
                 Rect activator = ToScreenRect(window, Rect.MinMaxRect(item.Name.worldBound.xMin, arrow.worldBound.yMin,
                     arrow.worldBound.xMax, arrow.worldBound.yMax));
 
                 _openArrow = arrow;
                 EditorApplication.delayCall += () => HierarchySceneMenuWindow.Open(activator, () => OnSceneMenuClosed(arrow));
-            });
+            }, TrickleDown.TrickleDown);
 
             item.LeftCustomContainer.Add(arrow);
             return arrow;
+        }
+
+        /// <summary>
+        /// The scene's name and the caret after it, matching the legacy window where the whole name
+        /// opens the list. The rest of the header still selects the scene.
+        /// </summary>
+        private static bool IsOverSceneLabel(HierarchyViewItem item, VisualElement arrow, Vector2 position)
+        {
+            if (item.Handler is not HierarchySceneHandler || arrow.resolvedStyle.display == DisplayStyle.None) return false;
+
+            Rect name = item.Name.worldBound;
+            Rect hit = Rect.MinMaxRect(name.xMin, name.yMin, Mathf.Max(name.xMax, arrow.worldBound.xMax), name.yMax);
+
+            return hit.Contains(position);
         }
 
         private static void OnSceneMenuClosed(VisualElement arrow)
