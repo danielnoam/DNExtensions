@@ -1,6 +1,6 @@
 {
     "moduleEnabled": true,
-    "forcedLegacyHierarchy": true,
+    "forcedLegacyHierarchy": false,
     "zebraStripesEnabled": true,
     "zebraColorEven": {
         "r": 0.0,
