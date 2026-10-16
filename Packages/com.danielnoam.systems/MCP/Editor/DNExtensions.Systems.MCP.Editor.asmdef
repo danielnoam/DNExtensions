@@ -3,6 +3,7 @@
     "rootNamespace": "DNExtensions.Systems.MCP",
     "references": [
         "Unity.Pipeline",
+        "Unity.Pipeline.Attributes",
         "DNExtensions.Systems",
         "DNExtensions.Utilities.MCP.Editor"
     ],

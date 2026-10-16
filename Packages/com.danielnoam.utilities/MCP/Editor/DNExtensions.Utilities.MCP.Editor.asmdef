@@ -3,6 +3,7 @@
     "rootNamespace": "DNExtensions.Utilities.MCP",
     "references": [
         "Unity.Pipeline",
+        "Unity.Pipeline.Attributes",
         "DNExtensions.Utilities.Attributes",
         "DNExtensions.Utilities.Attributes.Button.Editor",
         "DNExtensions.Utilities.QuickNavigation.Editor"

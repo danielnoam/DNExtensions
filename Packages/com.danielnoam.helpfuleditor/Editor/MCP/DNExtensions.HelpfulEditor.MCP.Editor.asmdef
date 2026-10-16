@@ -3,6 +3,7 @@
     "rootNamespace": "DNExtensions.HelpfulEditor.MCP",
     "references": [
         "Unity.Pipeline",
+        "Unity.Pipeline.Attributes",
         "DNExtensions.HelpfulEditor.Editor"
     ],
     "includePlatforms": [
