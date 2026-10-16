@@ -39,12 +39,12 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             {
                 if (!TryGetNode(view, rawId, out HierarchyNode node)) return;
 
-                bool expand = !view.IsExpanded(ref node);
+                bool expand = !view.IsExpanded(in node);
 
                 if (!includeChildren)
                 {
-                    if (expand) view.Expand(ref node);
-                    else view.Collapse(ref node);
+                    if (expand) view.Expand(in node);
+                    else view.Collapse(in node);
 
                     return;
                 }
@@ -83,7 +83,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                 foreach (GameObject gameObject in WalkBuffer)
                 {
                     HierarchyNode node = handler.GetOrCreateNode(gameObject);
-                    if (view.IsExpanded(ref node)) ids.Add(HelpfulEditorObjectId.Raw(gameObject));
+                    if (view.IsExpanded(in node)) ids.Add(HelpfulEditorObjectId.Raw(gameObject));
                 }
             }
             catch (Exception e)
@@ -118,7 +118,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                 foreach (GameObject gameObject in WalkBuffer)
                 {
                     HierarchyNode node = handler.GetOrCreateNode(gameObject);
-                    bool isExpanded = view.IsExpanded(ref node);
+                    bool isExpanded = view.IsExpanded(in node);
                     bool shouldExpand = wanted.Contains(gameObject);
 
                     if (shouldExpand && !isExpanded) ExpandBuffer.Add(node);
