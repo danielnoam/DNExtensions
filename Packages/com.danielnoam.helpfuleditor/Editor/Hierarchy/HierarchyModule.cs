@@ -153,6 +153,23 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             Color color = settings.treeLineColor;
             if (color.a <= 0f) return;
 
+            int depth = BuildTreePath(transform, LastOnPathBuffer);
+            if (depth == 0) return;
+
+            // A row with children owns the indent step left of its icon — that is where Unity draws
+            // the foldout arrow — so the elbow stops at the arrow's edge rather than running
+            // underneath the glyph.
+            HelpfulEditorGUI.DrawTreeConnectors(rowRect, rowRect.x - HelpfulEditorGUI.IndentWidth * depth,
+                LastOnPathBuffer, color, settings.treeLineStyle, transform.childCount > 0);
+        }
+
+        /// <summary>
+        /// Fills <paramref name="lastOnPath"/> with whether the node the path passes through at each
+        /// level is its parent's last child, the final entry being the row itself, and returns the
+        /// depth. Shared with the UI Toolkit window so both draw the same tree.
+        /// </summary>
+        internal static int BuildTreePath(Transform transform, List<bool> lastOnPath)
+        {
             AncestorBuffer.Clear();
             for (Transform parent = transform.parent; parent; parent = parent.parent)
             {
@@ -160,21 +177,17 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             }
 
             int depth = AncestorBuffer.Count;
-            if (depth == 0) return;
+            lastOnPath.Clear();
+            if (depth == 0) return 0;
 
             AncestorBuffer.Reverse();
 
-            LastOnPathBuffer.Clear();
             for (int level = 0; level < depth; level++)
             {
-                LastOnPathBuffer.Add(IsLastSibling(level + 1 < depth ? AncestorBuffer[level + 1] : transform));
+                lastOnPath.Add(IsLastSibling(level + 1 < depth ? AncestorBuffer[level + 1] : transform));
             }
 
-            // A row with children owns the indent step left of its icon — that is where Unity draws
-            // the foldout arrow — so the elbow stops at the arrow's edge rather than running
-            // underneath the glyph.
-            HelpfulEditorGUI.DrawTreeConnectors(rowRect, rowRect.x - HelpfulEditorGUI.IndentWidth * depth,
-                LastOnPathBuffer, color, settings.treeLineStyle, transform.childCount > 0);
+            return depth;
         }
 
         /// <summary>

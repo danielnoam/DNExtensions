@@ -15,7 +15,8 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
     /// submenu, which buried scenes under whatever folders they happened to live in and made
     /// switching a matter of navigating the project rather than picking a scene.
     ///
-    /// Starred scenes are listed above the rest with a divider between them. Open scenes are marked
+    /// Starred scenes are listed above the rest with a divider between them, in an order the user
+    /// sets by dragging a starred row, or with Alt+Up/Down. Open scenes are marked
     /// where they fall rather than lifted into a group of their own — the tick already says so, and
     /// a section for something the header above is already naming was a division too many.
     ///
@@ -41,6 +42,9 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             : new Color(0.75f, 0.55f, 0f);
 
         private readonly List<string> _paths = new List<string>();
+
+        /// <summary>Every starred scene in the user's order, searched or not, which is what a move is measured against.</summary>
+        private readonly List<string> _favorites = new List<string>();
 
         /// <summary>Which of the three groups each row belongs to, which is all a divider needs to know.</summary>
         private readonly List<int> _groups = new List<int>();
@@ -93,21 +97,25 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         }
 
         /// <summary>
-        /// Rebuilt from scratch whenever the order could have changed, which starring a scene and
-        /// typing in the search field both do. Group 0 is starred and 1 is everything else, since a
+        /// Rebuilt from scratch whenever the order could have changed, which starring, reordering and
+        /// typing in the search field all do. Group 0 is starred and 1 is everything else, since a
         /// search narrows the list rather than changing what is worth keeping at the top of it.
         ///
-        /// Ordered by how well the name matches and then by the name itself — an empty query matches
-        /// everything at the same cost, so the unsearched list reads alphabetically as it always did.
+        /// Starred scenes keep the user's order, searched or not. The rest are ordered by how well the
+        /// name matches and then by the name itself — an empty query matches everything at the same
+        /// cost, so the unsearched list reads alphabetically as it always did.
         /// </summary>
         private void Rebuild()
         {
             List<KeyValuePair<string, float>> matched = new List<KeyValuePair<string, float>>();
+            List<string> favorites = new List<string>();
 
             foreach (string guid in AssetDatabase.FindAssets("t:Scene"))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 if (string.IsNullOrEmpty(path)) continue;
+
+                if (IsFavorite(path)) favorites.Add(path);
 
                 // Matched on the name alone, not the path: the list shows names, and a query that
                 // hit a folder somewhere up the path would look like it had matched nothing.
@@ -125,22 +133,57 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                     : string.Compare(SceneName(left.Key), SceneName(right.Key), StringComparison.OrdinalIgnoreCase);
             });
 
+            _favorites.Clear();
+            _favorites.AddRange(OrderFavorites(favorites));
+
+            HashSet<string> matchedPaths = new HashSet<string>();
+            foreach (KeyValuePair<string, float> entry in matched) matchedPaths.Add(entry.Key);
+
             _paths.Clear();
             _groups.Clear();
 
-            for (int group = 0; group <= 1; group++)
+            foreach (string path in _favorites)
             {
-                foreach (KeyValuePair<string, float> entry in matched)
-                {
-                    if (GroupOf(entry.Key) != group) continue;
+                if (!matchedPaths.Contains(path)) continue;
 
-                    _paths.Add(entry.Key);
-                    _groups.Add(group);
-                }
+                _paths.Add(path);
+                _groups.Add(0);
+            }
+
+            foreach (KeyValuePair<string, float> entry in matched)
+            {
+                if (IsFavorite(entry.Key)) continue;
+
+                _paths.Add(entry.Key);
+                _groups.Add(1);
             }
         }
 
-        private static int GroupOf(string path) => IsFavorite(path) ? 0 : 1;
+        /// <summary>
+        /// The stored order first, then any starred scene it does not name — one starred before the
+        /// order was kept, or moved since — alphabetically after it.
+        /// </summary>
+        private static List<string> OrderFavorites(List<string> favorites)
+        {
+            List<string> stored = LoadFavoriteOrder();
+
+            favorites.Sort((left, right) =>
+            {
+                int leftIndex = stored.IndexOf(left);
+                int rightIndex = stored.IndexOf(right);
+
+                if (leftIndex < 0) leftIndex = int.MaxValue;
+                if (rightIndex < 0) rightIndex = int.MaxValue;
+
+                int byOrder = leftIndex.CompareTo(rightIndex);
+
+                return byOrder != 0
+                    ? byOrder
+                    : string.Compare(SceneName(left), SceneName(right), StringComparison.OrdinalIgnoreCase);
+            });
+
+            return favorites;
+        }
 
         private static string SceneName(string assetPath) => Path.GetFileNameWithoutExtension(assetPath);
 
@@ -185,7 +228,9 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
 
             // The only place the middle-click is announced. It reveals rather than changes anything,
             // so it is worth offering and not worth a row of its own to advertise.
-            _rowContent.tooltip = $"{path}\nMiddle-click to ping in the Project window";
+            _rowContent.tooltip = _groups[index] == 0
+                ? $"{path}\nMiddle-click to ping in the Project window\nDrag to reorder"
+                : $"{path}\nMiddle-click to ping in the Project window";
 
             GUI.Label(Rect.MinMaxRect(rowRect.x + TickWidth, rowRect.y, starRect.x, rowRect.yMax),
                 _rowContent, open ? EditorStyles.boldLabel : EditorStyles.label);
@@ -193,6 +238,60 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             GUI.color = previous;
 
             DrawStar(starRect, path, index);
+        }
+
+        /// <summary>Only the starred run, which is the only part of the list whose order is the user's.</summary>
+        protected override bool IsRowReorderable(int index) => _groups[index] == 0;
+
+        /// <summary>
+        /// Placed against the visible neighbour it was dropped beside, so under a search the scene
+        /// lands where it was seen to land, with any starred scenes the search hides keeping their places.
+        /// </summary>
+        protected override void MoveRow(int from, int to)
+        {
+            int neighbor = _favorites.IndexOf(_paths[to]);
+
+            MoveFavorite(_paths[from], to < from ? neighbor : neighbor + 1);
+        }
+
+        /// <summary>
+        /// Alt+Up/Down moves the highlighted starred scene past its visible neighbour, which under a
+        /// search may step over starred scenes the search has hidden.
+        /// </summary>
+        protected override bool HandleRowKey(int index, Event evt)
+        {
+            if (!evt.alt || _groups[index] != 0) return false;
+            if (evt.keyCode != KeyCode.UpArrow && evt.keyCode != KeyCode.DownArrow) return false;
+
+            string path = _paths[index];
+            int neighbor = evt.keyCode == KeyCode.UpArrow ? index - 1 : index + 1;
+
+            // Consumed even at either end of the run, so the key does not fall through to moving the
+            // highlight and read as the row having refused to move.
+            if (neighbor < 0 || neighbor >= RowCount || _groups[neighbor] != 0) return true;
+
+            int target = _favorites.IndexOf(_paths[neighbor]);
+            MoveFavorite(path, evt.keyCode == KeyCode.UpArrow ? target : target + 1);
+
+            SetHighlight(_paths.IndexOf(path));
+            return true;
+        }
+
+        /// <param name="insertIndex">Where in the starred order the scene goes, counted before it is lifted out.</param>
+        private void MoveFavorite(string path, int insertIndex)
+        {
+            List<string> order = new List<string>(_favorites);
+
+            int from = order.IndexOf(path);
+            if (from < 0) return;
+
+            order.RemoveAt(from);
+            if (insertIndex > from) insertIndex--;
+
+            order.Insert(Mathf.Clamp(insertIndex, 0, order.Count), path);
+
+            SaveFavoriteOrder(order);
+            Rebuild();
         }
 
         /// <summary>
@@ -244,7 +343,32 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             // that outlives the project.
             if (favorite) EditorPrefs.SetBool(FavoriteKey(path), true);
             else EditorPrefs.DeleteKey(FavoriteKey(path));
+
+            // A new star goes to the bottom of the starred run rather than wherever its name sorts,
+            // so starring never shuffles an order the user has already arranged.
+            List<string> order = LoadFavoriteOrder();
+            order.Remove(path);
+            if (favorite) order.Add(path);
+
+            SaveFavoriteOrder(order);
         }
+
+        private static List<string> LoadFavoriteOrder()
+        {
+            string stored = EditorPrefs.GetString(FavoriteOrderKey, string.Empty);
+
+            return new List<string>(stored.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        private static void SaveFavoriteOrder(List<string> order)
+        {
+            if (order.Count == 0) EditorPrefs.DeleteKey(FavoriteOrderKey);
+            else EditorPrefs.SetString(FavoriteOrderKey, string.Join("\n", order));
+        }
+
+        /// <summary>Scoped to the project the same way each scene's star is.</summary>
+        private static string FavoriteOrderKey =>
+            $"DNExtensions.HelpfulEditor.SceneFavoriteOrder.{Application.dataPath.GetHashCode():X8}";
 
         /// <summary>
         /// Per user, which is what EditorPrefs is, and scoped to this project by its location on

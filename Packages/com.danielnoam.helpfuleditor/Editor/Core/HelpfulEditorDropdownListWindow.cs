@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -18,6 +19,15 @@ namespace DNExtensions.HelpfulEditor
         private const float SearchHeight = 18f;
         private const float SearchGap = 4f;
 
+        /// <summary>How long a reorderable row has to be held still before it lifts, so a plain click still activates it.</summary>
+        private const double LongPressSeconds = 0.3;
+
+        /// <summary>How far a press may wander and still be a click. Past it, the row lifts and follows the cursor.</summary>
+        private const float PressSlop = 4f;
+
+        /// <summary>How quickly rows slide into place, as a rate for exponential easing. Higher is snappier.</summary>
+        private const float SlideRate = 18f;
+
         /// <summary>
         /// Unique per window so two dropdowns open at once cannot focus each other's field. Focus is
         /// addressed by name in IMGUI, and a shared name is a shared address.
@@ -32,6 +42,12 @@ namespace DNExtensions.HelpfulEditor
             ? new Color(1f, 1f, 1f, 0.45f)
             : new Color(0f, 0f, 0f, 0.45f);
 
+        private static Color DraggedRowColor => EditorGUIUtility.isProSkin
+            ? new Color(0.27f, 0.27f, 0.27f)
+            : new Color(0.84f, 0.84f, 0.84f);
+
+        private static Color DraggedRowShadow => new Color(0f, 0f, 0f, EditorGUIUtility.isProSkin ? 0.45f : 0.2f);
+
         private static GUIStyle _emptyStyle;
 
         private static GUIStyle EmptyStyle => _emptyStyle ??= new GUIStyle(EditorStyles.label)
@@ -45,6 +61,28 @@ namespace DNExtensions.HelpfulEditor
         private bool _reveal;
         private string _search = string.Empty;
         private bool _searchFocused;
+
+        private int _controlId;
+        private int _pressIndex = -1;
+        private double _pressTime;
+        private Vector2 _pressPosition;
+
+        private int _dragIndex = -1;
+        private int _dragTarget;
+        private int _runStart;
+        private int _runEnd;
+
+        /// <summary>Where in the dragged row the cursor took hold of it, so the row does not jump to centre itself under the cursor.</summary>
+        private float _dragGrab;
+
+        private float _dragY;
+
+        /// <summary>How far each row is currently drawn from its slot, eased toward where the drag wants it.</summary>
+        private float[] _offsets = Array.Empty<float>();
+
+        private float[] _rowTops = Array.Empty<float>();
+        private double _lastSlideTime;
+        private bool _ticking;
 
         protected virtual float RowHeight => 20f;
         protected virtual float MinWidth => 190f;
@@ -89,6 +127,34 @@ namespace DNExtensions.HelpfulEditor
         protected virtual string EmptySearchText => "No matches";
 
         private bool IsSearching => ShowSearchField && !string.IsNullOrEmpty(_search);
+
+        /// <summary>
+        /// A key press while a row is highlighted, offered before the list's own navigation so a row
+        /// can take a key the list would otherwise use. Return true to consume it.
+        /// </summary>
+        protected virtual bool HandleRowKey(int index, Event evt) => false;
+
+        /// <summary>
+        /// Rows that say yes can be dragged among their neighbours, the way Unity's own reorderable
+        /// lists work: pulled straight off, or held still until they lift. A drag stays inside the
+        /// unbroken run of reorderable rows it started in. A click on such a row activates on release
+        /// rather than on press.
+        /// </summary>
+        protected virtual bool IsRowReorderable(int index) => false;
+
+        /// <summary>
+        /// A drag ended with the row at <paramref name="from"/> dropped into the slot at
+        /// <paramref name="to"/>. The subclass reorders its rows so the moved one ends up at
+        /// <paramref name="to"/>.
+        /// </summary>
+        protected virtual void MoveRow(int from, int to)
+        {
+        }
+
+        protected bool IsDragging => _dragIndex >= 0;
+
+        /// <summary>Escape cancels a drag rather than closing the list out from under it.</summary>
+        protected override bool CloseOnEscape => !IsDragging && _pressIndex < 0;
 
         /// <summary>Called every pass with the row under the cursor or keyboard, for previewing it elsewhere.</summary>
         protected virtual void OnHighlightChanged(int index)
@@ -225,6 +291,24 @@ namespace DNExtensions.HelpfulEditor
         {
             if (evt.type != EventType.KeyDown) return false;
 
+            // The keyboard sits out a drag, apart from Escape calling it off — a Return or an arrow
+            // acting on the list while a row hangs under the cursor would leave the two disagreeing.
+            if (IsDragging || _pressIndex >= 0)
+            {
+                if (evt.keyCode == KeyCode.Escape) CancelPress();
+
+                evt.Use();
+                return true;
+            }
+
+            if (_highlighted >= 0 && _highlighted < RowCount && HandleRowKey(_highlighted, evt))
+            {
+                evt.Use();
+                _reveal = true;
+                Repaint();
+                return true;
+            }
+
             switch (evt.keyCode)
             {
                 case KeyCode.DownArrow:
@@ -268,6 +352,8 @@ namespace DNExtensions.HelpfulEditor
 
         private void DrawList(Rect listRect, Event evt)
         {
+            _controlId = GUIUtility.GetControlID(FocusType.Passive);
+
             float contentHeight = ListHeight();
             bool scrolls = contentHeight > listRect.height;
 
@@ -275,6 +361,10 @@ namespace DNExtensions.HelpfulEditor
 
             Rect viewRect = new Rect(0f, 0f, listRect.width - (scrolls ? ScrollBarWidth : 0f), contentHeight);
             _scroll = GUI.BeginScrollView(listRect, _scroll, viewRect);
+
+            MeasureRowTops();
+
+            if (evt.type == EventType.Repaint) Slide();
 
             float y = 0f;
 
@@ -295,17 +385,29 @@ namespace DNExtensions.HelpfulEditor
                     y += gap;
                 }
 
-                Rect rowRect = new Rect(0f, y, viewRect.width, RowHeight);
+                Rect rowRect = new Rect(0f, y + _offsets[i], viewRect.width, RowHeight);
                 y += RowHeight;
 
-                bool hovered = rowRect.Contains(evt.mousePosition);
+                // The lifted row is drawn last, over everything, wherever the cursor has it.
+                if (i == _dragIndex) continue;
+
+                bool hovered = rowRect.Contains(evt.mousePosition) && !IsDragging;
                 if (hovered && evt.type == EventType.MouseMove) _highlighted = i;
 
-                if (evt.type == EventType.Repaint && i == _highlighted) EditorGUI.DrawRect(rowRect, RowHighlightColor);
+                if (evt.type == EventType.Repaint && i == _highlighted && !IsDragging) EditorGUI.DrawRect(rowRect, RowHighlightColor);
 
                 DrawRow(rowRect, i);
 
                 if (!hovered || evt.type != EventType.MouseDown) continue;
+
+                // Held rather than activated, since the press may yet become a drag. Taken whether or
+                // not the row is enabled: moving it changes nothing that being disabled guards.
+                if (evt.button == 0 && IsRowReorderable(i))
+                {
+                    evt.Use();
+                    BeginPress(i, evt.mousePosition);
+                    continue;
+                }
 
                 // Middle-click points at a row rather than acting on it, so it is allowed even where
                 // activation is not — the same reasoning that keeps a scene's star live in play mode.
@@ -331,11 +433,278 @@ namespace DNExtensions.HelpfulEditor
                 return;
             }
 
+            if (IsDragging) DrawDraggedRow(viewRect.width, evt);
+
+            int clicked = HandlePress(evt);
+
+            if (clicked >= 0)
+            {
+                // Closed out first, since activating can close the window — the same order as a
+                // press on an ordinary row.
+                GUI.EndScrollView();
+                Activate(clicked, evt.shift);
+                return;
+            }
+
             GUI.EndScrollView();
 
             // Driven from here rather than each row so the keyboard and the cursor agree on what is
             // previewed, whichever of the two moved last.
             if (_highlighted >= 0 && _highlighted < RowCount) OnHighlightChanged(_highlighted);
+        }
+
+        /// <summary>
+        /// Each row's resting top, separators included, which a drag measures against. A list that
+        /// changed size under a drag has nothing left to drag through, so the drag is dropped.
+        /// </summary>
+        private void MeasureRowTops()
+        {
+            if (_rowTops.Length != RowCount)
+            {
+                _rowTops = new float[RowCount];
+                _offsets = new float[RowCount];
+
+                // Dropped outright rather than through CancelPress, which eases the lifted row back
+                // from a slot measured against the list as it was.
+                _pressIndex = -1;
+                _dragIndex = -1;
+
+                if (GUIUtility.hotControl == _controlId) GUIUtility.hotControl = 0;
+            }
+
+            float y = 0f;
+
+            for (int i = 0; i < RowCount; i++)
+            {
+                y += SeparatorBefore(i);
+                _rowTops[i] = y;
+                y += RowHeight;
+            }
+        }
+
+        private void BeginPress(int index, Vector2 position)
+        {
+            _pressIndex = index;
+            _pressTime = EditorApplication.timeSinceStartup;
+            _pressPosition = position;
+            _highlighted = index;
+
+            // Held as the hot control so the release still arrives if the cursor leaves the window.
+            GUIUtility.hotControl = _controlId;
+
+            StartTicking();
+        }
+
+        /// <summary>
+        /// Runs a held press: lifting it once it is pulled away or held long enough, dragging it,
+        /// dropping it, or — released before either — returning the row it clicked for the caller to
+        /// activate. -1 for no click.
+        /// </summary>
+        private int HandlePress(Event evt)
+        {
+            if (_pressIndex < 0 && !IsDragging) return -1;
+
+            switch (evt.GetTypeForControl(_controlId))
+            {
+                case EventType.MouseDrag:
+                    // Pulling the row away lifts it straight off, as in Unity's own lists; the hold
+                    // is only the other way in, for a press that stays put.
+                    if (!IsDragging && Vector2.Distance(evt.mousePosition, _pressPosition) > PressSlop) BeginDrag();
+
+                    if (IsDragging)
+                    {
+                        _dragY = evt.mousePosition.y;
+                        UpdateDragTarget();
+                        Repaint();
+                    }
+
+                    evt.Use();
+                    return -1;
+
+                case EventType.MouseUp:
+                    evt.Use();
+
+                    if (IsDragging)
+                    {
+                        Drop();
+                        return -1;
+                    }
+
+                    int pressed = _pressIndex;
+                    CancelPress();
+
+                    bool stillOver = evt.mousePosition.y >= _rowTops[pressed] && evt.mousePosition.y < _rowTops[pressed] + RowHeight;
+                    return stillOver && IsRowEnabled(pressed) ? pressed : -1;
+
+                // Layout rather than Repaint, so the row lifts between frames instead of halfway
+                // through drawing one.
+                case EventType.Layout:
+                    if (!IsDragging && EditorApplication.timeSinceStartup - _pressTime >= LongPressSeconds) BeginDrag();
+                    return -1;
+
+                default:
+                    return -1;
+            }
+        }
+
+        private void BeginDrag()
+        {
+            _dragIndex = _pressIndex;
+            _pressIndex = -1;
+
+            _runStart = _dragIndex;
+            while (_runStart > 0 && IsRowReorderable(_runStart - 1) && SeparatorBefore(_runStart) <= 0f) _runStart--;
+
+            _runEnd = _dragIndex;
+            while (_runEnd < RowCount - 1 && IsRowReorderable(_runEnd + 1) && SeparatorBefore(_runEnd + 1) <= 0f) _runEnd++;
+
+            _dragGrab = _pressPosition.y - _rowTops[_dragIndex];
+            _dragY = _pressPosition.y;
+            _dragTarget = _dragIndex;
+
+            Repaint();
+        }
+
+        /// <summary>Where the lifted row is drawn: under the cursor, kept within the run it can move through.</summary>
+        private float DragTop => Mathf.Clamp(_dragY - _dragGrab, _rowTops[_runStart], _rowTops[_runEnd]);
+
+        /// <summary>The slot whose middle the lifted row's middle has passed, so rows swap at the halfway point as in Unity's lists.</summary>
+        private void UpdateDragTarget()
+        {
+            float centre = DragTop + RowHeight * 0.5f;
+            int target = _runStart + Mathf.FloorToInt((centre - _rowTops[_runStart]) / RowHeight);
+
+            _dragTarget = Mathf.Clamp(target, _runStart, _runEnd);
+        }
+
+        /// <summary>Rows between the lifted row's slot and where it is headed step one row toward the gap it left.</summary>
+        private float TargetOffset(int index)
+        {
+            if (!IsDragging || index == _dragIndex) return 0f;
+
+            if (_dragTarget > _dragIndex && index > _dragIndex && index <= _dragTarget) return -RowHeight;
+            if (_dragTarget < _dragIndex && index >= _dragTarget && index < _dragIndex) return RowHeight;
+
+            return 0f;
+        }
+
+        /// <summary>Eases every row toward its target offset, by time rather than by frame so the speed holds however often it repaints.</summary>
+        private void Slide()
+        {
+            double now = EditorApplication.timeSinceStartup;
+            float deltaTime = Mathf.Clamp((float)(now - _lastSlideTime), 0f, 0.1f);
+            _lastSlideTime = now;
+
+            float blend = 1f - Mathf.Exp(-SlideRate * deltaTime);
+
+            for (int i = 0; i < _offsets.Length; i++)
+            {
+                float target = TargetOffset(i);
+
+                _offsets[i] = Mathf.Abs(target - _offsets[i]) < 0.1f ? target : Mathf.Lerp(_offsets[i], target, blend);
+            }
+        }
+
+        private bool IsSliding
+        {
+            get
+            {
+                for (int i = 0; i < _offsets.Length; i++)
+                {
+                    if (!Mathf.Approximately(_offsets[i], TargetOffset(i))) return true;
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Commits the move, then carries every row's on-screen position across the reorder as an
+        /// offset, so nothing jumps: the dropped row eases from where it was let go into its slot,
+        /// and the rows that had not finished making room finish from where they were.
+        /// </summary>
+        private void Drop()
+        {
+            int from = _dragIndex;
+            int to = _dragTarget;
+
+            List<float> drawnTops = new List<float>(RowCount);
+            for (int i = 0; i < RowCount; i++) drawnTops.Add(_rowTops[i] + _offsets[i]);
+
+            drawnTops.RemoveAt(from);
+            drawnTops.Insert(to, DragTop);
+
+            _dragIndex = -1;
+            if (GUIUtility.hotControl == _controlId) GUIUtility.hotControl = 0;
+
+            if (from != to) MoveRow(from, to);
+
+            _highlighted = to;
+
+            if (drawnTops.Count == RowCount && _offsets.Length == RowCount)
+            {
+                for (int i = 0; i < RowCount; i++) _offsets[i] = drawnTops[i] - _rowTops[i];
+            }
+
+            StartTicking();
+            Repaint();
+        }
+
+        /// <summary>Lets go of a press or a drag without moving anything. A lifted row eases back to its slot.</summary>
+        private void CancelPress()
+        {
+            if (IsDragging && _dragIndex < _offsets.Length) _offsets[_dragIndex] = DragTop - _rowTops[_dragIndex];
+
+            _pressIndex = -1;
+            _dragIndex = -1;
+
+            if (GUIUtility.hotControl == _controlId) GUIUtility.hotControl = 0;
+
+            StartTicking();
+            Repaint();
+        }
+
+        private void DrawDraggedRow(float width, Event evt)
+        {
+            Rect rect = new Rect(0f, DragTop, width, RowHeight);
+
+            if (evt.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(new Rect(rect.x, rect.yMax, rect.width, 2f), DraggedRowShadow);
+                EditorGUI.DrawRect(rect, DraggedRowColor);
+                EditorGUI.DrawRect(rect, RowHighlightColor);
+            }
+
+            DrawRow(rect, _dragIndex);
+        }
+
+        /// <summary>
+        /// Repaints every editor tick while something is moving or a press is waiting to become a
+        /// drag — IMGUI only repaints on input, and a hold or a slide has none.
+        /// </summary>
+        private void StartTicking()
+        {
+            if (_ticking) return;
+
+            _ticking = true;
+            _lastSlideTime = EditorApplication.timeSinceStartup;
+            EditorApplication.update += Tick;
+        }
+
+        private void Tick()
+        {
+            if (!this)
+            {
+                EditorApplication.update -= Tick;
+                return;
+            }
+
+            Repaint();
+
+            if (_pressIndex >= 0 || IsDragging || IsSliding) return;
+
+            _ticking = false;
+            EditorApplication.update -= Tick;
         }
 
         /// <summary>Keeps the arrow keys from walking the highlight off the visible part of a scrolling list.</summary>

@@ -528,8 +528,6 @@ namespace DNExtensions.HelpfulEditor
 
                 if (Section(Hierarchy, "Tree Lines"))
                 {
-                    DrawLegacyOnlyNote("Not drawn in the new Hierarchy yet.");
-
                     settings.treeLinesEnabled = EditorGUILayout.Toggle("Enabled", settings.treeLinesEnabled);
 
                     using (new EditorGUI.DisabledScope(!settings.treeLinesEnabled))
@@ -567,10 +565,8 @@ namespace DNExtensions.HelpfulEditor
 
                 if (Section(Hierarchy, "Folding"))
                 {
-                    DrawLegacyOnlyNote("Animate only applies to the legacy Hierarchy; the new one folds instantly.");
-
                     settings.animatedFoldsEnabled = EditorGUILayout.Toggle(
-                        new GUIContent("Animate", "Play Collapse Everything and Isolate one fold at a time instead of applying them instantly."),
+                        new GUIContent("Animate", "Animate folds. In the legacy Hierarchy, Collapse Everything and Isolate play one fold at a time; in the new one, rows slide and unfold whenever anything expands or collapses."),
                         settings.animatedFoldsEnabled);
 
                     settings.expandCollapseKey = DrawKeyBind("Expand / Collapse", settings.expandCollapseKey);
@@ -603,6 +599,7 @@ namespace DNExtensions.HelpfulEditor
                     IndentedHelpBox(
                         "Every scene in the project is listed flat by name, with the open ones ticked — deliberately not grouped by folder, which would turn picking a scene into navigating the project.\n" +
                         "Star a scene to lift it to the top of the list; stars are per user and per project.\n" +
+                        "Drag a starred scene up or down, or press Alt+Up/Down on it, to reorder the starred scenes.\n" +
                         "Choosing one opens it, asking to save first if anything is unsaved; Shift+Click, or Shift+Return, loads it additively instead.\n" +
                         "Up and Down move through the list, Return opens, Escape closes. Scenes cannot be opened during play mode.\n" +
                         "Only the name is clickable — an arrow appears at the end of it under the cursor, and the rest of the header still selects the scene while right-click still opens Unity's own menu.",

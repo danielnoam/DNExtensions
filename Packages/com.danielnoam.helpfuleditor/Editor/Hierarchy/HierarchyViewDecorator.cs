@@ -18,7 +18,8 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
     /// trusting what a previous object left there. Elements are created once per row and found again
     /// by name.
     ///
-    /// Zebra stripes are not ported: the new window draws alternating rows itself.
+    /// Zebra stripes are not ported: the new window draws alternating rows itself. Tree lines are,
+    /// measured from each row's own toggle and icon.
     /// </summary>
     [InitializeOnLoad]
     internal static class HierarchyViewDecorator
@@ -27,7 +28,13 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         private const string OverflowName = "dn-component-overflow";
         private const string CountName = "dn-child-count";
         private const string SceneArrowName = "dn-scene-arrow";
+        private const string TreeLinesName = "dn-tree-lines";
         private const string HookedClass = "dn-hooked";
+
+        private const string RowContainerClass = "hierarchy-item__container";
+        private const string CollectionRowClass = "unity-collection-view__item";
+        private const string ToggleClass = "unity-tree-view__item-toggle";
+        private const string IconClass = "hierarchy-item__icon";
 
         private const string DropdownIcon = "icon dropdown";
         private const float CountBadgeSize = 11f;
@@ -37,6 +44,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
         private const double ReopenGuard = 0.25;
 
         private static readonly List<Component> Buffer = new List<Component>();
+        private static readonly List<bool> TreePathBuffer = new List<bool>();
 
         private static VisualElement _pressed;
         private static VisualElement _openArrow;
@@ -78,6 +86,7 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
                 GameObject gameObject = gameObjectHandler.GetGameObject(item.Node);
                 if (!gameObject) return;
 
+                if (settings.treeLinesEnabled) BindTreeLines(item, gameObject);
                 if (settings.componentStripEnabled) BindStrip(window, item, gameObject, settings);
                 if (settings.childCountEnabled) BindChildCount(item, gameObject, settings);
 
@@ -95,6 +104,91 @@ namespace DNExtensions.HelpfulEditor.Hierarchy
             SetShown(item.Q(StripName), false);
             SetShown(item.Q(CountName), false);
             SetShown(item.Q(SceneArrowName), false);
+            SetShown(item.Q(TreeLinesName), false);
+        }
+
+        /// <summary>
+        /// The legacy window's tree connectors, drawn by the same routine so colour, style and
+        /// thickness match. An IMGUIContainer laid over the row, behind its content, ignoring the
+        /// pointer — the routine is IMGUI, and porting it would mean two copies of every line rule.
+        ///
+        /// The object rides on userData and the path is rebuilt on every repaint rather than at bind:
+        /// adding or moving a sibling changes which rows are last without rebinding them.
+        /// </summary>
+        private static void BindTreeLines(HierarchyViewItem item, GameObject gameObject)
+        {
+            VisualElement lines = item.Q(TreeLinesName) ?? CreateTreeLines(item);
+            if (lines == null) return;
+
+            lines.userData = gameObject;
+            SetShown(lines, true);
+        }
+
+        private static VisualElement CreateTreeLines(HierarchyViewItem item)
+        {
+            // Into the row's own container rather than the item, so the lines share the content's
+            // stacking and clipping. A layout Unity has changed underneath is left undecorated.
+            VisualElement container = item.Q(className: RowContainerClass);
+            if (container == null) return null;
+
+            IMGUIContainer lines = new IMGUIContainer { name = TreeLinesName, pickingMode = PickingMode.Ignore };
+            lines.style.position = Position.Absolute;
+            lines.style.left = 0f;
+            lines.style.top = 0f;
+            lines.style.right = 0f;
+            lines.style.bottom = 0f;
+
+            lines.onGUIHandler = () => DrawTreeLines(item, lines);
+
+            container.Insert(0, lines);
+            return lines;
+        }
+
+        /// <summary>
+        /// Measured from the row's own toggle and icon each time rather than from a fixed indent, so
+        /// the lines follow whatever indent the window is using. The guides run through the foldout
+        /// column of each ancestor: the toggle's centre, one indent step left per level.
+        ///
+        /// Drawn over the row's pitch, not its full height. The rows overlap their neighbours by a
+        /// pixel or so, and a translucent guide drawn over the overlap twice reads as a dark notch.
+        /// </summary>
+        private static void DrawTreeLines(HierarchyViewItem item, VisualElement lines)
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            if (lines.userData is not GameObject gameObject || !gameObject) return;
+
+            HierarchySettings settings = HelpfulEditorSettings.Hierarchy;
+            if (!settings.moduleEnabled || !settings.treeLinesEnabled || settings.treeLineColor.a <= 0f) return;
+
+            int depth = HierarchyModule.BuildTreePath(gameObject.transform, TreePathBuffer);
+            if (depth == 0) return;
+
+            VisualElement toggle = item.Q(className: ToggleClass);
+            VisualElement icon = item.Q(className: IconClass);
+            if (toggle == null || icon == null) return;
+
+            float origin = lines.worldBound.x;
+            Rect toggleRect = toggle.worldBound;
+            float indent = HelpfulEditorGUI.IndentWidth;
+
+            // The recycled row element is laid out at exactly the pitch; the item inside it overhangs.
+            VisualElement row = item.parent;
+            while (row != null && !row.ClassListContains(CollectionRowClass)) row = row.parent;
+
+            float pitch = row != null && row.layout.height > 0f ? row.layout.height : lines.contentRect.height;
+            float top = (lines.contentRect.height - pitch) * 0.5f;
+
+            bool hasChildren = gameObject.transform.childCount > 0;
+
+            // rowRect.x only places the elbow's end: at the toggle's edge when the row has an arrow
+            // to stop short of, otherwise just short of the icon.
+            float elbowAnchor = hasChildren ? toggleRect.xMin - origin + indent : icon.worldBound.x - origin;
+            Rect rowRect = new Rect(elbowAnchor, top, lines.contentRect.width - elbowAnchor, pitch);
+
+            float leftEdge = toggleRect.center.x - origin + indent * 0.5f - indent * depth;
+
+            HelpfulEditorGUI.DrawTreeConnectors(rowRect, leftEdge, TreePathBuffer, settings.treeLineColor,
+                settings.treeLineStyle, hasChildren);
         }
 
         /// <summary>
