@@ -80,7 +80,19 @@ namespace DNExtensions.HelpfulEditor.GameView
         /// </summary>
         private const string PendingStartKey = "DNExtensions.HelpfulEditor.Recording.PendingPlayStart";
 
+        /// <summary>The overrides a take waiting on play mode was asked with, carried across the same reload.</summary>
+        private const string PendingOptionsKey = "DNExtensions.HelpfulEditor.Recording.PendingPlayOptions";
+
         private static int _awaitingPlayFrames = -1;
+        private static GameViewRecordingOptions _pendingOptions;
+
+        /// <summary>The running take's overrides, or null when it is the toolbar's and follows the settings alone.</summary>
+        private static GameViewRecordingOptions _options;
+
+        /// <summary>A delegated take's destination without its extension, which Recorder picks to suit the codec.</summary>
+        private static string _delegatedBasePath;
+
+        private static string _lastSavedPath;
 
         static GameViewRecording()
         {
@@ -110,6 +122,11 @@ namespace DNExtensions.HelpfulEditor.GameView
 
             SessionState.SetBool(PendingStartKey, false);
 
+            string pendingJson = SessionState.GetString(PendingOptionsKey, string.Empty);
+            SessionState.EraseString(PendingOptionsKey);
+
+            _pendingOptions = string.IsNullOrEmpty(pendingJson) ? null : JsonUtility.FromJson<GameViewRecordingOptions>(pendingJson);
+
             // Not started here: play mode has begun but the first frame has not been drawn, so there
             // is no render target to size the recording from yet. The pump waits for one.
             _awaitingPlayFrames = MaxWaitFrames;
@@ -131,8 +148,12 @@ namespace DNExtensions.HelpfulEditor.GameView
 
             if (gameView && CanRecord(gameView))
             {
+                GameViewRecordingOptions options = _pendingOptions;
+
                 _awaitingPlayFrames = -1;
-                Start(gameView);
+                _pendingOptions = null;
+
+                Start(gameView, options);
 
                 return;
             }
@@ -140,6 +161,7 @@ namespace DNExtensions.HelpfulEditor.GameView
             if (--_awaitingPlayFrames > 0) return;
 
             _awaitingPlayFrames = -1;
+            _pendingOptions = null;
             Debug.LogWarning("[HelpfulEditor] Play mode started but the Game View never produced a frame, so no recording was started.");
         }
 
@@ -157,6 +179,43 @@ namespace DNExtensions.HelpfulEditor.GameView
 
         /// <summary>Either state counts as busy: both own the Game View and only one take runs at a time.</summary>
         public static bool IsActive => IsRecording || _starting;
+
+        /// <summary>Play mode has been asked for so a take can start in it, and the take has not started yet.</summary>
+        public static bool IsAwaitingPlayMode => _awaitingPlayFrames > 0 || SessionState.GetBool(PendingStartKey, false);
+
+        public static int Width => _width;
+        public static int Height => _height;
+        public static int Fps => _fps;
+
+        /// <summary>The take's length limit in seconds, zero when it records until stopped.</summary>
+        public static float MaxDuration => _options?.maxDuration ?? 0f;
+
+        /// <summary>Where the running take will be saved.</summary>
+        public static string Folder => ResolveFolder(_options);
+
+        /// <summary>
+        /// Where the last finished take was saved, or null before there is one. A delegated take is
+        /// looked up on disk once it has ended, since Recorder chose its extension — until then, and
+        /// until the file appears, this still names the take before it.
+        /// </summary>
+        public static string LastSavedPath
+        {
+            get
+            {
+                if (_delegated || string.IsNullOrEmpty(_delegatedBasePath)) return _lastSavedPath;
+
+                string folder = Path.GetDirectoryName(_delegatedBasePath);
+                if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) return _lastSavedPath;
+
+                string[] matches = Directory.GetFiles(folder, Path.GetFileName(_delegatedBasePath) + ".*");
+                if (matches.Length == 0) return _lastSavedPath;
+
+                _lastSavedPath = matches[0];
+                _delegatedBasePath = null;
+
+                return _lastSavedPath;
+            }
+        }
 
         /// <summary>The window being recorded, so a second Game View shows its button idle rather than active.</summary>
         public static EditorWindow Target => _gameView;
@@ -192,26 +251,29 @@ namespace DNExtensions.HelpfulEditor.GameView
         /// </summary>
         public static void Start(EditorWindow gameView)
         {
+            Start(gameView, null);
+        }
+
+        /// <param name="options">Overrides for this take. Null, or any field left at its default, follows the settings.</param>
+        public static void Start(EditorWindow gameView, GameViewRecordingOptions options)
+        {
             if (!CanRecord(gameView)) return;
 
-            GameViewSettings settings = HelpfulEditorSettings.GameView;
+            _options = options;
 
-            if (settings.recordingMode == RecordingMode.Recorder)
+            if (ModeFor(options) == RecordingMode.Recorder)
             {
-                StartDelegated(gameView, settings);
+                StartDelegated(gameView, options);
                 return;
             }
 
-            if (!settings.recordingForceResolution)
+            if (!ForcedResolution(options, out int width, out int height))
             {
                 RenderTexture source = GameViewScreenshot.GetRenderTexture(gameView);
 
                 BeginEncoding(gameView, source.width, source.height);
                 return;
             }
-
-            int width = Mathf.Clamp(settings.recordingResolution.x, MinResolution, MaxResolution);
-            int height = Mathf.Clamp(settings.recordingResolution.y, MinResolution, MaxResolution);
 
             if (!GameViewSizeApi.Available)
             {
@@ -257,11 +319,13 @@ namespace DNExtensions.HelpfulEditor.GameView
         /// Hands the take to Unity Recorder. It brings its own frame driver and audio, so none of the
         /// pumping below applies — this only picks the size and the destination and gets out of the way.
         /// </summary>
-        private static void StartDelegated(EditorWindow gameView, GameViewSettings settings)
+        private static void StartDelegated(EditorWindow gameView, GameViewRecordingOptions options)
         {
             if (!GameViewRecorderBridge.Available)
             {
                 Debug.LogWarning("[HelpfulEditor] Recorder mode needs the Unity Recorder package — install it, or switch the mode to Real Time.");
+                _options = null;
+
                 return;
             }
 
@@ -269,33 +333,38 @@ namespace DNExtensions.HelpfulEditor.GameView
             // and picks the take up on the other side rather than refusing.
             if (!EditorApplication.isPlaying)
             {
-                SessionState.SetBool(PendingStartKey, true);
-                EditorApplication.EnterPlaymode();
+                _options = null;
+                RequestPlayModeStart(options);
 
                 return;
             }
 
             RenderTexture source = GameViewScreenshot.GetRenderTexture(gameView);
 
-            int width = settings.recordingForceResolution
-                ? Mathf.Clamp(settings.recordingResolution.x, MinResolution, MaxResolution)
-                : source.width;
+            if (!ForcedResolution(options, out int width, out int height))
+            {
+                width = source.width;
+                height = source.height;
+            }
 
-            int height = settings.recordingForceResolution
-                ? Mathf.Clamp(settings.recordingResolution.y, MinResolution, MaxResolution)
-                : source.height;
-
-            string folder = ResolveFolder();
+            string folder = ResolveFolder(options);
             Directory.CreateDirectory(folder);
 
             // Recorder appends the extension its codec needs, so the path it is given carries none.
             string path = Path.Combine(folder, BaseName(width, height));
 
-            _fps = Mathf.Clamp(settings.recordingFps, 1, 240);
+            _fps = FpsFor(options);
 
-            if (!GameViewRecorderBridge.Start(width, height, _fps, settings.recordingQuality, path)) return;
+            if (!GameViewRecorderBridge.Start(width, height, _fps, QualityFor(options), path))
+            {
+                _options = null;
+                return;
+            }
 
             _gameView = gameView;
+            _width = width;
+            _height = height;
+            _delegatedBasePath = path;
             _delegated = true;
             _segmentStart = EditorApplication.timeSinceStartup;
             _accumulatedDuration = 0.0;
@@ -348,12 +417,10 @@ namespace DNExtensions.HelpfulEditor.GameView
 
         private static void BeginEncoding(EditorWindow gameView, int width, int height)
         {
-            GameViewSettings settings = HelpfulEditorSettings.GameView;
-
             _gameView = gameView;
             _width = width;
             _height = height;
-            _fps = Mathf.Clamp(settings.recordingFps, 1, 240);
+            _fps = FpsFor(_options);
 
             _temporaryPath = Path.Combine(Path.GetTempPath(), $"HelpfulEditor Recording {Guid.NewGuid():N}.mp4");
 
@@ -370,7 +437,7 @@ namespace DNExtensions.HelpfulEditor.GameView
                     width = (uint)_width,
                     height = (uint)_height,
                     includeAlpha = false,
-                    targetBitRate = BitRateFor(settings.recordingQuality)
+                    targetBitRate = BitRateFor(QualityFor(_options))
                 };
 
                 _encoder = new MediaEncoder(_temporaryPath, video);
@@ -440,6 +507,8 @@ namespace DNExtensions.HelpfulEditor.GameView
                 return;
             }
 
+            string folder = ResolveFolder(_options);
+
             if (!IsPaused)
             {
                 _accumulatedDuration = ActiveDuration(EditorApplication.timeSinceStartup);
@@ -456,7 +525,50 @@ namespace DNExtensions.HelpfulEditor.GameView
             // file is not playable — or movable on Windows — until it has let go.
             Release(discard: false);
 
-            Deliver(temporary, width, height);
+            Deliver(temporary, width, height, folder);
+        }
+
+        /// <summary>
+        /// Asks for play mode and starts the take once the game draws its first frame. Entering play
+        /// mode reloads the domain, so the request and its overrides go through SessionState. In play
+        /// mode already, the take starts now.
+        /// </summary>
+        public static void StartInPlayMode(GameViewRecordingOptions options)
+        {
+            if (EditorApplication.isPlaying)
+            {
+                EditorWindow gameView = GameViewModule.FirstGameView();
+                if (gameView) Start(gameView, options);
+
+                return;
+            }
+
+            RequestPlayModeStart(options);
+        }
+
+        private static void RequestPlayModeStart(GameViewRecordingOptions options)
+        {
+            SessionState.SetBool(PendingStartKey, true);
+
+            if (options != null) SessionState.SetString(PendingOptionsKey, JsonUtility.ToJson(options));
+            else SessionState.EraseString(PendingOptionsKey);
+
+            EditorApplication.EnterPlaymode();
+        }
+
+        /// <summary>A take asked to be a set length ends itself here, and leaves play mode if it was asked to.</summary>
+        private static bool StopAtMaxDuration()
+        {
+            float limit = MaxDuration;
+            if (limit <= 0f || Duration.TotalSeconds < limit) return false;
+
+            bool exitPlayMode = _options != null && _options.exitPlayModeOnStop;
+
+            Stop();
+
+            if (exitPlayMode && EditorApplication.isPlaying) EditorApplication.ExitPlaymode();
+
+            return true;
         }
 
         public static void Cancel()
@@ -487,6 +599,8 @@ namespace DNExtensions.HelpfulEditor.GameView
             }
 
             if (!IsRecording || IsPaused) return;
+
+            if (StopAtMaxDuration()) return;
 
             // Recorder captures its own frames and holds no encoder of ours, so none of the pumping
             // below applies to it — running it anyway is what tried to encode through a null.
@@ -610,18 +724,21 @@ namespace DNExtensions.HelpfulEditor.GameView
         }
 
         /// <summary>Moves the finished file into the recordings folder under a name that says what it holds.</summary>
-        private static void Deliver(string temporary, int width, int height)
+        private static void Deliver(string temporary, int width, int height, string folder)
         {
             if (string.IsNullOrEmpty(temporary) || !File.Exists(temporary)) return;
 
             try
             {
-                string folder = ResolveFolder();
                 Directory.CreateDirectory(folder);
 
                 string path = NextFreePath(folder, width, height);
 
                 File.Move(temporary, path);
+
+                _lastSavedPath = path;
+                _delegatedBasePath = null;
+
                 Reveal(path);
             }
             catch (Exception e)
@@ -679,6 +796,7 @@ namespace DNExtensions.HelpfulEditor.GameView
 
             _delegated = false;
             _delegatedConfirmed = false;
+            _options = null;
 
             IsPaused = false;
             _starting = false;
@@ -732,10 +850,53 @@ namespace DNExtensions.HelpfulEditor.GameView
 
         public static string ResolveFolder()
         {
-            string folder = HelpfulEditorSettings.GameView.recordingFolder;
+            return ResolveFolder(null);
+        }
+
+        /// <summary>The options' folder when they name one, otherwise the settings', resolved against the project root.</summary>
+        public static string ResolveFolder(GameViewRecordingOptions options)
+        {
+            string folder = options != null && !string.IsNullOrWhiteSpace(options.folder)
+                ? options.folder
+                : HelpfulEditorSettings.GameView.recordingFolder;
+
             if (string.IsNullOrWhiteSpace(folder)) folder = DefaultFolder;
 
-            return Path.IsPathRooted(folder) ? folder : Path.Combine(GameViewScreenshot.ProjectRoot, folder);
+            return Path.GetFullPath(Path.IsPathRooted(folder) ? folder : Path.Combine(GameViewScreenshot.ProjectRoot, folder));
+        }
+
+        private static RecordingMode ModeFor(GameViewRecordingOptions options)
+        {
+            if (options != null && Enum.IsDefined(typeof(RecordingMode), options.mode)) return (RecordingMode)options.mode;
+
+            return HelpfulEditorSettings.GameView.recordingMode;
+        }
+
+        private static int FpsFor(GameViewRecordingOptions options)
+        {
+            int fps = options != null && options.fps > 0 ? options.fps : HelpfulEditorSettings.GameView.recordingFps;
+
+            return Mathf.Clamp(fps, 1, 240);
+        }
+
+        private static RecordingQuality QualityFor(GameViewRecordingOptions options)
+        {
+            if (options != null && Enum.IsDefined(typeof(RecordingQuality), options.quality)) return (RecordingQuality)options.quality;
+
+            return HelpfulEditorSettings.GameView.recordingQuality;
+        }
+
+        /// <summary>Whether the take forces a resolution, and which: the options' when they give both sides, otherwise the settings'.</summary>
+        private static bool ForcedResolution(GameViewRecordingOptions options, out int width, out int height)
+        {
+            GameViewSettings settings = HelpfulEditorSettings.GameView;
+
+            bool fromOptions = options != null && options.width > 0 && options.height > 0;
+
+            width = Mathf.Clamp(fromOptions ? options.width : settings.recordingResolution.x, MinResolution, MaxResolution);
+            height = Mathf.Clamp(fromOptions ? options.height : settings.recordingResolution.y, MinResolution, MaxResolution);
+
+            return fromOptions || settings.recordingForceResolution;
         }
 
         public static void OpenFolder()
@@ -776,7 +937,9 @@ namespace DNExtensions.HelpfulEditor.GameView
         {
             string relative = FileUtil.GetProjectRelativePath(path.Replace('\\', '/'));
 
-            if (string.IsNullOrEmpty(relative))
+            // Only Assets holds importable files. The default Recordings folder and Temp sit beside it
+            // at the project root, where importing fails and pinging finds nothing.
+            if (string.IsNullOrEmpty(relative) || !relative.StartsWith("Assets/", StringComparison.Ordinal))
             {
                 Debug.Log($"[HelpfulEditor] Saved recording to {path}");
                 return;

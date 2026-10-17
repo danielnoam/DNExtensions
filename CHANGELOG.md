@@ -4,6 +4,11 @@
 
 ### Added
 - MCP tools for AI agents: `MCP/Editor` assemblies in every package, built only when `com.unity.pipeline` is installed, exposing Game View capture, inspector buttons, AutoGet population, Quick Navigation history, scene notes, audio IDs, object pools and ScriptableObject values/events as `unity` CLI commands and MCP tools.
+- MCP Game View recording: `dn_start_recording`, `dn_stop_recording` and `dn_recording_status` drive the Helpful Editor recorder, in Real Time or Unity Recorder mode, with optional size, fps, quality, a duration that stops the take by itself, and starting (and leaving) play mode around it.
+- Game View recording takes per-take options (`GameViewRecordingOptions`) that fall back to the Game View settings, and reports where the last take was saved.
+
+### Fixed
+- Saved recordings outside `Assets` (the default `Recordings` folder among them) no longer try to import and ping a file the AssetDatabase cannot see.
 
 ## [1.1.0] - 2026-10-06
 

@@ -73,6 +73,7 @@ unity mcp configure claude-code   # register the Unity MCP server with the clien
 | Command | Package | What it does |
 |---|---|---|
 | `dn_capture_game_view` | helpfuleditor | Saves a PNG of the Game View (optionally re-rendered at a size, or without UI) and returns its path |
+| `dn_start_recording` / `dn_stop_recording` / `dn_recording_status` | helpfuleditor | Records the Game View to an MP4 through the Game View recorder: size, fps, quality and mode default to its settings, `play_mode` starts the game first, `duration` stops the take by itself, and stopping returns the file's path |
 | `dn_list_buttons` / `dn_invoke_button` | utilities | Lists and presses `[Button]` methods on a GameObject's components or an asset |
 | `dn_autoget_populate` | utilities | Populates `[AutoGet]` fields in a scene or under a GameObject and reports the ones still empty |
 | `dn_recent_assets` | utilities | The user's Quick Navigation history and favorites |
@@ -80,6 +81,13 @@ unity mcp configure claude-code   # register the Unity MCP server with the clien
 | `dn_list_audio_ids` | systems | The IDs registered for `AudioLibrary` and `AudioTrack` |
 | `dn_list_pools` | systems | Configured object pools, or live active/inactive counts in play mode |
 | `dn_list_scriptables` / `dn_set_so_value` / `dn_invoke_so_event` | systems | Reads and tunes `SOValue` assets, raises `SOEvent`s in play mode |
+
+Screenshots and recordings go to `Temp/DNExtensionsMCP` unless a `path` or `folder` is given, so they are never imported or committed. For example, four seconds of gameplay that starts and stops play mode by itself:
+
+```bash
+unity command dn_start_recording --play_mode true --duration 4 --exit_play_mode true
+unity command dn_recording_status   # repeat until it reports the saved take
+```
 
 ### Download size
 
