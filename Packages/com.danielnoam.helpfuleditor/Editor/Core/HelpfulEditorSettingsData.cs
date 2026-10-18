@@ -352,10 +352,11 @@ namespace DNExtensions.HelpfulEditor
         public KeyBind reopenWindowKey = KeyBind.Of(KeyCode.T, ctrl: true, shift: true);
 
         /// <summary>
-        /// Window types Close Focused Window refuses to act on, matched by type name. Empty by
-        /// default: closing is undoable, so the core windows no longer need protecting from it.
+        /// Window types Close Focused Window refuses to act on, matched by type name. By default the
+        /// Scene and Game views and the Hierarchy — both its legacy window and the UI Toolkit one 6.6
+        /// made the default — since closing one of those by reflex costs more than reopening it saves.
         /// </summary>
-        public List<string> closeWindowExcludedTypes = new List<string>();
+        public List<string> closeWindowExcludedTypes = new List<string> { "SceneView", "GameView", "SceneHierarchyWindow", "HierarchyWindow" };
         public KeyBind navigateBackKey = KeyBind.Of(KeyCode.Mouse3);
         public KeyBind navigateForwardKey = KeyBind.Of(KeyCode.Mouse4);
     }

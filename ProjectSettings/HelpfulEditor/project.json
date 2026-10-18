@@ -104,7 +104,9 @@
         "SceneView",
         "ConsoleWindow",
         "InspectorWindow",
-        "SceneHierarchyWindow"
+        "SceneHierarchyWindow",
+        "GameView",
+        "HierarchyWindow"
     ],
     "navigateBackKey": {
         "key": 326,

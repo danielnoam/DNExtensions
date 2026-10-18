@@ -108,9 +108,8 @@ namespace DNExtensions.HelpfulEditor.Project
 
         /// <summary>
         /// The window is snapshotted before it goes, so Reopen Closed Window can bring it back where
-        /// it was. That is what makes the exclusion list optional rather than a safety net — it now
-        /// defaults to empty, and exists only for anyone who would rather a given window never
-        /// respond to the shortcut at all.
+        /// it was. The exclusion list keeps the windows a layout is built around — the Scene and Game
+        /// views and the Hierarchy by default — from responding to the shortcut at all.
         /// </summary>
         private static bool CloseFocusedWindow()
         {
