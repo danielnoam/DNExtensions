@@ -875,13 +875,18 @@ namespace DNExtensions.HelpfulEditor
 
                 if (Section(ProjectModule, "Window History"))
                 {
-                    settings.closeWindowKey = DrawKeyBind("Close Focused Window", settings.closeWindowKey);
-                    settings.reopenWindowKey = DrawKeyBind("Reopen Closed Window", settings.reopenWindowKey);
+                    settings.windowHistoryEnabled = EditorGUILayout.Toggle("Enabled", settings.windowHistoryEnabled);
 
-                    DrawStringList("Never Close These Windows", settings.closeWindowExcludedTypes);
-                    EditorGUILayout.LabelField("Closing is undoable, so this list is usually best left empty.", EditorStyles.miniLabel);
+                    using (new EditorGUI.DisabledScope(!settings.windowHistoryEnabled))
+                    {
+                        settings.closeWindowKey = DrawKeyBind("Close Focused Window", settings.closeWindowKey);
+                        settings.reopenWindowKey = DrawKeyBind("Reopen Closed Window", settings.reopenWindowKey);
 
-                    if (HelpfulEditorPlugins.VTabsActive)
+                        DrawStringList("Never Close These Windows", settings.closeWindowExcludedTypes);
+                        EditorGUILayout.LabelField("Window type names. The Scene and Game views and the Hierarchy are listed by default.", EditorStyles.miniLabel);
+                    }
+
+                    if (settings.windowHistoryEnabled && HelpfulEditorPlugins.VTabsActive)
                     {
                         IndentedHelpBox("vTabs binds the same defaults for close and reopen, acting on the tab rather than the window. Both will fire — rebind one side.",
                             MessageType.Warning);

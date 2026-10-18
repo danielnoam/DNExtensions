@@ -348,6 +348,9 @@ namespace DNExtensions.HelpfulEditor
         /// <summary>Dropping onto a dock area's tab strip opens the tab there, rather than only the keybind doing it.</summary>
         public bool dropOnTabsEnabled = true;
 
+        /// <summary>Close Focused Window and Reopen Closed Window together. Off leaves both shortcuts to Unity and other tools.</summary>
+        public bool windowHistoryEnabled = true;
+
         public KeyBind closeWindowKey = KeyBind.Of(KeyCode.W, ctrl: true);
         public KeyBind reopenWindowKey = KeyBind.Of(KeyCode.T, ctrl: true, shift: true);
 

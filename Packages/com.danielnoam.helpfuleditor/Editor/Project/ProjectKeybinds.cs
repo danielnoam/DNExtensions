@@ -31,13 +31,13 @@ namespace DNExtensions.HelpfulEditor.Project
 
             // Closing and reopening target whatever has focus, so they are handled before the
             // mouse-over-the-Project-window gate the row actions need.
-            if (settings.closeWindowKey.Matches(evt))
+            if (settings.windowHistoryEnabled && settings.closeWindowKey.Matches(evt))
             {
                 if (CloseFocusedWindow()) evt.Use();
                 return;
             }
 
-            if (settings.reopenWindowKey.Matches(evt))
+            if (settings.windowHistoryEnabled && settings.reopenWindowKey.Matches(evt))
             {
                 if (HelpfulEditorWindowHistory.ReopenLast()) evt.Use();
                 return;
