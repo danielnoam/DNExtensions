@@ -74,6 +74,8 @@ unity mcp configure claude-code   # register the Unity MCP server with the clien
 |---|---|---|
 | `dn_capture_game_view` | helpfuleditor | Saves a PNG of the Game View (optionally re-rendered at a size, or without UI) and returns its path |
 | `dn_start_recording` / `dn_stop_recording` / `dn_recording_status` | helpfuleditor | Records the Game View to an MP4 through the Game View recorder: size, fps, quality and mode default to its settings, `play_mode` starts the game first, `duration` stops the take by itself, and stopping returns the file's path |
+| `dn_store_refresh` / `dn_store_categories` / `dn_store_list` | helpfuleditor | Fetches the signed-in user's whole Asset Store library (owned, downloaded or not) into a local cache, and lists it by category, search text or downloaded state |
+| `dn_store_download` / `dn_store_download_status` / `dn_store_import` | helpfuleditor | Downloads owned packages (by id, a whole category, a search, or everything missing) into the Asset Store cache like the Package Manager's Download button, tracks progress, and imports a downloaded package into the project |
 | `dn_list_buttons` / `dn_invoke_button` | utilities | Lists and presses `[Button]` methods on a GameObject's components or an asset |
 | `dn_autoget_populate` | utilities | Populates `[AutoGet]` fields in a scene or under a GameObject and reports the ones still empty |
 | `dn_recent_assets` | utilities | The user's Quick Navigation history and favorites |
@@ -87,6 +89,16 @@ Screenshots and recordings go to `Temp/DNExtensionsMCP` unless a `path` or `fold
 ```bash
 unity command dn_start_recording --play_mode true --duration 4 --exit_play_mode true
 unity command dn_recording_status   # repeat until it reports the saved take
+```
+
+The Asset Store commands use the account signed in to the editor and reach the Package Manager's internal Asset Store services by reflection, as Unity has no public API for a user's purchases. If a Unity update renames those internals, the commands say so instead of failing halfway. A typical session:
+
+```bash
+unity command dn_store_refresh                                   # once, then whenever new assets are bought
+unity command dn_store_list --category audio --downloaded no     # owned audio that was never downloaded
+unity command dn_store_download --category audio/sound-fx
+unity command dn_store_download_status
+unity command dn_store_import --id 115488
 ```
 
 ### Download size
