@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.danielnoam.buildtool": {
+      "version": "file:com.danielnoam.buildtool",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.danielnoam.components": {
       "version": "file:com.danielnoam.components",
       "depth": 0,
