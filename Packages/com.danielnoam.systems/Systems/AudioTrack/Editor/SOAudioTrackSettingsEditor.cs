@@ -1,6 +1,7 @@
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using DNExtensions.Utilities;
 
 namespace DNExtensions.Systems.AudioTrack
 {
@@ -94,7 +95,7 @@ namespace DNExtensions.Systems.AudioTrack
         }
 
 
-        [MenuItem("Tools/DNExtensions/Audio Track Settings")]
+        [MenuItem(DNExtensionsMenu.Root + "Audio Track Settings")]
         private static void OpenSettings()
         {
             var settings = SOAudioTrackSettings.Instance;

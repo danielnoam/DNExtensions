@@ -71,7 +71,7 @@ namespace DNExtensions.HelpfulEditor.Project
                 if (StateOf(folder) != LinkState.RealFolder) continue;
 
                 Debug.LogError($"[HelpfulEditor] Assets/{folder} is a real folder, not a symlink. " +
-                               "Anything placed there will not reach the linked location. Recreate the link from Tools/DNExtensions/Linked Assets.");
+                               "Anything placed there will not reach the linked location. Recreate the link from DNExtensions > Linked Assets.");
             }
         }
 

@@ -20,7 +20,7 @@ namespace DNExtensions.HelpfulEditor.Project
         private string _trackName = string.Empty;
         private Vector2 _scroll;
 
-        [MenuItem("Tools/DNExtensions/Linked Assets", false, 1001)]
+        [MenuItem(DNExtensionsMenu.Root + "Linked Assets", false, 1001)]
         public static void ShowWindow()
         {
             GetWindow<LinkedAssetsWindow>("Linked Assets");

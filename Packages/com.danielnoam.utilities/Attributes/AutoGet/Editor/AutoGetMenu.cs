@@ -7,7 +7,7 @@ namespace DNExtensions.Utilities.AutoGet
 {
     internal static class AutoGetMenu
     {
-        private const string MenuRoot = "Tools/DNExtensions/AutoGet/";
+        private const string MenuRoot = DNExtensionsMenu.Root + "AutoGet/";
         private const int MenuPriority = 1000;
         
         [MenuItem("CONTEXT/MonoBehaviour/Populate AutoGet Fields")]

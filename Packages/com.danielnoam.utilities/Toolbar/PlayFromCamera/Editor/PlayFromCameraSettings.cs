@@ -74,7 +74,7 @@ namespace DNExtensions.Utilities.PlayFromCamera
 #if UNITY_EDITOR
     static class PlayFromCameraSettingsProvider
     {
-        private const string MenuPath = "Tools/DNExtensions/Play from Camera Settings";
+        private const string MenuPath = DNExtensionsMenu.Root + "Play from Camera Settings";
 
         [MenuItem(MenuPath, false)]
         public static void OpenSettings()

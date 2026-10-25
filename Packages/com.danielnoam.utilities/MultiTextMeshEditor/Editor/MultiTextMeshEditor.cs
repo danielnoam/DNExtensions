@@ -27,7 +27,7 @@ namespace DNExtensions.Utilities
         private const float RowHeight = 20f;
         private const float InspectorPadding = 10f;
 
-        [MenuItem("Tools/DNExtensions/Multi TextMesh Editor")]
+        [MenuItem(DNExtensionsMenu.Root + "Multi TextMesh Editor")]
         public static void ShowWindow()
         {
             var window = GetWindow<MultiTextMeshEditor>("Multi TextMesh Editor");

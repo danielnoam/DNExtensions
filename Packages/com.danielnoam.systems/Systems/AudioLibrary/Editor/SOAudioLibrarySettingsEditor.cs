@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using DNExtensions.Utilities;
 
 namespace DNExtensions.Systems.AudioLibrary
 {
@@ -158,7 +159,7 @@ namespace DNExtensions.Systems.AudioLibrary
         }
 
 
-        [MenuItem("Tools/DNExtensions/Audio Library Settings")]
+        [MenuItem(DNExtensionsMenu.Root + "Audio Library Settings")]
         private static void OpenSettings()
         {
             var settings = SOAudioLibrarySettings.Instance;

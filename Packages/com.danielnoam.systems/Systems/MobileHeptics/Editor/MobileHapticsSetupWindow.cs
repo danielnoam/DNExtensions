@@ -2,6 +2,7 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using DNExtensions.Utilities;
 
 namespace DNExtensions.Systems.MobileHaptics
 {
@@ -45,7 +46,7 @@ namespace DNExtensions.Systems.MobileHaptics
                 new Object[] { _instance }, SettingsPath, true);
         }
         
-        [MenuItem("Tools/DNExtensions/Mobile Haptics Settings")]
+        [MenuItem(DNExtensionsMenu.Root + "Mobile Haptics Settings")]
         public static void OpenSettings()
         {
             SettingsService.OpenProjectSettings("Project/DNExtensions/Mobile Haptics");

@@ -24,7 +24,7 @@ namespace DNExtensions.HelpfulEditor
 
         private static int _sectionIndent;
 
-        [MenuItem("Tools/DNExtensions/Helpful Editor Settings", false, 1000)]
+        [MenuItem(DNExtensionsMenu.Root + "Helpful Editor Settings", false, 1000)]
         public static void OpenSettings()
         {
             SettingsService.OpenProjectSettings(RootPath);
@@ -941,7 +941,7 @@ namespace DNExtensions.HelpfulEditor
                         new GUIContent("Enabled", "Badge folders that are meant to be symlinks with whether they still are."),
                         settings.linkedAssetsEnabled);
 
-                    // The window itself stays reachable from Tools/DNExtensions while the feature is
+                    // The window itself stays reachable from the DNExtensions menu while the feature is
                     // off — this is a shortcut to it, not the only way in.
                     using (new EditorGUI.DisabledScope(!settings.linkedAssetsEnabled))
                     {

@@ -13,7 +13,7 @@ namespace DNExtensions.BuildTool
     /// </summary>
     internal class BuildWindow : EditorWindow
     {
-        public const string MenuPath = "Tools/DNExtensions/Build";
+        public const string MenuPath = DNExtensionsMenu.Root + "Build";
 
         private static readonly string[] Tabs = { "Build", "Settings" };
 

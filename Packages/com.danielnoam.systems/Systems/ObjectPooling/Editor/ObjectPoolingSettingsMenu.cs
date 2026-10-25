@@ -1,6 +1,7 @@
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using DNExtensions.Utilities;
 
 namespace DNExtensions.Systems.ObjectPooling
 {
@@ -12,7 +13,7 @@ namespace DNExtensions.Systems.ObjectPooling
     {
         private const string SettingsPath = "Assets/Resources/ObjectPoolingSettings.asset";
 
-        [MenuItem("Tools/DNExtensions/Object Pooling Settings")]
+        [MenuItem(DNExtensionsMenu.Root + "Object Pooling Settings")]
         private static void OpenSettings()
         {
             var settings = ObjectPoolingSettings.Instance;

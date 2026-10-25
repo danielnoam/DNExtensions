@@ -68,7 +68,7 @@ namespace DNExtensions.Utilities.Button
 
     static class ButtonSettingsProvider
     {
-        private const string MenuPath = "Tools/DNExtensions/Button Settings";
+        private const string MenuPath = DNExtensionsMenu.Root + "Button Settings";
         private const int MenuPriority = 1000;
 
         [MenuItem(MenuPath, false, MenuPriority)]

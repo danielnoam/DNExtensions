@@ -128,7 +128,7 @@ Everything is toggleable at **Project Settings → DNExtensions → Helpful Edit
 
 ### `com.danielnoam.buildtool` — Build Tool
 
-A release window at **Tools → DNExtensions → Build**. Editor-only, no dependencies.
+A release window at **DNExtensions → Build**. Editor-only, no dependencies.
 
 - **Build** tab: the version (with the Android version code derived from it), Android APK and Windows targets built from Build Profiles one after another, then uploads to a folder, GitHub Releases (via the `gh` CLI, with release notes from commit subjects), itch.io (via `butler`, one channel per target) and Steam (via `steamcmd` and a generated SteamPipe script).
 - **Settings** tab: the project's setup, saved in `Assets/Settings/Build/BuildConfig.asset` (file name, default build folder, Android target API pin, GitHub repository, itch.io project and channels, Steam App and depot IDs), and this computer's own, kept in EditorPrefs per project (build and copy folders, release keystore and its password encrypted for the Windows user, butler and steamcmd paths, itch.io API key, Steam user).

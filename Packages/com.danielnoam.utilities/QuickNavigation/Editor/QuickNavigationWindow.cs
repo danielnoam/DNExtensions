@@ -46,7 +46,7 @@ namespace DNExtensions.Utilities
         private string _newTabName = "New Tab";
         private Color _newTabColor = Color.white;
 
-        [MenuItem("Tools/DNExtensions/Quick Navigation")]
+        [MenuItem(DNExtensionsMenu.Root + "Quick Navigation")]
         public static void ShowWindow()
         {
             var window = GetWindow<QuickNavigationWindow>("Quick Navigation");

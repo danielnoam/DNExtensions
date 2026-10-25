@@ -55,7 +55,7 @@ namespace DNExtensions.Utilities
         private const float RowHeight = 20f;
         private const float ToggleWidth = 20f;
         
-        [MenuItem("Tools/DNExtensions/ScriptableObject Editor")]
+        [MenuItem(DNExtensionsMenu.Root + "ScriptableObject Editor")]
         public static void ShowWindow()
         {
             var window = GetWindow<ScriptableObjectEditor>("ScriptableObject Editor");

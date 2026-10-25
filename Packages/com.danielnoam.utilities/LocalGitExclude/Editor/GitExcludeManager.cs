@@ -13,7 +13,7 @@ namespace DNExtensions.Utilities
         private Vector2 _scrollPosition;
         private string _fileContents = "";
 
-        [MenuItem("Tools/DNExtensions/Git Local Exclude Manager")]
+        [MenuItem(DNExtensionsMenu.Root + "Git Local Exclude Manager")]
         public static void ShowWindow()
         {
             var window = GetWindow<GitExcludeManager>("Git Exclude");
