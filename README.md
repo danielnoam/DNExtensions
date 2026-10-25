@@ -17,6 +17,7 @@ UPM does **not** resolve git dependencies transitively. A package that depends o
 | # | Package | Depends on | Prerequisites |
 |---|---------|-----------|---------------|
 | — | `helpfuleditor` | nothing | none — install any time |
+| — | `buildtool` | nothing | Unity 6 (Build Profiles) — install any time |
 | 1 | `utilities` | nothing | none |
 | 2 | `components` | utilities | PrimeTween |
 | 3 | `systems` | utilities, components | PrimeTween |
@@ -27,6 +28,9 @@ Adding `systems` to an empty project will fail. Add `utilities` first.
 
 ```
 https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.helpfuleditor
+```
+```
+https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.buildtool
 ```
 ```
 https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.utilities
@@ -119,6 +123,17 @@ Editor-only quality-of-life for Unity's own windows. No dependencies, nothing to
 - **Game View** — rulers and draggable guides, held against the render target so they survive resizing and zooming.
 
 Everything is toggleable at **Project Settings → DNExtensions → Helpful Editor**, stored as JSON under `ProjectSettings/HelpfulEditor/` so it travels with source control.
+
+---
+
+### `com.danielnoam.buildtool` — Build Tool
+
+A release window at **Tools → DNExtensions → Build**. Editor-only, no dependencies.
+
+- **Build** tab: the version (with the Android version code derived from it), Android APK and Windows targets built from Build Profiles one after another, then uploads to a folder, GitHub Releases (via the `gh` CLI, with release notes from commit subjects), itch.io (via `butler`, one channel per target) and Steam (via `steamcmd` and a generated SteamPipe script).
+- **Settings** tab: the project's setup, saved in `Assets/Settings/Build/BuildConfig.asset` (file name, default build folder, Android target API pin, GitHub repository, itch.io project and channels, Steam App and depot IDs), and this computer's own, kept in EditorPrefs per project (build and copy folders, release keystore and its password encrypted for the Windows user, butler and steamcmd paths, itch.io API key, Steam user).
+- **Project checks**: mark a static method `[BuildCheck("Name")]` returning `IEnumerable<string>`; each message it yields stops the build.
+- **Headless and agents**: `-executeMethod DNExtensions.BuildTool.BuildRunner.BuildFromCommandLine`, or `BuildRequestWatcher.Queue` / `ReadStatus` to build in the open editor.
 
 ---
 

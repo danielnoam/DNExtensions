@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- `com.danielnoam.buildtool`: the build window from ElectroGrid, made generic. Builds Android and Windows from Build Profiles, runs `[BuildCheck]` project checks, signs Android releases with a keystore kept off the repository, and uploads to a folder, GitHub Releases, itch.io (butler) and Steam (SteamPipe). Build and Settings tabs; per-machine settings stay on each computer.
 - MCP tools for AI agents: `MCP/Editor` assemblies in every package, built only when `com.unity.pipeline` is installed, exposing Game View capture, inspector buttons, AutoGet population, Quick Navigation history, scene notes, audio IDs, object pools and ScriptableObject values/events as `unity` CLI commands and MCP tools.
 - MCP Game View recording: `dn_start_recording`, `dn_stop_recording` and `dn_recording_status` drive the Helpful Editor recorder, in Real Time or Unity Recorder mode, with optional size, fps, quality, a duration that stops the take by itself, and starting (and leaving) play mode around it.
 - MCP Asset Store library: `dn_store_refresh`, `dn_store_categories`, `dn_store_list`, `dn_store_download`, `dn_store_download_status` and `dn_store_import` browse everything the signed-in user owns (filed under its deepest category, cached in `Library/DNExtensionsMCP`), download single packages, whole categories, search matches or everything missing through the Package Manager's download manager, and import downloaded packages.

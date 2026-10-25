@@ -1,0 +1,17 @@
+{
+  "name": "com.danielnoam.buildtool",
+  "version": "1.0.0",
+  "displayName": "DNExtensions Build Tool",
+  "description": "A build window for releasing: builds Android APK and Windows targets from Build Profiles one after another, runs the project's own checks, signs Android releases with a keystore kept off the repository, and uploads to a folder, GitHub Releases, itch.io (butler) and Steam (SteamPipe).\n\nEditor-only. Project setup lives in Assets/Settings/Build/BuildConfig.asset; per-machine folders, keys and logins stay on each computer.",
+  "unity": "6000.0",
+  "keywords": [
+    "build",
+    "release",
+    "github",
+    "itch",
+    "steam"
+  ],
+  "author": {
+    "name": "Daniel Noam"
+  }
+}
