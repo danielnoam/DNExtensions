@@ -37,6 +37,10 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private static bool _selectionResolved;
         private static bool _selectionAvailable;
 
+        /// <summary>Whether the pipeline raised beginCameraRendering for a preview camera during the
+        /// current <see cref="Render"/>. Rendering is synchronous, so one flag covers every stage.</summary>
+        private static bool _callbackRaised;
+
         /// <summary>Every live preview camera, which is how the emit below tells ours from the game
         /// and scene view cameras the same callback is raised for.</summary>
         private static readonly HashSet<Camera> Cameras = new HashSet<Camera>();
@@ -46,6 +50,9 @@ namespace DNExtensions.HelpfulEditor.Inspector
         private PreviewRenderUtility _preview;
         private GameObject _instance;
         private GameObject _built;
+
+        private bool _renderAsSceneView;
+        private RenderPipelineAsset _decidedUnder;
 
         public Camera Camera => _preview?.camera;
 
@@ -102,12 +109,19 @@ namespace DNExtensions.HelpfulEditor.Inspector
         ///
         /// So the call is made here rather than assumed of whoever is rendering. Registering the
         /// camera instead of naming a pipeline is the point: nothing about this depends on which one
-        /// is installed, or on a preview camera pretending to be a scene view camera to reach a
-        /// branch meant for something else.
+        /// is installed.
+        ///
+        /// A pipeline that skips preview cameras outright never raises this at all, which is what
+        /// <see cref="Render"/> falls back on a scene view camera for. On that render the pipeline's
+        /// own scene view branch emits the canvas, so emitting here too would draw it twice.
         /// </summary>
         private static void EmitGeometry(ScriptableRenderContext context, Camera camera)
         {
             if (!Cameras.Contains(camera)) return;
+
+            _callbackRaised = true;
+
+            if (camera.cameraType == CameraType.SceneView) return;
 
             ScriptableRenderContext.EmitGeometryForCamera(camera);
         }
@@ -161,9 +175,37 @@ namespace DNExtensions.HelpfulEditor.Inspector
             _preview.BeginPreview(rect, background);
         }
 
+        /// <summary>
+        /// Renders the camera and draws the result into the rect.
+        ///
+        /// Under a scriptable pipeline that never raises beginCameraRendering for the preview camera,
+        /// the pipeline skipped it entirely and the render came back empty. The camera is then
+        /// rendered again as a scene view camera, which every pipeline has to draw, and stays one
+        /// for as long as the same pipeline is active so the wasted render is paid only once.
+        /// </summary>
         public void Render(Rect rect)
         {
-            _preview.camera.Render();
+            Camera camera = _preview.camera;
+            RenderPipelineAsset pipeline = GraphicsSettings.currentRenderPipeline;
+
+            if (pipeline != _decidedUnder)
+            {
+                _decidedUnder = pipeline;
+                _renderAsSceneView = false;
+            }
+
+            camera.cameraType = _renderAsSceneView ? CameraType.SceneView : CameraType.Preview;
+
+            _callbackRaised = false;
+            camera.Render();
+
+            if (pipeline && !_renderAsSceneView && !_callbackRaised)
+            {
+                _renderAsSceneView = true;
+                camera.cameraType = CameraType.SceneView;
+                camera.Render();
+            }
+
             _preview.EndAndDrawPreview(rect);
         }
 
