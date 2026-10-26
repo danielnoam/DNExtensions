@@ -1,0 +1,49 @@
+name: Release Tag Check
+
+on:
+  push:
+    tags:
+      - "v*"
+  pull_request:
+    paths:
+      - "Packages/com.danielnoam.*/package.json"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check package versions
+        shell: python
+        run: |
+          import glob, json, os, sys
+
+          packages = {}
+          for path in sorted(glob.glob("Packages/com.danielnoam.*/package.json")):
+              with open(path, encoding="utf-8") as f:
+                  data = json.load(f)
+              packages[data["name"]] = data
+
+          errors = []
+          versions = {data["version"] for data in packages.values()}
+          if len(versions) != 1:
+              errors.append("Packages have different versions: " + ", ".join(f"{n} {d['version']}" for n, d in packages.items()))
+          version = sorted(versions)[0]
+
+          for name, data in packages.items():
+              for dep, dep_version in data.get("dependencies", {}).items():
+                  if dep in packages and dep_version != packages[dep]["version"]:
+                      errors.append(f"{name} depends on {dep} {dep_version}, but {dep} is {packages[dep]['version']}")
+
+          ref = os.environ.get("GITHUB_REF", "")
+          if ref.startswith("refs/tags/"):
+              tag = ref[len("refs/tags/"):]
+              if tag != f"v{version}":
+                  errors.append(f"Tag {tag} does not match package version {version}")
+
+          for error in errors:
+              print(f"::error::{error}")
+          if errors:
+              sys.exit(1)
+          print(f"All {len(packages)} packages are at {version}")
