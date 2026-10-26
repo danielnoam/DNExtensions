@@ -11,7 +11,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.danielnoam.utilities": "1.0.0",
+        "com.danielnoam.utilities": "1.2.0",
         "com.unity.inputsystem": "1.19.0",
         "com.unity.ugui": "2.0.0"
       }
@@ -27,8 +27,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.danielnoam.utilities": "1.0.0",
-        "com.danielnoam.components": "1.0.0",
+        "com.danielnoam.utilities": "1.2.0",
+        "com.danielnoam.components": "1.2.0",
         "com.unity.cinemachine": "3.1.7",
         "com.unity.inputsystem": "1.19.0",
         "com.unity.render-pipelines.universal": "17.5.0",

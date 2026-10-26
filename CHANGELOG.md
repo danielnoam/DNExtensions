@@ -2,7 +2,10 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-26
+
 ### Added
+- Releases are tagged. Every package shares one version and one `vX.Y.Z` tag, so a project pins the whole suite to the same commit.
 - `DNExtensionsMenu.Root` (`DNExtensions/`), the one place menu items are rooted. Utilities holds the public one; Helpful Editor and Build Tool keep an internal copy since they depend on nothing.
 - `com.danielnoam.buildtool`: the build window from ElectroGrid, made generic. Builds Android and Windows from Build Profiles, runs `[BuildCheck]` project checks, signs Android releases with a keystore kept off the repository, and uploads to a folder, GitHub Releases, itch.io (butler) and Steam (SteamPipe). Build and Settings tabs; per-machine settings stay on each computer.
 - MCP tools for AI agents: `MCP/Editor` assemblies in every package, built only when `com.unity.pipeline` is installed, exposing Game View capture, inspector buttons, AutoGet population, Quick Navigation history, scene notes, audio IDs, object pools and ScriptableObject values/events as `unity` CLI commands and MCP tools.
@@ -11,6 +14,7 @@
 - Game View recording takes per-take options (`GameViewRecordingOptions`) that fall back to the Game View settings, and reports where the last take was saved.
 
 ### Changed
+- All packages are versioned together; each one moved to 1.2.0.
 - Every DNExtensions editor menu item moved from **Tools → DNExtensions** to its own **DNExtensions** menu in the top bar.
 
 ### Fixed

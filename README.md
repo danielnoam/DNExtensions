@@ -27,20 +27,26 @@ Adding `systems` to an empty project will fail. Add `utilities` first.
 ### URLs
 
 ```
-https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.helpfuleditor
+https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.helpfuleditor#v1.2.0
 ```
 ```
-https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.buildtool
+https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.buildtool#v1.2.0
 ```
 ```
-https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.utilities
+https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.utilities#v1.2.0
 ```
 ```
-https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.components
+https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.components#v1.2.0
 ```
 ```
-https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.systems
+https://github.com/danielnoam/DNExtensions.git?path=/Packages/com.danielnoam.systems#v1.2.0
 ```
+
+### Versions
+
+Every package shares one version, and each release is a `vX.Y.Z` tag on the whole repository (see [CHANGELOG.md](CHANGELOG.md)). The `#v1.2.0` at the end of each URL pins that release; use the same tag on every DNExtensions package in a project so they all come from the same commit. Leave it off to track `main`.
+
+The Package Manager does not report new versions of git packages. To update, change the tag on each DNExtensions line in `Packages/manifest.json`.
 
 ### PrimeTween
 
