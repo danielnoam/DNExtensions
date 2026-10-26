@@ -47,8 +47,11 @@ namespace DNExtensions.BuildTool
         private static double _nextPoll;
         private static bool _queued;
 
+        private static System.Threading.SynchronizationContext _mainThread;
+
         static BuildRequestWatcher()
         {
+            _mainThread = System.Threading.SynchronizationContext.Current;
             EditorApplication.update += Poll;
         }
 
@@ -115,9 +118,10 @@ namespace DNExtensions.BuildTool
             _queued = true;
 
             // Deferred so the build does not run inside the update callback that found the request. The file is only
-            // consumed there, so a script reload in between drops the queued call but not the request
-            EditorApplication.delayCall += RunRequest;
-            EditorApplication.QueuePlayerLoopUpdate();
+            // consumed there, so a script reload in between drops the queued call but not the request. Posted to the
+            // main thread rather than delayCall, which does not run while the editor sits in the background
+            if (_mainThread != null) _mainThread.Post(_ => RunRequest(), null);
+            else EditorApplication.delayCall += RunRequest;
         }
 
         private static void RunRequest()

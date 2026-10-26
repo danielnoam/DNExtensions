@@ -14,6 +14,7 @@
 - Every DNExtensions editor menu item moved from **Tools → DNExtensions** to its own **DNExtensions** menu in the top bar.
 
 ### Fixed
+- Build Tool: a build requested from outside the editor (`BuildRequestWatcher`) no longer waits for the editor to get focus; it starts through the main thread's synchronization context instead of `delayCall`.
 - Saved recordings outside `Assets` (the default `Recordings` folder among them) no longer try to import and ping a file the AssetDatabase cannot see.
 
 ## [1.1.0] - 2026-10-06
