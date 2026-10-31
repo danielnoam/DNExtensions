@@ -59,7 +59,7 @@ namespace DNExtensions.BuildTool
         [Min(0)] public int androidTargetApi;
 
         public bool uploadToGitHub;
-        [Tooltip("owner/name of the repository the releases go to. Empty uses this checkout's origin remote")]
+        [Tooltip("owner/name of the repository the releases go to. Empty uses this checkout's origin remote. Another repository gets the release on its default branch, and the version tag goes to origin")]
         public string githubRepository = string.Empty;
         [Tooltip("Draft: only you can see it, to test before publishing. Prerelease: public but marked as a test build. " +
                  "Published: public.")]

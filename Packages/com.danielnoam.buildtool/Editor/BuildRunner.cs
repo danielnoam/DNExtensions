@@ -237,6 +237,27 @@ namespace DNExtensions.BuildTool
         // Named on every release call, so gh does not fall back to whichever repository this checkout's remote is
         private static string RepoArgument(SOBuildConfig config) => $" --repo {Repository(config)}";
 
+        /// <summary>
+        /// Whether releases go to a repository other than this checkout's origin, such as a public releases-only one for a
+        /// private project. The built commit is not there, so the release tags that repository's default branch and the
+        /// version tag is pushed to origin from here instead.
+        /// </summary>
+        private static bool UsesSeparateRepository(SOBuildConfig config)
+        {
+            var remote = BuildProcess.Git("remote get-url origin", 15);
+            string origin = remote.Succeeded ? RepositoryFromUrl(remote.Output.Trim()) : string.Empty;
+            return !string.Equals(Repository(config), origin, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>Tags the built commit in this checkout and pushes the tag to origin, moving it when a release is replaced.</summary>
+        private static BuildProcess.Result TagOrigin(string commit, bool move)
+        {
+            var tag = BuildProcess.Git($"tag{(move ? " -f" : string.Empty)} {ReleaseTag} {commit}");
+            if (!tag.Succeeded) return tag;
+
+            return BuildProcess.Git($"push{(move ? " --force" : string.Empty)} origin refs/tags/{ReleaseTag}", 120);
+        }
+
         public static RunResult Run(SOBuildConfig config, bool upload)
         {
             var result = new RunResult
@@ -567,11 +588,18 @@ namespace DNExtensions.BuildTool
             foreach (string artifact in artifacts) arguments.Append(' ').Append(BuildProcess.Quote(artifact));
             arguments.Append($" --title {BuildProcess.Quote($"{config.ResolvedFileName} {Version}")}");
             arguments.Append($" --notes-file {BuildProcess.Quote(notesPath)}");
-            if (!string.IsNullOrEmpty(commit)) arguments.Append($" --target {commit}");
+            bool separate = UsesSeparateRepository(config);
+            if (!string.IsNullOrEmpty(commit) && !separate) arguments.Append($" --target {commit}");
             if (config.githubReleaseType == SOBuildConfig.ReleaseType.Draft) arguments.Append(" --draft");
             if (config.githubReleaseType == SOBuildConfig.ReleaseType.Prerelease) arguments.Append(" --prerelease");
 
-            return BuildProcess.Gh(arguments.ToString(), 30 * 60);
+            var created = BuildProcess.Gh(arguments.ToString(), 30 * 60);
+            if (!created.Succeeded || !separate || string.IsNullOrEmpty(commit)) return created;
+
+            var tagged = TagOrigin(commit, false);
+            return tagged.Succeeded
+                ? created
+                : new BuildProcess.Result(1, created.Output, $"Released, but tagging {ReleaseTag} on origin failed: {tagged.Message}");
         }
 
         /// <summary>
@@ -580,7 +608,13 @@ namespace DNExtensions.BuildTool
         /// </summary>
         private static BuildProcess.Result ReplaceRelease(SOBuildConfig config, bool isDraft, List<string> artifacts, string notesPath, string commit)
         {
-            if (!string.IsNullOrEmpty(commit))
+            if (!string.IsNullOrEmpty(commit) && UsesSeparateRepository(config))
+            {
+                // The release keeps its own tag, only origin's tag follows the commit just built
+                var moved = TagOrigin(commit, true);
+                if (!moved.Succeeded) return moved;
+            }
+            else if (!string.IsNullOrEmpty(commit))
             {
                 var retarget = isDraft
                     ? BuildProcess.Gh($"release edit {ReleaseTag}{RepoArgument(config)} --target {commit}")

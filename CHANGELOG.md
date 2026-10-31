@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- Build Tool: GitHub releases can go to a separate repository, such as a public releases-only one for a private project. The release tags that repository's default branch, and the version tag is pushed to origin at the built commit.
+
 ## [1.2.0] - 2026-10-26
 
 ### Added
