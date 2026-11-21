@@ -128,6 +128,22 @@ Editor-only quality-of-life for Unity's own windows. No dependencies, nothing to
 - **Project** — hover highlighting, zebra striping, tree guides, folder content type-icons, file extensions, a create-folder button, folder history, drag-conflict resolution, symlinked-folder badges, and middle-click to open a folder in a second Project window.
 - **Game View** — rulers and draggable guides, held against the render target so they survive resizing and zooming.
 
+Other editor code can add its own entries to the create-folder button's right-click menu with `[ProjectFolderMenuItem]` on a static method. It receives the folder that Project window is browsing:
+
+```csharp
+using DNExtensions.HelpfulEditor;
+
+internal static class LevelMenu
+{
+    [ProjectFolderMenuItem("Level/New Level", Priority = 10, Validate = nameof(CanCreateLevel))]
+    private static void CreateLevel(string folderPath) { /* ... */ }
+
+    private static bool CanCreateLevel(string folderPath) => folderPath.StartsWith("Assets/Levels");
+}
+```
+
+The method returns `void` and takes nothing or one `string`; `Validate` (optional) names a `bool` method with the same parameters, and the entry is greyed out when it returns false. An assembly with its own asmdef references `DNExtensions.HelpfulEditor.Editor`; to keep Helpful Editor optional there, add a version define on `com.danielnoam.helpfuleditor` and wrap the methods in it.
+
 Everything is toggleable at **Project Settings → DNExtensions → Helpful Editor**, stored as JSON under `ProjectSettings/HelpfulEditor/` so it travels with source control.
 
 ---
