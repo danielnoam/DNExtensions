@@ -99,19 +99,19 @@ namespace DNExtensions.HelpfulEditor.Project
                     continue;
                 }
 
-                if (existing == null) window.rootVisualElement.Add(BuildButton());
+                if (existing == null) window.rootVisualElement.Add(BuildButton(window));
             }
         }
 
-        private static VisualElement BuildButton()
+        private static VisualElement BuildButton(EditorWindow window)
         {
             Button button = new Button(CreateFolder)
             {
                 name = ElementName,
-                tooltip = "New folder in the folder being browsed\nRight-click for other asset types"
+                tooltip = "New folder in the folder being browsed\nRight-click for other asset types and custom actions"
             };
 
-            button.AddManipulator(new ContextualMenuManipulator(BuildCreateMenu));
+            button.AddManipulator(new ContextualMenuManipulator(evt => BuildCreateMenu(evt, window)));
 
             button.style.position = Position.Absolute;
             button.style.top = 22f;
@@ -146,7 +146,7 @@ namespace DNExtensions.HelpfulEditor.Project
             return button;
         }
 
-        private static void BuildCreateMenu(ContextualMenuPopulateEvent evt)
+        private static void BuildCreateMenu(ContextualMenuPopulateEvent evt, EditorWindow window)
         {
             Dictionary<string, string> menu = EnumerateCreateMenu();
 
@@ -156,6 +156,25 @@ namespace DNExtensions.HelpfulEditor.Project
                 if (menuPath == null) continue;
 
                 evt.menu.AppendAction(label, _ => EditorApplication.ExecuteMenuItem(menuPath));
+            }
+
+            // Custom entries get this window's folder, not the editor's active one, so a second Project window
+            // hands over the folder it is actually showing.
+            List<ProjectFolderMenuItems.Entry> customEntries = ProjectFolderMenuItems.All();
+            if (customEntries.Count == 0) return;
+
+            string folderPath = HelpfulEditorProjectWindow.ActiveFolderPath(window);
+            if (string.IsNullOrEmpty(folderPath)) return;
+
+            evt.menu.AppendSeparator();
+
+            foreach (ProjectFolderMenuItems.Entry entry in customEntries)
+            {
+                DropdownMenuAction.Status status = entry.IsEnabled(folderPath)
+                    ? DropdownMenuAction.Status.Normal
+                    : DropdownMenuAction.Status.Disabled;
+
+                evt.menu.AppendAction(entry.label, _ => entry.Run(folderPath), status);
             }
         }
 

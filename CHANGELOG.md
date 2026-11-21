@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- Helpful Editor: `[ProjectFolderMenuItem]` lets other editor code add entries to the right-click menu of the Project window's create-folder button. Entries get the path of the folder that window is browsing, can be ordered with `Priority`, and can be greyed out with a `Validate` method.
 - Build Tool: GitHub releases can go to a separate repository, such as a public releases-only one for a private project. The release tags that repository's default branch, and the version tag is pushed to origin at the built commit.
 
 ## [1.2.0] - 2026-10-26
